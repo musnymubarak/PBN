@@ -83,6 +83,14 @@ def _register_middleware(app: FastAPI) -> None:
         allow_headers=["*"],
     )
 
+    # Security headers on every response
+    from app.core.security_headers import SecurityHeadersMiddleware
+    app.add_middleware(SecurityHeadersMiddleware)
+
+    # Rate limiting (disabled in development via env check inside)
+    from app.core.rate_limit import RateLimitMiddleware
+    app.add_middleware(RateLimitMiddleware)
+
 
 # ── Exception Handlers ──────────────────────────────────────────────────────
 
@@ -124,6 +132,8 @@ def _register_routes(app: FastAPI) -> None:
     from app.features.rewards.router import router as rew_router
     from app.features.analytics.router import router as an_router
     from app.features.payments.router import router as pay_router
+    from app.features.notifications.router import router as notif_router
+    from app.features.admin.router import router as admin_router
 
     app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
     app.include_router(app_router, prefix=settings.API_V1_PREFIX)
@@ -133,6 +143,8 @@ def _register_routes(app: FastAPI) -> None:
     app.include_router(rew_router, prefix=settings.API_V1_PREFIX)
     app.include_router(an_router, prefix=settings.API_V1_PREFIX)
     app.include_router(pay_router, prefix=settings.API_V1_PREFIX)
+    app.include_router(notif_router, prefix=settings.API_V1_PREFIX)
+    app.include_router(admin_router, prefix=settings.API_V1_PREFIX)
 
     # ── Infrastructure Endpoints ─────────────────────────────────────────
     @app.get("/health", tags=["Infrastructure"])

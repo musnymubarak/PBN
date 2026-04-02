@@ -1,0 +1,189 @@
+"""
+Prime Business Network – Notifications Service.
+
+Handles listing, marking as read, configuring FCM tokens natively against User,
+and abstracting Push Notification delivery via Firebase Cloud Messaging.
+"""
+
+from __future__ import annotations
+
+import logging
+from datetime import datetime, timezone
+from typing import Any, Dict, List
+from uuid import UUID
+
+from sqlalchemy import desc, select, update, func
+from sqlalchemy.ext.asyncio import AsyncSession
+
+import firebase_admin
+from firebase_admin import credentials, messaging
+
+from app.core.config import get_settings
+from app.core.exceptions import NotFoundException
+from app.models.notifications import Notification
+from app.models.user import User
+
+logger = logging.getLogger(__name__)
+
+# Cache the Firebase app initialization state
+_firebase_app_initialized = False
+
+
+def _init_firebase() -> bool:
+    """Initialize Firebase Admin SDK if credentials are provided."""
+    global _firebase_app_initialized
+    if _firebase_app_initialized:
+        return True
+
+    settings = get_settings()
+    if settings.FIREBASE_CREDENTIALS_PATH:
+        try:
+            cred = credentials.Certificate(settings.FIREBASE_CREDENTIALS_PATH)
+            firebase_admin.initialize_app(cred)
+            _firebase_app_initialized = True
+            logger.info("Firebase Admin initialized successfully.")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to initialize Firebase Admin: {e}")
+            return False
+    return False
+
+
+async def update_fcm_token(user_id: UUID, fcm_token: str, db: AsyncSession) -> None:
+    """Update a user's FCM token."""
+    await db.execute(
+        update(User)
+        .where(User.id == user_id)
+        .values(fcm_token=fcm_token)
+    )
+    await db.commit()
+
+
+async def send_push_notification(
+    user_id: UUID,
+    title: str,
+    body: str,
+    notification_type: str,
+    data: Dict[str, str] | None = None,
+    db: AsyncSession | None = None,
+) -> None:
+    """
+    Background Task: Emits a structural Notification into DB and triggers FCM push.
+    Gracefully degrades to Stub logging if Firebase is not linked.
+    """
+    if db is None:
+        return
+
+    now = datetime.now(timezone.utc)
+    
+    # 1. DB Persistence
+    notif = Notification(
+        user_id=user_id,
+        title=title,
+        body=body,
+        notification_type=notification_type,
+        data=data,
+        sent_at=now,
+        is_read=False,
+    )
+    db.add(notif)
+    # We must flush/commit here inside the background task context.
+    await db.commit()
+
+    # 2. Get User FCM Token
+    user = (await db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
+    if not user or not user.fcm_token:
+        logger.info(f"FCM [SKIPPED]: User {user_id} has no token registered. Notif={title}")
+        return
+
+    # 3. Dispatch
+    if _init_firebase():
+        try:
+            # Create FCM message
+            message = messaging.Message(
+                notification=messaging.Notification(
+                    title=title,
+                    body=body,
+                ),
+                data=data if data else {},
+                token=user.fcm_token,
+            )
+            # Send (Synchronous in Python SDK, wrapped conceptually)
+            response = messaging.send(message)
+            logger.info(f"FCM [DISPATCHED]: Messages ID: {response}")
+        except Exception as e:
+            logger.error(f"FCM [FAILED]: Delivery error: {str(e)}")
+    else:
+        # Stub / development mode
+        logger.info(f"FCM [STUB]: Emitting '{title}' to internal token {user.fcm_token}")
+
+
+def _serialize_notification(n: Notification) -> Dict[str, Any]:
+    return {
+        "id": str(n.id),
+        "title": n.title,
+        "body": n.body,
+        "notification_type": n.notification_type,
+        "data": n.data,
+        "is_read": n.is_read,
+        "sent_at": n.sent_at.isoformat() if n.sent_at else None,
+        "read_at": n.read_at.isoformat() if n.read_at else None,
+    }
+
+
+async def list_my_notifications(user_id: UUID, db: AsyncSession) -> Dict[str, Any]:
+    """List all notifications for a member, with total unread count."""
+    stmt = (
+        select(Notification)
+        .where(Notification.user_id == user_id)
+        .order_by(desc(Notification.sent_at))
+        .limit(50)
+    )
+    results = (await db.execute(stmt)).scalars().all()
+
+    unread_stmt = select(func.count(1)).where(Notification.user_id == user_id, Notification.is_read == False)
+    total_unread = (await db.execute(unread_stmt)).scalar_one()
+
+    return {
+        "notifications": [_serialize_notification(n) for n in results],
+        "total_unread": total_unread,
+    }
+
+
+async def get_unread_count(user_id: UUID, db: AsyncSession) -> int:
+    """Fast-path unread count scalar resolver."""
+    stmt = select(func.count(1)).where(Notification.user_id == user_id, Notification.is_read == False)
+    return (await db.execute(stmt)).scalar_one()
+
+
+async def mark_as_read(notification_id: UUID, user_id: UUID, db: AsyncSession) -> Dict[str, Any]:
+    """Target a specific notification and mark read."""
+    notif = (
+        await db.execute(
+            select(Notification).where(
+                Notification.id == notification_id, Notification.user_id == user_id
+            )
+        )
+    ).scalar_one_or_none()
+
+    if not notif:
+        raise NotFoundException("Notification not found")
+
+    if not notif.is_read:
+        notif.is_read = True
+        notif.read_at = datetime.now(timezone.utc)
+        await db.commit()
+
+    return _serialize_notification(notif)
+
+
+async def mark_all_read(user_id: UUID, db: AsyncSession) -> None:
+    """Mark all unread notifications read bulk operation."""
+    now = datetime.now(timezone.utc)
+    stmt = (
+        update(Notification)
+        .where(Notification.user_id == user_id, Notification.is_read == False)
+        .values(is_read=True, read_at=now)
+    )
+    await db.execute(stmt)
+    await db.commit()

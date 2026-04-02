@@ -62,6 +62,9 @@ class Settings(BaseSettings):
     WEBXPAY_CANCEL_URL: str = "http://localhost:8000/api/v1/payments/cancel"
     WEBXPAY_NOTIFY_URL: str = "http://localhost:8000/api/v1/payments/webhook"
 
+    # ── Firebase ──────────────────────────────────────────────
+    FIREBASE_CREDENTIALS_PATH: str | None = None
+
     # ── CORS ─────────────────────────────────────────────────
     CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:5173"]
 
