@@ -21,6 +21,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
+import sqlalchemy.orm
 
 from app.models.base import Base, TimestampMixin
 
@@ -37,6 +38,8 @@ class PrivilegeCard(Base, TimestampMixin):
     issued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
+    user: Mapped["User"] = sqlalchemy.orm.relationship("User")
+
     def __repr__(self) -> str:
         return f"<PrivilegeCard {self.card_number}>"
 
@@ -49,6 +52,8 @@ class Partner(Base, TimestampMixin):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     website: Mapped[str | None] = mapped_column(String(500), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    offers: Mapped[list["Offer"]] = sqlalchemy.orm.relationship("Offer", back_populates="partner", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return f"<Partner {self.name}>"
@@ -77,6 +82,9 @@ class Offer(Base, TimestampMixin):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     redemption_instructions: Mapped[str | None] = mapped_column(Text, nullable=True)
 
+    partner: Mapped["Partner"] = sqlalchemy.orm.relationship("Partner", back_populates="offers")
+    redemptions: Mapped[list["OfferRedemption"]] = sqlalchemy.orm.relationship("OfferRedemption", back_populates="offer", cascade="all, delete-orphan")
+
     def __repr__(self) -> str:
         return f"<Offer {self.title}>"
 
@@ -95,6 +103,9 @@ class OfferRedemption(Base, TimestampMixin):
     __table_args__ = (
         UniqueConstraint("offer_id", "user_id", name="unique_offer_redemption"),
     )
+
+    offer: Mapped["Offer"] = sqlalchemy.orm.relationship("Offer", back_populates="redemptions")
+    user: Mapped["User"] = sqlalchemy.orm.relationship("User")
 
     def __repr__(self) -> str:
         return f"<Redemption offer={self.offer_id} user={self.user_id}>"

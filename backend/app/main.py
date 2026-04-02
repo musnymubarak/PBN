@@ -119,10 +119,20 @@ def _register_routes(app: FastAPI) -> None:
     from app.features.auth.router import router as auth_router
     from app.features.applications.router import router as app_router
     from app.features.chapters.router import router as chap_router
+    from app.features.referrals.router import router as ref_router
+    from app.features.events.router import router as ev_router
+    from app.features.rewards.router import router as rew_router
+    from app.features.analytics.router import router as an_router
+    from app.features.payments.router import router as pay_router
 
     app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
     app.include_router(app_router, prefix=settings.API_V1_PREFIX)
     app.include_router(chap_router, prefix=settings.API_V1_PREFIX)
+    app.include_router(ref_router, prefix=settings.API_V1_PREFIX)
+    app.include_router(ev_router, prefix=settings.API_V1_PREFIX)
+    app.include_router(rew_router, prefix=settings.API_V1_PREFIX)
+    app.include_router(an_router, prefix=settings.API_V1_PREFIX)
+    app.include_router(pay_router, prefix=settings.API_V1_PREFIX)
 
     # ── Infrastructure Endpoints ─────────────────────────────────────────
     @app.get("/health", tags=["Infrastructure"])

@@ -22,6 +22,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
+import sqlalchemy.orm
 
 from app.models.base import Base, TimestampMixin
 
@@ -67,6 +68,12 @@ class Referral(Base, TimestampMixin):
         ),
     )
 
+    from_member: Mapped["User"] = sqlalchemy.orm.relationship("User", foreign_keys=[from_member_id])
+    to_member: Mapped["User"] = sqlalchemy.orm.relationship("User", foreign_keys=[to_member_id])
+    history: Mapped[list["ReferralStatusHistory"]] = sqlalchemy.orm.relationship(
+        "ReferralStatusHistory", back_populates="referral", cascade="all, delete-orphan", order_by="ReferralStatusHistory.created_at"
+    )
+
     def __repr__(self) -> str:
         return f"<Referral {self.from_member_id}→{self.to_member_id} [{self.status.value}]>"
 
@@ -83,6 +90,7 @@ class ReferralStatusHistory(Base, TimestampMixin):
     changed_by: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
+    referral: Mapped["Referral"] = sqlalchemy.orm.relationship("Referral", back_populates="history")
 
     def __repr__(self) -> str:
         return f"<RefStatusHistory {self.old_status}→{self.new_status}>"

@@ -22,6 +22,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
+import sqlalchemy.orm
 
 from app.models.base import Base, TimestampMixin
 
@@ -60,6 +61,10 @@ class Event(Base, TimestampMixin):
     is_published: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
+    chapter: Mapped["Chapter"] = sqlalchemy.orm.relationship("Chapter")
+    rsvps: Mapped[list["EventRSVP"]] = sqlalchemy.orm.relationship("EventRSVP", back_populates="event", cascade="all, delete-orphan")
+    attendances: Mapped[list["EventAttendance"]] = sqlalchemy.orm.relationship("EventAttendance", back_populates="event", cascade="all, delete-orphan")
+
     def __repr__(self) -> str:
         return f"<Event {self.title}>"
 
@@ -81,6 +86,9 @@ class EventRSVP(Base, TimestampMixin):
         UniqueConstraint("event_id", "user_id", name="unique_event_rsvp"),
     )
 
+    event: Mapped["Event"] = sqlalchemy.orm.relationship("Event", back_populates="rsvps")
+    user: Mapped["User"] = sqlalchemy.orm.relationship("User")
+
     def __repr__(self) -> str:
         return f"<RSVP event={self.event_id} user={self.user_id} [{self.status.value}]>"
 
@@ -98,6 +106,10 @@ class EventAttendance(Base, TimestampMixin):
     marked_by: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
+
+    event: Mapped["Event"] = sqlalchemy.orm.relationship("Event", back_populates="attendances")
+    user: Mapped["User"] = sqlalchemy.orm.relationship("User", foreign_keys=[user_id])
+    marked_by_user: Mapped["User"] = sqlalchemy.orm.relationship("User", foreign_keys=[marked_by])
 
     def __repr__(self) -> str:
         return f"<Attendance event={self.event_id} user={self.user_id}>"
