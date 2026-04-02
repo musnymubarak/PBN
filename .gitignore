@@ -1,0 +1,59 @@
+# ── Python ───────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# ── Virtual Environments ────────────────────────────────
+venv/
+.venv/
+env/
+.env
+
+# ── IDE ──────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── OS ───────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Database ─────────────────────────────────────────────
+*.db
+*.sqlite3
+
+# ── Logs ─────────────────────────────────────────────────
+*.log
+logs/
+
+# ── Test Artifacts ───────────────────────────────────────
+test_*.py
+debug_*.py
+*.txt
+!requirements.txt
+htmlcov/
+.coverage
+.pytest_cache/
+
+# ── Alembic ──────────────────────────────────────────────
+alembic/versions/*.pyc
+
+# ── Firebase ─────────────────────────────────────────────
+*firebase*.json
+*serviceAccount*.json
+
+# ── Docker ───────────────────────────────────────────────
+# Keep docker-compose.yml but ignore local overrides
+docker-compose.override.yml
+
+# ── Gemini/Antigravity ───────────────────────────────────
+.gemini/
+.agents/
