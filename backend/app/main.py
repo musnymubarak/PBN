@@ -118,9 +118,11 @@ def _register_routes(app: FastAPI) -> None:
     # ── Feature Routers ──────────────────────────────────────────────────
     from app.features.auth.router import router as auth_router
     from app.features.applications.router import router as app_router
+    from app.features.chapters.router import router as chap_router
 
     app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
     app.include_router(app_router, prefix=settings.API_V1_PREFIX)
+    app.include_router(chap_router, prefix=settings.API_V1_PREFIX)
 
     # ── Infrastructure Endpoints ─────────────────────────────────────────
     @app.get("/health", tags=["Infrastructure"])
