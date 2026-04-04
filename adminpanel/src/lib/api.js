@@ -10,7 +10,10 @@ async function apiFetch(path, options = {}) {
       ...options.headers,
     },
   });
-  if (!res.ok) throw new Error(`API ${res.status}: ${path}`);
+  if (!res.ok) {
+    const errorJson = await res.json().catch(() => ({}));
+    throw new Error(`API ${res.status}: ${path} - ${errorJson.message || 'Unknown Error'} (${errorJson.code || 'NO_CODE'})`);
+  }
   const json = await res.json();
   return json.data;
 }
@@ -21,4 +24,31 @@ export const api = {
   listReferrals: () => apiFetch('/referrals/my/given'),
   listPayments: () => apiFetch('/admin/payments'),
   exportData: () => apiFetch('/admin/export'),
+
+  // Applications
+  listApplications: (params = {}) => apiFetch(`/applications?${new URLSearchParams(params)}`),
+  getApplication: (id) => apiFetch(`/applications/${id}`),
+  updateApplicationStatus: (id, body) =>
+    apiFetch(`/applications/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }),
+
+  // Admin Auth
+  adminLogin: async (username, password) => {
+    const res = await fetch(`${BASE_URL}/auth/admin/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || `Login failed (${res.status})`);
+    }
+    const json = await res.json();
+    return json.data;
+  },
+
+  // Chapters
+  listChapters: () => apiFetch('/chapters'),
 };

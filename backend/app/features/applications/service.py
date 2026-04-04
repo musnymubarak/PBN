@@ -264,7 +264,16 @@ async def update_application_status(
         
         if taken:
             if taken.user_id != user.id:
-                raise BadRequestException("Industry category is already filled in this chapter.", code="INDUSTRY_TAKEN")
+                # Get names for better error message
+                ic_stmt = select(IndustryCategory.name).where(IndustryCategory.id == app.industry_category_id)
+                ch_stmt = select(Chapter.name).where(Chapter.id == chapter_id)
+                ic_name = (await db.execute(ic_stmt)).scalar() or "Unknown"
+                ch_name = (await db.execute(ch_stmt)).scalar() or "This Chapter"
+                
+                raise BadRequestException(
+                    f'The "{ic_name}" slot is already occupied by another member in "{ch_name}".',
+                    code="INDUSTRY_TAKEN"
+                )
         else:
             new_mem = ChapterMembership(
                 user_id=user.id,

@@ -31,15 +31,16 @@ _firebase_app_initialized = False
 
 
 def _init_firebase() -> bool:
-    """Initialize Firebase Admin SDK if credentials are provided."""
+    """Initialize Firebase Admin SDK if credentials JSON path is provided."""
     global _firebase_app_initialized
     if _firebase_app_initialized:
         return True
 
     settings = get_settings()
-    if settings.FIREBASE_CREDENTIALS_PATH:
+    sa_path = settings.FIREBASE_SERVICE_ACCOUNT_JSON
+    if sa_path:
         try:
-            cred = credentials.Certificate(settings.FIREBASE_CREDENTIALS_PATH)
+            cred = credentials.Certificate(sa_path)
             firebase_admin.initialize_app(cred)
             _firebase_app_initialized = True
             logger.info("Firebase Admin initialized successfully.")

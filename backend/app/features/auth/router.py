@@ -19,11 +19,13 @@ from app.core.dependencies import get_db, get_redis
 from app.core.response import success_response
 from app.features.auth.dependencies import get_current_user
 from app.features.auth.schemas import (
+    AdminLoginRequest,
     RefreshTokenRequest,
     SendOTPRequest,
     VerifyOTPRequest,
 )
 from app.features.auth.service import (
+    admin_login,
     logout,
     refresh_access_token,
     send_otp,
@@ -32,6 +34,19 @@ from app.features.auth.service import (
 from app.models.user import User
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+
+# ── Admin Login ──────────────────────────────────────────────────────────────
+
+
+@router.post("/admin/login", summary="Admin login with username & password")
+async def admin_login_endpoint(
+    body: AdminLoginRequest,
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    """Authenticate admin user with email/phone + password."""
+    tokens = await admin_login(body.username, body.password, db)
+    return success_response(data=tokens, status_code=200)
 
 
 # ── Dev-only: retrieve OTP for automated testing ─────────────────────────────

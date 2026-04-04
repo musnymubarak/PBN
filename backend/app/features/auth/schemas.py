@@ -56,6 +56,11 @@ class RefreshTokenRequest(BaseModel):
     refresh_token: str
 
 
+class AdminLoginRequest(BaseModel):
+    username: str
+    password: str
+
+
 # ── Response Schemas ─────────────────────────────────────────────────────────
 
 

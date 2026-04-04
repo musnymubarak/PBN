@@ -49,6 +49,9 @@ class User(Base, TimestampMixin):
     fcm_token: Mapped[str | None] = mapped_column(
         String(500), nullable=True, default=None
     )
+    password_hash: Mapped[str | None] = mapped_column(
+        String(255), nullable=True, default=None
+    )
 
     def __repr__(self) -> str:
         return f"<User {self.phone_number} role={self.role.value}>"

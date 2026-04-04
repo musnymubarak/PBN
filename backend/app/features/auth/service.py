@@ -293,3 +293,70 @@ async def _get_user_by_id(user_id: UUID, db: AsyncSession) -> User | None:
 async def get_user_by_id(user_id: UUID, db: AsyncSession) -> User | None:
     """Public accessor for other features."""
     return await _get_user_by_id(user_id, db)
+
+
+# ── Admin Password Login ─────────────────────────────────────────────────────
+
+
+async def admin_login(
+    username: str,
+    password: str,
+    db: AsyncSession,
+) -> dict[str, Any]:
+    """Authenticate an admin user by email/phone + password."""
+    from passlib.context import CryptContext
+
+    pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+    # Look up user by email or phone
+    stmt = select(User).where(
+        (User.email == username) | (User.phone_number == username)
+    )
+    result = await db.execute(stmt)
+    user = result.scalar_one_or_none()
+
+    if user is None:
+        raise UnauthorizedException(
+            message="Invalid credentials.", code="INVALID_CREDENTIALS"
+        )
+
+    # Must be an admin
+    if user.role not in (UserRole.SUPER_ADMIN, UserRole.CHAPTER_ADMIN):
+        raise UnauthorizedException(
+            message="Admin access only.", code="INSUFFICIENT_ROLE"
+        )
+
+    # Must have a password set
+    if not user.password_hash:
+        raise UnauthorizedException(
+            message="Password not configured for this account.",
+            code="NO_PASSWORD",
+        )
+
+    # Verify password
+    if not pwd_ctx.verify(password, user.password_hash):
+        raise UnauthorizedException(
+            message="Invalid credentials.", code="INVALID_CREDENTIALS"
+        )
+
+    if not user.is_active:
+        raise UnauthorizedException(
+            message="Account is deactivated.", code="ACCOUNT_INACTIVE"
+        )
+
+    # Generate tokens
+    access_token = await create_access_token_with_claims(user, db)
+    refresh_token = _create_refresh_token(user)
+
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer",
+        "user": {
+            "id": str(user.id),
+            "full_name": user.full_name,
+            "email": user.email,
+            "role": user.role.value,
+        },
+    }
+
