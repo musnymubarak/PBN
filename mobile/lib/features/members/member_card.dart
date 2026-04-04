@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
-import 'package:nexconnect/core/constants/app_colors.dart';
-import 'package:nexconnect/models/member.dart';
+import 'package:pbn/core/constants/app_colors.dart';
+import 'package:pbn/models/member.dart';
 
 class MemberCard extends StatelessWidget {
   final Member member;

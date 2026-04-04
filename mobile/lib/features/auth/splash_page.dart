@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
-import 'package:nexconnect/core/constants/app_colors.dart';
+import 'package:pbn/core/constants/app_colors.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});

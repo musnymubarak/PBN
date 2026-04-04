@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:nexconnect/core/theme/app_theme.dart';
-import 'package:nexconnect/features/auth/login_page.dart';
-import 'package:nexconnect/features/auth/splash_page.dart';
-import 'package:nexconnect/features/dashboard/dashboard_page.dart';
+import 'package:pbn/core/theme/app_theme.dart';
+import 'package:pbn/features/auth/login_page.dart';
+import 'package:pbn/features/auth/splash_page.dart';
+import 'package:pbn/features/dashboard/dashboard_page.dart';
 
 void main() {
   runApp(const PBNApp());

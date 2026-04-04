@@ -16,6 +16,8 @@ import {
   IconLogout,
   IconFileExport
 } from '@tabler/icons-react';
+import { api } from './lib/api';
+import { useApi } from './hooks/useApi';
 
 const MENU_GROUPS = [
   {
@@ -57,16 +59,30 @@ const StatCard = ({ title, value, icon, trend, color }) => (
   </div>
 );
 
+const formatCurrency = (val) => {
+  if (val == null) return '—';
+  if (val >= 1_000_000) return `LKR ${(val / 1_000_000).toFixed(1)}M`;
+  if (val >= 1_000) return `LKR ${(val / 1_000).toFixed(1)}K`;
+  return `LKR ${val}`;
+};
+
 export default function App() {
   const [activeTab, setActiveTab] = useState('overview');
+  const { data: overview, loading: overviewLoading, error: overviewError } = useApi(api.getAdminOverview);
+  const { data: referrals, loading: referralsLoading } = useApi(api.listReferrals);
 
-  const referrals = [
-    { id: 'REF-7821', from: 'John Silva', to: 'Aashiq Amin', value: 'LKR 450,000', status: 'Completed', date: '2 hours ago' },
-    { id: 'REF-7822', from: 'Bhathiya W.', to: 'Chatura Fernando', value: 'LKR 125,000', status: 'Pending', date: '5 hours ago' },
-    { id: 'REF-7823', from: 'Janaka P.', to: 'Damika Perera', value: 'LKR 950,000', status: 'Completed', date: 'Yesterday' },
-    { id: 'REF-7824', from: 'Hirunika S.', to: 'Erandi K.', value: 'LKR 80,000', status: 'Pending', date: 'Oct 23, 2023' },
-    { id: 'REF-7825', from: 'Mahesh S.', to: 'Farhan M.', value: 'LKR 2,500,000', status: 'Completed', date: 'Oct 22, 2023' },
-  ];
+  if (overviewLoading) {
+    return (
+      <div className="loading-state" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontSize: '1.1rem', fontWeight: 600, color: '#64748b', background: '#f8fafc' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ width: 40, height: 40, border: '3px solid #e2e8f0', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 1rem' }}></div>
+          Loading dashboard...
+        </div>
+      </div>
+    );
+  }
+
+  const displayReferrals = referrals || [];
 
   return (
     <div className="app-wrapper">
@@ -138,12 +154,18 @@ export default function App() {
             </p>
           </div>
 
-          <div className="stat-grid">
-            <StatCard title="TOTAL REVENUE (ROI)" value="LKR 12.8M" icon={IconCoin} trend={12.4} color="#059669" />
-            <StatCard title="ACTIVE MEMBER BASE" value="2,481" icon={IconUsers} trend={5.2} color="#2563eb" />
-            <StatCard title="REFERRAL VELOCITY" value="82.1%" icon={IconHierarchy2} color="#f59e0b" />
-            <StatCard title="AVG. LEAD VALUE" value="LKR 51.6K" icon={IconClock} color="#7c3aed" />
-          </div>
+          {overviewError ? (
+            <div style={{ padding: '2rem', textAlign: 'center', color: '#ef4444', fontWeight: 600 }}>
+              Failed to load analytics. Check backend connection.
+            </div>
+          ) : (
+            <div className="stat-grid">
+              <StatCard title="TOTAL REVENUE (ROI)" value={formatCurrency(overview?.total_value)} icon={IconCoin} trend={12.4} color="#059669" />
+              <StatCard title="ACTIVE MEMBER BASE" value={overview?.total_members?.toLocaleString() ?? '—'} icon={IconUsers} trend={5.2} color="#2563eb" />
+              <StatCard title="REFERRAL VELOCITY" value={overview?.conversion_rate != null ? `${overview.conversion_rate}%` : '—'} icon={IconHierarchy2} color="#f59e0b" />
+              <StatCard title="TOTAL REFERRALS" value={overview?.total_referrals?.toLocaleString() ?? '—'} icon={IconClock} color="#7c3aed" />
+            </div>
+          )}
 
           <div className="data-section">
             <div className="section-head">
@@ -176,18 +198,22 @@ export default function App() {
                 </tr>
               </thead>
               <tbody>
-                {referrals.map(ref => (
-                  <tr key={ref.id}>
-                    <td><span className="id-badge">{ref.id}</span></td>
-                    <td style={{ fontWeight: 600 }}>{ref.from}</td>
-                    <td>{ref.to}</td>
-                    <td style={{ fontWeight: 700 }}>{ref.value}</td>
+                {referralsLoading ? (
+                  <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>Loading referrals...</td></tr>
+                ) : displayReferrals.length === 0 ? (
+                  <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>No referral data available</td></tr>
+                ) : displayReferrals.map((ref, idx) => (
+                  <tr key={ref.id || idx}>
+                    <td><span className="id-badge">{ref.id ? `REF-${String(ref.id).slice(0, 4)}` : `REF-${idx}`}</span></td>
+                    <td style={{ fontWeight: 600 }}>{ref.from_member_name || '—'}</td>
+                    <td>{ref.to_member_name || '—'}</td>
+                    <td style={{ fontWeight: 700 }}>{ref.estimated_value ? formatCurrency(ref.estimated_value) : '—'}</td>
                     <td>
-                      <span className={`pill ${ref.status === 'Completed' ? 'pill-completed' : 'pill-pending'}`}>
-                        {ref.status}
+                      <span className={`pill ${ref.status === 'closed_won' ? 'pill-completed' : 'pill-pending'}`}>
+                        {ref.status || 'Unknown'}
                       </span>
                     </td>
-                    <td>{ref.date}</td>
+                    <td>{ref.created_at ? new Date(ref.created_at).toLocaleDateString() : '—'}</td>
                     <td><IconDotsVertical size={20} color="#94a3b8" style={{ cursor: 'pointer' }} /></td>
                   </tr>
                 ))}
@@ -195,7 +221,9 @@ export default function App() {
             </table>
             
             <div style={{ padding: '1.5rem 2.5rem', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-               <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Showing 5 entries out of 124 available records</p>
+               <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                 {displayReferrals.length > 0 ? `Showing ${displayReferrals.length} entries` : 'No records available'}
+               </p>
                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', cursor: 'pointer', color: 'var(--secondary)', fontWeight: 700, fontSize: '0.875rem' }}>
                  See Full Global Timeline <IconChevronRight size={18} />
                </div>

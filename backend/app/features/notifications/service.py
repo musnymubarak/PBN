@@ -19,6 +19,7 @@ import firebase_admin
 from firebase_admin import credentials, messaging
 
 from app.core.config import get_settings
+from app.core.database import async_session_factory
 from app.core.exceptions import NotFoundException
 from app.models.notifications import Notification
 from app.models.user import User
@@ -65,57 +66,54 @@ async def send_push_notification(
     body: str,
     notification_type: str,
     data: Dict[str, str] | None = None,
-    db: AsyncSession | None = None,
+    db: AsyncSession | None = None,  # keep for backward compat but ignore
 ) -> None:
     """
     Background Task: Emits a structural Notification into DB and triggers FCM push.
     Gracefully degrades to Stub logging if Firebase is not linked.
+    Creates its own DB session to avoid using a closed request-scoped session.
     """
-    if db is None:
-        return
-
-    now = datetime.now(timezone.utc)
-    
-    # 1. DB Persistence
-    notif = Notification(
-        user_id=user_id,
-        title=title,
-        body=body,
-        notification_type=notification_type,
-        data=data,
-        sent_at=now,
-        is_read=False,
-    )
-    db.add(notif)
-    # We must flush/commit here inside the background task context.
-    await db.commit()
-
-    # 2. Get User FCM Token
-    user = (await db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
-    if not user or not user.fcm_token:
-        logger.info(f"FCM [SKIPPED]: User {user_id} has no token registered. Notif={title}")
-        return
-
-    # 3. Dispatch
-    if _init_firebase():
+    async with async_session_factory() as session:
         try:
-            # Create FCM message
-            message = messaging.Message(
-                notification=messaging.Notification(
-                    title=title,
-                    body=body,
-                ),
-                data=data if data else {},
-                token=user.fcm_token,
+            now = datetime.now(timezone.utc)
+
+            # 1. DB Persistence
+            notif = Notification(
+                user_id=user_id,
+                title=title,
+                body=body,
+                notification_type=notification_type,
+                data=data,
+                sent_at=now,
+                is_read=False,
             )
-            # Send (Synchronous in Python SDK, wrapped conceptually)
-            response = messaging.send(message)
-            logger.info(f"FCM [DISPATCHED]: Messages ID: {response}")
+            session.add(notif)
+            await session.commit()
+
+            # 2. Get User FCM Token
+            user = (await session.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
+            if not user or not user.fcm_token:
+                logger.info(f"FCM [SKIPPED]: User {user_id} has no token. Notif={title}")
+                return
+
+            # 3. Dispatch
+            if _init_firebase():
+                try:
+                    message = messaging.Message(
+                        notification=messaging.Notification(title=title, body=body),
+                        data=data if data else {},
+                        token=user.fcm_token,
+                    )
+                    response = messaging.send(message)
+                    logger.info(f"FCM [DISPATCHED]: {response}")
+                except Exception as e:
+                    logger.error(f"FCM [FAILED]: {e}")
+            else:
+                logger.info(f"FCM [STUB]: '{title}' → {user.fcm_token}")
+
         except Exception as e:
-            logger.error(f"FCM [FAILED]: Delivery error: {str(e)}")
-    else:
-        # Stub / development mode
-        logger.info(f"FCM [STUB]: Emitting '{title}' to internal token {user.fcm_token}")
+            await session.rollback()
+            logger.error(f"send_push_notification failed: {e}")
 
 
 def _serialize_notification(n: Notification) -> Dict[str, Any]:

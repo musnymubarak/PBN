@@ -89,6 +89,5 @@ async def test_push_endpoint(
         body="If you read this, the FCM module is functioning correctly for your device.",
         notification_type="system_test",
         data={"route": "/profile"},
-        db=db,
     )
     return success_response(message="Background push task scheduled")

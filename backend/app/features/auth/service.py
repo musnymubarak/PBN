@@ -62,10 +62,12 @@ def _hash_otp(otp: str) -> str:
 async def _check_rate_limit(
     redis: Redis, key: str, limit: int, window: int, error_msg: str
 ) -> None:
-    """Increment a Redis counter and raise if over the limit."""
-    current = await redis.incr(key)
-    if current == 1:
-        await redis.expire(key, window)
+    """Increment a Redis counter atomically and raise if over the limit."""
+    async with redis.pipeline(transaction=True) as pipe:
+        await pipe.incr(key)
+        await pipe.expire(key, window)
+        results = await pipe.execute()
+    current = results[0]
     if current > limit:
         raise RateLimitException(message=error_msg, code="RATE_LIMIT_EXCEEDED")
 
@@ -130,7 +132,7 @@ async def verify_otp(
     user = await _get_or_create_user(phone_number, db)
 
     # Generate tokens
-    access_token = _create_access_token(user)
+    access_token = await create_access_token_with_claims(user, db)
     refresh_token = _create_refresh_token(user)
 
     # Store refresh token in Redis for invalidation
@@ -173,7 +175,7 @@ async def refresh_access_token(
     if user is None or not user.is_active:
         raise UnauthorizedException(message="Account deactivated.", code="ACCOUNT_INACTIVE")
 
-    new_access = _create_access_token(user)
+    new_access = await create_access_token_with_claims(user, db)
     return {"access_token": new_access, "token_type": "bearer"}
 
 
@@ -186,14 +188,38 @@ async def logout(user_id: UUID, redis: Redis) -> None:
 # ── JWT ──────────────────────────────────────────────────────────────────────
 
 
-def _create_access_token(user: User) -> str:
+async def create_access_token_with_claims(user: User, db: AsyncSession) -> str:
+    """Create an access token with chapter_id populated from active membership."""
+    from app.models.memberships import ChapterMembership
+
+    stmt = select(ChapterMembership.chapter_id).where(
+        ChapterMembership.user_id == user.id,
+        ChapterMembership.is_active.is_(True)
+    ).limit(1)
+    chapter_id = (await db.execute(stmt)).scalar_one_or_none()
+
     expire = datetime.now(timezone.utc) + timedelta(
         minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
     )
     payload = {
         "sub": str(user.id),
         "role": user.role.value,
-        "chapter_id": None,  # populated after membership is assigned
+        "chapter_id": str(chapter_id) if chapter_id else None,
+        "type": "access",
+        "exp": expire,
+    }
+    return jwt.encode(payload, settings.SECRET_KEY, algorithm="HS256")
+
+
+def _create_access_token(user: User) -> str:
+    """Legacy helper — prefer create_access_token_with_claims."""
+    expire = datetime.now(timezone.utc) + timedelta(
+        minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+    )
+    payload = {
+        "sub": str(user.id),
+        "role": user.role.value,
+        "chapter_id": None,
         "type": "access",
         "exp": expire,
     }

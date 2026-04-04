@@ -148,12 +148,12 @@ async def list_applications(
     return list(items), total
 
 
-async def _generate_privilege_card(user_id: UUID, db: AsyncSession) -> PrivilegeCard:
+async def _generate_privilege_card(user_id: UUID, db: AsyncSession) -> PrivilegeCard | None:
     # See if one already exists
     stmt = select(PrivilegeCard).where(PrivilegeCard.user_id == user_id)
-    existing = await db.execute(stmt)
-    if existing.scalar_one_or_none():
-        return  # Already has a card
+    existing = (await db.execute(stmt)).scalar_one_or_none()
+    if existing:
+        return existing  # return existing card, not None
         
     # Generate random 10-char alphanum card number
     card_number = "PBN" + "".join(random.choices(string.digits, k=7))

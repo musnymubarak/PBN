@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:nexconnect/core/constants/app_colors.dart';
+import 'package:pbn/core/constants/app_colors.dart';
 
 class AppTheme {
   static ThemeData get lightTheme {

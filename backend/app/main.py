@@ -75,6 +75,10 @@ def create_app() -> FastAPI:
 
 
 def _register_middleware(app: FastAPI) -> None:
+    # Request correlation ID (must come first)
+    from app.core.request_id import RequestIDMiddleware
+    app.add_middleware(RequestIDMiddleware)
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.CORS_ORIGINS,

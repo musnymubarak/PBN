@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
-import 'package:nexconnect/core/constants/app_colors.dart';
-import 'package:nexconnect/core/widgets/stat_card.dart';
-import 'package:nexconnect/features/members/members_page.dart';
-import 'package:nexconnect/features/referrals/create_referral_page.dart';
+import 'package:pbn/core/constants/app_colors.dart';
+import 'package:pbn/core/widgets/stat_card.dart';
+import 'package:pbn/features/members/members_page.dart';
+import 'package:pbn/features/referrals/create_referral_page.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
