@@ -33,7 +33,7 @@ class MemberCard extends StatelessWidget {
                 ),
                 child: Center(
                   child: Text(
-                    member.name[0],
+                    member.initials,
                     style: const TextStyle(
                       color: AppColors.primary,
                       fontWeight: FontWeight.w800,
@@ -48,7 +48,7 @@ class MemberCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      member.name,
+                      member.fullName,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,

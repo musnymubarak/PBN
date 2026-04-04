@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:pbn/core/constants/app_colors.dart';
+import 'package:pbn/core/services/chapter_service.dart';
+import 'package:pbn/core/services/referral_service.dart';
 import 'package:pbn/core/widgets/custom_button.dart';
 import 'package:pbn/models/member.dart';
 
@@ -12,137 +14,120 @@ class CreateReferralPage extends StatefulWidget {
 }
 
 class _CreateReferralPageState extends State<CreateReferralPage> {
-  final List<Member> _members = Member.mockMembers.take(10).toList();
-  String? _selectedMember;
-  final _descriptionController = TextEditingController();
-  final _valueController = TextEditingController();
+  final _referralService = ReferralService();
+  final _chapterService = ChapterService();
 
-  void _submitReferral() {
-    if (_selectedMember == null || _descriptionController.text.isEmpty || _valueController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please complete all referral details'), backgroundColor: Colors.redAccent),
+  List<Member> _members = [];
+  Member? _selectedMember;
+  final _leadNameController = TextEditingController();
+  final _leadContactController = TextEditingController();
+  final _leadEmailController = TextEditingController();
+  final _notesController = TextEditingController();
+  bool _loading = false;
+  bool _loadingMembers = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMembers();
+  }
+
+  Future<void> _loadMembers() async {
+    try {
+      final memberships = await _chapterService.getMyMemberships();
+      if (memberships.isNotEmpty) {
+        _members = await _chapterService.getChapterMembers(memberships.first.chapter.id);
+      }
+    } catch (_) {}
+    if (mounted) setState(() => _loadingMembers = false);
+  }
+
+  Future<void> _submit() async {
+    if (_selectedMember == null) { _showError('Please select a member'); return; }
+    if (_leadNameController.text.isEmpty) { _showError('Please enter lead name'); return; }
+    if (_leadContactController.text.isEmpty) { _showError('Please enter lead contact'); return; }
+
+    setState(() => _loading = true);
+    try {
+      await _referralService.createReferral(
+        targetUserId: _selectedMember!.userId,
+        leadName: _leadNameController.text.trim(),
+        leadContact: _leadContactController.text.trim(),
+        leadEmail: _leadEmailController.text.trim().isEmpty ? null : _leadEmailController.text.trim(),
+        notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
       );
-      return;
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Referral submitted successfully!'), backgroundColor: Colors.green, behavior: SnackBarBehavior.floating));
+        _leadNameController.clear(); _leadContactController.clear(); _leadEmailController.clear(); _notesController.clear();
+        setState(() { _selectedMember = null; });
+      }
+    } catch (e) {
+      _showError('Failed to submit referral');
     }
+    if (mounted) setState(() => _loading = false);
+  }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Business Referral Sent Successfully!'),
-        backgroundColor: Colors.green,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+  void _showError(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.redAccent, behavior: SnackBarBehavior.floating));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Text('Create Referral', style: Theme.of(context).textTheme.titleLarge),
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-      ),
+      appBar: AppBar(title: const Text('New Referral', style: TextStyle(fontWeight: FontWeight.w800))),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              decoration: BoxDecoration(
-                color: AppColors.accent.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(30),
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(TablerIcons.briefcase, color: AppColors.accent, size: 16),
-                  SizedBox(width: 8),
-                  Text(
-                    'NEW BUSINESS OPPORTUNITY',
-                    style: TextStyle(
-                      color: AppColors.accent,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 11,
-                      letterSpacing: 1.2,
+        padding: const EdgeInsets.all(20),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          _sectionLabel('SELECT MEMBER'),
+          const SizedBox(height: 8),
+          _loadingMembers
+              ? const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator(color: AppColors.primary)))
+              : Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.grey.shade200)),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<Member>(
+                      value: _selectedMember,
+                      hint: const Text('Choose a member...'),
+                      isExpanded: true,
+                      items: _members.map((m) => DropdownMenuItem(value: m, child: Text('${m.fullName} — ${m.industry}'))).toList(),
+                      onChanged: (m) => setState(() => _selectedMember = m),
                     ),
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 32),
-            Text(
-              'Select Recipient Member',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 16, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.grey.shade300),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  isExpanded: true,
-                  hint: const Text('Choose a professional partner'),
-                  value: _selectedMember,
-                  icon: const Icon(TablerIcons.chevron_down),
-                  onChanged: (value) => setState(() => _selectedMember = value),
-                  items: _members.map((Member member) {
-                    return DropdownMenuItem<String>(
-                      value: member.name,
-                      child: Text(member.name),
-                    );
-                  }).toList(),
                 ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Business Opportunity Description',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 16, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _descriptionController,
-              maxLines: 4,
-              decoration: const InputDecoration(
-                hintText: 'e.g., Looking for a residential construction service for a new 3,000 sqft house inquiry from my close circle.',
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Estimated Transaction Value (LKR)',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 16, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _valueController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                hintText: 'e.g., 250,500.00',
-                prefixIcon: Icon(TablerIcons.coin),
-              ),
-            ),
-            const SizedBox(height: 48),
-            CustomButton(
-              text: 'SUBMIT REFERRAL',
-              backgroundColor: AppColors.accent,
-              onPressed: _submitReferral,
-            ),
-            const SizedBox(height: 20),
-            Center(
-              child: Text(
-                'Chapter members will be notified instantly.',
-                style: TextStyle(color: Colors.grey.shade500, fontSize: 13, fontWeight: FontWeight.w500),
-              ),
-            ),
-          ],
-        ),
+          const SizedBox(height: 24),
+
+          _sectionLabel('LEAD INFORMATION'),
+          const SizedBox(height: 8),
+          _inputField(_leadNameController, 'Lead Name', TablerIcons.user, required: true),
+          const SizedBox(height: 14),
+          _inputField(_leadContactController, 'Lead Contact Number', TablerIcons.phone, keyboardType: TextInputType.phone, required: true),
+          const SizedBox(height: 14),
+          _inputField(_leadEmailController, 'Lead Email (optional)', TablerIcons.mail, keyboardType: TextInputType.emailAddress),
+          const SizedBox(height: 14),
+          _inputField(_notesController, 'Notes (optional)', TablerIcons.notes, maxLines: 3),
+          const SizedBox(height: 32),
+
+          CustomButton(text: 'SUBMIT REFERRAL', onPressed: _submit, isLoading: _loading),
+        ]),
+      ),
+    );
+  }
+
+  Widget _sectionLabel(String text) => Text(text, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.grey.shade400, letterSpacing: 1.2));
+
+  Widget _inputField(TextEditingController controller, String hint, IconData icon, {TextInputType? keyboardType, int maxLines = 1, bool required = false}) {
+    return TextField(
+      controller: controller,
+      keyboardType: keyboardType,
+      maxLines: maxLines,
+      decoration: InputDecoration(
+        hintText: hint,
+        prefixIcon: maxLines == 1 ? Icon(icon, size: 20) : null,
+        filled: true, fillColor: Colors.white,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: Colors.grey.shade200)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: Colors.grey.shade200)),
       ),
     );
   }

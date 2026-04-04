@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:pbn/core/constants/app_colors.dart';
+import 'package:pbn/core/services/chapter_service.dart';
 import 'package:pbn/models/member.dart';
-import 'package:pbn/features/members/member_card.dart';
 
 class MembersPage extends StatefulWidget {
   const MembersPage({super.key});
@@ -12,24 +12,35 @@ class MembersPage extends StatefulWidget {
 }
 
 class _MembersPageState extends State<MembersPage> {
-  final List<Member> _allMembers = Member.mockMembers;
-  List<Member> _filteredMembers = [];
-  final _searchController = TextEditingController();
+  final _chapterService = ChapterService();
+  List<Member> _members = [];
+  List<Member> _filtered = [];
+  bool _loading = true;
+  String _search = '';
 
   @override
   void initState() {
     super.initState();
-    _filteredMembers = _allMembers;
+    _loadMembers();
   }
 
-  void _onSearchChanged(String query) {
+  Future<void> _loadMembers() async {
+    setState(() => _loading = true);
+    try {
+      // First get my memberships to find my chapter
+      final memberships = await _chapterService.getMyMemberships();
+      if (memberships.isNotEmpty) {
+        _members = await _chapterService.getChapterMembers(memberships.first.chapter.id);
+      }
+    } catch (_) {}
+    _filtered = _members;
+    if (mounted) setState(() => _loading = false);
+  }
+
+  void _filterMembers(String query) {
     setState(() {
-      _filteredMembers = _allMembers
-          .where((member) =>
-              member.name.toLowerCase().contains(query.toLowerCase()) ||
-              member.industry.toLowerCase().contains(query.toLowerCase()) ||
-              member.company.toLowerCase().contains(query.toLowerCase()))
-          .toList();
+      _search = query;
+      _filtered = _members.where((m) => m.fullName.toLowerCase().contains(query.toLowerCase()) || m.industry.toLowerCase().contains(query.toLowerCase()) || m.company.toLowerCase().contains(query.toLowerCase())).toList();
     });
   }
 
@@ -37,51 +48,62 @@ class _MembersPageState extends State<MembersPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Text('Member Directory', style: Theme.of(context).textTheme.titleLarge),
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        centerTitle: false,
-        actions: [
-          IconButton(onPressed: () {}, icon: const Icon(TablerIcons.adjustments_horizontal)),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Chapter Members', style: TextStyle(fontWeight: FontWeight.w800))),
       body: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(24),
-                bottomRight: Radius.circular(24),
-              ),
-            ),
+          Padding(
+            padding: const EdgeInsets.all(16),
             child: TextField(
-              controller: _searchController,
-              onChanged: _onSearchChanged,
+              onChanged: _filterMembers,
               decoration: InputDecoration(
-                hintText: 'Search industry, name or company...',
-                prefixIcon: const Icon(TablerIcons.search),
-                fillColor: AppColors.background.withOpacity(0.5),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide.none,
-                ),
+                hintText: 'Search members...', prefixIcon: const Icon(TablerIcons.search, size: 20),
+                filled: true, fillColor: Colors.white,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
               ),
             ),
           ),
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(24),
-              itemCount: _filteredMembers.length,
-              itemBuilder: (context, index) {
-                return MemberCard(member: _filteredMembers[index]);
-              },
-            ),
+            child: _loading
+                ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                : _filtered.isEmpty
+                    ? Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                        Icon(TablerIcons.users_group, size: 48, color: Colors.grey.shade300),
+                        const SizedBox(height: 12),
+                        Text(_search.isEmpty ? 'No members found' : 'No results for "$_search"', style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.w600)),
+                      ]))
+                    : RefreshIndicator(
+                        onRefresh: _loadMembers,
+                        child: ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: _filtered.length,
+                          itemBuilder: (context, i) => _buildMemberCard(_filtered[i]),
+                        ),
+                      ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildMemberCard(Member member) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 8)]),
+      child: Row(children: [
+        Container(
+          width: 48, height: 48,
+          decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(14)),
+          child: Center(child: Text(member.initials, style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.primary, fontSize: 16))),
+        ),
+        const SizedBox(width: 14),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(member.fullName, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: AppColors.text)),
+          const SizedBox(height: 4),
+          Text('${member.industry} • ${member.company}', style: TextStyle(fontSize: 12, color: Colors.grey.shade500, fontWeight: FontWeight.w500)),
+        ])),
+        Icon(TablerIcons.chevron_right, color: Colors.grey.shade300, size: 20),
+      ]),
     );
   }
 }

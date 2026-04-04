@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:pbn/core/constants/app_colors.dart';
 
 class StatCard extends StatelessWidget {
@@ -7,6 +6,7 @@ class StatCard extends StatelessWidget {
   final String value;
   final IconData icon;
   final Color color;
+  final List<Color>? gradient;
 
   const StatCard({
     super.key,
@@ -14,23 +14,28 @@ class StatCard extends StatelessWidget {
     required this.value,
     required this.icon,
     this.color = AppColors.primary,
+    this.gradient,
   });
 
   @override
   Widget build(BuildContext context) {
+    final hasGradient = gradient != null && gradient!.length >= 2;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        gradient: hasGradient
+            ? LinearGradient(colors: gradient!, begin: Alignment.topLeft, end: Alignment.bottomRight)
+            : null,
+        color: hasGradient ? null : AppColors.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: (hasGradient ? gradient!.first : Colors.black).withOpacity(hasGradient ? 0.25 : 0.04),
+            blurRadius: hasGradient ? 16 : 10,
+            offset: const Offset(0, 6),
           ),
         ],
-        border: Border.all(color: Colors.grey.shade100),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -38,28 +43,28 @@ class StatCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: Colors.white.withOpacity(hasGradient ? 0.2 : 0.0),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: color, size: 24),
+            child: Icon(icon, color: hasGradient ? Colors.white : color, size: 24),
           ),
           const SizedBox(height: 16),
           Text(
             title.toUpperCase(),
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            style: TextStyle(
               fontWeight: FontWeight.w700,
               letterSpacing: 1.0,
-              color: AppColors.textSecondary,
+              color: hasGradient ? Colors.white.withOpacity(0.8) : AppColors.textSecondary,
               fontSize: 10,
             ),
           ),
           const SizedBox(height: 6),
           Text(
             value,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w800,
-              color: AppColors.text,
+              color: hasGradient ? Colors.white : AppColors.text,
             ),
           ),
         ],
