@@ -42,40 +42,21 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Send OTP to phone number.
-  Future<bool> sendOtp(String phoneNumber) async {
+  /// Login with email/phone and password.
+  Future<bool> login(String identifier, String password) async {
     _loading = true;
     _error = null;
     notifyListeners();
 
     try {
-      await _authService.sendOtp(phoneNumber);
-      _loading = false;
-      notifyListeners();
-      return true;
-    } catch (e) {
-      _error = 'Failed to send OTP. Please try again.';
-      _loading = false;
-      notifyListeners();
-      return false;
-    }
-  }
-
-  /// Verify OTP and login.
-  Future<bool> verifyOtp(String phoneNumber, String otp) async {
-    _loading = true;
-    _error = null;
-    notifyListeners();
-
-    try {
-      await _authService.verifyOtp(phoneNumber, otp);
+      await _authService.login(identifier, password);
       _user = await _authService.getProfile();
       _status = AuthStatus.authenticated;
       _loading = false;
       notifyListeners();
       return true;
     } catch (e) {
-      _error = 'Invalid OTP. Please try again.';
+      _error = 'Invalid credentials. Please check your email/phone and password.';
       _loading = false;
       notifyListeners();
       return false;

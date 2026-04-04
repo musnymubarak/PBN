@@ -11,14 +11,12 @@ from datetime import date, datetime, timedelta, timezone
 from typing import List, Tuple
 from uuid import UUID
 
-from fastapi import Depends
-from sqlalchemy import func, select, desc
+from sqlalchemy import select, desc, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from jose import jwt
 
-from app.core.config import get_settings
-from app.core.dependencies import get_db
 from app.core.exceptions import BadRequestException, NotFoundException
+from app.features.auth.service import pwd_ctx
 from app.features.applications.schemas import (
     ApplicationCreate,
     ApplicationStatusUpdate,
@@ -34,6 +32,7 @@ from app.models.memberships import ChapterMembership, MembershipType
 from app.models.privilege_cards import PrivilegeCard
 from app.models.user import User, UserRole
 from app.models.chapters import Chapter
+from app.core.config import get_settings
 
 settings = get_settings()
 
@@ -224,6 +223,7 @@ async def update_application_status(
                 full_name=app.full_name,
                 email=app.email,
                 role=UserRole.MEMBER,
+                password_hash=pwd_ctx.hash("pbn123"), # Default password for initial login
             )
             db.add(user)
             await db.flush()
@@ -233,6 +233,8 @@ async def update_application_status(
                 user.full_name = app.full_name
                 if app.email:
                     user.email = app.email
+                if not user.password_hash:
+                    user.password_hash = pwd_ctx.hash("pbn123")
                 await db.flush()
 
         # Generate privilege card

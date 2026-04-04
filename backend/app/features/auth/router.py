@@ -19,13 +19,13 @@ from app.core.dependencies import get_db, get_redis
 from app.core.response import success_response
 from app.features.auth.dependencies import get_current_user
 from app.features.auth.schemas import (
-    AdminLoginRequest,
+    LoginRequest,
     RefreshTokenRequest,
     SendOTPRequest,
     VerifyOTPRequest,
 )
 from app.features.auth.service import (
-    admin_login,
+    login,
     logout,
     refresh_access_token,
     send_otp,
@@ -36,16 +36,17 @@ from app.models.user import User
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
-# ── Admin Login ──────────────────────────────────────────────────────────────
+# ── Unified Login ────────────────────────────────────────────────────────────
 
 
-@router.post("/admin/login", summary="Admin login with username & password")
-async def admin_login_endpoint(
-    body: AdminLoginRequest,
+@router.post("/login", summary="Login with identifier (email/phone) & password")
+async def login_endpoint(
+    body: LoginRequest,
+    redis: Redis = Depends(get_redis),
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
-    """Authenticate admin user with email/phone + password."""
-    tokens = await admin_login(body.username, body.password, db)
+    """Authenticate any user (Admin/Member) via identifier + password."""
+    tokens = await login(body.identifier, body.password, redis, db)
     return success_response(data=tokens, status_code=200)
 
 

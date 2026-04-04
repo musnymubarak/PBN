@@ -16,7 +16,7 @@ from uuid import UUID
 
 from jose import JWTError, jwt
 from redis.asyncio import Redis
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
@@ -295,38 +295,39 @@ async def get_user_by_id(user_id: UUID, db: AsyncSession) -> User | None:
     return await _get_user_by_id(user_id, db)
 
 
-# ── Admin Password Login ─────────────────────────────────────────────────────
+# ── Unified Login ────────────────────────────────────────────────────────────
+
+from passlib.context import CryptContext
+pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
-async def admin_login(
-    username: str,
+async def login(
+    identifier: str,
     password: str,
+    redis: Redis,
     db: AsyncSession,
 ) -> dict[str, Any]:
-    """Authenticate an admin user by email/phone + password."""
-    from passlib.context import CryptContext
-
-    pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-    # Look up user by email or phone
-    stmt = select(User).where(
-        (User.email == username) | (User.phone_number == username)
+    """Authenticate any user (Admin or Member) via identifier (email/phone) + password."""
+    # Lookup by phone or email
+    query = select(User).where(
+        or_(
+            User.phone_number == identifier,
+            User.email == identifier,
+        )
     )
-    result = await db.execute(stmt)
+    result = await db.execute(query)
     user = result.scalar_one_or_none()
 
-    if user is None:
+    if not user:
         raise UnauthorizedException(
             message="Invalid credentials.", code="INVALID_CREDENTIALS"
         )
 
-    # Must be an admin
-    if user.role not in (UserRole.SUPER_ADMIN, UserRole.CHAPTER_ADMIN):
+    if not user.is_active:
         raise UnauthorizedException(
-            message="Admin access only.", code="INSUFFICIENT_ROLE"
+            message="Account is deactivated.", code="ACCOUNT_INACTIVE"
         )
 
-    # Must have a password set
     if not user.password_hash:
         raise UnauthorizedException(
             message="Password not configured for this account.",
@@ -339,14 +340,17 @@ async def admin_login(
             message="Invalid credentials.", code="INVALID_CREDENTIALS"
         )
 
-    if not user.is_active:
-        raise UnauthorizedException(
-            message="Account is deactivated.", code="ACCOUNT_INACTIVE"
-        )
-
     # Generate tokens
     access_token = await create_access_token_with_claims(user, db)
     refresh_token = _create_refresh_token(user)
+
+    # Store refresh token in Redis for invalidation
+    refresh_key = REFRESH_KEY.format(user_id=str(user.id))
+    await redis.set(
+        refresh_key,
+        _hash_otp(refresh_token),  # hash before storing
+        ex=settings.REFRESH_TOKEN_EXPIRE_DAYS * 86400,
+    )
 
     return {
         "access_token": access_token,

@@ -6,18 +6,11 @@ import 'package:pbn/models/user.dart';
 class AuthService {
   final _api = ApiClient();
 
-  /// Step 1: Request OTP for phone number.
-  Future<void> sendOtp(String phoneNumber) async {
-    await _api.post('/auth/send-otp', data: {
-      'phone_number': phoneNumber,
-    });
-  }
-
-  /// Step 2: Verify OTP → receive and store tokens.
-  Future<void> verifyOtp(String phoneNumber, String otp) async {
-    final res = await _api.post('/auth/verify-otp', data: {
-      'phone_number': phoneNumber,
-      'otp': otp,
+  /// Login with email/phone and password.
+  Future<void> login(String identifier, String password) async {
+    final res = await _api.post('/auth/login', data: {
+      'identifier': identifier,
+      'password': password,
     });
     final data = _api.unwrap(res);
     await SecureStorage.setAccessToken(data['access_token']);

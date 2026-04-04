@@ -13,33 +13,22 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final _phoneController = TextEditingController();
-  final _otpController = TextEditingController();
-  bool _otpSent = false;
+  final _identifierController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _obscurePassword = true;
 
-  Future<void> _handleSendOtp() async {
-    final phone = _phoneController.text.trim();
-    if (phone.isEmpty) {
-      _showError('Please enter your phone number');
+  Future<void> _handleLogin() async {
+    final identifier = _identifierController.text.trim();
+    final password = _passwordController.text.trim();
+    
+    if (identifier.isEmpty || password.isEmpty) {
+      _showError('Please enter both your email/phone and password');
       return;
     }
-    final auth = context.read<AuthProvider>();
-    final success = await auth.sendOtp(phone);
-    if (success && mounted) {
-      setState(() => _otpSent = true);
-    } else if (mounted && auth.error != null) {
-      _showError(auth.error!);
-    }
-  }
 
-  Future<void> _handleVerifyOtp() async {
-    final otp = _otpController.text.trim();
-    if (otp.length != 6) {
-      _showError('OTP must be 6 digits');
-      return;
-    }
     final auth = context.read<AuthProvider>();
-    final success = await auth.verifyOtp(_phoneController.text.trim(), otp);
+    final success = await auth.login(identifier, password);
+    
     if (success && mounted) {
       Navigator.pushReplacementNamed(context, '/dashboard');
     } else if (mounted && auth.error != null) {
@@ -99,62 +88,59 @@ class _LoginPageState extends State<LoginPage> {
                 ],
               ),
             ),
-            // ── Form ────────────────────────────────────
+            // ── Login Form ──────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 40),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(_otpSent ? 'Verify OTP' : 'Welcome',
+                  Text('Sign In',
                     style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 32, fontWeight: FontWeight.w800, letterSpacing: -0.5),
                   ),
                   const SizedBox(height: 4),
-                  Text(_otpSent ? 'Enter the 6-digit code sent to your phone' : 'Sign in with your phone number',
+                  Text('Enter your credentials to access the network',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade500, fontSize: 15),
                   ),
                   const SizedBox(height: 40),
 
-                  if (!_otpSent) ...[
-                    Text('PHONE NUMBER', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.grey.shade400, letterSpacing: 1.2)),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _phoneController,
-                      keyboardType: TextInputType.phone,
-                      decoration: const InputDecoration(hintText: '+94XXXXXXXXX', prefixIcon: Icon(TablerIcons.phone, size: 20), filled: true, fillColor: Color(0xFFF9FAFB)),
+                  // Identifier Field
+                  Text('EMAIL OR PHONE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.grey.shade400, letterSpacing: 1.2)),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _identifierController,
+                    decoration: const InputDecoration(
+                      hintText: 'admin@pbn.lk or +94...', 
+                      prefixIcon: Icon(TablerIcons.user, size: 20), 
+                      filled: true, 
+                      fillColor: Color(0xFFF9FAFB)
                     ),
-                    const SizedBox(height: 32),
-                    CustomButton(
-                      text: 'SEND OTP',
-                      onPressed: _handleSendOtp,
-                      isLoading: auth.loading,
-                    ),
-                  ],
+                  ),
+                  const SizedBox(height: 24),
 
-                  if (_otpSent) ...[
-                    Text('VERIFICATION CODE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.grey.shade400, letterSpacing: 1.2)),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _otpController,
-                      keyboardType: TextInputType.number,
-                      maxLength: 6,
-                      style: const TextStyle(fontSize: 24, letterSpacing: 8, fontWeight: FontWeight.w800),
-                      textAlign: TextAlign.center,
-                      decoration: const InputDecoration(hintText: '------', counterText: '', filled: true, fillColor: Color(0xFFF9FAFB)),
-                    ),
-                    const SizedBox(height: 32),
-                    CustomButton(
-                      text: 'VERIFY & LOGIN',
-                      onPressed: _handleVerifyOtp,
-                      isLoading: auth.loading,
-                    ),
-                    const SizedBox(height: 16),
-                    Center(
-                      child: TextButton(
-                        onPressed: () => setState(() { _otpSent = false; _otpController.clear(); }),
-                        child: const Text('Change phone number', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700)),
+                  // Password Field
+                  Text('PASSWORD', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.grey.shade400, letterSpacing: 1.2)),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _passwordController,
+                    obscureText: _obscurePassword,
+                    decoration: InputDecoration(
+                      hintText: '••••••••', 
+                      prefixIcon: const Icon(TablerIcons.lock, size: 20),
+                      suffixIcon: IconButton(
+                        icon: Icon(_obscurePassword ? TablerIcons.eye : TablerIcons.eye_off, size: 20),
+                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                       ),
+                      filled: true, 
+                      fillColor: Color(0xFFF9FAFB)
                     ),
-                  ],
+                  ),
+                  const SizedBox(height: 32),
+
+                  CustomButton(
+                    text: 'SIGN IN',
+                    onPressed: _handleLogin,
+                    isLoading: auth.loading,
+                  ),
 
                   const SizedBox(height: 40),
                   Center(

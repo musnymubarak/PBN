@@ -7,7 +7,7 @@ from __future__ import annotations
 import re
 from typing import Optional
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 
 # ── Validators ───────────────────────────────────────────────────────────────
@@ -56,9 +56,10 @@ class RefreshTokenRequest(BaseModel):
     refresh_token: str
 
 
-class AdminLoginRequest(BaseModel):
-    username: str
-    password: str
+class LoginRequest(BaseModel):
+    """Unified login request for all users (Admin & Members)."""
+    identifier: str = Field(..., description="Email or phone number")
+    password: str = Field(..., description="User password")
 
 
 # ── Response Schemas ─────────────────────────────────────────────────────────
