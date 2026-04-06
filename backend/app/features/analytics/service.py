@@ -4,7 +4,6 @@ Prime Business Network – Analytics & Dashboard Service.
 
 from __future__ import annotations
 
-import asyncio
 import json
 from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List
@@ -17,7 +16,7 @@ from sqlalchemy.orm import selectinload
 from app.core.exceptions import NotFoundException
 from app.core.redis import get_redis_client
 from app.models.user import User
-from app.models.referrals import Referral, ReferralStatusHistory
+from app.models.referrals import Referral, ReferralStatus, ReferralStatusHistory
 from app.models.chapters import Chapter
 from app.models.memberships import ChapterMembership
 from app.models.businesses import Business
@@ -31,132 +30,128 @@ def _parse_decimal(obj):
 
 
 async def get_dashboard(user_id: UUID, db: AsyncSession) -> Dict[str, Any]:
-    redis = get_redis_client()  # sync call, no await
-    cache_key = f"dashboard:user:{user_id}"
-    
-    cached = await redis.get(cache_key)
-    if cached:
-        return json.loads(cached)
+    try:
+        redis = get_redis_client()  # sync call, no await
+        cache_key = f"dashboard:user:{user_id}"
+        
+        cached = await redis.get(cache_key)
+        if cached:
+            return json.loads(cached)
 
-    now = datetime.now(timezone.utc)
-    first_day_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    first_day_of_year = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+        now = datetime.now(timezone.utc)
+        first_day_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        first_day_of_year = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
 
-    # ── Parallelized independent queries ─────────────────────────────────
+        # ── Run queries sequentially (asyncpg forbids concurrent ops on one connection) ──
 
-    async def _get_ref_stats():
         ref_stmt = select(
             func.count(1).filter(Referral.from_member_id == user_id).label("sent_total"),
             func.count(1).filter((Referral.from_member_id == user_id) & (Referral.created_at >= first_day_of_month)).label("sent_this_month"),
             func.count(1).filter(Referral.to_member_id == user_id).label("received_total"),
             func.count(1).filter((Referral.to_member_id == user_id) & (Referral.created_at >= first_day_of_month)).label("received_this_month"),
-            func.count(1).filter((Referral.to_member_id == user_id) & (Referral.status.in_(["submitted", "contacted"]))).label("pending_followup"),
-            func.count(1).filter((Referral.from_member_id == user_id) & (Referral.status == "closed_won")).label("sent_won"),
+            func.count(1).filter((Referral.to_member_id == user_id) & (Referral.status.in_([
+                ReferralStatus.SUBMITTED, ReferralStatus.CONTACTED,
+                ReferralStatus.NEGOTIATION, ReferralStatus.IN_PROGRESS,
+            ]))).label("pending_followup"),
+            func.count(1).filter((Referral.from_member_id == user_id) & (Referral.status == ReferralStatus.SUCCESS)).label("sent_won"),
         )
-        return (await db.execute(ref_stmt)).one()
+        ref_stats = (await db.execute(ref_stmt)).one()
 
-    async def _get_roi_stats():
         roi_stmt = select(
-            func.coalesce(func.sum(Referral.actual_value).filter((Referral.from_member_id == user_id) & (Referral.status == "closed_won")), 0).label("total_value"),
-            func.coalesce(func.sum(Referral.actual_value).filter((Referral.from_member_id == user_id) & (Referral.status == "closed_won") & (Referral.closed_at >= first_day_of_month)), 0).label("month_value"),
+            func.coalesce(func.sum(Referral.actual_value).filter((Referral.from_member_id == user_id) & (Referral.status == ReferralStatus.SUCCESS)), 0).label("total_value"),
+            func.coalesce(func.sum(Referral.actual_value).filter((Referral.from_member_id == user_id) & (Referral.status == ReferralStatus.SUCCESS) & (Referral.closed_at >= first_day_of_month)), 0).label("month_value"),
         )
-        return (await db.execute(roi_stmt)).one()
+        roi_stats = (await db.execute(roi_stmt)).one()
 
-    async def _get_membership():
-        return (await db.execute(select(ChapterMembership).where(ChapterMembership.user_id == user_id, ChapterMembership.is_active == True))).scalars().first()
+        mem = (await db.execute(select(ChapterMembership).where(ChapterMembership.user_id == user_id, ChapterMembership.is_active == True))).scalars().first()
 
-    async def _get_attendance():
         att_stmt = select(func.count(1)).where(EventAttendance.user_id == user_id, EventAttendance.marked_at >= first_day_of_year)
-        return (await db.execute(att_stmt)).scalar_one()
+        attended_this_year = (await db.execute(att_stmt)).scalar_one()
 
-    async def _get_rank():
         rank_stmt = select(
             Referral.from_member_id.label("user_id"),
             func.rank().over(
                 order_by=(
-                    func.count(1).filter(Referral.status == "closed_won").desc(),
+                    func.count(1).filter(Referral.status == ReferralStatus.SUCCESS).desc(),
                     func.count(1).desc()
                 )
             ).label("rank")
         ).group_by(Referral.from_member_id).subquery()
-        
+
         user_rank_stmt = select(rank_stmt.c.rank).where(rank_stmt.c.user_id == user_id)
-        return (await db.execute(user_rank_stmt)).scalar_one_or_none()
+        leaderboard_position = (await db.execute(user_rank_stmt)).scalar_one_or_none()
 
-    ref_stats, roi_stats, mem, attended_this_year, leaderboard_position = await asyncio.gather(
-        _get_ref_stats(),
-        _get_roi_stats(),
-        _get_membership(),
-        _get_attendance(),
-        _get_rank(),
-    )
+        # ── Derived calculations ─────────────────────────────────────────────
 
-    # ── Derived calculations ─────────────────────────────────────────────
+        conversion_rate = 0.0
+        if ref_stats.sent_total > 0:
+            conversion_rate = (ref_stats.sent_won / ref_stats.sent_total) * 100.0
 
-    conversion_rate = 0.0
-    if ref_stats.sent_total > 0:
-        conversion_rate = (ref_stats.sent_won / ref_stats.sent_total) * 100.0
+        total_val = float(roi_stats.total_value)
+        month_val = float(roi_stats.month_value)
+        avg_deal = total_val / ref_stats.sent_won if ref_stats.sent_won > 0 else 0.0
 
-    total_val = float(roi_stats.total_value)
-    month_val = float(roi_stats.month_value)
-    avg_deal = total_val / ref_stats.sent_won if ref_stats.sent_won > 0 else 0.0
+        # ── Sequential: next_event depends on membership ─────────────────────
 
-    # ── Sequential: next_event depends on membership ─────────────────────
+        next_event = None
+        if mem:
+            next_event_obj = (await db.execute(
+                select(Event).where(Event.chapter_id == mem.chapter_id, Event.is_published == True, Event.start_at >= now)
+                .order_by(Event.start_at.asc())
+                .limit(1)
+            )).scalar_one_or_none()
+            
+            if next_event_obj:
+                next_event = {
+                    "id": str(next_event_obj.id),
+                    "title": next_event_obj.title,
+                    "start_at": next_event_obj.start_at.isoformat()
+                }
 
-    next_event = None
-    if mem:
-        next_event_obj = (await db.execute(
-            select(Event).where(Event.chapter_id == mem.chapter_id, Event.is_published == True, Event.start_at >= now)
-            .order_by(Event.start_at.asc())
-            .limit(1)
-        )).scalar_one_or_none()
-        
-        if next_event_obj:
-            next_event = {
-                "id": str(next_event_obj.id),
-                "title": next_event_obj.title,
-                "start_at": next_event_obj.start_at.isoformat()
+        # 4. Membership Stats
+        membership_data = {
+            "status": "Inactive",
+            "type": "None",
+            "expires_at": None,
+            "days_until_expiry": None
+        }
+        if mem:
+            membership_data = {
+                "status": "Active" if mem.is_active else "Expired",
+                "type": mem.membership_type.value,
+                "expires_at": mem.end_date.isoformat() if mem.end_date else None,
+                "days_until_expiry": (mem.end_date - now.date()).days if mem.end_date else None
             }
 
-    # 4. Membership Stats
-    membership_data = {
-        "status": "Inactive",
-        "type": "None",
-        "expires_at": None,
-        "days_until_expiry": None
-    }
-    if mem:
-        membership_data = {
-            "status": "Active" if mem.is_active else "Expired",
-            "type": mem.membership_type.value,
-            "expires_at": mem.end_date.isoformat() if mem.end_date else None,
-            "days_until_expiry": (mem.end_date - now.date()).days if mem.end_date else None
+        payload = {
+            "referrals": {
+                "sent_total": ref_stats.sent_total,
+                "sent_this_month": ref_stats.sent_this_month,
+                "received_total": ref_stats.received_total,
+                "received_this_month": ref_stats.received_this_month,
+                "pending_followup": ref_stats.pending_followup,
+                "conversion_rate": round(conversion_rate, 2)
+            },
+            "roi": {
+                "total_value_generated": total_val,
+                "this_month_value": month_val,
+                "avg_deal_value": round(avg_deal, 2)
+            },
+            "events": {
+                "next_event": next_event,
+                "attended_this_year": attended_this_year
+            },
+            "membership": membership_data,
+            "leaderboard_position": int(leaderboard_position) if leaderboard_position is not None else None
         }
-
-    payload = {
-        "referrals": {
-            "sent_total": ref_stats.sent_total,
-            "sent_this_month": ref_stats.sent_this_month,
-            "received_total": ref_stats.received_total,
-            "received_this_month": ref_stats.received_this_month,
-            "pending_followup": ref_stats.pending_followup,
-            "conversion_rate": round(conversion_rate, 2)
-        },
-        "roi": {
-            "total_value_generated": total_val,
-            "this_month_value": month_val,
-            "avg_deal_value": round(avg_deal, 2)
-        },
-        "events": {
-            "next_event": next_event,
-            "attended_this_year": attended_this_year
-        },
-        "membership": membership_data,
-        "leaderboard_position": int(leaderboard_position) if leaderboard_position else None
-    }
-    
-    await redis.setex(cache_key, 600, json.dumps(payload))
-    return payload
+        
+        await redis.setex(cache_key, 600, json.dumps(payload))
+        return payload
+    except Exception as e:
+        print(f"ERROR IN GET_DASHBOARD: {e}")
+        import traceback
+        traceback.print_exc()
+        raise e
 
 
 async def get_leaderboard(chapter_id: UUID | None, period: str, db: AsyncSession) -> Dict[str, Any]:
@@ -175,7 +170,7 @@ async def get_leaderboard(chapter_id: UUID | None, period: str, db: AsyncSession
     # Base query for stats
     base_ref = select(
         Referral.from_member_id.label("uid"),
-        func.count(1).filter(Referral.status == "closed_won").label("won_cnt"),
+        func.count(1).filter(Referral.status == ReferralStatus.SUCCESS).label("won_cnt"),
         func.count(1).label("sent_cnt"),
         func.coalesce(func.sum(Referral.actual_value), 0).label("val")
     ).where(Referral.created_at >= start_date)
@@ -250,7 +245,7 @@ async def get_analytics_roi(user_id: UUID, period: str, db: AsyncSession) -> Lis
     stmt = select(
         func.date_trunc('month', Referral.created_at).label("mnth"),
         func.count(1).label("sent"),
-        func.count(1).filter(Referral.status == "closed_won").label("converted"),
+        func.count(1).filter(Referral.status == ReferralStatus.SUCCESS).label("converted"),
         func.coalesce(func.sum(Referral.actual_value), 0).label("val")
     ).where(Referral.from_member_id == user_id, Referral.created_at >= start_date)\
      .group_by(text("mnth")).order_by(text("mnth"))
@@ -293,7 +288,7 @@ async def get_admin_overview(db: AsyncSession) -> Dict[str, Any]:
     
     ref_stmt = select(
         func.count(1).label("total_ref"),
-        func.count(1).filter(Referral.status == "closed_won").label("won_ref"),
+        func.count(1).filter(Referral.status == ReferralStatus.SUCCESS).label("won_ref"),
         func.coalesce(func.sum(Referral.actual_value), 0).label("tot_val")
     )
     ref_stats = (await db.execute(ref_stmt)).one()

@@ -8,15 +8,15 @@ class ReferralService {
     required String targetUserId,
     required String leadName,
     required String leadContact,
-    String? leadEmail,
-    String? notes,
+    required String leadEmail,
+    required String description,
   }) async {
     await _api.post('/referrals', data: {
       'target_user_id': targetUserId,
       'lead_name': leadName,
       'lead_contact': leadContact,
-      if (leadEmail != null) 'lead_email': leadEmail,
-      if (notes != null) 'notes': notes,
+      'lead_email': leadEmail,
+      'description': description,
     });
   }
 
@@ -32,10 +32,10 @@ class ReferralService {
     return list.map((j) => Referral.fromJson(j)).toList();
   }
 
-  Future<void> updateStatus(String refId, String status, {String? notes}) async {
+  Future<void> updateStatus(String refId, String status, {String? description}) async {
     await _api.patch('/referrals/$refId/status', data: {
       'status': status,
-      if (notes != null) 'notes': notes,
+      if (description != null) 'description': description,
     });
   }
 }

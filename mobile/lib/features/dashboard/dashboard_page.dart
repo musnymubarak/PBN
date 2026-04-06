@@ -7,10 +7,12 @@ import 'package:pbn/core/providers/notification_provider.dart';
 import 'package:pbn/core/services/dashboard_service.dart';
 import 'package:pbn/core/services/reward_service.dart';
 import 'package:pbn/core/widgets/stat_card.dart';
+import 'package:pbn/core/widgets/custom_button.dart';
 import 'package:pbn/models/dashboard_data.dart';
 import 'package:pbn/models/reward.dart';
 import 'package:pbn/features/members/members_page.dart';
-import 'package:pbn/features/referrals/create_referral_page.dart';
+import 'package:pbn/features/referrals/my_referrals_page.dart';
+import 'package:pbn/features/referrals/referral_dashboard_page.dart';
 import 'package:pbn/features/events/events_page.dart';
 import 'package:pbn/features/profile/profile_page.dart';
 
@@ -50,7 +52,6 @@ class _DashboardPageState extends State<DashboardPage> {
           _card = results[1] as PrivilegeCard?;
           _loading = false;
         });
-        // Update notification badge
         if (mounted) context.read<NotificationProvider>().fetchUnreadCount();
       }
     } catch (e) {
@@ -60,63 +61,68 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    final pages = [
-      _buildDashboardBody(),
-      const MembersPage(),
-      const CreateReferralPage(),
-      const EventsPage(),
-      const ProfilePage(),
-    ];
+    final auth = context.watch<AuthProvider>();
+    final isProspect = auth.user?.role.toUpperCase() == 'PROSPECT';
+
+    final pages = isProspect
+        ? [ _buildProspectDashboard(), const ProfilePage() ]
+        : [ _buildDashboardBody(), const MembersPage(), const ReferralDashboardPage(), const EventsPage(), const ProfilePage() ];
+
+    if (_currentIndex >= pages.length) _currentIndex = 0;
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: _currentIndex == 0 ? _buildAppBar() : null,
+      appBar: _currentIndex == 0 ? _buildAppBar(isProspect) : null,
       body: pages[_currentIndex],
-      bottomNavigationBar: _buildBottomNav(),
+      bottomNavigationBar: _buildBottomNav(isProspect),
     );
   }
 
-  PreferredSizeWidget _buildAppBar() {
+  PreferredSizeWidget _buildAppBar(bool isProspect) {
     final auth = context.watch<AuthProvider>();
     final notifs = context.watch<NotificationProvider>();
     return AppBar(
+      toolbarHeight: 80,
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Welcome back,', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textSecondary)),
-          Text(auth.user?.fullName ?? 'Member', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.text)),
+          const Text('OVERVIEW', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1.5)),
+          const SizedBox(height: 4),
+          Text(auth.user?.fullName ?? (isProspect ? 'Prospect' : 'Member'), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.text)),
         ],
       ),
       actions: [
         Stack(
           children: [
-            IconButton(icon: const Icon(TablerIcons.bell, color: AppColors.text), onPressed: () => Navigator.pushNamed(context, '/notifications')),
+            IconButton(icon: const Icon(TablerIcons.bell, color: AppColors.text, size: 24), onPressed: () => Navigator.pushNamed(context, '/notifications')),
             if (notifs.unreadCount > 0)
-              Positioned(right: 8, top: 8, child: Container(
+              Positioned(right: 8, top: 10, child: Container(
                 padding: const EdgeInsets.all(4), decoration: const BoxDecoration(color: Colors.redAccent, shape: BoxShape.circle),
-                child: Text('${notifs.unreadCount}', style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.w800)),
+                child: Text('${notifs.unreadCount}', style: const TextStyle(fontSize: 8, color: Colors.white, fontWeight: FontWeight.w900)),
               )),
           ],
         ),
-        _buildDrawerMenu(),
+        _buildDrawerMenu(isProspect),
+        const SizedBox(width: 8),
       ],
     );
   }
 
-  Widget _buildDrawerMenu() {
+  Widget _buildDrawerMenu(bool isProspect) {
     return PopupMenuButton<String>(
-      icon: const Icon(TablerIcons.menu_2, color: AppColors.text),
-      offset: const Offset(0, 48),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      icon: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10)]), child: const Icon(TablerIcons.layout_grid, color: AppColors.primary, size: 20)),
+      offset: const Offset(0, 56),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       itemBuilder: (context) => [
-        _menuItem('my-referrals', TablerIcons.arrows_exchange, 'My Referrals'),
-        _menuItem('leaderboard', TablerIcons.trophy, 'Leaderboard'),
-        _menuItem('rewards', TablerIcons.gift, 'Rewards'),
-        _menuItem('payments', TablerIcons.credit_card, 'Payments'),
-        _menuItem('chapters', TablerIcons.building, 'Chapters'),
-        const PopupMenuDivider(),
-        _menuItem('apply', TablerIcons.file_plus, 'Apply Now'),
-        _menuItem('my-applications', TablerIcons.file_check, 'My Applications'),
+        if (!isProspect) ...[
+          _menuItem('leaderboard', TablerIcons.trophy, 'Leaderboard'),
+          _menuItem('rewards', TablerIcons.gift, 'Rewards Catalog'),
+          _menuItem('payments', TablerIcons.credit_card, 'Billing'),
+          _menuItem('chapters', TablerIcons.building_community, 'Chapters'),
+          const PopupMenuDivider(),
+        ],
+        _menuItem('apply', TablerIcons.file_pencil, 'Application Form'),
+        _menuItem('my-applications', TablerIcons.file_search, 'Application Tracker'),
       ],
       onSelected: (route) => Navigator.pushNamed(context, '/$route'),
     );
@@ -124,88 +130,96 @@ class _DashboardPageState extends State<DashboardPage> {
 
   PopupMenuItem<String> _menuItem(String value, IconData icon, String label) {
     return PopupMenuItem(value: value, child: Row(children: [
-      Icon(icon, size: 20, color: AppColors.primary), const SizedBox(width: 12),
-      Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+      Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(10)), child: Icon(icon, size: 16, color: AppColors.primary)), const SizedBox(width: 12),
+      Text(label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
     ]));
   }
 
   Widget _buildDashboardBody() {
-    if (_loading) {
-      return const Center(child: CircularProgressIndicator(color: AppColors.primary));
-    }
-    if (_error != null) {
-      return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-        Icon(TablerIcons.wifi_off, size: 48, color: Colors.grey.shade400),
-        const SizedBox(height: 16),
-        Text(_error!, style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.w600)),
-        const SizedBox(height: 16),
-        ElevatedButton(onPressed: _loadData, child: const Text('Retry')),
-      ]));
-    }
+    if (_loading) return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+    if (_error != null) return _buildErrorState();
 
     return RefreshIndicator(
       onRefresh: _loadData,
       color: AppColors.primary,
       child: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         children: [
-          // ── Stats Grid ──────────────────────────
-          Row(children: [
-            Expanded(child: StatCard(title: 'Referrals Sent', value: '${_data?.referrals.sentTotal ?? 0}', icon: TablerIcons.send, gradient: const [Color(0xFF3B82F6), Color(0xFF1D4ED8)])),
-            const SizedBox(width: 14),
-            Expanded(child: StatCard(title: 'Conversion', value: '${(_data?.referrals.conversionRate ?? 0).toStringAsFixed(0)}%', icon: TablerIcons.chart_bar, gradient: const [Color(0xFF10B981), Color(0xFF059669)])),
-          ]),
-          const SizedBox(height: 14),
-          Row(children: [
-            Expanded(child: StatCard(title: 'Total ROI', value: _formatCurrency(_data?.roi.totalValue ?? 0), icon: TablerIcons.trending_up, gradient: const [Color(0xFFF59E0B), Color(0xFFD97706)])),
-            const SizedBox(width: 14),
-            Expanded(child: StatCard(title: 'Received', value: '${_data?.referrals.receivedTotal ?? 0}', icon: TablerIcons.inbox, gradient: const [Color(0xFF8B5CF6), Color(0xFF7C3AED)])),
-          ]),
-          const SizedBox(height: 28),
-
-          // ── Privilege Card ────────────────────────
-          if (_card != null) ...[
-            _buildPrivilegeCard(),
-            const SizedBox(height: 28),
-          ],
-
-          // ── Next Event ────────────────────────────
-          if (_data?.events.nextEvent != null) ...[
-            _buildNextEvent(),
-            const SizedBox(height: 28),
-          ],
-
-          // ── Quick Actions ─────────────────────────
-          _buildQuickActions(),
+          _buildPrivilegeCard(),
+          const SizedBox(height: 32),
+          const Text('PERFORMANCE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1.5)),
           const SizedBox(height: 20),
+          Row(children: [
+            Expanded(child: StatCard(title: 'Sent', value: '${_data?.referrals.sentTotal ?? 0}', icon: TablerIcons.arrow_up_right, color: Colors.blue)),
+            const SizedBox(width: 16),
+            Expanded(child: StatCard(title: 'Ratio', value: '${(_data?.referrals.conversionRate ?? 0).toStringAsFixed(0)}%', icon: TablerIcons.chart_pie, color: const Color(0xFF10B981))),
+          ]),
+          const SizedBox(height: 16),
+          Row(children: [
+            Expanded(child: StatCard(title: 'Valuation', value: _formatCurrency(_data?.roi.totalValue ?? 0), icon: TablerIcons.trending_up, color: Colors.orange)),
+            const SizedBox(width: 16),
+            Expanded(child: StatCard(title: 'Incoming', value: '${_data?.referrals.receivedTotal ?? 0}', icon: TablerIcons.arrow_down_left, color: Colors.purple)),
+          ]),
+          const SizedBox(height: 32),
+          const Text('UPCOMING PLAN', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1.5)),
+          const SizedBox(height: 16),
+          if (_data?.events.nextEvent != null) _buildNextEvent(),
+          const SizedBox(height: 32),
+          _buildQuickActionsTiles(),
+          const SizedBox(height: 40),
         ],
       ),
     );
   }
 
   Widget _buildPrivilegeCard() {
+    if (_card == null) return const SizedBox();
     return Container(
-      padding: const EdgeInsets.all(24),
+      width: double.infinity,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: [Color(0xFF0A2540), Color(0xFF1E3A8A)], begin: Alignment.topLeft, end: Alignment.bottomRight),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 8))],
+        color: const Color(0xFF111827),
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 30, offset: const Offset(0, 15)),
+        ],
       ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          const Text('PRIVILEGE CARD', style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 2)),
-          Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4), decoration: BoxDecoration(color: AppColors.accent, borderRadius: BorderRadius.circular(8)),
-            child: Text(_card!.tier.toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900)),
-          ),
-        ]),
-        const SizedBox(height: 20),
-        Text(_card!.cardNumber, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800, letterSpacing: 2)),
-        const SizedBox(height: 12),
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Text('${_card!.points} Points', style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w600)),
-          const Text('PRIME BUSINESS NETWORK', style: TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1)),
-        ]),
-      ]),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(28),
+        child: Stack(
+          children: [
+            Positioned(right: -40, top: -40, child: Container(width: 200, height: 200, decoration: BoxDecoration(color: Colors.white.withOpacity(0.03), shape: BoxShape.circle))),
+            Positioned(left: -20, bottom: -20, child: Container(width: 120, height: 120, decoration: BoxDecoration(color: Colors.white.withOpacity(0.02), shape: BoxShape.circle))),
+            Padding(
+              padding: const EdgeInsets.all(28),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                  const Icon(TablerIcons.circle_dot, color: Colors.amber, size: 28),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white.withOpacity(0.1))),
+                    child: Text(_card!.tier.toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                  ),
+                ]),
+                const SizedBox(height: 48),
+                Text(_card!.cardNumber, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800, letterSpacing: 3)),
+                const SizedBox(height: 24),
+                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                  Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    const Text('BALANCE', style: TextStyle(color: Colors.white38, fontSize: 9, fontWeight: FontWeight.w800, letterSpacing: 1)),
+                    const SizedBox(height: 4),
+                    Text('${_card!.points} PTS', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
+                  ]),
+                  const Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                    Text('PBN MEMBER', style: TextStyle(color: Colors.white38, fontSize: 9, fontWeight: FontWeight.w800, letterSpacing: 1)),
+                    SizedBox(height: 4),
+                    Icon(TablerIcons.access_point, color: Colors.white54, size: 20),
+                  ]),
+                ]),
+              ]),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -213,74 +227,108 @@ class _DashboardPageState extends State<DashboardPage> {
     final event = _data!.events.nextEvent!;
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 4))]),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20, offset: const Offset(0, 8))]),
       child: Row(children: [
         Container(
-          padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: AppColors.accent.withOpacity(0.1), borderRadius: BorderRadius.circular(14)),
+          padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: AppColors.accent.withOpacity(0.1), borderRadius: BorderRadius.circular(16)),
           child: const Icon(TablerIcons.calendar_event, color: AppColors.accent, size: 24),
         ),
         const SizedBox(width: 16),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('NEXT EVENT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.textSecondary, letterSpacing: 1)),
+          Text(event.title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.text)),
           const SizedBox(height: 4),
-          Text(event.title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.text)),
+          Text(event.startAt.split('T').first, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
         ])),
-        const Icon(TablerIcons.chevron_right, color: AppColors.textSecondary),
+        const Icon(TablerIcons.chevron_right, color: AppColors.textSecondary, size: 20),
       ]),
     );
   }
 
-  Widget _buildQuickActions() {
+  Widget _buildQuickActionsTiles() {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const Text('Quick Actions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.text)),
-      const SizedBox(height: 14),
+      const Text('EXPLORE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1.5)),
+      const SizedBox(height: 20),
       Row(children: [
-        _actionTile(TablerIcons.send, 'New Referral', () => setState(() => _currentIndex = 2)),
-        const SizedBox(width: 12),
-        _actionTile(TablerIcons.trophy, 'Leaderboard', () => Navigator.pushNamed(context, '/leaderboard')),
-        const SizedBox(width: 12),
-        _actionTile(TablerIcons.gift, 'Rewards', () => Navigator.pushNamed(context, '/rewards')),
+        _modernActionTile(TablerIcons.stars, 'Awards', Colors.amber, () => Navigator.pushNamed(context, '/rewards')),
+        const SizedBox(width: 16),
+        _modernActionTile(TablerIcons.chart_arrows_vertical, 'Rank', Colors.blue, () => Navigator.pushNamed(context, '/leaderboard')),
+        const SizedBox(width: 16),
+        _modernActionTile(TablerIcons.help_circle, 'Help', Colors.pink, () {}),
       ]),
     ]);
   }
 
-  Widget _actionTile(IconData icon, String label, VoidCallback onTap) {
+  Widget _modernActionTile(IconData icon, String label, Color color, VoidCallback onTap) {
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 20),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 8)]),
+          padding: const EdgeInsets.symmetric(vertical: 24),
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24), boxShadow: [BoxShadow(color: color.withOpacity(0.05), blurRadius: 15, offset: const Offset(0, 6))]),
           child: Column(children: [
-            Icon(icon, color: AppColors.primary, size: 26),
-            const SizedBox(height: 8),
-            Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.text)),
+            Icon(icon, color: color, size: 26),
+            const SizedBox(height: 10),
+            Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.text)),
           ]),
         ),
       ),
     );
   }
 
-  Widget _buildBottomNav() {
+  Widget _buildErrorState() {
+    return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+      Icon(TablerIcons.alert_triangle, size: 48, color: Colors.amber.shade300),
+      const SizedBox(height: 16),
+      Text(_error!, style: const TextStyle(fontWeight: FontWeight.w700)),
+      const SizedBox(height: 24),
+      SizedBox(width: 120, child: CustomButton(text: 'RETRY', onPressed: _loadData, backgroundColor: AppColors.primary)),
+    ]));
+  }
+
+  Widget _buildProspectDashboard() {
+    return Padding(
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(padding: const EdgeInsets.all(24), decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.05), shape: BoxShape.circle), child: const Icon(TablerIcons.building_community, size: 64, color: AppColors.primary)),
+          const SizedBox(height: 32),
+          const Text('Verification Pending', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: AppColors.text)),
+          const SizedBox(height: 16),
+          Text('Apply to unlock the full potential of PBN. Verified members get access to exclusive leads, events, and rewards.', textAlign: TextAlign.center, style: TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.6, fontWeight: FontWeight.w500)),
+          const SizedBox(height: 40),
+          CustomButton(text: 'SUBMIT APPLICATION', onPressed: () => Navigator.pushNamed(context, '/apply'), backgroundColor: AppColors.primary),
+          const SizedBox(height: 16),
+          TextButton(onPressed: () => Navigator.pushNamed(context, '/my-applications'), child: const Text('Track Application Status', style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w800, fontSize: 13))),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomNav(bool isProspect) {
     return Container(
-      decoration: BoxDecoration(boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 20, offset: const Offset(0, -4))]),
+      decoration: BoxDecoration(boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20, offset: const Offset(0, -4))]),
       child: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (i) => setState(() => _currentIndex = i),
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white,
         selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.textSecondary,
-        selectedFontSize: 11,
-        unselectedFontSize: 11,
-        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w800),
-        items: const [
-          BottomNavigationBarItem(icon: Icon(TablerIcons.layout_dashboard), label: 'Dashboard'),
-          BottomNavigationBarItem(icon: Icon(TablerIcons.users), label: 'Members'),
-          BottomNavigationBarItem(icon: Icon(TablerIcons.send), label: 'Referral'),
-          BottomNavigationBarItem(icon: Icon(TablerIcons.calendar_event), label: 'Events'),
-          BottomNavigationBarItem(icon: Icon(TablerIcons.user), label: 'Profile'),
-        ],
+        unselectedItemColor: AppColors.textSecondary.withOpacity(0.5),
+        selectedFontSize: 10,
+        unselectedFontSize: 10,
+        elevation: 0,
+        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 0.5),
+        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700),
+        items: isProspect
+            ? [ const BottomNavigationBarItem(icon: Icon(TablerIcons.layout_dashboard), label: 'HOME'), const BottomNavigationBarItem(icon: Icon(TablerIcons.user), label: 'PROFILE') ]
+            : [
+                const BottomNavigationBarItem(icon: Icon(TablerIcons.layout_dashboard), label: 'HOME'),
+                const BottomNavigationBarItem(icon: Icon(TablerIcons.users), label: 'NETWORK'),
+                const BottomNavigationBarItem(icon: Icon(TablerIcons.arrows_exchange), label: 'REFERRALS'),
+                const BottomNavigationBarItem(icon: Icon(TablerIcons.calendar_event), label: 'AGENDA'),
+                const BottomNavigationBarItem(icon: Icon(TablerIcons.user), label: 'ME'),
+              ],
       ),
     );
   }

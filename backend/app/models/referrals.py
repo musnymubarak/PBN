@@ -30,9 +30,10 @@ from app.models.base import Base, TimestampMixin
 class ReferralStatus(str, enum.Enum):
     SUBMITTED = "submitted"
     CONTACTED = "contacted"
-    MEETING_SCHEDULED = "meeting_scheduled"
-    CLOSED_WON = "closed_won"
-    CLOSED_LOST = "closed_lost"
+    NEGOTIATION = "negotiation"
+    IN_PROGRESS = "in_progress"
+    SUCCESS = "success"
+    FAILED = "closed_lost"
 
 
 class Referral(Base, TimestampMixin):
@@ -55,7 +56,8 @@ class Referral(Base, TimestampMixin):
         Numeric(precision=14, scale=2), nullable=True
     )
     status: Mapped[ReferralStatus] = mapped_column(
-        Enum(ReferralStatus, name="referral_status", create_type=True),
+        Enum(ReferralStatus, name="referral_status", create_type=True,
+             values_callable=lambda x: [e.value for e in x]),
         nullable=False,
         default=ReferralStatus.SUBMITTED,
     )

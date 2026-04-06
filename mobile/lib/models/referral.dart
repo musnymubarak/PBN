@@ -5,7 +5,7 @@ class Referral {
   final String leadName;
   final String leadContact;
   final String? leadEmail;
-  final String? notes;
+  final String? description;
   final String status;
   final String createdAt;
   final String updatedAt;
@@ -18,7 +18,7 @@ class Referral {
     required this.leadName,
     required this.leadContact,
     this.leadEmail,
-    this.notes,
+    this.description,
     required this.status,
     required this.createdAt,
     required this.updatedAt,
@@ -32,7 +32,7 @@ class Referral {
         leadName: json['lead_name'] ?? '',
         leadContact: json['lead_contact'] ?? '',
         leadEmail: json['lead_email'],
-        notes: json['notes'],
+        description: json['description'],
         status: json['status'] ?? 'submitted',
         createdAt: json['created_at'] ?? '',
         updatedAt: json['updated_at'] ?? '',
@@ -46,10 +46,11 @@ class Referral {
     switch (status) {
       case 'submitted': return 'Submitted';
       case 'contacted': return 'Contacted';
+      case 'negotiation': return 'Negotiation';
       case 'in_progress': return 'In Progress';
-      case 'closed_won': return 'Won';
+      case 'success': return 'Success';
       case 'closed_lost': return 'Lost';
-      default: return status;
+      default: return status[0].toUpperCase() + status.substring(1).replaceAll('_', ' ');
     }
   }
 }
@@ -72,14 +73,14 @@ class ReferralHistory {
   final String id;
   final String oldStatus;
   final String newStatus;
-  final String? notes;
+  final String? description;
   final String createdAt;
 
   ReferralHistory({
     required this.id,
     required this.oldStatus,
     required this.newStatus,
-    this.notes,
+    this.description,
     required this.createdAt,
   });
 
@@ -87,7 +88,7 @@ class ReferralHistory {
         id: json['id'] ?? '',
         oldStatus: json['old_status'] ?? '',
         newStatus: json['new_status'] ?? '',
-        notes: json['notes'],
+        description: json['description'],
         createdAt: json['created_at'] ?? '',
       );
 }

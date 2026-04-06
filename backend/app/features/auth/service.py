@@ -10,6 +10,12 @@ from __future__ import annotations
 import hashlib
 import logging
 import secrets
+import bcrypt
+
+# ── Fix for passlib/bcrypt 4.0 conflict ──────────────────────
+if not hasattr(bcrypt, "__about__"):
+    bcrypt.__about__ = type("about", (object,), {"__version__": bcrypt.__version__})
+
 from datetime import datetime, timedelta, timezone
 from typing import Any
 from uuid import UUID
@@ -308,6 +314,7 @@ async def login(
     db: AsyncSession,
 ) -> dict[str, Any]:
     """Authenticate any user (Admin or Member) via identifier (email/phone) + password."""
+    logger.info("🔑 Login attempt for identifier: '%s'", identifier)
     # Lookup by phone or email
     query = select(User).where(
         or_(
@@ -319,6 +326,7 @@ async def login(
     user = result.scalar_one_or_none()
 
     if not user:
+        logger.warning("❌ Login failed: User not found for '%s'", identifier)
         raise UnauthorizedException(
             message="Invalid credentials.", code="INVALID_CREDENTIALS"
         )
@@ -335,7 +343,9 @@ async def login(
         )
 
     # Verify password
-    if not pwd_ctx.verify(password, user.password_hash):
+    is_correct = pwd_ctx.verify(password, user.password_hash)
+    logger.info("🔐 Password verification for '%s': %s", identifier, "SUCCESS" if is_correct else "FAILED")
+    if not is_correct:
         raise UnauthorizedException(
             message="Invalid credentials.", code="INVALID_CREDENTIALS"
         )

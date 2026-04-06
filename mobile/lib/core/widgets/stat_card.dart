@@ -6,7 +6,6 @@ class StatCard extends StatelessWidget {
   final String value;
   final IconData icon;
   final Color color;
-  final List<Color>? gradient;
 
   const StatCard({
     super.key,
@@ -14,57 +13,57 @@ class StatCard extends StatelessWidget {
     required this.value,
     required this.icon,
     this.color = AppColors.primary,
-    this.gradient,
   });
 
   @override
   Widget build(BuildContext context) {
-    final hasGradient = gradient != null && gradient!.length >= 2;
-
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: hasGradient
-            ? LinearGradient(colors: gradient!, begin: Alignment.topLeft, end: Alignment.bottomRight)
-            : null,
-        color: hasGradient ? null : AppColors.surface,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: (hasGradient ? gradient!.first : Colors.black).withOpacity(hasGradient ? 0.25 : 0.04),
-            blurRadius: hasGradient ? 16 : 10,
-            offset: const Offset(0, 6),
+            color: color.withOpacity(0.08),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(hasGradient ? 0.2 : 0.0),
-              borderRadius: BorderRadius.circular(12),
+              color: color.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(16),
             ),
-            child: Icon(icon, color: hasGradient ? Colors.white : color, size: 24),
+            child: Icon(icon, color: color, size: 22),
           ),
-          const SizedBox(height: 16),
-          Text(
-            title.toUpperCase(),
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.0,
-              color: hasGradient ? Colors.white.withOpacity(0.8) : AppColors.textSecondary,
-              fontSize: 10,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-              color: hasGradient ? Colors.white : AppColors.text,
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.text,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textSecondary,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
