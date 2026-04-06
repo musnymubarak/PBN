@@ -36,10 +36,10 @@ export const api = {
 
   // Admin Auth
   adminLogin: async (username, password) => {
-    const res = await fetch(`${BASE_URL}/auth/admin/login`, {
+    const res = await fetch(`${BASE_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({ identifier: username, password }),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));

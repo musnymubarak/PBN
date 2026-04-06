@@ -288,8 +288,8 @@ async def get_analytics_roi(user_id: UUID, period: str, db: AsyncSession) -> Lis
 
 
 async def get_admin_overview(db: AsyncSession) -> Dict[str, Any]:
-    # System-wide overview
-    total_members = (await db.execute(select(func.count(1)).where(User.role == "member"))).scalar_one()
+    from app.models.user import UserRole
+    total_members = (await db.execute(select(func.count(1)).where(User.role == UserRole.MEMBER))).scalar_one()
     
     ref_stmt = select(
         func.count(1).label("total_ref"),

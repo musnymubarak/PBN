@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from jose import jwt
 
 from app.core.exceptions import BadRequestException, NotFoundException
-from app.features.auth.service import pwd_ctx
+from app.features.auth.service import hash_password
 from app.features.applications.schemas import (
     ApplicationCreate,
     ApplicationStatusUpdate,
@@ -223,7 +223,7 @@ async def update_application_status(
                 full_name=app.full_name,
                 email=app.email,
                 role=UserRole.MEMBER,
-                password_hash=pwd_ctx.hash("pbn123"), # Default password for initial login
+                password_hash=hash_password("pbn123"), # Default password for initial login
             )
             db.add(user)
             await db.flush()
@@ -234,7 +234,7 @@ async def update_application_status(
                 if app.email:
                     user.email = app.email
                 if not user.password_hash:
-                    user.password_hash = pwd_ctx.hash("pbn123")
+                    user.password_hash = hash_password("pbn123")
                 await db.flush()
 
         # Generate privilege card

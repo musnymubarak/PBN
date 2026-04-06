@@ -295,10 +295,12 @@ async def get_user_by_id(user_id: UUID, db: AsyncSession) -> User | None:
     return await _get_user_by_id(user_id, db)
 
 
-# ── Unified Login ────────────────────────────────────────────────────────────
+import bcrypt
 
-from passlib.context import CryptContext
-pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
+def hash_password(password: str) -> str:
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+# ── Unified Login ────────────────────────────────────────────────────────────
 
 
 async def login(
@@ -315,8 +317,9 @@ async def login(
             User.email == identifier,
         )
     )
+    # Use .first() because multiple users may share the same email
     result = await db.execute(query)
-    user = result.scalar_one_or_none()
+    user = result.scalars().first()
 
     if not user:
         raise UnauthorizedException(
@@ -335,7 +338,15 @@ async def login(
         )
 
     # Verify password
-    if not pwd_ctx.verify(password, user.password_hash):
+    try:
+        passwd_bytes = password.encode('utf-8')
+        hash_bytes = user.password_hash.encode('utf-8')
+        if not bcrypt.checkpw(passwd_bytes, hash_bytes):
+            raise UnauthorizedException(
+                message="Invalid credentials.", code="INVALID_CREDENTIALS"
+            )
+    except Exception as e:
+        logger.error(f"Password verification error: {e}")
         raise UnauthorizedException(
             message="Invalid credentials.", code="INVALID_CREDENTIALS"
         )
