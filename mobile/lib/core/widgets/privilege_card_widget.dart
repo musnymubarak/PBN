@@ -10,86 +10,116 @@ class PrivilegeCardWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
+      height: 220,
       decoration: BoxDecoration(
-        color: const Color(0xFF111827),
-        borderRadius: BorderRadius.circular(28),
+        color: const Color(0xFF0F172A),
+        borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withOpacity(0.4),
             blurRadius: 30,
             offset: const Offset(0, 15),
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(18),
         child: Stack(
           children: [
-            // Mesh background elements
+            // Suble Foil/Metallic Sheen
             Positioned(
-              right: -40,
-              top: -40,
+              right: -50,
+              top: -50,
               child: Container(
-                width: 200,
-                height: 200,
+                width: 250,
+                height: 250,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.03),
+                  gradient: RadialGradient(
+                    colors: [
+                      Colors.white.withOpacity(0.04),
+                      Colors.transparent,
+                    ],
+                  ),
                   shape: BoxShape.circle,
                 ),
               ),
             ),
-            Positioned(
-              left: -20,
-              bottom: -20,
-              child: Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.02),
-                  shape: BoxShape.circle,
-                ),
+            
+            // Stylized Mesh Pattern (background)
+            Opacity(
+              opacity: 0.1,
+              child: Center(
+                child: Icon(TablerIcons.square_rotated, size: 400, color: Colors.white.withOpacity(0.3)),
               ),
             ),
+
             Padding(
-              padding: const EdgeInsets.all(28),
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 26),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Icon(TablerIcons.circle_dot, color: Colors.amber, size: 28),
+                      const Text(
+                        'PRECISION BUSINESS NETWORK',
+                        style: TextStyle(
+                          color: Colors.white38,
+                          fontSize: 8,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 2,
+                        ),
+                      ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(10),
                           border: Border.all(color: Colors.white.withOpacity(0.1)),
                         ),
                         child: Text(
                           card.tier.toUpperCase(),
                           style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
+                            color: Colors.amber,
+                            fontSize: 9,
                             fontWeight: FontWeight.w900,
-                            letterSpacing: 1.2,
+                            letterSpacing: 1.5,
                           ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 48),
+                  const Spacer(),
+                  // Premium Digital Chip
+                  Container(
+                    width: 44,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Colors.amber.shade200, Colors.amber.shade600],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Stack(
+                      children: [
+                        Center(child: Icon(TablerIcons.border_all, color: Colors.black.withOpacity(0.2), size: 20)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
                   Text(
                     card.cardNumber,
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 22,
+                      fontSize: 20,
                       fontWeight: FontWeight.w800,
-                      letterSpacing: 3,
-                      fontFamily: 'Courier', // Give it a card feel
+                      letterSpacing: 4,
+                      fontFamily: 'Monospace',
                     ),
                   ),
-                  const SizedBox(height: 28),
+                  const Spacer(),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -97,41 +127,17 @@ class PrivilegeCardWidget extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            'BALANCE',
-                            style: TextStyle(
-                              color: Colors.white38,
-                              fontSize: 9,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 1.5,
-                            ),
+                            'REWARD POINTS',
+                            style: TextStyle(color: Colors.white38, fontSize: 8, fontWeight: FontWeight.w800, letterSpacing: 1.5),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             '${card.points} PTS',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w900,
-                              fontSize: 17,
-                            ),
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16),
                           ),
                         ],
                       ),
-                      const Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            'PBN MEMBER',
-                            style: TextStyle(
-                              color: Colors.white38,
-                              fontSize: 9,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 1.5,
-                            ),
-                          ),
-                          SizedBox(height: 4),
-                          Icon(TablerIcons.access_point, color: Colors.white54, size: 22),
-                        ],
-                      ),
+                      const Icon(TablerIcons.access_point, color: Colors.white38, size: 24),
                     ],
                   ),
                 ],

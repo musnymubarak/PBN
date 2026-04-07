@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:provider/provider.dart';
@@ -13,6 +14,7 @@ import 'package:pbn/models/reward.dart';
 import 'package:pbn/core/widgets/privilege_card_widget.dart';
 import 'package:pbn/features/members/members_page.dart';
 import 'package:pbn/features/referrals/my_referrals_page.dart';
+import 'package:pbn/features/referrals/create_referral_page.dart';
 import 'package:pbn/features/referrals/referral_dashboard_page.dart';
 import 'package:pbn/features/events/events_page.dart';
 import 'package:pbn/features/profile/profile_page.dart';
@@ -31,6 +33,11 @@ class _DashboardPageState extends State<DashboardPage> {
   bool _loading = true;
   String? _error;
 
+  // -- Sliding Ads Logic --
+  final PageController _adController = PageController();
+  int _adIndex = 0;
+  Timer? _adTimer;
+
   final _dashboardService = DashboardService();
   final _rewardService = RewardService();
 
@@ -38,6 +45,26 @@ class _DashboardPageState extends State<DashboardPage> {
   void initState() {
     super.initState();
     _loadData();
+    _startAdTimer();
+  }
+
+  @override
+  void dispose() {
+    _adTimer?.cancel();
+    _adController.dispose();
+    super.dispose();
+  }
+
+  void _startAdTimer() {
+    _adTimer?.cancel();
+    _adTimer = Timer.periodic(const Duration(seconds: 6), (timer) {
+      if (mounted) {
+        setState(() {
+          _adIndex = (_adIndex + 1) % 3; // Cycle between 3 ads
+          _adController.animateToPage(_adIndex, duration: const Duration(milliseconds: 700), curve: Curves.easeInOutQuart);
+        });
+      }
+    });
   }
 
   Future<void> _loadData() async {
@@ -87,9 +114,9 @@ class _DashboardPageState extends State<DashboardPage> {
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('OVERVIEW', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1.5)),
+          const Text('GLOBAL OVERVIEW', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 2)),
           const SizedBox(height: 4),
-          Text(auth.user?.fullName ?? (isProspect ? 'Prospect' : 'Member'), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.text)),
+          Text(auth.user?.fullName ?? (isProspect ? 'Prospect' : 'Member'), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.text, letterSpacing: -0.5)),
         ],
       ),
       actions: [
@@ -146,87 +173,145 @@ class _DashboardPageState extends State<DashboardPage> {
       child: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         children: [
-          _buildPrivilegeCard(),
+          PrivilegeCardWidget(card: _card!),
           const SizedBox(height: 32),
-          const Text('PERFORMANCE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1.5)),
+          
+          // -- TRANSITIONING AD PANEL (SLIDER) --
+          SizedBox(
+            height: 180,
+            child: PageView(
+              controller: _adController,
+              onPageChanged: (i) => setState(() => _adIndex = i),
+              children: [
+                _buildAdPromoPanel(),
+                _buildEventZoomPanel(),
+                _buildPhysicalMeetingPanel(),
+              ],
+            ),
+          ),
+          
+          const SizedBox(height: 24),
+          Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            _adDot(0), const SizedBox(width: 8), _adDot(1), const SizedBox(width: 8), _adDot(2),
+          ]),
+          
+          const SizedBox(height: 32),
+          const Text('PERFORMANCE STATS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1.5)),
           const SizedBox(height: 20),
           Row(children: [
-            Expanded(child: StatCard(title: 'Sent', value: '${_data?.referrals.sentTotal ?? 0}', icon: TablerIcons.arrow_up_right, color: Colors.blue)),
+            Expanded(child: SizedBox(height: 120, child: StatCard(title: 'Sent', value: '${_data?.referrals.sentTotal ?? 0}', icon: TablerIcons.arrow_up_right, gradient: const [Color(0xFF3B82F6), Color(0xFF1D4ED8)]))),
             const SizedBox(width: 16),
-            Expanded(child: StatCard(title: 'Ratio', value: '${(_data?.referrals.conversionRate ?? 0).toStringAsFixed(0)}%', icon: TablerIcons.chart_pie, color: const Color(0xFF10B981))),
+            Expanded(child: SizedBox(height: 120, child: StatCard(title: 'Ratio', value: '${(_data?.referrals.conversionRate ?? 0).toStringAsFixed(0)}%', icon: TablerIcons.chart_pie, gradient: const [Color(0xFF10B981), Color(0xFF064E3B)]))),
           ]),
           const SizedBox(height: 16),
           Row(children: [
-            Expanded(child: StatCard(title: 'Valuation', value: _formatCurrency(_data?.roi.totalValue ?? 0), icon: TablerIcons.trending_up, color: Colors.orange)),
+            Expanded(child: SizedBox(height: 120, child: StatCard(title: 'Valuation', value: _formatCurrency(_data?.roi.totalValue ?? 0), icon: TablerIcons.trending_up, gradient: const [Color(0xFFF59E0B), Color(0xFF92400E)]))),
             const SizedBox(width: 16),
-            Expanded(child: StatCard(title: 'Incoming', value: '${_data?.referrals.receivedTotal ?? 0}', icon: TablerIcons.arrow_down_left, color: Colors.purple)),
+            Expanded(child: SizedBox(height: 120, child: StatCard(title: 'Incoming', value: '${_data?.referrals.receivedTotal ?? 0}', icon: TablerIcons.arrow_down_left, gradient: const [Color(0xFF8B5CF6), Color(0xFF5B21B6)]))),
           ]),
           const SizedBox(height: 32),
-          const Text('UPCOMING PLAN', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1.5)),
-          const SizedBox(height: 16),
-          if (_data?.events.nextEvent != null) _buildNextEvent(),
-          const SizedBox(height: 32),
-          _buildQuickActionsTiles(),
+          const Text('EXPLORE NETWORK', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1.5)),
+          const SizedBox(height: 20),
+          Row(children: [
+            _modernActionTile(TablerIcons.stars, 'Awards', Colors.amber, () => Navigator.pushNamed(context, '/rewards')),
+            const SizedBox(width: 16),
+            _modernActionTile(TablerIcons.chart_arrows_vertical, 'Global Rank', Colors.blue, () => Navigator.pushNamed(context, '/leaderboard')),
+            const SizedBox(width: 16),
+            _modernActionTile(TablerIcons.help_circle, 'Support', Colors.pink, () {}),
+          ]),
           const SizedBox(height: 40),
         ],
       ),
     );
   }
 
-  Widget _buildPrivilegeCard() {
-    if (_card == null) return const SizedBox();
-    return PrivilegeCardWidget(card: _card!);
+  Widget _adDot(int index) {
+    bool active = _adIndex == index;
+    return Container(width: active ? 22 : 8, height: 8, decoration: BoxDecoration(color: active ? AppColors.primary : Colors.grey.withOpacity(0.3), borderRadius: BorderRadius.circular(10)));
   }
 
-  Widget _buildNextEvent() {
-    final event = _data!.events.nextEvent!;
+  Widget _buildAdPromoPanel() {
     return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20, offset: const Offset(0, 8))]),
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: const Color(0xFF111827),
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 10))],
+      ),
       child: Row(children: [
-        Container(
-          padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: AppColors.accent.withOpacity(0.1), borderRadius: BorderRadius.circular(16)),
-          child: const Icon(TablerIcons.calendar_event, color: AppColors.accent, size: 24),
-        ),
-        const SizedBox(width: 16),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(event.title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.text)),
-          const SizedBox(height: 4),
-          Text(event.startAt.split('T').first, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+          const Text('REFER & EARN', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+          const SizedBox(height: 8),
+          const Text('Expand your network reach.', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800, height: 1.4)),
+          const Spacer(),
+          ElevatedButton(
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => CreateReferralPage())),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8)),
+            child: const Text('SUBMIT NOW', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900)),
+          ),
         ])),
-        const Icon(TablerIcons.chevron_right, color: AppColors.textSecondary, size: 20),
+        const SizedBox(width: 16),
+        Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), shape: BoxShape.circle), child: const Icon(TablerIcons.gift, color: Colors.white70, size: 32)),
       ]),
     );
   }
 
-  Widget _buildQuickActionsTiles() {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const Text('EXPLORE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1.5)),
-      const SizedBox(height: 20),
-      Row(children: [
-        _modernActionTile(TablerIcons.stars, 'Awards', Colors.amber, () => Navigator.pushNamed(context, '/rewards')),
+  Widget _buildEventZoomPanel() {
+    final event = _data?.events.nextEvent;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [BoxShadow(color: const Color(0xFF6366F1).withOpacity(0.2), blurRadius: 20, offset: const Offset(0, 10))],
+      ),
+      child: Row(children: [
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Text('NEXT ONLINE SESSION', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+          const SizedBox(height: 8),
+          Text(event?.title ?? 'Strategic Sync', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800, height: 1.4)),
+          if (event != null) Text(event.startAt.replaceAll('T', ' | '), style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w600)),
+          const Spacer(),
+          ElevatedButton.icon(
+            onPressed: () {}, // Link to Zoom or Meeting
+            icon: const Icon(TablerIcons.video, size: 14),
+            label: const Text('JOIN ZOOM', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900)),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: const Color(0xFF6366F1), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8)),
+          ),
+        ])),
         const SizedBox(width: 16),
-        _modernActionTile(TablerIcons.chart_arrows_vertical, 'Rank', Colors.blue, () => Navigator.pushNamed(context, '/leaderboard')),
-        const SizedBox(width: 16),
-        _modernActionTile(TablerIcons.help_circle, 'Help', Colors.pink, () {}),
+        Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle), child: const Icon(TablerIcons.brand_zoom, color: Colors.white, size: 32)),
       ]),
-    ]);
+    );
   }
 
-  Widget _modernActionTile(IconData icon, String label, Color color, VoidCallback onTap) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 24),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24), boxShadow: [BoxShadow(color: color.withOpacity(0.05), blurRadius: 15, offset: const Offset(0, 6))]),
-          child: Column(children: [
-            Icon(icon, color: color, size: 26),
-            const SizedBox(height: 10),
-            Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.text)),
-          ]),
-        ),
+  Widget _buildPhysicalMeetingPanel() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(colors: [Color(0xFFF97316), Color(0xFFEF4444)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [BoxShadow(color: const Color(0xFFF97316).withOpacity(0.2), blurRadius: 20, offset: const Offset(0, 10))],
       ),
+      child: Row(children: [
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Text('MONTHLY CHAPTER MEET', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+          const SizedBox(height: 8),
+          const Text('In-Person Meeting (Galle Face)', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800, height: 1.4)),
+          const Spacer(),
+          ElevatedButton.icon(
+            onPressed: () {}, // Link to Map
+            icon: const Icon(TablerIcons.map_pin, size: 14),
+            label: const Text('GO TO LOCATION', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900)),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: const Color(0xFFF97316), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8)),
+          ),
+        ])),
+        const SizedBox(width: 16),
+        Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle), child: const Icon(TablerIcons.building_community, color: Colors.white, size: 32)),
+      ]),
     );
   }
 
@@ -250,11 +335,9 @@ class _DashboardPageState extends State<DashboardPage> {
           const SizedBox(height: 32),
           const Text('Verification Pending', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: AppColors.text)),
           const SizedBox(height: 16),
-          Text('Apply to unlock the full potential of PBN. Verified members get access to exclusive leads, events, and rewards.', textAlign: TextAlign.center, style: TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.6, fontWeight: FontWeight.w500)),
+          Text('Your application is being reviewed. Verified members unlock access to leads, events, and rewards.', textAlign: TextAlign.center, style: TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.6, fontWeight: FontWeight.w500)),
           const SizedBox(height: 40),
-          CustomButton(text: 'SUBMIT APPLICATION', onPressed: () => Navigator.pushNamed(context, '/apply'), backgroundColor: AppColors.primary),
-          const SizedBox(height: 16),
-          TextButton(onPressed: () => Navigator.pushNamed(context, '/my-applications'), child: const Text('Track Application Status', style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w800, fontSize: 13))),
+          CustomButton(text: 'CONTACT SUPPORT', onPressed: () {}, backgroundColor: AppColors.primary),
         ],
       ),
     );
@@ -269,9 +352,9 @@ class _DashboardPageState extends State<DashboardPage> {
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white,
         selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.textSecondary.withOpacity(0.5),
-        selectedFontSize: 10,
-        unselectedFontSize: 10,
+        unselectedItemColor: AppColors.textSecondary.withOpacity(0.4),
+        selectedFontSize: 9,
+        unselectedFontSize: 9,
         elevation: 0,
         selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 0.5),
         unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700),
@@ -279,11 +362,28 @@ class _DashboardPageState extends State<DashboardPage> {
             ? [ const BottomNavigationBarItem(icon: Icon(TablerIcons.layout_dashboard), label: 'HOME'), const BottomNavigationBarItem(icon: Icon(TablerIcons.user), label: 'PROFILE') ]
             : [
                 const BottomNavigationBarItem(icon: Icon(TablerIcons.layout_dashboard), label: 'HOME'),
-                const BottomNavigationBarItem(icon: Icon(TablerIcons.users), label: 'NETWORK'),
+                const BottomNavigationBarItem(icon: Icon(TablerIcons.users), label: 'MEMBERS'),
                 const BottomNavigationBarItem(icon: Icon(TablerIcons.arrows_exchange), label: 'REFERRALS'),
                 const BottomNavigationBarItem(icon: Icon(TablerIcons.calendar_event), label: 'AGENDA'),
-                const BottomNavigationBarItem(icon: Icon(TablerIcons.user), label: 'ME'),
+                const BottomNavigationBarItem(icon: Icon(TablerIcons.user), label: 'PROFILE'),
               ],
+      ),
+    );
+  }
+
+  Widget _modernActionTile(IconData icon, String label, Color color, VoidCallback onTap) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), boxShadow: [BoxShadow(color: color.withOpacity(0.04), blurRadius: 15, offset: const Offset(0, 6))]),
+          child: Column(children: [
+            Icon(icon, color: color, size: 24),
+            const SizedBox(height: 8),
+            Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.text)),
+          ]),
+        ),
       ),
     );
   }
