@@ -57,3 +57,31 @@ docker-compose.override.yml
 # ── Gemini/Antigravity ───────────────────────────────────
 .gemini/
 .agents/
+
+# ── Node.js / React / Admin Panel ────────────────────────
+node_modules/
+dist/
+dist-ssr/
+*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ── Flutter / Dart / Mobile ──────────────────────────────
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+/build/
+mobile/build/
+adminpanel/dist/
+flutter_export_environment.sh
+ios/.generated/
+android/.gradle/
+android/local.properties
+windows/flutter/ephemeral/
+linux/flutter/ephemeral/
+macos/Flutter/ephemeral/
+*.iml

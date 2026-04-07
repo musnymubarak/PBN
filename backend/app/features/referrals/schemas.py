@@ -23,13 +23,13 @@ class ReferralCreate(BaseModel):
     target_user_id: UUID
     lead_name: str
     lead_contact: str
-    lead_email: Optional[str] = None
-    notes: Optional[str] = None
+    lead_email: str # Now required
+    description: str # Renamed and required
 
 
 class ReferralStatusUpdate(BaseModel):
     status: ReferralStatus
-    notes: Optional[str] = None
+    description: Optional[str] = None
 
 
 class ReferralStatusHistoryResponse(BaseModel):

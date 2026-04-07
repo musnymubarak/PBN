@@ -45,7 +45,6 @@ class PBNApp extends StatelessWidget {
         '/login': (context) => const LoginPage(),
         '/dashboard': (context) => const DashboardPage(),
         '/profile': (context) => const ProfilePage(),
-        '/my-referrals': (context) => const MyReferralsPage(),
         '/events': (context) => const EventsPage(),
         '/rewards': (context) => const RewardsPage(),
         '/payments': (context) => const PaymentsPage(),

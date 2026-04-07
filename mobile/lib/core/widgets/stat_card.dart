@@ -5,35 +5,32 @@ class StatCard extends StatelessWidget {
   final String title;
   final String value;
   final IconData icon;
-  final Color color;
-  final List<Color>? gradient;
+  final List<Color> gradient;
 
   const StatCard({
     super.key,
     required this.title,
     required this.value,
     required this.icon,
-    this.color = AppColors.primary,
-    this.gradient,
+    required this.gradient,
   });
 
   @override
   Widget build(BuildContext context) {
-    final hasGradient = gradient != null && gradient!.length >= 2;
-
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: hasGradient
-            ? LinearGradient(colors: gradient!, begin: Alignment.topLeft, end: Alignment.bottomRight)
-            : null,
-        color: hasGradient ? null : AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          colors: gradient,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: (hasGradient ? gradient!.first : Colors.black).withOpacity(hasGradient ? 0.25 : 0.04),
-            blurRadius: hasGradient ? 16 : 10,
-            offset: const Offset(0, 6),
+            color: gradient.first.withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
@@ -41,30 +38,32 @@ class StatCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(hasGradient ? 0.2 : 0.0),
-              borderRadius: BorderRadius.circular(12),
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white.withOpacity(0.1)),
             ),
-            child: Icon(icon, color: hasGradient ? Colors.white : color, size: 24),
+            child: Icon(icon, color: Colors.white, size: 24),
           ),
-          const SizedBox(height: 16),
+          const Spacer(),
           Text(
             title.toUpperCase(),
             style: TextStyle(
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.0,
-              color: hasGradient ? Colors.white.withOpacity(0.8) : AppColors.textSecondary,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.2,
+              color: Colors.white.withOpacity(0.7),
               fontSize: 10,
             ),
           ),
           const SizedBox(height: 6),
           Text(
             value,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-              color: hasGradient ? Colors.white : AppColors.text,
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+              letterSpacing: -0.5,
             ),
           ),
         ],

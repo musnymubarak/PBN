@@ -4,6 +4,7 @@ import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/services/reward_service.dart';
 import 'package:pbn/features/rewards/qr_redeem_screen.dart';
 import 'package:pbn/models/reward.dart';
+import 'package:pbn/core/widgets/privilege_card_widget.dart';
 
 class RewardsPage extends StatefulWidget {
   const RewardsPage({super.key});
@@ -63,6 +64,17 @@ class _RewardsPageState extends State<RewardsPage> {
           title: const Text('Rewards',
               style: TextStyle(fontWeight: FontWeight.w800))),
       body: _loading
+          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+          : RefreshIndicator(onRefresh: _loadData, child: ListView(padding: const EdgeInsets.all(16), children: [
+              if (_card != null) ...[
+                PrivilegeCardWidget(card: _card!),
+                const SizedBox(height: 32),
+              ],
+              const Text('Partner Offers', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+              const SizedBox(height: 12),
+              if (_partners.isEmpty) Center(child: Padding(padding: const EdgeInsets.all(40), child: Text('No partner offers available', style: TextStyle(color: Colors.grey.shade500)))),
+              ..._partners.map((p) => Container(
+                margin: const EdgeInsets.only(bottom: 14),
           ? const Center(
               child: CircularProgressIndicator(color: AppColors.primary))
           : RefreshIndicator(

@@ -34,7 +34,7 @@ async def _serialize_referral(ref: Referral) -> Dict[str, Any]:
         "lead_name": ref.client_name,
         "lead_contact": ref.client_phone,
         "lead_email": ref.client_email,
-        "notes": ref.description,
+        "description": ref.description,
         "status": ref.status.value,
         "created_at": ref.created_at.isoformat() if ref.created_at else None,
         "updated_at": ref.updated_at.isoformat() if ref.updated_at else None,
@@ -43,7 +43,7 @@ async def _serialize_referral(ref: Referral) -> Dict[str, Any]:
                 "id": str(h.id),
                 "old_status": h.old_status,
                 "new_status": h.new_status,
-                "notes": h.notes,
+                "description": h.notes,
                 "created_at": h.created_at.isoformat() if h.created_at else None
             }
             for h in ref.history
@@ -67,7 +67,7 @@ async def create_referral(data: ReferralCreate, actor_id: UUID, db: AsyncSession
         client_name=data.lead_name,
         client_phone=data.lead_contact,
         client_email=data.lead_email,
-        description=data.notes,
+        description=data.description,
         status=ReferralStatus.SUBMITTED,
     )
     db.add(referral)
@@ -161,7 +161,7 @@ async def update_referral_status(ref_id: UUID, data: ReferralStatusUpdate, actor
         referral_id=ref.id,
         old_status=old_status,
         new_status=data.status.value,
-        notes=data.notes or f"Status updated to {data.status.value}",
+        notes=data.description or f"Status updated to {data.status.value}",
         changed_by=actor_id
     )
     db.add(history)
