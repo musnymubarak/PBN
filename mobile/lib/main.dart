@@ -71,7 +71,7 @@ class AuthGuard extends StatelessWidget {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Navigator.pushReplacementNamed(context, '/splash');
       });
-      return const Scaffold(backgroundColor: Color(0xFF030D16), body: Center(child: CircularProgressIndicator(color: AppColors.primary)));
+      return Scaffold(backgroundColor: const Color(0xFF030D16), body: Center(child: CircularProgressIndicator(color: AppColors.primary)));
     }
     
     if (auth.status == AuthStatus.unauthenticated) {
