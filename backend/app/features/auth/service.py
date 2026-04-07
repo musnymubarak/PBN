@@ -18,6 +18,7 @@ from jose import JWTError, jwt
 from redis.asyncio import Redis
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from passlib.context import CryptContext
 
 from app.core.config import get_settings
 from app.core.exceptions import (
@@ -295,10 +296,12 @@ async def get_user_by_id(user_id: UUID, db: AsyncSession) -> User | None:
     return await _get_user_by_id(user_id, db)
 
 
-import bcrypt
+# ── Password Hashing ─────────────────────────────────────────────────────────
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def hash_password(password: str) -> str:
-    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    return pwd_context.hash(password)
 
 # ── Unified Login ────────────────────────────────────────────────────────────
 
@@ -339,9 +342,7 @@ async def login(
 
     # Verify password
     try:
-        passwd_bytes = password.encode('utf-8')
-        hash_bytes = user.password_hash.encode('utf-8')
-        if not bcrypt.checkpw(passwd_bytes, hash_bytes):
+        if not pwd_context.verify(password, user.password_hash):
             raise UnauthorizedException(
                 message="Invalid credentials.", code="INVALID_CREDENTIALS"
             )

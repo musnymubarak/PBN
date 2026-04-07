@@ -30,7 +30,11 @@ class _LoginPageState extends State<LoginPage> {
     final success = await auth.login(identifier, password);
     
     if (success && mounted) {
-      Navigator.pushReplacementNamed(context, '/dashboard');
+      if (auth.user?.role == 'PARTNER_ADMIN') {
+        Navigator.pushReplacementNamed(context, '/partner_dashboard');
+      } else {
+        Navigator.pushReplacementNamed(context, '/dashboard');
+      }
     } else if (mounted && auth.error != null) {
       _showError(auth.error!);
     }

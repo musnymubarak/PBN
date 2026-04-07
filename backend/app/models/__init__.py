@@ -10,7 +10,7 @@ from app.models.applications import Application, ApplicationStatusHistory  # noq
 from app.models.memberships import ChapterMembership  # noqa: F401
 from app.models.referrals import Referral, ReferralStatusHistory  # noqa: F401
 from app.models.events import Event, EventRSVP, EventAttendance  # noqa: F401
-from app.models.privilege_cards import PrivilegeCard, Partner, Offer, OfferRedemption  # noqa: F401
+from app.models.privilege_cards import PrivilegeCard, Partner, Offer, OfferRedemption, RedemptionToken, CouponCode  # noqa: F401
 from app.models.payments import Payment  # noqa: F401
 from app.models.notifications import Notification  # noqa: F401
 from app.models.audit_logs import AuditLog  # noqa: F401
@@ -25,8 +25,9 @@ __all__ = [
     "ChapterMembership",
     "Referral", "ReferralStatusHistory",
     "Event", "EventRSVP", "EventAttendance",
-    "PrivilegeCard", "Partner", "Offer", "OfferRedemption",
+    "PrivilegeCard", "Partner", "Offer", "OfferRedemption", "RedemptionToken", "CouponCode",
     "Payment",
     "Notification",
     "AuditLog",
 ]
+

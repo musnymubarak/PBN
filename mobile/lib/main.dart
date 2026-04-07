@@ -16,6 +16,7 @@ import 'package:pbn/features/leaderboard/leaderboard_page.dart';
 import 'package:pbn/features/chapters/chapters_page.dart';
 import 'package:pbn/features/applications/apply_page.dart';
 import 'package:pbn/features/applications/my_applications_page.dart';
+import 'package:pbn/features/partner/partner_dashboard_page.dart';
 
 void main() {
   runApp(
@@ -53,6 +54,7 @@ class PBNApp extends StatelessWidget {
         '/chapters': (context) => const ChaptersPage(),
         '/apply': (context) => const ApplyPage(),
         '/my-applications': (context) => const MyApplicationsPage(),
+        '/partner_dashboard': (context) => const PartnerDashboardPage(),
       },
     );
   }

@@ -79,14 +79,6 @@ def _register_middleware(app: FastAPI) -> None:
     from app.core.request_id import RequestIDMiddleware
     app.add_middleware(RequestIDMiddleware)
 
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.CORS_ORIGINS,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
-
     # Security headers on every response
     from app.core.security_headers import SecurityHeadersMiddleware
     app.add_middleware(SecurityHeadersMiddleware)
@@ -94,6 +86,17 @@ def _register_middleware(app: FastAPI) -> None:
     # Rate limiting (disabled in development via env check inside)
     from app.core.rate_limit import RateLimitMiddleware
     app.add_middleware(RateLimitMiddleware)
+
+    # CORS (Must be outermost to handle preflights correctly)
+    # In development, allow all origins since Flutter web uses random ports
+    origins = ["*"] if settings.ENVIRONMENT == "development" else settings.CORS_ORIGINS
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_credentials=False if settings.ENVIRONMENT == "development" else True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 
 # ── Exception Handlers ──────────────────────────────────────────────────────

@@ -39,7 +39,7 @@ def _get_limit_tier(path: str) -> dict:
 class RateLimitMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         settings = get_settings()
-        if settings.ENVIRONMENT == "development":
+        if settings.ENVIRONMENT == "development" or request.method == "OPTIONS":
             return await call_next(request)
 
         client_ip = request.client.host if request.client else "unknown"

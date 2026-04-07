@@ -20,6 +20,7 @@ class UserRole(str, enum.Enum):
 
     PROSPECT = "PROSPECT"
     MEMBER = "MEMBER"
+    PARTNER_ADMIN = "PARTNER_ADMIN"
     CHAPTER_ADMIN = "CHAPTER_ADMIN"
     SUPER_ADMIN = "SUPER_ADMIN"
 
