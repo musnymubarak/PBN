@@ -65,80 +65,13 @@ class _RewardsPageState extends State<RewardsPage> {
               style: TextStyle(fontWeight: FontWeight.w800))),
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-          : RefreshIndicator(onRefresh: _loadData, child: ListView(padding: const EdgeInsets.all(16), children: [
-              if (_card != null) ...[
-                PrivilegeCardWidget(card: _card!),
-                const SizedBox(height: 32),
-              ],
-              const Text('Partner Offers', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-              const SizedBox(height: 12),
-              if (_partners.isEmpty) Center(child: Padding(padding: const EdgeInsets.all(40), child: Text('No partner offers available', style: TextStyle(color: Colors.grey.shade500)))),
-              ..._partners.map((p) => Container(
-                margin: const EdgeInsets.only(bottom: 14),
-          ? const Center(
-              child: CircularProgressIndicator(color: AppColors.primary))
           : RefreshIndicator(
               onRefresh: _loadData,
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
                   if (_card != null) ...[
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(colors: [
-                          Color(0xFF0A2540),
-                          Color(0xFF1E3A8A)
-                        ]),
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                              color: AppColors.primary.withOpacity(0.25),
-                              blurRadius: 16,
-                              offset: const Offset(0, 6)),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text('MY PRIVILEGE CARD',
-                                  style: TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      letterSpacing: 2)),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(
-                                    color: AppColors.accent,
-                                    borderRadius: BorderRadius.circular(8)),
-                                child: Text(_card!.tier.toUpperCase(),
-                                    style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w900)),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Text(_card!.cardNumber,
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 2)),
-                          const SizedBox(height: 8),
-                          Text('${_card!.points} Points',
-                              style: const TextStyle(
-                                  color: Colors.white70,
-                                  fontWeight: FontWeight.w600)),
-                        ],
-                      ),
-                    ),
+                    PrivilegeCardWidget(card: _card!),
                     const SizedBox(height: 24),
                   ],
                   const Text('Partner Offers',
