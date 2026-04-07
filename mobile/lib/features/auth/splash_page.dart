@@ -19,6 +19,9 @@ class _SplashPageState extends State<SplashPage> {
   }
 
   Future<void> _checkAuth() async {
+    // Cinematic Brand Delay - Ensures logo visibility on every open
+    await Future.delayed(const Duration(milliseconds: 2500));
+    
     final auth = context.read<AuthProvider>();
     await auth.tryAutoLogin();
 
@@ -31,7 +34,7 @@ class _SplashPageState extends State<SplashPage> {
         Navigator.pushReplacementNamed(context, '/dashboard');
       }
     } else {
-      Navigator.pushReplacementNamed(context, '/login');
+      Navigator.pushReplacementNamed(context, '/onboarding');
     }
   }
 
@@ -56,18 +59,38 @@ class _SplashPageState extends State<SplashPage> {
               children: [
                 Hero(
                   tag: 'logo',
-                  child: Image.asset('assets/logo.png', height: 140, fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) => const Icon(TablerIcons.briefcase, size: 100, color: AppColors.accent),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFF59E0B).withOpacity(0.15),
+                          blurRadius: 40,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(24),
+                      child: Image.asset('assets/logo.png', height: 180, fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) => const Icon(TablerIcons.briefcase, size: 100, color: AppColors.accent),
+                      ),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 32),
-                const SizedBox(
-                  width: 30, height: 30,
-                  child: CircularProgressIndicator(color: AppColors.accent, strokeWidth: 2),
-                ),
-                const SizedBox(height: 60),
+              ],
+            ),
+          ),
+          Positioned(
+            bottom: 40,
+            left: 0,
+            right: 0,
+            child: Column(
+              children: [
+                Text('from', style: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 10, letterSpacing: 1),),
+                const SizedBox(height: 6),
                 Text('PRIME BUSINESS NETWORK',
-                  style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 3),
+                  style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 3),
                 ),
               ],
             ),

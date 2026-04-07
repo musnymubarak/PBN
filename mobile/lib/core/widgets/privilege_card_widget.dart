@@ -10,10 +10,10 @@ class PrivilegeCardWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      height: 220,
+      height: 190,
       decoration: BoxDecoration(
         color: const Color(0xFF0F172A),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.4),
@@ -23,7 +23,7 @@ class PrivilegeCardWidget extends StatelessWidget {
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(14),
         child: Stack(
           children: [
             // Suble Foil/Metallic Sheen
@@ -54,7 +54,7 @@ class PrivilegeCardWidget extends StatelessWidget {
             ),
 
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 26),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -108,7 +108,7 @@ class PrivilegeCardWidget extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 14),
                   Text(
                     card.cardNumber,
                     style: const TextStyle(

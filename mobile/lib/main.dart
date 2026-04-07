@@ -18,6 +18,7 @@ import 'package:pbn/features/chapters/chapters_page.dart';
 import 'package:pbn/features/applications/apply_page.dart';
 import 'package:pbn/features/applications/my_applications_page.dart';
 import 'package:pbn/features/partner/partner_dashboard_page.dart';
+import 'package:pbn/features/auth/onboarding_page.dart';
 
 void main() {
   runApp(
@@ -43,6 +44,7 @@ class PBNApp extends StatelessWidget {
       initialRoute: '/splash',
       routes: {
         '/splash': (context) => const SplashPage(),
+        '/onboarding': (context) => const OnboardingPage(),
         '/login': (context) => const LoginPage(),
         '/dashboard': (context) => const AuthGuard(child: DashboardPage()),
         '/profile': (context) => const AuthGuard(child: ProfilePage()),
@@ -77,7 +79,7 @@ class AuthGuard extends StatelessWidget {
     
     if (auth.status == AuthStatus.unauthenticated) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        Navigator.pushReplacementNamed(context, '/login');
+        Navigator.pushReplacementNamed(context, '/onboarding');
       });
       return const Scaffold(backgroundColor: Colors.white);
     }
