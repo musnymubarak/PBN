@@ -58,7 +58,7 @@ class _DashboardPageState extends State<DashboardPage> {
   void _startAdTimer() {
     _adTimer?.cancel();
     _adTimer = Timer.periodic(const Duration(seconds: 6), (timer) {
-      if (mounted) {
+      if (mounted && _adController.hasClients) {
         setState(() {
           _adIndex = (_adIndex + 1) % 3; // Cycle between 3 ads
           _adController.animateToPage(_adIndex, duration: const Duration(milliseconds: 700), curve: Curves.easeInOutQuart);
@@ -178,7 +178,7 @@ class _DashboardPageState extends State<DashboardPage> {
           
           // -- TRANSITIONING AD PANEL (SLIDER) --
           SizedBox(
-            height: 180,
+            height: 210,
             child: PageView(
               controller: _adController,
               onPageChanged: (i) => setState(() => _adIndex = i),
@@ -199,15 +199,15 @@ class _DashboardPageState extends State<DashboardPage> {
           const Text('PERFORMANCE STATS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1.5)),
           const SizedBox(height: 20),
           Row(children: [
-            Expanded(child: SizedBox(height: 120, child: StatCard(title: 'Sent', value: '${_data?.referrals.sentTotal ?? 0}', icon: TablerIcons.arrow_up_right, gradient: const [Color(0xFF3B82F6), Color(0xFF1D4ED8)]))),
+            Expanded(child: SizedBox(height: 145, child: StatCard(title: 'Sent', value: '${_data?.referrals.sentTotal ?? 0}', icon: TablerIcons.arrow_up_right, gradient: const [Color(0xFF3B82F6), Color(0xFF1D4ED8)]))),
             const SizedBox(width: 16),
-            Expanded(child: SizedBox(height: 120, child: StatCard(title: 'Ratio', value: '${(_data?.referrals.conversionRate ?? 0).toStringAsFixed(0)}%', icon: TablerIcons.chart_pie, gradient: const [Color(0xFF10B981), Color(0xFF064E3B)]))),
+            Expanded(child: SizedBox(height: 145, child: StatCard(title: 'Ratio', value: '${(_data?.referrals.conversionRate ?? 0).toStringAsFixed(0)}%', icon: TablerIcons.chart_pie, gradient: const [Color(0xFF10B981), Color(0xFF064E3B)]))),
           ]),
           const SizedBox(height: 16),
           Row(children: [
-            Expanded(child: SizedBox(height: 120, child: StatCard(title: 'Valuation', value: _formatCurrency(_data?.roi.totalValue ?? 0), icon: TablerIcons.trending_up, gradient: const [Color(0xFFF59E0B), Color(0xFF92400E)]))),
+            Expanded(child: SizedBox(height: 145, child: StatCard(title: 'Valuation', value: _formatCurrency(_data?.roi.totalValue ?? 0), icon: TablerIcons.trending_up, gradient: const [Color(0xFFF59E0B), Color(0xFF92400E)]))),
             const SizedBox(width: 16),
-            Expanded(child: SizedBox(height: 120, child: StatCard(title: 'Incoming', value: '${_data?.referrals.receivedTotal ?? 0}', icon: TablerIcons.arrow_down_left, gradient: const [Color(0xFF8B5CF6), Color(0xFF5B21B6)]))),
+            Expanded(child: SizedBox(height: 145, child: StatCard(title: 'Incoming', value: '${_data?.referrals.receivedTotal ?? 0}', icon: TablerIcons.arrow_down_left, gradient: const [Color(0xFF8B5CF6), Color(0xFF5B21B6)]))),
           ]),
           const SizedBox(height: 32),
           const Text('EXPLORE NETWORK', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1.5)),
@@ -233,27 +233,35 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget _buildAdPromoPanel() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFF111827),
+        color: const Color(0xFF0F172A),
         borderRadius: BorderRadius.circular(18),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 10))],
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 20, offset: const Offset(0, 10))],
       ),
-      child: Row(children: [
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('REFER & EARN', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
-          const SizedBox(height: 8),
-          const Text('Expand your network reach.', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800, height: 1.4)),
-          const Spacer(),
-          ElevatedButton(
-            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => CreateReferralPage())),
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8)),
-            child: const Text('SUBMIT NOW', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900)),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: Stack(children: [
+          Positioned.fill(child: _smartImage('https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&q=80&w=600', const [Color(0xFF0F172A), Color(0xFF1E293B)])),
+          Positioned.fill(child: Container(decoration: BoxDecoration(gradient: LinearGradient(colors: [Colors.black.withOpacity(0.8), Colors.transparent], begin: Alignment.centerLeft, end: Alignment.centerRight)))),
+          
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Row(children: [
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                const Text('NETWORK GROWTH', style: TextStyle(color: Colors.blueAccent, fontSize: 9, fontWeight: FontWeight.w900, shadows: [Shadow(blurRadius: 4, color: Colors.black54)])),
+                const SizedBox(height: 8),
+                const Text('Expand your business reach effortlessly.', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800, height: 1.4, shadows: [Shadow(blurRadius: 10, color: Colors.black87)])),
+                const Spacer(),
+                ElevatedButton(
+                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => CreateReferralPage())),
+                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8)),
+                  child: const Text('SUBMIT REFERRAL', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900)),
+                ),
+              ])),
+            ]),
           ),
-        ])),
-        const SizedBox(width: 16),
-        Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), shape: BoxShape.circle), child: const Icon(TablerIcons.gift, color: Colors.white70, size: 32)),
-      ]),
+        ]),
+      ),
     );
   }
 
@@ -261,58 +269,102 @@ class _DashboardPageState extends State<DashboardPage> {
     final event = _data?.events.nextEvent;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+        color: const Color(0xFF6366F1),
         borderRadius: BorderRadius.circular(18),
         boxShadow: [BoxShadow(color: const Color(0xFF6366F1).withOpacity(0.2), blurRadius: 20, offset: const Offset(0, 10))],
       ),
-      child: Row(children: [
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('NEXT ONLINE SESSION', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
-          const SizedBox(height: 8),
-          Text(event?.title ?? 'Strategic Sync', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800, height: 1.4)),
-          if (event != null) Text(event.startAt.replaceAll('T', ' | '), style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w600)),
-          const Spacer(),
-          ElevatedButton.icon(
-            onPressed: () {}, // Link to Zoom or Meeting
-            icon: const Icon(TablerIcons.video, size: 14),
-            label: const Text('JOIN ZOOM', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900)),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: const Color(0xFF6366F1), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8)),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: Stack(children: [
+          Positioned.fill(child: _smartImage('https://images.unsplash.com/photo-1588196749597-9ff075ee6b5b?auto=format&fit=crop&q=80&w=600', const [Color(0xFF6366F1), Color(0xFF4F46E5)])),
+          Positioned.fill(child: Container(decoration: BoxDecoration(gradient: LinearGradient(colors: [const Color(0xFF6366F1).withOpacity(0.95), const Color(0xFF6366F1).withOpacity(0.4)], begin: Alignment.centerLeft, end: Alignment.centerRight)))),
+          
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Row(children: [
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                const Text('NEXT ONLINE SESSION', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900)),
+                const SizedBox(height: 8),
+                Text(event?.title ?? 'Strategic Sync Performance', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800, height: 1.4, shadows: [Shadow(blurRadius: 10, color: Colors.black45)])),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(10)),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    const Icon(TablerIcons.calendar_event, color: Colors.white, size: 16),
+                    const SizedBox(width: 8),
+                    Text(_formatDateTime(event?.startAt), style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w900)),
+                  ]),
+                ),
+                const Spacer(),
+                ElevatedButton.icon(
+                  onPressed: () {}, 
+                  icon: const Icon(TablerIcons.video, size: 14),
+                  label: const Text('JOIN ZOOM', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900)),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: const Color(0xFF6366F1), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8)),
+                ),
+              ])),
+            ]),
           ),
-        ])),
-        const SizedBox(width: 16),
-        Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle), child: const Icon(TablerIcons.brand_zoom, color: Colors.white, size: 32)),
-      ]),
+        ]),
+      ),
     );
   }
 
   Widget _buildPhysicalMeetingPanel() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: [Color(0xFFF97316), Color(0xFFEF4444)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+        color: const Color(0xFFF97316),
         borderRadius: BorderRadius.circular(18),
         boxShadow: [BoxShadow(color: const Color(0xFFF97316).withOpacity(0.2), blurRadius: 20, offset: const Offset(0, 10))],
       ),
-      child: Row(children: [
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('MONTHLY CHAPTER MEET', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
-          const SizedBox(height: 8),
-          const Text('In-Person Meeting (Galle Face)', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800, height: 1.4)),
-          const Spacer(),
-          ElevatedButton.icon(
-            onPressed: () {}, // Link to Map
-            icon: const Icon(TablerIcons.map_pin, size: 14),
-            label: const Text('GO TO LOCATION', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900)),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: const Color(0xFFF97316), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8)),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: Stack(children: [
+          Positioned.fill(child: _smartImage('https://picsum.photos/id/445/600/300', const [Color(0xFFF97316), Color(0xFFEA580C)])),
+          Positioned.fill(child: Container(decoration: BoxDecoration(gradient: LinearGradient(colors: [const Color(0xFFF97316).withOpacity(0.95), const Color(0xFFF97316).withOpacity(0.4)], begin: Alignment.centerLeft, end: Alignment.centerRight)))),
+          
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Row(children: [
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                const Text('CHAPTER MEETUP', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900)),
+                const SizedBox(height: 8),
+                const Text('Galle Face In-Person Chapter Meeting', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800, height: 1.4, shadows: [Shadow(blurRadius: 10, color: Colors.black45)])),
+                const Spacer(),
+                ElevatedButton.icon(
+                  onPressed: () {}, 
+                  icon: const Icon(TablerIcons.map_pin, size: 14),
+                  label: const Text('VIEW LOCATION', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900)),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: const Color(0xFFF97316), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8)),
+                ),
+              ])),
+            ]),
           ),
-        ])),
-        const SizedBox(width: 16),
-        Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle), child: const Icon(TablerIcons.building_community, color: Colors.white, size: 32)),
-      ]),
+        ]),
+      ),
     );
+  }
+
+  Widget _smartImage(String url, List<Color> fallbackColors) {
+    return Image.network(
+      url, 
+      fit: BoxFit.cover,
+      loadingBuilder: (context, child, progress) => progress == null ? child : Container(decoration: BoxDecoration(gradient: LinearGradient(colors: fallbackColors))),
+      errorBuilder: (context, error, stack) => Container(
+        decoration: BoxDecoration(gradient: LinearGradient(colors: fallbackColors, begin: Alignment.topLeft, end: Alignment.bottomRight)),
+        child: Center(child: Opacity(opacity: 0.1, child: Icon(TablerIcons.photo, size: 80, color: Colors.white))),
+      ),
+    );
+  }
+
+  String _formatDateTime(String? iso) {
+    if (iso == null) return 'Wednesday | 10:00 AM';
+    final parts = iso.split('T');
+    if (parts.length < 2) return iso;
+    return '${parts[0]}  |  ${parts[1].substring(0, 5)}';
   }
 
   Widget _buildErrorState() {
