@@ -11,6 +11,12 @@ async function apiFetch(path, options = {}) {
     },
   });
   if (!res.ok) {
+    if (res.status === 401) {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      window.location.href = '/';
+      return Promise.reject(new Error('Session expired'));
+    }
     const errorJson = await res.json().catch(() => ({}));
     throw new Error(`API ${res.status}: ${path} - ${errorJson.message || 'Unknown Error'} (${errorJson.code || 'NO_CODE'})`);
   }

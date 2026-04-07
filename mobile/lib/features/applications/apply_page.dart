@@ -50,11 +50,22 @@ class _ApplyPageState extends State<ApplyPage> {
       return;
     }
     setState(() => _submitting = true);
+    
+    String formattedPhone = _phoneCtrl.text.trim().replaceAll(' ', '');
+    // Standardize to Sri Lanka format +94XXXXXXXXX
+    if (formattedPhone.startsWith('0')) {
+      formattedPhone = '+94${formattedPhone.substring(1)}';
+    } else if (formattedPhone.startsWith('94')) {
+      formattedPhone = '+$formattedPhone';
+    } else if (!formattedPhone.startsWith('+') && formattedPhone.length == 9) {
+      formattedPhone = '+94$formattedPhone';
+    }
+
     try {
       await _service.submitApplication(
         fullName: _nameCtrl.text.trim(),
         businessName: _businessCtrl.text.trim(),
-        contactNumber: _phoneCtrl.text.trim(),
+        contactNumber: formattedPhone,
         email: _emailCtrl.text.trim(),
         district: _districtCtrl.text.trim(),
         industryCategoryId: _selectedCategory!.id,
