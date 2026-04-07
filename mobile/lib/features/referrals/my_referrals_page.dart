@@ -38,26 +38,29 @@ class _MyReferralsPageState extends State<MyReferralsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final title = widget.isReceived ? 'Received Referrals' : 'Sent Referrals';
+    final title = widget.isReceived ? 'Received Deals' : 'Sent Deals';
     
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.white)),
-        backgroundColor: AppColors.primary,
+        title: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.black)),
+        backgroundColor: Colors.white,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
+        centerTitle: true,
+        iconTheme: const IconThemeData(color: Colors.black),
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+          ? const Center(child: CircularProgressIndicator(color: Colors.black))
           : RefreshIndicator(
               onRefresh: _loadData,
+              color: Colors.black,
               child: _referrals.isEmpty
                   ? _buildEmptyState()
                   : ListView.builder(
                       padding: const EdgeInsets.all(20),
                       itemCount: _referrals.length,
                       itemBuilder: (context, i) => _buildCard(_referrals[i]),
+                      physics: const AlwaysScrollableScrollPhysics(),
                     ),
             ),
     );
@@ -66,11 +69,11 @@ class _MyReferralsPageState extends State<MyReferralsPage> {
   Widget _buildEmptyState() {
     return Center(
       child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-        Icon(TablerIcons.arrows_exchange, size: 64, color: Colors.grey.shade300),
+        Icon(TablerIcons.folder_off, size: 60, color: Colors.grey.shade300),
         const SizedBox(height: 16),
         Text(
-          widget.isReceived ? 'No referrals received yet' : 'No referrals sent yet',
-          style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.w600, fontSize: 16),
+          widget.isReceived ? 'No deals received yet' : 'No deals sent yet',
+          style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.w600, fontSize: 15),
         ),
       ]),
     );
@@ -79,90 +82,44 @@ class _MyReferralsPageState extends State<MyReferralsPage> {
   Widget _buildCard(Referral ref) {
     final color = _statusColor(ref.status);
     return Container(
-      margin: const EdgeInsets.only(bottom: 20),
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20, offset: const Offset(0, 8)),
-        ],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFF3F4F6), width: 1.5),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(24),
-          onTap: widget.isReceived ? () => _showStatusUpdate(ref) : null,
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => _showDetails(ref), // Always enable click to show details
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                 Expanded(
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(ref.leadName, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: AppColors.text)),
-                    const SizedBox(height: 4),
-                    Text(
-                      widget.isReceived ? 'Shared by ${ref.fromUser.fullName}' : 'Sent to ${ref.targetUser.fullName}',
-                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
-                    ),
-                  ]),
+                  child: Text(ref.leadName, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Colors.black), overflow: TextOverflow.ellipsis),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-                  child: Text(ref.statusLabel.toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: color, letterSpacing: 0.5)),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(20)),
+                  child: Text(ref.statusLabel.toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: color, letterSpacing: 0.5)),
                 ),
               ]),
-              const SizedBox(height: 16),
-              const Divider(height: 1),
-              const SizedBox(height: 16),
-              Row(children: [
-                Icon(TablerIcons.calendar_event, size: 14, color: Colors.grey.shade400),
-                const SizedBox(width: 8),
-                Text(_formatDate(ref.createdAt), style: TextStyle(fontSize: 12, color: Colors.grey.shade500, fontWeight: FontWeight.w500)),
-                const Spacer(),
-                if (widget.isReceived)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(color: AppColors.accent.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-                    child: const Row(children: [
-                      Icon(TablerIcons.edit, size: 12, color: AppColors.accent),
-                      SizedBox(width: 6),
-                      Text('UPDATE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.accent)),
-                    ]),
-                  ),
-              ]),
-              const SizedBox(height: 20),
-              if (ref.leadContact.isNotEmpty) _buildContactRow(TablerIcons.phone, ref.leadContact),
-              if (ref.leadEmail != null && ref.leadEmail!.isNotEmpty) ...[
-                if (ref.leadContact.isNotEmpty) const SizedBox(height: 10),
-                _buildContactRow(TablerIcons.mail, ref.leadEmail!),
-              ],
-              if (ref.description != null && ref.description!.isNotEmpty) ...[
-                const SizedBox(height: 20),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  width: double.infinity,
-                  decoration: BoxDecoration(color: AppColors.background.withOpacity(0.5), borderRadius: BorderRadius.circular(16)),
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    const Text('DESCRIPTION', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 0.8)),
-                    const SizedBox(height: 8),
-                    Text(ref.description!, style: const TextStyle(fontSize: 14, color: AppColors.text, height: 1.5)),
-                  ]),
+              const SizedBox(height: 8),
+              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                Text(
+                  widget.isReceived ? 'From ${ref.fromUser.fullName}' : 'To ${ref.targetUser.fullName}',
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey),
                 ),
-              ],
+                Text(_formatDate(ref.createdAt), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.grey)),
+              ]),
             ]),
           ),
         ),
       ),
     );
-  }
-
-  Widget _buildContactRow(IconData icon, String text) {
-    return Row(children: [
-      Icon(icon, size: 16, color: AppColors.primary.withOpacity(0.5)),
-      const SizedBox(width: 10),
-      Text(text, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.text)),
-    ]);
   }
 
   String _formatDate(String iso) {
@@ -173,13 +130,13 @@ class _MyReferralsPageState extends State<MyReferralsPage> {
     } catch (_) { return iso.split('T').first; }
   }
 
-  void _showStatusUpdate(Referral ref) {
+  void _showDetails(Referral ref) {
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       isScrollControlled: true,
       backgroundColor: Colors.white,
-      builder: (context) => _UpdateStatusSheet(referral: ref, onUpdate: _loadData),
+      builder: (context) => _ReferralDetailsSheet(referral: ref, isReceived: widget.isReceived, onUpdate: _loadData),
     );
   }
 
@@ -188,7 +145,7 @@ class _MyReferralsPageState extends State<MyReferralsPage> {
       case 'submitted': return Colors.blue;
       case 'contacted': return Colors.orange;
       case 'negotiation': return const Color(0xFF8B5CF6);
-      case 'in_progress': return AppColors.accent;
+      case 'in_progress': return Colors.black;
       case 'success': return Colors.green;
       case 'closed_lost': return Colors.red;
       default: return Colors.grey;
@@ -196,16 +153,17 @@ class _MyReferralsPageState extends State<MyReferralsPage> {
   }
 }
 
-class _UpdateStatusSheet extends StatefulWidget {
+class _ReferralDetailsSheet extends StatefulWidget {
   final Referral referral;
+  final bool isReceived;
   final VoidCallback onUpdate;
-  const _UpdateStatusSheet({required this.referral, required this.onUpdate});
+  const _ReferralDetailsSheet({required this.referral, required this.isReceived, required this.onUpdate});
 
   @override
-  State<_UpdateStatusSheet> createState() => _UpdateStatusSheetState();
+  State<_ReferralDetailsSheet> createState() => _ReferralDetailsSheetState();
 }
 
-class _UpdateStatusSheetState extends State<_UpdateStatusSheet> {
+class _ReferralDetailsSheetState extends State<_ReferralDetailsSheet> {
   final _service = ReferralService();
   final _descriptionController = TextEditingController();
   late String _selectedStatus;
@@ -247,46 +205,92 @@ class _UpdateStatusSheetState extends State<_UpdateStatusSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            const Text('Update Status', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.primary)),
+            Expanded(child: Text(widget.referral.leadName, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.black))),
             GestureDetector(
               onTap: () => Navigator.pop(context),
               child: Container(
                 padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(color: Colors.grey.shade100, shape: BoxShape.circle),
-                child: const Icon(TablerIcons.x, size: 20, color: Colors.grey),
+                decoration: BoxDecoration(color: const Color(0xFFF3F4F6), shape: BoxShape.circle),
+                child: const Icon(TablerIcons.x, size: 20, color: Colors.black),
               ),
             ),
           ]),
-          const SizedBox(height: 8),
-          Text('Lead: ${widget.referral.leadName}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
-          const SizedBox(height: 32),
-          const Text('CURRENT PROGRESS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1.5)),
-          const SizedBox(height: 16),
-          _buildStatusGrid(),
-          const SizedBox(height: 32),
-          const Text('STATUS NOTES', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1.5)),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _descriptionController,
-            maxLines: 3,
-            decoration: InputDecoration(
-              hintText: 'Add an update...',
-              filled: true, fillColor: AppColors.background.withOpacity(0.5),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.grey.shade200)),
-              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppColors.primary, width: 2)),
+          const SizedBox(height: 24),
+          
+          // Contact Details
+          _buildInfoRow(TablerIcons.phone, widget.referral.leadContact),
+          if (widget.referral.leadEmail != null && widget.referral.leadEmail!.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            _buildInfoRow(TablerIcons.mail, widget.referral.leadEmail!),
+          ],
+          
+          if (widget.referral.description != null && widget.referral.description!.isNotEmpty) ...[
+             const SizedBox(height: 24),
+             Container(
+               padding: const EdgeInsets.all(16),
+               width: double.infinity,
+               decoration: BoxDecoration(color: const Color(0xFFF9FAFB), borderRadius: BorderRadius.circular(16)),
+               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                 const Text('DESCRIPTION', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.grey, letterSpacing: 1.0)),
+                 const SizedBox(height: 8),
+                 Text(widget.referral.description!, style: const TextStyle(fontSize: 14, color: Colors.black, height: 1.5)),
+               ]),
+             ),
+          ],
+          
+          if (widget.isReceived) ...[
+            const SizedBox(height: 32),
+            const Divider(color: Color(0xFFF3F4F6)),
+            const SizedBox(height: 24),
+            const Text('UPDATE STATUS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.grey, letterSpacing: 1.5)),
+            const SizedBox(height: 16),
+            _buildStatusGrid(),
+            const SizedBox(height: 24),
+            TextField(
+              controller: _descriptionController,
+              maxLines: 2,
+              style: const TextStyle(fontSize: 14, color: Colors.black, fontWeight: FontWeight.w600),
+              decoration: InputDecoration(
+                hintText: 'Add an update note...',
+                hintStyle: const TextStyle(color: Colors.grey),
+                filled: true, fillColor: const Color(0xFFF9FAFB),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Colors.black, width: 2)),
+              ),
             ),
-          ),
-          const SizedBox(height: 32),
-          CustomButton(text: 'UPDATE STATUS', onPressed: _submit, isLoading: _loading, backgroundColor: AppColors.primary),
+            const SizedBox(height: 32),
+            GestureDetector(
+              onTap: _submit,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                decoration: BoxDecoration(color: Colors.black, borderRadius: BorderRadius.circular(30)),
+                child: Center(
+                  child: _loading 
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : const Text('Update Status', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15)),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
 
+  Widget _buildInfoRow(IconData icon, String text) {
+    return Row(children: [
+      Icon(icon, size: 18, color: Colors.grey),
+      const SizedBox(width: 12),
+      Text(text, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.black)),
+    ]);
+  }
+
   Widget _buildStatusGrid() {
     return Wrap(
-      spacing: 12, runSpacing: 12,
+      spacing: 8, runSpacing: 8,
       children: _statuses.map((s) {
         final isSelected = _selectedStatus == s['value'];
         return GestureDetector(
@@ -295,11 +299,11 @@ class _UpdateStatusSheetState extends State<_UpdateStatusSheet> {
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: isSelected ? AppColors.primary : Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: isSelected ? AppColors.primary : Colors.grey.shade200, width: 2),
+              color: isSelected ? Colors.black : Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: isSelected ? Colors.black : Colors.grey.shade300, width: 1.5),
             ),
-            child: Text(s['label']!, style: TextStyle(color: isSelected ? Colors.white : AppColors.text, fontWeight: FontWeight.w800, fontSize: 13)),
+            child: Text(s['label']!, style: TextStyle(color: isSelected ? Colors.white : Colors.black, fontWeight: FontWeight.w700, fontSize: 13)),
           ),
         );
       }).toList(),

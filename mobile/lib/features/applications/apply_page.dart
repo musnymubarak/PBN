@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
-import 'dart:ui';
 import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/services/application_service.dart';
 import 'package:pbn/core/widgets/custom_button.dart';
@@ -87,7 +86,7 @@ class _ApplyPageState extends State<ApplyPage> {
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -119,95 +118,59 @@ class _ApplyPageState extends State<ApplyPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          // ── Background Image with Scrim ──────────────────────────
-          Positioned.fill(
-            child: Image.network(
-              'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&q=80&w=1200',
-              fit: BoxFit.cover,
-              errorBuilder: (c, e, s) => Container(color: const Color(0xFF0F172A)),
-            ),
-          ),
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.black.withOpacity(0.9), const Color(0xFF0F172A).withOpacity(0.75), Colors.black.withOpacity(0.95)],
-                  begin: Alignment.topCenter, end: Alignment.bottomCenter,
-                ),
-              ),
-            ),
-          ),
-
-          // ── Content ──────────────────────────────
-          SafeArea(
-            child: Column(
-              children: [
-                // ── Top Header ──
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        onPressed: () => Navigator.pop(context),
-                        icon: const Icon(TablerIcons.arrow_left, color: Colors.white, size: 24),
-                      ),
-                      const SizedBox(width: 12),
-                      const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('BECOME A MEMBER', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 2)),
-                          Text('PBN Application', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
-                        ],
-                      ),
-                    ],
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        toolbarHeight: 80,
+        title: const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('BECOME A MEMBER', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 2)),
+            Text('PBN Application', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.text, letterSpacing: -0.5)),
+          ],
+        ),
+      ),
+      body: _loadingCategories 
+        ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+        : Column(
+            children: [
+              _buildProgressIndicator(),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.03),
+                          blurRadius: 30,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      child: _currentStep == 0 ? _buildBusinessStep() : _buildPersonalStep(),
+                    ),
                   ),
                 ),
-                
-                _buildProgressIndicator(),
-
-                Expanded(
-                  child: _loadingCategories 
-                    ? const Center(child: CircularProgressIndicator(color: Color(0xFFF59E0B)))
-                    : SingleChildScrollView(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(24),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                            child: Container(
-                              padding: const EdgeInsets.all(32),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.05),
-                                borderRadius: BorderRadius.circular(24),
-                                border: Border.all(color: Colors.white.withOpacity(0.1)),
-                              ),
-                              child: AnimatedSwitcher(
-                                duration: const Duration(milliseconds: 400),
-                                child: _currentStep == 0 ? _buildBusinessStep() : _buildPersonalStep(),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
   Widget _buildProgressIndicator() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
       child: Row(
         children: [
           _stepDot(0, 'Business'),
-          Expanded(child: Container(height: 2, color: _currentStep > 0 ? const Color(0xFFF59E0B) : Colors.white.withOpacity(0.1))),
+          Expanded(child: Container(height: 2, color: _currentStep > 0 ? AppColors.primary : Colors.grey.shade200)),
           _stepDot(1, 'Personal'),
         ],
       ),
@@ -217,26 +180,25 @@ class _ApplyPageState extends State<ApplyPage> {
   Widget _stepDot(int index, String label) {
     bool active = _currentStep == index;
     bool completed = _currentStep > index;
-    final themeColor = const Color(0xFFF59E0B);
-    
     return Column(
       children: [
-        Container(
-          width: 36, height: 36,
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          width: 38, height: 38,
           decoration: BoxDecoration(
-            color: active || completed ? themeColor : Colors.white.withOpacity(0.05),
-            shape: BoxShape.circle,
-            border: Border.all(color: active || completed ? themeColor : Colors.white.withOpacity(0.1), width: 2),
-            boxShadow: active ? [BoxShadow(color: themeColor.withOpacity(0.3), blurRadius: 15)] : null,
+            color: active || completed ? AppColors.primary : Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: active || completed ? AppColors.primary : Colors.grey.shade200, width: 1.5),
+            boxShadow: active ? [BoxShadow(color: AppColors.primary.withOpacity(0.25), blurRadius: 15, offset: const Offset(0, 8))] : null,
           ),
           child: Center(
             child: completed 
-              ? const Icon(TablerIcons.check, size: 18, color: Colors.black)
-              : Text('${index + 1}', style: TextStyle(color: active ? Colors.black : Colors.white38, fontWeight: FontWeight.w900, fontSize: 13)),
+              ? const Icon(TablerIcons.check, size: 18, color: Colors.white)
+              : Text('${index + 1}', style: TextStyle(color: active ? Colors.white : Colors.grey.shade400, fontWeight: FontWeight.w900, fontSize: 13)),
           ),
         ),
         const SizedBox(height: 10),
-        Text(label, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: active ? themeColor : Colors.white38, letterSpacing: 0.5)),
+        Text(label.toUpperCase(), style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w900, color: active ? AppColors.primary : Colors.grey.shade400, letterSpacing: 1.2)),
       ],
     );
   }
@@ -246,22 +208,17 @@ class _ApplyPageState extends State<ApplyPage> {
       key: const ValueKey(0),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Step 1 of 2', style: TextStyle(color: Color(0xFFF59E0B), fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1)),
-        const SizedBox(height: 8),
-        const Text('Business Intelligence', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
-        const SizedBox(height: 12),
-        Text('Tell us about your company to match you with the right network chapter.', 
-          style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 13, height: 1.5)),
-        const SizedBox(height: 40),
+        _instruction('Tell us about your business to help us find the right chapter.'),
+        const SizedBox(height: 32),
         _modernField(_businessCtrl, 'Company Name', TablerIcons.building),
-        const SizedBox(height: 24),
+        const SizedBox(height: 20),
         _modernField(_districtCtrl, 'Working District', TablerIcons.map_pin),
-        const SizedBox(height: 24),
-        const Text('INDUSTRY SECTOR', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.white38, letterSpacing: 1.5)),
-        const SizedBox(height: 10),
+        const SizedBox(height: 20),
+        const Text('INDUSTRY', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1.5)),
+        const SizedBox(height: 8),
         _industryDropdown(),
         const SizedBox(height: 48),
-        CustomButton(text: 'CONTINUE TO PERSONAL', onPressed: () => setState(() => _currentStep = 1)),
+        CustomButton(text: 'CONTINUE', onPressed: () => setState(() => _currentStep = 1), backgroundColor: AppColors.primary),
       ],
     );
   }
@@ -271,18 +228,13 @@ class _ApplyPageState extends State<ApplyPage> {
       key: const ValueKey(1),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Step 2 of 2', style: TextStyle(color: Color(0xFFF59E0B), fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1)),
-        const SizedBox(height: 8),
-        const Text('Lead Representative', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
-        const SizedBox(height: 12),
-        Text('Provide your primary contact details for our membership review board.', 
-          style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 13, height: 1.5)),
-        const SizedBox(height: 40),
+        _instruction('How should we reach out to you once reviewed?'),
+        const SizedBox(height: 32),
         _modernField(_nameCtrl, 'Full Name', TablerIcons.user),
-        const SizedBox(height: 24),
+        const SizedBox(height: 20),
         _modernField(_emailCtrl, 'Email Address', TablerIcons.mail, keyboardType: TextInputType.emailAddress),
-        const SizedBox(height: 24),
-        _modernField(_phoneCtrl, 'Direct Contact', TablerIcons.phone, keyboardType: TextInputType.phone),
+        const SizedBox(height: 20),
+        _modernField(_phoneCtrl, 'Contact Number', TablerIcons.phone, keyboardType: TextInputType.phone),
         const SizedBox(height: 48),
         Row(
           children: [
@@ -290,38 +242,54 @@ class _ApplyPageState extends State<ApplyPage> {
               onPressed: () => setState(() => _currentStep = 0),
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 18),
-                side: BorderSide(color: Colors.white.withOpacity(0.1)),
+                side: BorderSide(color: Colors.grey.shade200),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               ),
-              child: const Text('BACK', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.white38)),
+              child: const Text('BACK', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: AppColors.textSecondary)),
             )),
             const SizedBox(width: 16),
-            Expanded(flex: 2, child: CustomButton(text: 'SUBMIT APPLICATION', onPressed: _submit, isLoading: _submitting)),
+            Expanded(flex: 2, child: CustomButton(text: 'SUBMIT APPLICATION', onPressed: _submit, isLoading: _submitting, backgroundColor: AppColors.primary)),
           ],
         ),
       ],
     );
   }
 
-  Widget _modernField(TextEditingController c, String label, IconData icon, {TextInputType? keyboardType}) {
+  Widget _instruction(String text) {
+    return Text(text, style: TextStyle(fontSize: 14, color: AppColors.textSecondary, fontWeight: FontWeight.w500, height: 1.5));
+  }
+
+  Widget _modernField(TextEditingController c, String hint, IconData icon, {TextInputType? keyboardType}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label.toUpperCase(), style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.white38, letterSpacing: 1.5)),
+        Row(
+          children: [
+            Text(hint.toUpperCase(), style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1.5)),
+            const SizedBox(width: 8),
+            Expanded(child: Container(height: 1, color: Colors.grey.shade100)),
+          ],
+        ),
         const SizedBox(height: 10),
-        TextField(
-          controller: c,
-          keyboardType: keyboardType,
-          style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
-          decoration: InputDecoration(
-            hintText: 'Enter $label...',
-            hintStyle: TextStyle(color: Colors.white.withOpacity(0.2)),
-            prefixIcon: Icon(icon, size: 20, color: Colors.white38),
-            filled: true,
-            fillColor: Colors.white.withOpacity(0.05),
-            contentPadding: const EdgeInsets.all(20),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: Colors.white.withOpacity(0.05))),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFF59E0B), width: 1)),
+        Container(
+          decoration: BoxDecoration(
+            boxShadow: [
+              BoxShadow(color: Colors.black.withOpacity(0.01), blurRadius: 20, offset: const Offset(0, 10)),
+            ],
+          ),
+          child: TextField(
+            controller: c,
+            keyboardType: keyboardType,
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+            decoration: InputDecoration(
+              hintText: 'Enter $hint...',
+              prefixIcon: Icon(icon, size: 20, color: AppColors.primary),
+              filled: true,
+              fillColor: const Color(0xFFF8FAFC),
+              contentPadding: const EdgeInsets.all(20),
+              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: Colors.grey.shade100)),
+              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.primary, width: 1)),
+            ),
           ),
         ),
       ],
@@ -332,22 +300,20 @@ class _ApplyPageState extends State<ApplyPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
+        color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        border: Border.all(color: Colors.grey.shade100),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<IndustryCategory>(
           value: _selectedCategory,
-          dropdownColor: const Color(0xFF1E293B),
-          hint: Text('Select your industry...', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white.withOpacity(0.3))),
+          hint: const Text('Select your industry...', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
           isExpanded: true,
-          icon: const Icon(TablerIcons.chevron_down, size: 18, color: Colors.white38),
-          items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white)))).toList(),
+          icon: const Icon(TablerIcons.chevron_down, size: 18),
+          items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)))).toList(),
           onChanged: (c) => setState(() => _selectedCategory = c),
         ),
       ),
     );
   }
 }
-

@@ -92,116 +92,86 @@ class _CreateReferralPageState extends State<CreateReferralPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Submit Referral', style: TextStyle(fontWeight: FontWeight.w800, color: Colors.white)),
-        backgroundColor: AppColors.primary,
+        title: const Text('New Deal', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.black)),
+        backgroundColor: Colors.white,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
+        centerTitle: true,
+        iconTheme: const IconThemeData(color: Colors.black),
       ),
       body: _loadingMembers 
-        ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+        ? const Center(child: CircularProgressIndicator(color: Colors.black))
         : SingleChildScrollView(
-            child: Column(children: [
-              _buildHeader(),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  _buildSectionCard(
-                    title: 'TARGET MEMBER',
-                    icon: TablerIcons.users,
-                    child: _buildMemberDropdown(),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                const Text('Generate high-quality business opportunities for your fellow members.', style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500, height: 1.5)),
+                const SizedBox(height: 32),
+                
+                _buildSectionLabel('Target recipient'),
+                _buildMemberDropdown(),
+                
+                const SizedBox(height: 32),
+                _buildSectionLabel('Lead contact info'),
+                _inputField(_leadNameController, 'Lead Full Name', TablerIcons.user),
+                const SizedBox(height: 12),
+                _inputField(_leadContactController, 'Phone Number', TablerIcons.phone, keyboardType: TextInputType.phone),
+                const SizedBox(height: 12),
+                _inputField(_leadEmailController, 'Email Address (Optional)', TablerIcons.mail, keyboardType: TextInputType.emailAddress),
+                
+                const SizedBox(height: 32),
+                _buildSectionLabel('Deal details'),
+                _inputField(_descriptionController, 'Explain how the recipient can help this lead...', null, maxLines: 5),
+                
+                const SizedBox(height: 48),
+                GestureDetector(
+                  onTap: _submit,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    decoration: BoxDecoration(
+                      color: Colors.black,
+                      borderRadius: BorderRadius.circular(30),
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 15, offset: const Offset(0, 8))],
+                    ),
+                    child: Center(
+                      child: _loading 
+                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        : const Text('Submit Deal', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15)),
+                    ),
                   ),
-                  const SizedBox(height: 20),
-                  _buildSectionCard(
-                    title: 'LEAD DETAILS',
-                    icon: TablerIcons.user_plus,
-                    child: Column(children: [
-                      _inputField(_leadNameController, 'Full Name', TablerIcons.user),
-                      const SizedBox(height: 16),
-                      _inputField(_leadContactController, 'Phone Number', TablerIcons.phone, keyboardType: TextInputType.phone),
-                      const SizedBox(height: 16),
-                      _inputField(_leadEmailController, 'Email Address', TablerIcons.mail, keyboardType: TextInputType.emailAddress),
-                    ]),
-                  ),
-                  const SizedBox(height: 20),
-                  _buildSectionCard(
-                    title: 'REFERRAL DESCRIPTION',
-                    icon: TablerIcons.notes,
-                    child: _inputField(_descriptionController, 'Explain how the member can help this lead...', null, maxLines: 5),
-                  ),
-                  const SizedBox(height: 32),
-                  CustomButton(
-                    text: 'SUBMIT REFERRAL', 
-                    onPressed: _submit, 
-                    isLoading: _loading,
-                    backgroundColor: AppColors.accent,
-                    textColor: AppColors.primary,
-                  ),
-                  const SizedBox(height: 20),
-                ]),
-              ),
-            ]),
+                ),
+                const SizedBox(height: 40),
+              ]),
+            ),
           ),
     );
   }
 
-  Widget _buildHeader() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 30),
-      decoration: const BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30),
-        ),
-      ),
-      child: const Text(
-        'Generate more business for your fellow chapter members.',
-        style: TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w500),
-      ),
-    );
-  }
-
-  Widget _buildSectionCard({required String title, required IconData icon, required Widget child}) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
-      ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          Icon(icon, size: 18, color: AppColors.primary.withOpacity(0.5)),
-          const SizedBox(width: 8),
-          Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textSecondary, letterSpacing: 1)),
-        ]),
-        const Divider(height: 30),
-        child,
-      ]),
+  Widget _buildSectionLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Text(text, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Colors.black)),
     );
   }
 
   Widget _buildMemberDropdown() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.background.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<Member>(
           value: _selectedMember,
-          hint: const Text('Choose a person...', style: TextStyle(fontSize: 14)),
+          hint: const Text('Choose a recipient...', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.grey)),
           isExpanded: true,
+          icon: const Icon(TablerIcons.chevron_down, size: 20, color: Colors.black),
           items: _members.map((m) => DropdownMenuItem(
             value: m, 
-            child: Text('${m.fullName} (${m.industry})', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600))
+            child: Text('${m.fullName} (${m.industry})', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.black))
           )).toList(),
           onChanged: (m) => setState(() => _selectedMember = m),
         ),
@@ -214,17 +184,17 @@ class _CreateReferralPageState extends State<CreateReferralPage> {
       controller: controller,
       keyboardType: keyboardType,
       maxLines: maxLines,
-      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.black),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-        prefixIcon: icon != null ? Icon(icon, size: 20, color: AppColors.primary.withOpacity(0.4)) : null,
+        hintStyle: const TextStyle(color: Colors.grey, fontSize: 14, fontWeight: FontWeight.w600),
+        prefixIcon: icon != null ? Icon(icon, size: 20, color: Colors.grey) : null,
         filled: true,
-        fillColor: AppColors.background.withOpacity(0.5),
-        contentPadding: const EdgeInsets.all(16),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade200)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade200)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
+        fillColor: const Color(0xFFF9FAFB),
+        contentPadding: const EdgeInsets.all(20),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Colors.black, width: 2)),
       ),
     );
   }
