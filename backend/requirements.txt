@@ -26,3 +26,4 @@ python-multipart==0.0.20
 python-dotenv==1.1.0
 orjson==3.10.16
 firebase-admin==6.6.0
+jinja2==3.1.6

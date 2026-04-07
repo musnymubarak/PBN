@@ -1,24 +1,39 @@
 """
 Prime Business Network – Rewards Router.
+
+Includes:
+- Privilege card management
+- Partner/Offer CRUD
+- QR Code redemption flow (initiate → verify → confirm)
+- Coupon code generation for online purchases
+- Verification web page (public, served via Jinja2)
 """
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import ORJSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_db
 from app.core.response import success_response
 from app.features.auth.dependencies import get_current_user, require_role
-from app.features.rewards.schemas import PartnerCreate, OfferCreate
+from app.features.rewards.schemas import (
+    PartnerCreate, OfferCreate, ConfirmRedemptionRequest
+)
 from app.features.rewards.service import (
+    check_redemption_status,
+    confirm_redemption,
     create_offer,
     create_partner,
+    generate_coupon,
     get_my_card,
+    get_verification_data,
+    initiate_redeem,
     list_partners,
     redeem_offer,
 )
@@ -27,8 +42,15 @@ from app.models.user import User, UserRole
 
 router = APIRouter(tags=["Rewards"])
 
+# Template directory is at backend/templates/
+# Removed Jinja templates
+
 admin_req = require_role([UserRole.CHAPTER_ADMIN, UserRole.SUPER_ADMIN])
 member_req = require_role([UserRole.MEMBER, UserRole.CHAPTER_ADMIN, UserRole.SUPER_ADMIN])
+partner_req = require_role([UserRole.PARTNER_ADMIN, UserRole.SUPER_ADMIN])
+
+
+# ── Privilege Card ──────────────────────────────────────────
 
 
 @router.get("/rewards/my-card", summary="Get my active privilege card")
@@ -40,6 +62,9 @@ async def my_card_endpoint(
     return success_response(data=card)
 
 
+# ── Partners & Offers ───────────────────────────────────────
+
+
 @router.get("/rewards/partners", summary="List partner businesses and their offers")
 async def list_partners_endpoint(
     active_only: bool = Query(True, description="Only show active partners"),
@@ -48,8 +73,8 @@ async def list_partners_endpoint(
 ) -> ORJSONResponse:
     if current_user.role not in (UserRole.CHAPTER_ADMIN, UserRole.SUPER_ADMIN):
         active_only = True
-        
-    partners = await list_partners(active_only, db)
+
+    partners = await list_partners(active_only, db, user_id=current_user.id)
     return success_response(data=partners)
 
 
@@ -74,7 +99,10 @@ async def create_offer_endpoint(
     return success_response(data=offer, message="Offer created successfully", status_code=201)
 
 
-@router.post("/rewards/offers/{offer_id}/redeem", summary="Redeem an offer", status_code=200)
+# ── Legacy Direct Redeem (backward compatibility) ───────────
+
+
+@router.post("/rewards/offers/{offer_id}/redeem", summary="Redeem an offer (legacy)", status_code=200)
 async def redeem_offer_endpoint(
     offer_id: UUID,
     current_user: User = Depends(member_req),
@@ -82,3 +110,93 @@ async def redeem_offer_endpoint(
 ) -> ORJSONResponse:
     redemption = await redeem_offer(offer_id, current_user.id, db)
     return success_response(data=redemption, message="Offer redeemed successfully")
+
+
+# ── QR Code Redemption Flow ─────────────────────────────────
+
+
+@router.post("/rewards/offers/{offer_id}/initiate-redeem", summary="Start QR redemption flow")
+async def initiate_redeem_endpoint(
+    offer_id: UUID,
+    current_user: User = Depends(member_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    result = await initiate_redeem(offer_id, current_user.id, db)
+    return success_response(data=result, message="QR code generated. Show it to the partner.")
+
+
+@router.get("/rewards/redemptions/status/{token}", summary="Check QR redemption status (polling)")
+async def redemption_status_endpoint(
+    token: str,
+    current_user: User = Depends(member_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    status = await check_redemption_status(token, db)
+    return success_response(data=status)
+
+
+# ── Coupon Code (Online Purchases) ──────────────────────────
+
+
+@router.post("/rewards/offers/{offer_id}/generate-coupon", summary="Generate coupon for online offer")
+async def generate_coupon_endpoint(
+    offer_id: UUID,
+    current_user: User = Depends(member_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    coupon = await generate_coupon(offer_id, current_user.id, db)
+    return success_response(data=coupon, message="Coupon code generated successfully")
+
+
+# ── Partner Portal (Mobile Dashboard) ───────────────────────
+
+from sqlalchemy import select as _select
+from app.models.privilege_cards import Partner as _Partner
+from app.core.exceptions import NotFoundException as _NotFoundExc
+from app.features.rewards import service as _rewards_svc
+from app.features.rewards import schemas as _rewards_schemas
+
+
+@router.get("/rewards/partner/dashboard", summary="Get partner dashboard stats")
+async def partner_dashboard_endpoint(
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(partner_req),
+) -> ORJSONResponse:
+    stmt = _select(_Partner).where(_Partner.admin_id == user.id)
+    partner = (await db.execute(stmt)).scalar_one_or_none()
+    if not partner:
+        raise _NotFoundExc("You are not assigned to any partner profile.")
+
+    stats = await _rewards_svc.get_partner_dashboard(partner.id, db)
+    return success_response(data=stats)
+
+
+
+@router.get("/rewards/partner/redemptions", summary="Get partner redemptions log")
+async def partner_redemptions_endpoint(
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(partner_req),
+) -> ORJSONResponse:
+    stmt = _select(_Partner).where(_Partner.admin_id == user.id)
+    partner = (await db.execute(stmt)).scalar_one_or_none()
+    if not partner:
+        raise _NotFoundExc("You are not assigned to any partner profile.")
+
+    data = await _rewards_svc.get_partner_redemptions(partner.id, db)
+    return success_response(data=data)
+
+
+@router.post("/rewards/partner/scan", summary="Scan and confirm user QR code")
+async def partner_scan_endpoint(
+    body: _rewards_schemas.PartnerScanRequest,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(partner_req),
+) -> ORJSONResponse:
+    stmt = _select(_Partner).where(_Partner.admin_id == user.id)
+    partner = (await db.execute(stmt)).scalar_one_or_none()
+    if not partner:
+        raise _NotFoundExc("You are not assigned to any partner profile.")
+
+    result = await _rewards_svc.partner_scan_token(body.token, partner.id, db)
+    return success_response(data=result, message="QR Code scanned successfully!")
+

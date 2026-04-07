@@ -24,6 +24,7 @@ from jose import JWTError, jwt
 from redis.asyncio import Redis
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from passlib.context import CryptContext
 
 from app.core.config import get_settings
 from app.core.exceptions import (
@@ -301,10 +302,14 @@ async def get_user_by_id(user_id: UUID, db: AsyncSession) -> User | None:
     return await _get_user_by_id(user_id, db)
 
 
-# ── Unified Login ────────────────────────────────────────────────────────────
+# ── Password Hashing ─────────────────────────────────────────────────────────
 
-from passlib.context import CryptContext
-pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def hash_password(password: str) -> str:
+    return pwd_context.hash(password)
+
+# ── Unified Login ────────────────────────────────────────────────────────────
 
 
 async def login(
@@ -322,8 +327,9 @@ async def login(
             User.email == identifier,
         )
     )
+    # Use .first() because multiple users may share the same email
     result = await db.execute(query)
-    user = result.scalar_one_or_none()
+    user = result.scalars().first()
 
     if not user:
         logger.warning("❌ Login failed: User not found for '%s'", identifier)
@@ -343,9 +349,13 @@ async def login(
         )
 
     # Verify password
-    is_correct = pwd_ctx.verify(password, user.password_hash)
-    logger.info("🔐 Password verification for '%s': %s", identifier, "SUCCESS" if is_correct else "FAILED")
-    if not is_correct:
+    try:
+        if not pwd_context.verify(password, user.password_hash):
+            raise UnauthorizedException(
+                message="Invalid credentials.", code="INVALID_CREDENTIALS"
+            )
+    except Exception as e:
+        logger.error(f"Password verification error: {e}")
         raise UnauthorizedException(
             message="Invalid credentials.", code="INVALID_CREDENTIALS"
         )

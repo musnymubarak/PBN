@@ -25,7 +25,11 @@ class _SplashPageState extends State<SplashPage> {
     if (!mounted) return;
 
     if (auth.isLoggedIn) {
-      Navigator.pushReplacementNamed(context, '/dashboard');
+      if (auth.user?.role == 'PARTNER_ADMIN') {
+        Navigator.pushReplacementNamed(context, '/partner_dashboard');
+      } else {
+        Navigator.pushReplacementNamed(context, '/dashboard');
+      }
     } else {
       Navigator.pushReplacementNamed(context, '/login');
     }
