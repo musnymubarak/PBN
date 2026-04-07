@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict knntWpzktnDbhKEcaJGFIk1G8gFhH8wXanexSNbhnCNfaRAQkS18kg3Ojf74nIj
+\restrict wuWT9WIv78ISxeY9IgDpGOa5O2VvnzNhBuDHwbKXGE9ZVVoWcmoiOFeZLHiYrq5
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.1
@@ -19,6 +19,149 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
+ALTER TABLE IF EXISTS ONLY public.referrals DROP CONSTRAINT IF EXISTS referrals_to_member_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.referrals DROP CONSTRAINT IF EXISTS referrals_from_member_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.referral_status_history DROP CONSTRAINT IF EXISTS referral_status_history_referral_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.referral_status_history DROP CONSTRAINT IF EXISTS referral_status_history_changed_by_fkey;
+ALTER TABLE IF EXISTS ONLY public.redemption_tokens DROP CONSTRAINT IF EXISTS redemption_tokens_user_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.redemption_tokens DROP CONSTRAINT IF EXISTS redemption_tokens_offer_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.privilege_cards DROP CONSTRAINT IF EXISTS privilege_cards_user_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.payments DROP CONSTRAINT IF EXISTS payments_user_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.partners DROP CONSTRAINT IF EXISTS partners_admin_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.offers DROP CONSTRAINT IF EXISTS offers_partner_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.offer_redemptions DROP CONSTRAINT IF EXISTS offer_redemptions_user_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.offer_redemptions DROP CONSTRAINT IF EXISTS offer_redemptions_redemption_token_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.offer_redemptions DROP CONSTRAINT IF EXISTS offer_redemptions_offer_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.notifications DROP CONSTRAINT IF EXISTS notifications_user_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.events DROP CONSTRAINT IF EXISTS events_chapter_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.event_rsvps DROP CONSTRAINT IF EXISTS event_rsvps_user_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.event_rsvps DROP CONSTRAINT IF EXISTS event_rsvps_event_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.event_attendance DROP CONSTRAINT IF EXISTS event_attendance_user_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.event_attendance DROP CONSTRAINT IF EXISTS event_attendance_marked_by_fkey;
+ALTER TABLE IF EXISTS ONLY public.event_attendance DROP CONSTRAINT IF EXISTS event_attendance_event_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.coupon_codes DROP CONSTRAINT IF EXISTS coupon_codes_user_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.coupon_codes DROP CONSTRAINT IF EXISTS coupon_codes_offer_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.chapter_memberships DROP CONSTRAINT IF EXISTS chapter_memberships_user_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.chapter_memberships DROP CONSTRAINT IF EXISTS chapter_memberships_industry_category_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.chapter_memberships DROP CONSTRAINT IF EXISTS chapter_memberships_chapter_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.businesses DROP CONSTRAINT IF EXISTS businesses_owner_user_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.businesses DROP CONSTRAINT IF EXISTS businesses_industry_category_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.audit_logs DROP CONSTRAINT IF EXISTS audit_logs_actor_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.applications DROP CONSTRAINT IF EXISTS applications_industry_category_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.application_status_history DROP CONSTRAINT IF EXISTS application_status_history_changed_by_user_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.application_status_history DROP CONSTRAINT IF EXISTS application_status_history_application_id_fkey;
+DROP INDEX IF EXISTS public.ix_users_phone_number;
+DROP INDEX IF EXISTS public.ix_users_id;
+DROP INDEX IF EXISTS public.ix_referrals_to_member_id;
+DROP INDEX IF EXISTS public.ix_referrals_id;
+DROP INDEX IF EXISTS public.ix_referrals_from_member_id;
+DROP INDEX IF EXISTS public.ix_referral_status_history_referral_id;
+DROP INDEX IF EXISTS public.ix_referral_status_history_id;
+DROP INDEX IF EXISTS public.ix_redemption_tokens_user_id;
+DROP INDEX IF EXISTS public.ix_redemption_tokens_token;
+DROP INDEX IF EXISTS public.ix_redemption_tokens_offer_id;
+DROP INDEX IF EXISTS public.ix_redemption_tokens_id;
+DROP INDEX IF EXISTS public.ix_privilege_cards_id;
+DROP INDEX IF EXISTS public.ix_privilege_cards_card_number;
+DROP INDEX IF EXISTS public.ix_payments_user_id;
+DROP INDEX IF EXISTS public.ix_payments_id;
+DROP INDEX IF EXISTS public.ix_partners_id;
+DROP INDEX IF EXISTS public.ix_partners_admin_id;
+DROP INDEX IF EXISTS public.ix_offers_partner_id;
+DROP INDEX IF EXISTS public.ix_offers_id;
+DROP INDEX IF EXISTS public.ix_offer_redemptions_user_id;
+DROP INDEX IF EXISTS public.ix_offer_redemptions_offer_id;
+DROP INDEX IF EXISTS public.ix_offer_redemptions_id;
+DROP INDEX IF EXISTS public.ix_notifications_user_id;
+DROP INDEX IF EXISTS public.ix_notifications_id;
+DROP INDEX IF EXISTS public.ix_industry_categories_slug;
+DROP INDEX IF EXISTS public.ix_industry_categories_id;
+DROP INDEX IF EXISTS public.ix_events_id;
+DROP INDEX IF EXISTS public.ix_events_chapter_id;
+DROP INDEX IF EXISTS public.ix_event_rsvps_user_id;
+DROP INDEX IF EXISTS public.ix_event_rsvps_id;
+DROP INDEX IF EXISTS public.ix_event_rsvps_event_id;
+DROP INDEX IF EXISTS public.ix_event_attendance_user_id;
+DROP INDEX IF EXISTS public.ix_event_attendance_id;
+DROP INDEX IF EXISTS public.ix_event_attendance_event_id;
+DROP INDEX IF EXISTS public.ix_coupon_codes_user_id;
+DROP INDEX IF EXISTS public.ix_coupon_codes_offer_id;
+DROP INDEX IF EXISTS public.ix_coupon_codes_id;
+DROP INDEX IF EXISTS public.ix_coupon_codes_code;
+DROP INDEX IF EXISTS public.ix_chapters_id;
+DROP INDEX IF EXISTS public.ix_chapter_memberships_user_id;
+DROP INDEX IF EXISTS public.ix_chapter_memberships_id;
+DROP INDEX IF EXISTS public.ix_chapter_memberships_chapter_id;
+DROP INDEX IF EXISTS public.ix_businesses_owner_user_id;
+DROP INDEX IF EXISTS public.ix_businesses_id;
+DROP INDEX IF EXISTS public.ix_audit_logs_id;
+DROP INDEX IF EXISTS public.ix_audit_logs_entity_type;
+DROP INDEX IF EXISTS public.ix_audit_logs_actor_id;
+DROP INDEX IF EXISTS public.ix_applications_id;
+DROP INDEX IF EXISTS public.ix_applications_contact_number;
+DROP INDEX IF EXISTS public.ix_application_status_history_id;
+DROP INDEX IF EXISTS public.ix_application_status_history_application_id;
+ALTER TABLE IF EXISTS ONLY public.users DROP CONSTRAINT IF EXISTS users_pkey;
+ALTER TABLE IF EXISTS ONLY public.offer_redemptions DROP CONSTRAINT IF EXISTS unique_offer_redemption;
+ALTER TABLE IF EXISTS ONLY public.chapter_memberships DROP CONSTRAINT IF EXISTS unique_industry_per_chapter;
+ALTER TABLE IF EXISTS ONLY public.event_rsvps DROP CONSTRAINT IF EXISTS unique_event_rsvp;
+ALTER TABLE IF EXISTS ONLY public.coupon_codes DROP CONSTRAINT IF EXISTS unique_coupon_per_user_offer;
+ALTER TABLE IF EXISTS ONLY public.referrals DROP CONSTRAINT IF EXISTS referrals_pkey;
+ALTER TABLE IF EXISTS ONLY public.referral_status_history DROP CONSTRAINT IF EXISTS referral_status_history_pkey;
+ALTER TABLE IF EXISTS ONLY public.redemption_tokens DROP CONSTRAINT IF EXISTS redemption_tokens_pkey;
+ALTER TABLE IF EXISTS ONLY public.privilege_cards DROP CONSTRAINT IF EXISTS privilege_cards_user_id_key;
+ALTER TABLE IF EXISTS ONLY public.privilege_cards DROP CONSTRAINT IF EXISTS privilege_cards_pkey;
+ALTER TABLE IF EXISTS ONLY public.payments DROP CONSTRAINT IF EXISTS payments_pkey;
+ALTER TABLE IF EXISTS ONLY public.partners DROP CONSTRAINT IF EXISTS partners_pkey;
+ALTER TABLE IF EXISTS ONLY public.offers DROP CONSTRAINT IF EXISTS offers_pkey;
+ALTER TABLE IF EXISTS ONLY public.offer_redemptions DROP CONSTRAINT IF EXISTS offer_redemptions_pkey;
+ALTER TABLE IF EXISTS ONLY public.notifications DROP CONSTRAINT IF EXISTS notifications_pkey;
+ALTER TABLE IF EXISTS ONLY public.industry_categories DROP CONSTRAINT IF EXISTS industry_categories_pkey;
+ALTER TABLE IF EXISTS ONLY public.events DROP CONSTRAINT IF EXISTS events_pkey;
+ALTER TABLE IF EXISTS ONLY public.event_rsvps DROP CONSTRAINT IF EXISTS event_rsvps_pkey;
+ALTER TABLE IF EXISTS ONLY public.event_attendance DROP CONSTRAINT IF EXISTS event_attendance_pkey;
+ALTER TABLE IF EXISTS ONLY public.coupon_codes DROP CONSTRAINT IF EXISTS coupon_codes_pkey;
+ALTER TABLE IF EXISTS ONLY public.chapters DROP CONSTRAINT IF EXISTS chapters_pkey;
+ALTER TABLE IF EXISTS ONLY public.chapters DROP CONSTRAINT IF EXISTS chapters_name_key;
+ALTER TABLE IF EXISTS ONLY public.chapter_memberships DROP CONSTRAINT IF EXISTS chapter_memberships_pkey;
+ALTER TABLE IF EXISTS ONLY public.businesses DROP CONSTRAINT IF EXISTS businesses_pkey;
+ALTER TABLE IF EXISTS ONLY public.audit_logs DROP CONSTRAINT IF EXISTS audit_logs_pkey;
+ALTER TABLE IF EXISTS ONLY public.applications DROP CONSTRAINT IF EXISTS applications_pkey;
+ALTER TABLE IF EXISTS ONLY public.application_status_history DROP CONSTRAINT IF EXISTS application_status_history_pkey;
+ALTER TABLE IF EXISTS ONLY public.alembic_version DROP CONSTRAINT IF EXISTS alembic_version_pkc;
+DROP TABLE IF EXISTS public.users;
+DROP TABLE IF EXISTS public.referrals;
+DROP TABLE IF EXISTS public.referral_status_history;
+DROP TABLE IF EXISTS public.redemption_tokens;
+DROP TABLE IF EXISTS public.privilege_cards;
+DROP TABLE IF EXISTS public.payments;
+DROP TABLE IF EXISTS public.partners;
+DROP TABLE IF EXISTS public.offers;
+DROP TABLE IF EXISTS public.offer_redemptions;
+DROP TABLE IF EXISTS public.notifications;
+DROP TABLE IF EXISTS public.industry_categories;
+DROP TABLE IF EXISTS public.events;
+DROP TABLE IF EXISTS public.event_rsvps;
+DROP TABLE IF EXISTS public.event_attendance;
+DROP TABLE IF EXISTS public.coupon_codes;
+DROP TABLE IF EXISTS public.chapters;
+DROP TABLE IF EXISTS public.chapter_memberships;
+DROP TABLE IF EXISTS public.businesses;
+DROP TABLE IF EXISTS public.audit_logs;
+DROP TABLE IF EXISTS public.applications;
+DROP TABLE IF EXISTS public.application_status_history;
+DROP TABLE IF EXISTS public.alembic_version;
+DROP TYPE IF EXISTS public.user_role;
+DROP TYPE IF EXISTS public.token_status;
+DROP TYPE IF EXISTS public.rsvp_status;
+DROP TYPE IF EXISTS public.referral_status;
+DROP TYPE IF EXISTS public.payment_type;
+DROP TYPE IF EXISTS public.payment_status;
+DROP TYPE IF EXISTS public.offer_type;
+DROP TYPE IF EXISTS public.membership_type;
+DROP TYPE IF EXISTS public.event_type;
+DROP TYPE IF EXISTS public.coupon_status;
+DROP TYPE IF EXISTS public.application_status;
 --
 -- Name: application_status; Type: TYPE; Schema: public; Owner: pbn_user
 --
@@ -1967,5 +2110,5 @@ ALTER TABLE ONLY public.referrals
 -- PostgreSQL database dump complete
 --
 
-\unrestrict knntWpzktnDbhKEcaJGFIk1G8gFhH8wXanexSNbhnCNfaRAQkS18kg3Ojf74nIj
+\unrestrict wuWT9WIv78ISxeY9IgDpGOa5O2VvnzNhBuDHwbKXGE9ZVVoWcmoiOFeZLHiYrq5
 
