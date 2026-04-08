@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:provider/provider.dart';
@@ -174,11 +175,11 @@ class _DashboardPageState extends State<DashboardPage> {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         children: [
           PrivilegeCardWidget(card: _card!),
-          const SizedBox(height: 32),
+          const SizedBox(height: 16),
           
           // -- TRANSITIONING AD PANEL (SLIDER) --
           SizedBox(
-            height: 210,
+            height: 170,
             child: PageView(
               controller: _adController,
               onPageChanged: (i) => setState(() => _adIndex = i),
@@ -195,19 +196,26 @@ class _DashboardPageState extends State<DashboardPage> {
             _adDot(0), const SizedBox(width: 8), _adDot(1), const SizedBox(width: 8), _adDot(2),
           ]),
           
-          const SizedBox(height: 32),
-          const Text('PERFORMANCE STATS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1.5)),
-          const SizedBox(height: 20),
-          Row(children: [
-            Expanded(child: SizedBox(height: 145, child: StatCard(title: 'Sent', value: '${_data?.referrals.sentTotal ?? 0}', icon: TablerIcons.arrow_up_right, gradient: const [Color(0xFF3B82F6), Color(0xFF1D4ED8)]))),
-            const SizedBox(width: 16),
-            Expanded(child: SizedBox(height: 145, child: StatCard(title: 'Ratio', value: '${(_data?.referrals.conversionRate ?? 0).toStringAsFixed(0)}%', icon: TablerIcons.chart_pie, gradient: const [Color(0xFF10B981), Color(0xFF064E3B)]))),
-          ]),
           const SizedBox(height: 16),
-          Row(children: [
-            Expanded(child: SizedBox(height: 145, child: StatCard(title: 'Valuation', value: _formatCurrency(_data?.roi.totalValue ?? 0), icon: TablerIcons.trending_up, gradient: const [Color(0xFFF59E0B), Color(0xFF92400E)]))),
-            const SizedBox(width: 16),
-            Expanded(child: SizedBox(height: 145, child: StatCard(title: 'Incoming', value: '${_data?.referrals.receivedTotal ?? 0}', icon: TablerIcons.arrow_down_left, gradient: const [Color(0xFF8B5CF6), Color(0xFF5B21B6)]))),
+          const Text('PERFORMANCE ENGINE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF64748B), letterSpacing: 1.5)),
+          const SizedBox(height: 12),
+          
+          const SizedBox(height: 16),
+          const Text('PERFORMANCE OVERVIEW', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF64748B), letterSpacing: 1.5)),
+          const SizedBox(height: 12),
+          
+          Column(children: [
+            Row(children: [
+              Expanded(child: SizedBox(height: 85, child: StatCard(title: 'Sent', value: '${_data?.referrals.sentTotal ?? 0}', icon: TablerIcons.arrow_up_right, gradient: const [Color(0xFF3B82F6), Color(0xFF1D4ED8)]))),
+              const SizedBox(width: 12),
+              Expanded(child: SizedBox(height: 85, child: StatCard(title: 'Ratio', value: '${(_data?.referrals.conversionRate ?? 0).toStringAsFixed(0)}%', icon: TablerIcons.chart_pie, gradient: const [Color(0xFF10B981), Color(0xFF064E3B)]))),
+            ]),
+            const SizedBox(height: 12),
+            Row(children: [
+              Expanded(child: SizedBox(height: 85, child: StatCard(title: 'Valuation', value: _formatCurrency(_data?.roi.totalValue ?? 0), icon: TablerIcons.trending_up, gradient: const [Color(0xFFF59E0B), Color(0xFF92400E)]))),
+              const SizedBox(width: 12),
+              Expanded(child: SizedBox(height: 85, child: StatCard(title: 'Incoming', value: '${_data?.referrals.receivedTotal ?? 0}', icon: TablerIcons.arrow_down_left, gradient: const [Color(0xFF8B5CF6), Color(0xFF5B21B6)]))),
+            ]),
           ]),
           const SizedBox(height: 32),
           const Text('EXPLORE NETWORK', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1.5)),
@@ -235,11 +243,11 @@ class _DashboardPageState extends State<DashboardPage> {
       width: double.infinity,
       decoration: BoxDecoration(
         color: const Color(0xFF0F172A),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(14),
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 20, offset: const Offset(0, 10))],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(14),
         child: Stack(children: [
           Positioned.fill(child: _smartImage('https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&q=80&w=600', const [Color(0xFF0F172A), Color(0xFF1E293B)])),
           Positioned.fill(child: Container(decoration: BoxDecoration(gradient: LinearGradient(colors: [Colors.black.withOpacity(0.8), Colors.transparent], begin: Alignment.centerLeft, end: Alignment.centerRight)))),
@@ -271,11 +279,11 @@ class _DashboardPageState extends State<DashboardPage> {
       width: double.infinity,
       decoration: BoxDecoration(
         color: const Color(0xFF6366F1),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(14),
         boxShadow: [BoxShadow(color: const Color(0xFF6366F1).withOpacity(0.2), blurRadius: 20, offset: const Offset(0, 10))],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(14),
         child: Stack(children: [
           Positioned.fill(child: _smartImage('https://images.unsplash.com/photo-1588196749597-9ff075ee6b5b?auto=format&fit=crop&q=80&w=600', const [Color(0xFF6366F1), Color(0xFF4F46E5)])),
           Positioned.fill(child: Container(decoration: BoxDecoration(gradient: LinearGradient(colors: [const Color(0xFF6366F1).withOpacity(0.95), const Color(0xFF6366F1).withOpacity(0.4)], begin: Alignment.centerLeft, end: Alignment.centerRight)))),
@@ -317,11 +325,11 @@ class _DashboardPageState extends State<DashboardPage> {
       width: double.infinity,
       decoration: BoxDecoration(
         color: const Color(0xFFF97316),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(14),
         boxShadow: [BoxShadow(color: const Color(0xFFF97316).withOpacity(0.2), blurRadius: 20, offset: const Offset(0, 10))],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(14),
         child: Stack(children: [
           Positioned.fill(child: _smartImage('https://picsum.photos/id/445/600/300', const [Color(0xFFF97316), Color(0xFFEA580C)])),
           Positioned.fill(child: Container(decoration: BoxDecoration(gradient: LinearGradient(colors: [const Color(0xFFF97316).withOpacity(0.95), const Color(0xFFF97316).withOpacity(0.4)], begin: Alignment.centerLeft, end: Alignment.centerRight)))),
@@ -429,13 +437,47 @@ class _DashboardPageState extends State<DashboardPage> {
         onTap: onTap,
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 20),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), boxShadow: [BoxShadow(color: color.withOpacity(0.04), blurRadius: 15, offset: const Offset(0, 6))]),
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), boxShadow: [BoxShadow(color: color.withOpacity(0.04), blurRadius: 15, offset: const Offset(0, 6))]),
           child: Column(children: [
             Icon(icon, color: color, size: 24),
             const SizedBox(height: 8),
             Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.text)),
           ]),
         ),
+      ),
+    );
+  }
+
+  Widget _buildEngineStat(String label, String value, IconData icon, Color color, {bool showGlow = false}) {
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                  boxShadow: showGlow ? [BoxShadow(color: color.withOpacity(0.2), blurRadius: 8, spreadRadius: 1)] : null,
+                ),
+                child: Icon(icon, color: color, size: 14),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                label.toUpperCase(),
+                style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: const Color(0xFF64748B), letterSpacing: 1),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: -0.5),
+          ),
+        ],
       ),
     );
   }

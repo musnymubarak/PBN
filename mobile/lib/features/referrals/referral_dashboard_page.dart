@@ -1,154 +1,184 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:pbn/core/constants/app_colors.dart';
+import 'package:pbn/core/services/referral_service.dart';
 import 'package:pbn/features/referrals/create_referral_page.dart';
 import 'package:pbn/features/referrals/my_referrals_page.dart';
 
-class ReferralDashboardPage extends StatelessWidget {
+class ReferralDashboardPage extends StatefulWidget {
   const ReferralDashboardPage({super.key});
 
   @override
+  State<ReferralDashboardPage> createState() => _ReferralDashboardPageState();
+}
+
+class _ReferralDashboardPageState extends State<ReferralDashboardPage> {
+  final _service = ReferralService();
+  bool _loading = true;
+  int _receivedCount = 0;
+  int _sentCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStats();
+  }
+
+  Future<void> _loadStats() async {
+    int rCount = 0;
+    int sCount = 0;
+
+    try {
+      final received = await _service.getReceivedReferrals();
+      rCount = received.length;
+    } catch (e) {
+      debugPrint('Error loading received deals: $e');
+    }
+
+    try {
+      final sent = await _service.getGivenReferrals();
+      sCount = sent.length;
+    } catch (e) {
+      debugPrint('Error loading sent deals: $e');
+    }
+
+    if (mounted) {
+      setState(() {
+        _receivedCount = rCount;
+        _sentCount = sCount;
+        _loading = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final totalDeals = _receivedCount + _sentCount;
+
     return Scaffold(
-      backgroundColor: AppColors.background,
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            expandedHeight: 180,
-            floating: false,
-            pinned: true,
-            backgroundColor: AppColors.primary,
-            elevation: 0,
-            flexibleSpace: FlexibleSpaceBar(
-              title: const Text('Referrals', style: TextStyle(fontWeight: FontWeight.w900, color: Colors.white)),
-              centerTitle: false,
-              titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
-              background: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Positioned(
-                    right: -50,
-                    top: -50,
-                    child: Icon(TablerIcons.arrows_exchange, size: 250, color: Colors.white.withOpacity(0.05)),
-                  ),
-                ],
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: Colors.white,
+        centerTitle: true,
+        title: const Text('Referrals', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.black)),
+      ),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator(color: Colors.black))
+          : RefreshIndicator(
+              onRefresh: _loadStats,
+              color: Colors.black,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 20),
+                    // -- MAIN METRIC --
+                    const Text('Total Network Deals', style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 8),
+                    Text('$totalDeals', style: const TextStyle(fontSize: 64, fontWeight: FontWeight.w900, color: Colors.black, letterSpacing: -2)),
+                    const SizedBox(height: 32),
+
+                    // -- QUICK ACTIONS (CIRCLES) --
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildQuickAction(context, 'New Deal', TablerIcons.plus, Colors.black, Colors.white, () {
+                          Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateReferralPage())).then((_) => _loadStats());
+                        }),
+                        _buildQuickAction(context, 'Received', TablerIcons.arrow_down_left, const Color(0xFFF3F4F6), Colors.black, () {
+                          Navigator.push(context, MaterialPageRoute(builder: (_) => const MyReferralsPage(isReceived: true))).then((_) => _loadStats());
+                        }, badgeCount: _receivedCount),
+                        _buildQuickAction(context, 'Sent', TablerIcons.arrow_up_right, const Color(0xFFF3F4F6), Colors.black, () {
+                          Navigator.push(context, MaterialPageRoute(builder: (_) => const MyReferralsPage(isReceived: false))).then((_) => _loadStats());
+                        }, badgeCount: _sentCount),
+                      ],
+                    ),
+                    const SizedBox(height: 48),
+
+                    // -- BOTTOM CARD --
+                    Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.symmetric(horizontal: 20),
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF9FAFB),
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                                child: const Icon(TablerIcons.chart_bar, size: 20, color: Colors.black),
+                              ),
+                              const SizedBox(width: 16),
+                              const Text('My Performance', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.black)),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+                          _buildStatRow('Deals Received', '$_receivedCount', Colors.green),
+                          const SizedBox(height: 16),
+                          const Divider(height: 1, color: Color(0xFFE5E7EB)),
+                          const SizedBox(height: 16),
+                          _buildStatRow('Deals Sent', '$_sentCount', Colors.blue),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 40),
+                  ],
+                ),
               ),
             ),
-          ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'GROW YOUR NETWORK',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1.5),
-                  ),
-                  const SizedBox(height: 20),
-                  _buildOption(
-                    context,
-                    title: 'New Referral',
-                    subtitle: 'Connect a lead with a trusted member',
-                    icon: TablerIcons.plus,
-                    color: const Color(0xFF6366F1),
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateReferralPage())),
-                  ),
-                  const SizedBox(height: 32),
-                  const Text(
-                    'TRACK PERFORMANCE',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1.5),
-                  ),
-                  const SizedBox(height: 20),
-                  _buildOption(
-                    context,
-                    title: 'Received Referrals',
-                    subtitle: 'Manage and update incoming business',
-                    icon: TablerIcons.arrow_down_left,
-                    color: const Color(0xFF10B981),
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyReferralsPage(isReceived: true))),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildOption(
-                    context,
-                    title: 'Sent Referrals',
-                    subtitle: 'Monitor progress of your shares',
-                    icon: TablerIcons.arrow_up_right,
-                    color: const Color(0xFFF59E0B),
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyReferralsPage(isReceived: false))),
-                  ),
-                  const SizedBox(height: 40),
-                ],
+    );
+  }
+
+  Widget _buildQuickAction(BuildContext context, String label, IconData icon, Color bgColor, Color iconColor, VoidCallback onTap, {int badgeCount = 0}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: bgColor,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: iconColor, size: 28),
               ),
-            ),
+              if (badgeCount > 0)
+                Positioned(
+                  right: -4,
+                  top: -4,
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                    child: Text('$badgeCount', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900)),
+                  ),
+                ),
+            ],
           ),
+          const SizedBox(height: 12),
+          Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black)),
         ],
       ),
     );
   }
 
-  Widget _buildOption(
-    BuildContext context, {
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Icon(icon, color: color, size: 28),
-            ),
-            const SizedBox(width: 20),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.text,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey.shade500,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(TablerIcons.chevron_right, color: Colors.grey, size: 20),
-          ],
-        ),
-      ),
+  Widget _buildStatRow(String label, String value, Color valueColor) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.grey)),
+        Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: valueColor)),
+      ],
     );
   }
 }

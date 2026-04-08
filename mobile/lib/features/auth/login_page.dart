@@ -60,12 +60,21 @@ class _LoginPageState extends State<LoginPage> {
               width: double.infinity,
               decoration: const BoxDecoration(
                 color: Color(0xFF030D16),
-                borderRadius: BorderRadius.only(bottomLeft: Radius.circular(55), bottomRight: Radius.circular(55)),
+                borderRadius: BorderRadius.only(bottomLeft: Radius.circular(24), bottomRight: Radius.circular(24)),
               ),
               child: Stack(
                 children: [
-                  Positioned(right: -50, top: -50,
-                    child: Container(width: 200, height: 200, decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.primary.withOpacity(0.5))),
+                  Positioned(right: -70, top: -70,
+                    child: Container(
+                      width: 240, 
+                      height: 240, 
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle, 
+                        gradient: RadialGradient(
+                          colors: [const Color(0xFF1E293B).withOpacity(0.4), Colors.transparent],
+                        ),
+                      ),
+                    ),
                   ),
                   Center(
                     child: Column(
@@ -74,9 +83,13 @@ class _LoginPageState extends State<LoginPage> {
                         const SizedBox(height: 30),
                         Container(
                           padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(20), border: Border.all(color: AppColors.accent.withOpacity(0.3), width: 1)),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0F172A), 
+                            borderRadius: BorderRadius.circular(14), 
+                            border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.35), width: 0.8)
+                          ),
                           child: ClipRRect(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(14),
                             child: Hero(tag: 'logo',
                               child: Image.asset('assets/logo.png', height: 110, fit: BoxFit.contain,
                                 errorBuilder: (c, e, s) => const Icon(TablerIcons.briefcase, size: 80, color: AppColors.accent),
@@ -112,11 +125,16 @@ class _LoginPageState extends State<LoginPage> {
                   const SizedBox(height: 8),
                   TextField(
                     controller: _identifierController,
-                    decoration: const InputDecoration(
-                      hintText: 'admin@pbn.lk or +94...', 
-                      prefixIcon: Icon(TablerIcons.user, size: 20), 
+                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                    decoration: InputDecoration(
+                      hintText: 'Email or Phone Number', 
+                      prefixIcon: const Icon(TablerIcons.user, size: 20), 
                       filled: true, 
-                      fillColor: Color(0xFFF9FAFB)
+                      fillColor: const Color(0xFFF8FAFC),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.primary, width: 1)),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -127,6 +145,7 @@ class _LoginPageState extends State<LoginPage> {
                   TextField(
                     controller: _passwordController,
                     obscureText: _obscurePassword,
+                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18, letterSpacing: 2),
                     decoration: InputDecoration(
                       hintText: '••••••••', 
                       prefixIcon: const Icon(TablerIcons.lock, size: 20),
@@ -135,7 +154,11 @@ class _LoginPageState extends State<LoginPage> {
                         onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                       ),
                       filled: true, 
-                      fillColor: Color(0xFFF9FAFB)
+                      fillColor: const Color(0xFFF8FAFC),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.primary, width: 1)),
                     ),
                   ),
                   const SizedBox(height: 32),

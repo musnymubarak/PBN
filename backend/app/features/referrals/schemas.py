@@ -30,6 +30,7 @@ class ReferralCreate(BaseModel):
 class ReferralStatusUpdate(BaseModel):
     status: ReferralStatus
     description: Optional[str] = None
+    actual_value: Optional[float] = None
 
 
 class ReferralStatusHistoryResponse(BaseModel):
@@ -54,4 +55,5 @@ class ReferralResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     
+    actual_value: Optional[float] = None
     history: Optional[List[ReferralStatusHistoryResponse]] = []
