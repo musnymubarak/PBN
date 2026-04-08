@@ -29,13 +29,32 @@ async def list_users_endpoint(
     role: Optional[str] = Query(None),
     is_active: Optional[bool] = Query(None),
     search: Optional[str] = Query(None),
+    chapter_id: Optional[UUID] = Query(None),
+    industry_id: Optional[UUID] = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     current_user: User = Depends(admin_req),
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
-    result = await service.list_users(role, is_active, search, page, page_size, db)
+    result = await service.list_users(
+        role, is_active, search, page, page_size, db,
+        chapter_id=chapter_id, industry_id=industry_id
+    )
     return success_response(data=result)
+
+
+@router.get("/admin/industries", summary="List all industry categories")
+async def list_industries_endpoint(
+    current_user: User = Depends(admin_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    """Helper for the admin panel to populate industry filters."""
+    from app.models.industry_categories import IndustryCategory
+    stmt = select(IndustryCategory).where(IndustryCategory.is_active == True).order_by(IndustryCategory.name)
+    results = (await db.execute(stmt)).scalars().all()
+    return success_response(data=[
+        {"id": str(i.id), "name": i.name, "slug": i.slug} for i in results
+    ])
 
 
 @router.patch("/admin/users/{user_id}/deactivate", summary="Deactivate a user")

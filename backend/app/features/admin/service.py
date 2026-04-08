@@ -19,6 +19,8 @@ from app.core.exceptions import NotFoundException, BadRequestException
 from app.models.audit_logs import AuditLog
 from app.models.user import User, UserRole
 from app.models.memberships import ChapterMembership
+from app.models.chapters import Chapter
+from app.models.industry_categories import IndustryCategory
 from app.models.referrals import Referral
 from app.models.payments import Payment
 
@@ -41,7 +43,7 @@ def _mask_email(email: str | None) -> str | None:
     return email
 
 
-def _serialize_user(u: User, mask: bool = False) -> Dict[str, Any]:
+def _serialize_user(u: User, mask: bool = False, chapter_name: str | None = None, industry_name: str | None = None) -> Dict[str, Any]:
     return {
         "id": str(u.id),
         "phone_number": _mask_phone(u.phone_number) if mask else u.phone_number,
@@ -49,6 +51,8 @@ def _serialize_user(u: User, mask: bool = False) -> Dict[str, Any]:
         "full_name": u.full_name,
         "role": u.role.value,
         "is_active": u.is_active,
+        "chapter_name": chapter_name,
+        "industry_name": industry_name,
         "created_at": u.created_at.isoformat() if u.created_at else None,
     }
 
@@ -74,18 +78,35 @@ async def list_users(
     page: int,
     page_size: int,
     db: AsyncSession,
+    chapter_id: UUID | None = None,
+    industry_id: UUID | None = None,
 ) -> Dict[str, Any]:
     """List all users with optional filtering, search, and pagination."""
-    stmt = select(User).order_by(desc(User.created_at))
+    # Use outer joins to include chapter and industry info if available
+    stmt = (
+        select(User, Chapter.name.label("chapter_name"), IndustryCategory.name.label("industry_name"))
+        .outerjoin(ChapterMembership, (User.id == ChapterMembership.user_id) & (ChapterMembership.is_active == True))
+        .outerjoin(Chapter, ChapterMembership.chapter_id == Chapter.id)
+        .outerjoin(IndustryCategory, ChapterMembership.industry_category_id == IndustryCategory.id)
+        .order_by(desc(User.created_at))
+    )
 
     if role_filter:
         stmt = stmt.where(User.role == role_filter)
     if is_active is not None:
         stmt = stmt.where(User.is_active == is_active)
+    if chapter_id:
+        stmt = stmt.where(Chapter.id == chapter_id)
+    if industry_id:
+        stmt = stmt.where(IndustryCategory.id == industry_id)
+        
     if search:
         pattern = f"%{search}%"
         stmt = stmt.where(
-            (User.full_name.ilike(pattern)) | (User.phone_number.ilike(pattern))
+            (User.full_name.ilike(pattern)) | 
+            (User.phone_number.ilike(pattern)) |
+            (Chapter.name.ilike(pattern)) |
+            (IndustryCategory.name.ilike(pattern))
         )
 
     # Count total
@@ -94,10 +115,18 @@ async def list_users(
 
     # Paginate
     stmt = stmt.offset((page - 1) * page_size).limit(page_size)
-    results = (await db.execute(stmt)).scalars().all()
+    results = await db.execute(stmt)
+    
+    # Process results (User, chapter_name, industry_name)
+    user_list = []
+    for row in results.all():
+        u = row[0]
+        c_name = row[1]
+        i_name = row[2]
+        user_list.append(_serialize_user(u, chapter_name=c_name, industry_name=i_name))
 
     return {
-        "users": [_serialize_user(u) for u in results],
+        "users": user_list,
         "total": total,
         "page": page,
         "page_size": page_size,

@@ -657,6 +657,185 @@ function ApplicationsPage() {
   );
 }
 
+// ── Members Directory Page ──────────────────────────────────────────────────
+
+function MembersPage() {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [total, setTotal] = useState(0);
+  const [pages, setPages] = useState(0);
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
+  const [chapterFilter, setChapterFilter] = useState('');
+  const [industryFilter, setIndustryFilter] = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
+
+  const [chapters, setChapters] = useState([]);
+  const [industries, setIndustries] = useState([]);
+
+  const fetchMembers = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = { page, limit: 15 };
+      if (search) params.search = search;
+      if (chapterFilter) params.chapter_id = chapterFilter;
+      if (industryFilter) params.industry_id = industryFilter;
+      if (roleFilter) params.role = roleFilter;
+      
+      const result = await api.listUsers(params);
+      setUsers(result.users || []);
+      setTotal(result.total || 0);
+      setPages(Math.ceil(result.total / (result.page_size || 15)) || 1);
+    } catch (err) {
+      console.error('Failed to load members:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, search, chapterFilter, industryFilter, roleFilter]);
+
+  useEffect(() => {
+    fetchMembers();
+  }, [fetchMembers]);
+
+  useEffect(() => {
+    Promise.all([
+      api.listChapters().catch(() => ({ data: [] })),
+      api.listIndustries().catch(() => ({ data: [] }))
+    ]).then(([cData, iData]) => {
+      const c = cData?.data || (Array.isArray(cData) ? cData : []);
+      const i = iData?.data || (Array.isArray(iData) ? iData : []);
+      setChapters(c);
+      setIndustries(i);
+    });
+  }, []);
+
+  return (
+    <section className="dashboard-body">
+      <div className="page-title-wrap">
+        <h1 className="page-title">Member Directory</h1>
+        <p style={{ color: 'var(--text-secondary)', marginTop: '0.4rem', fontWeight: 500 }}>
+          Browse, filter, and search through all members and prospects in the network.
+        </p>
+      </div>
+
+      <div className="data-section">
+        <div className="section-head" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Network Registry</h3>
+            <button className="btn-primary" onClick={() => { setPage(1); fetchMembers(); }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <IconRefresh size={18} /> Refresh
+            </button>
+          </div>
+
+          <div className="directory-filters" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+            <div style={{ flex: 1, minWidth: '250px', position: 'relative' }}>
+              <IconSearch size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+              <input 
+                type="text" 
+                placeholder="Search by name, phone or chapter..." 
+                className="filter-input"
+                style={{ paddingLeft: '40px', width: '100%', height: '48px' }}
+                value={search}
+                onChange={e => { setSearch(e.target.value); setPage(1); }}
+              />
+            </div>
+            
+            <select className="filter-input" style={{ width: '200px', height: '48px' }} value={chapterFilter} onChange={e => { setChapterFilter(e.target.value); setPage(1); }}>
+              <option value="">All Chapters</option>
+              {chapters.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+
+            <select className="filter-input" style={{ width: '220px', height: '48px' }} value={industryFilter} onChange={e => { setIndustryFilter(e.target.value); setPage(1); }}>
+              <option value="">All Industries (Network)</option>
+              {industries.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
+            </select>
+
+            <select className="filter-input" style={{ width: '180px', height: '48px' }} value={roleFilter} onChange={e => { setRoleFilter(e.target.value); setPage(1); }}>
+              <option value="">All Roles</option>
+              <option value="MEMBER">Members</option>
+              <option value="PROSPECT">Prospects</option>
+              <option value="CHAPTER_ADMIN">Chapter Admins</option>
+              <option value="PARTNER_ADMIN">Partner Admins</option>
+            </select>
+          </div>
+        </div>
+
+        <table className="modern-table">
+          <thead>
+            <tr>
+              <th>Member Name</th>
+              <th>Chapter</th>
+              <th>Network (Industry)</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Joined Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr><td colSpan={6} style={{ textAlign: 'center', padding: '3rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{ width: 28, height: 28, border: '3px solid #e2e8f0', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                  Loading directory...
+                </div>
+              </td></tr>
+            ) : users.length === 0 ? (
+              <tr><td colSpan={6} style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>No members found matching your criteria.</td></tr>
+            ) : users.map(user => (
+              <tr key={user.id}>
+                <td>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div className="avatar-sm" style={{ background: '#f1f5f9', color: 'var(--primary)' }}>
+                      {user.full_name ? user.full_name[0] : '?'}
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 700 }}>{user.full_name || 'Unnamed User'}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{user.phone_number}</div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  {user.chapter_name ? (
+                    <span className="id-badge" style={{ background: '#e0f2fe', color: '#0369a1' }}>{user.chapter_name}</span>
+                  ) : <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>No Chapter</span>}
+                </td>
+                <td>{user.industry_name || '—'}</td>
+                <td>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 600, color: user.role === 'PROSPECT' ? '#f59e0b' : '#64748b' }}>
+                    {user.role}
+                  </span>
+                </td>
+                <td>
+                  <span className={`pill ${user.is_active ? 'pill-approved' : 'pill-rejected'}`}>
+                    {user.is_active ? 'Active' : 'Inactive'}
+                  </span>
+                </td>
+                <td style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                  {user.created_at ? new Date(user.created_at).toLocaleDateString() : '—'}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {/* Pagination */}
+        <div style={{ padding: '1.25rem 2.5rem', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+            {total > 0 ? `Showing page ${page} of ${pages} · ${total} users` : 'No members found'}
+          </p>
+          {pages > 1 && (
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button className="pagination-btn" disabled={page <= 1} onClick={() => setPage(p => p - 1)}><IconChevronLeft size={16} /> Prev</button>
+              <button className="pagination-btn" disabled={page >= pages} onClick={() => setPage(p => p + 1)}>Next <IconChevronRight size={16} /></button>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+
 
 // ── Main App ────────────────────────────────────────────────────────────────
 
@@ -665,10 +844,12 @@ export default function App() {
   const [adminUser, setAdminUser] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
   const { data: overview, loading: overviewLoading, error: overviewError } = useApi(
-    isAuthenticated ? api.getAdminOverview : () => Promise.resolve(null)
+    isAuthenticated ? api.getAdminOverview : () => Promise.resolve(null),
+    [isAuthenticated]
   );
   const { data: referrals, loading: referralsLoading } = useApi(
-    isAuthenticated ? api.listReferrals : () => Promise.resolve(null)
+    isAuthenticated ? api.listReferrals : () => Promise.resolve(null),
+    [isAuthenticated]
   );
 
   const handleLogin = (user) => {
@@ -703,6 +884,9 @@ export default function App() {
   const renderContent = () => {
     if (activeTab === 'applications') {
       return <ApplicationsPage />;
+    }
+    if (activeTab === 'members') {
+      return <MembersPage />;
     }
 
     // Default: Overview dashboard
@@ -825,12 +1009,30 @@ export default function App() {
           ))}
         </nav>
 
-        <div className="sidebar-footer" style={{ marginTop: 'auto', padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-             <IconUser size={18} stroke={1.5} color="rgba(255,255,255,0.5)" />
-             <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>Support Hub</span>
-          </div>
-          <IconLogout size={18} stroke={1.5} color="rgba(255,255,255,0.3)" style={{ cursor: 'pointer' }} onClick={handleLogout} />
+        <div className="sidebar-footer" style={{ marginTop: 'auto', padding: '1.25rem' }}>
+          <button 
+            onClick={handleLogout}
+            style={{ 
+              width: '100%', 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '0.75rem', 
+              padding: '0.875rem 1rem', 
+              background: 'rgba(239, 68, 68, 0.1)', 
+              color: '#f87171', 
+              border: '1px solid rgba(239, 68, 68, 0.2)', 
+              borderRadius: '12px', 
+              cursor: 'pointer',
+              fontSize: '0.875rem',
+              fontWeight: 700,
+              transition: 'all 0.2s'
+            }}
+            onMouseOver={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'}
+            onMouseOut={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
+          >
+            <IconLogout size={18} stroke={2} />
+            Sign Out
+          </button>
         </div>
       </aside>
 

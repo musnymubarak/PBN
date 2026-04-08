@@ -27,6 +27,7 @@ async function apiFetch(path, options = {}) {
 export const api = {
   getAdminOverview: () => apiFetch('/admin/analytics/overview'),
   listUsers: (params = {}) => apiFetch(`/admin/users?${new URLSearchParams(params)}`),
+  listIndustries: () => apiFetch('/admin/industries'),
   listReferrals: () => apiFetch('/referrals/my/given'),
   listPayments: () => apiFetch('/admin/payments'),
   exportData: () => apiFetch('/admin/export'),
