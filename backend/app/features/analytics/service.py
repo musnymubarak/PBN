@@ -54,12 +54,13 @@ async def get_dashboard(user_id: UUID, db: AsyncSession) -> Dict[str, Any]:
                 ReferralStatus.NEGOTIATION, ReferralStatus.IN_PROGRESS,
             ]))).label("pending_followup"),
             func.count(1).filter((Referral.from_member_id == user_id) & (Referral.status == ReferralStatus.SUCCESS)).label("sent_won"),
+            func.count(1).filter((Referral.to_member_id == user_id) & (Referral.status == ReferralStatus.SUCCESS)).label("received_won"),
         )
         ref_stats = (await db.execute(ref_stmt)).one()
 
         roi_stmt = select(
-            func.coalesce(func.sum(Referral.actual_value).filter((Referral.from_member_id == user_id) & (Referral.status == ReferralStatus.SUCCESS)), 0).label("total_value"),
-            func.coalesce(func.sum(Referral.actual_value).filter((Referral.from_member_id == user_id) & (Referral.status == ReferralStatus.SUCCESS) & (Referral.closed_at >= first_day_of_month)), 0).label("month_value"),
+            func.coalesce(func.sum(Referral.actual_value).filter(Referral.to_member_id == user_id), 0).label("total_value"),
+            func.coalesce(func.sum(Referral.actual_value).filter((Referral.to_member_id == user_id) & (Referral.closed_at >= first_day_of_month)), 0).label("month_value"),
         )
         roi_stats = (await db.execute(roi_stmt)).one()
 
@@ -89,7 +90,7 @@ async def get_dashboard(user_id: UUID, db: AsyncSession) -> Dict[str, Any]:
 
         total_val = float(roi_stats.total_value)
         month_val = float(roi_stats.month_value)
-        avg_deal = total_val / ref_stats.sent_won if ref_stats.sent_won > 0 else 0.0
+        avg_deal = total_val / ref_stats.received_won if ref_stats.received_won > 0 else 0.0
 
         # ── Sequential: next_event depends on membership ─────────────────────
 
