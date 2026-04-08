@@ -27,6 +27,11 @@ from app.features.auth.schemas import (
     SendOTPRequest,
     VerifyOTPRequest,
 )
+from pydantic import BaseModel
+
+class UpdateProfileRequest(BaseModel):
+    full_name: str
+    phone_number: str
 from app.features.auth.service import (
     login,
     logout,
@@ -151,6 +156,29 @@ async def me_endpoint(
             "profile_photo": current_user.profile_photo,
             "created_at": current_user.created_at.isoformat(),
             "updated_at": current_user.updated_at.isoformat(),
+        },
+        status_code=200,
+    )
+
+@router.put("/me", summary="Update current user profile")
+async def update_me_endpoint(
+    body: UpdateProfileRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+) -> ORJSONResponse:
+    """Update the authenticated user's profile."""
+    current_user.full_name = body.full_name
+    current_user.phone_number = body.phone_number
+    await db.commit()
+    
+    return success_response(
+        data={
+            "id": str(current_user.id),
+            "phone_number": current_user.phone_number,
+            "email": current_user.email,
+            "full_name": current_user.full_name,
+            "role": current_user.role.value,
+            "profile_photo": current_user.profile_photo,
         },
         status_code=200,
     )
