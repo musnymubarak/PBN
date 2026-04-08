@@ -79,7 +79,11 @@ services:
 
 volumes:
   postgres_data:
+    external: true
+    name: backend_postgres_data
   redis_data:
+    external: true
+    name: backend_redis_data
 
 networks:
   pbn-network:
