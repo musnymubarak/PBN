@@ -33,7 +33,7 @@ services:
     container_name: pbn-admin
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8005:80"  # Hidden from public, only accessible locally
+      - "8005:80"           # Accessible to the mobile app
     depends_on:
       - api
     networks:
