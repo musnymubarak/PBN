@@ -56,129 +56,211 @@ class _ReferralDashboardPageState extends State<ReferralDashboardPage> {
     final totalDeals = _receivedCount + _sentCount;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.white,
-        centerTitle: true,
-        title: const Text('Referrals', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.black)),
+        toolbarHeight: 80,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('DEAL FLOW',
+                style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.textSecondary,
+                    letterSpacing: 2)),
+            const Text('Referrals Center',
+                style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.text)),
+          ],
+        ),
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: Colors.black))
+          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
           : RefreshIndicator(
               onRefresh: _loadStats,
-              color: Colors.black,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 20),
-                    // -- MAIN METRIC --
-                    const Text('Total Network Deals', style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
-                    Text('$totalDeals', style: const TextStyle(fontSize: 64, fontWeight: FontWeight.w900, color: Colors.black, letterSpacing: -2)),
-                    const SizedBox(height: 32),
-
-                    // -- QUICK ACTIONS (CIRCLES) --
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _buildQuickAction(context, 'New Deal', TablerIcons.plus, Colors.black, Colors.white, () {
-                          Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateReferralPage())).then((_) => _loadStats());
-                        }),
-                        _buildQuickAction(context, 'Received', TablerIcons.arrow_down_left, const Color(0xFFF3F4F6), Colors.black, () {
-                          Navigator.push(context, MaterialPageRoute(builder: (_) => const MyReferralsPage(isReceived: true))).then((_) => _loadStats());
-                        }, badgeCount: _receivedCount),
-                        _buildQuickAction(context, 'Sent', TablerIcons.arrow_up_right, const Color(0xFFF3F4F6), Colors.black, () {
-                          Navigator.push(context, MaterialPageRoute(builder: (_) => const MyReferralsPage(isReceived: false))).then((_) => _loadStats());
-                        }, badgeCount: _sentCount),
+              child: ListView(
+                padding: const EdgeInsets.all(20),
+                children: [
+                  // -- MAIN OVERVIEW CARD --
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(32),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                            color: const Color(0xFF0F172A).withOpacity(0.3),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10))
                       ],
                     ),
-                    const SizedBox(height: 48),
-
-                    // -- BOTTOM CARD --
-                    Container(
-                      width: double.infinity,
-                      margin: const EdgeInsets.symmetric(horizontal: 20),
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF9FAFB),
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                                child: const Icon(TablerIcons.chart_bar, size: 20, color: Colors.black),
-                              ),
-                              const SizedBox(width: 16),
-                              const Text('My Performance', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.black)),
-                            ],
-                          ),
-                          const SizedBox(height: 24),
-                          _buildStatRow('Deals Received', '$_receivedCount', Colors.green),
-                          const SizedBox(height: 16),
-                          const Divider(height: 1, color: Color(0xFFE5E7EB)),
-                          const SizedBox(height: 16),
-                          _buildStatRow('Deals Sent', '$_sentCount', Colors.blue),
-                        ],
-                      ),
+                    child: Column(
+                      children: [
+                        const Text('Total Network Deals',
+                            style: TextStyle(
+                                color: Colors.blueAccent,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1.5)),
+                        const SizedBox(height: 12),
+                        Text('$totalDeals',
+                            style: const TextStyle(
+                                fontSize: 64,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                                letterSpacing: -2)),
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                          child: Text(_sentCount >= _receivedCount ? 'High Giving Ratio' : 'Potential Growth Needed', 
+                            style: const TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w700)),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 40),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // -- ACTION TILES --
+                  Row(
+                    children: [
+                      _buildActionTile(
+                        icon: TablerIcons.plus,
+                        label: 'New Deal',
+                        color: AppColors.primary,
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateReferralPage())).then((_) => _loadStats()),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  const Text('DEAL ACTIVITY',
+                      style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.textSecondary,
+                          letterSpacing: 1.5)),
+                  const SizedBox(height: 16),
+
+                  // -- PERFORMANCE ROWS --
+                  _buildTrackerCard(
+                    title: 'Received Deals',
+                    count: _receivedCount,
+                    icon: TablerIcons.arrow_down_left,
+                    color: Colors.green,
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyReferralsPage(isReceived: true))).then((_) => _loadStats()),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildTrackerCard(
+                    title: 'Sent Deals',
+                    count: _sentCount,
+                    icon: TablerIcons.arrow_up_right,
+                    color: Colors.blue,
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyReferralsPage(isReceived: false))).then((_) => _loadStats()),
+                  ),
+
+                  const SizedBox(height: 32),
+                  _buildInstructionCard(),
+                ],
               ),
             ),
     );
   }
 
-  Widget _buildQuickAction(BuildContext context, String label, IconData icon, Color bgColor, Color iconColor, VoidCallback onTap, {int badgeCount = 0}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        children: [
-          Stack(
-            clipBehavior: Clip.none,
+  Widget _buildActionTile({required IconData icon, required String label, required Color color, required VoidCallback onTap}) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 24),
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [BoxShadow(color: color.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  color: bgColor,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: iconColor, size: 28),
-              ),
-              if (badgeCount > 0)
-                Positioned(
-                  right: -4,
-                  top: -4,
-                  child: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
-                    child: Text('$badgeCount', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900)),
-                  ),
-                ),
+              Icon(icon, color: Colors.white, size: 24),
+              const SizedBox(width: 12),
+              Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white)),
             ],
           ),
-          const SizedBox(height: 12),
-          Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black)),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildStatRow(String label, String value, Color valueColor) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.grey)),
-        Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: valueColor)),
-      ],
+  Widget _buildTrackerCard({required String title, required int count, required IconData icon, required Color color, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.grey.shade100),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+              child: Icon(icon, color: color, size: 24),
+            ),
+            const SizedBox(width: 20),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppColors.text)),
+                  const SizedBox(height: 4),
+                  Text('Track status and updates', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.textSecondary)),
+                ],
+              ),
+            ),
+            Text('$count', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: AppColors.text, letterSpacing: -1)),
+            const SizedBox(width: 12),
+            Icon(TablerIcons.chevron_right, color: Colors.grey.shade300, size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInstructionCard() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.primary.withOpacity(0.1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(TablerIcons.info_circle, color: AppColors.primary, size: 20),
+              SizedBox(width: 12),
+              Text('How it works', style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.primary, fontSize: 14)),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'High deal flow helps you climb the leaderboard and unlock premium rewards. Always update the ROI once a deal is closed successfully.',
+            style: TextStyle(fontSize: 13, height: 1.5, color: AppColors.primary.withOpacity(0.8), fontWeight: FontWeight.w500),
+          ),
+        ],
+      ),
     );
   }
 }

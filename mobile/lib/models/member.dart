@@ -3,7 +3,9 @@ class Member {
   final String fullName;
   final String? email;
   final String? phoneNumber;
+  final String? profilePhoto;
   final String industryName;
+  final String? chapterName;
   final String? businessName;
   final String? companyName;
 
@@ -12,7 +14,9 @@ class Member {
     required this.fullName,
     this.email,
     this.phoneNumber,
+    this.profilePhoto,
     required this.industryName,
+    this.chapterName,
     this.businessName,
     this.companyName,
   });
@@ -22,7 +26,9 @@ class Member {
         fullName: json['full_name'] ?? '',
         email: json['email'],
         phoneNumber: json['phone_number'],
+        profilePhoto: json['profile_photo'],
         industryName: json['industry_category']?['name'] ?? 'Unknown',
+        chapterName: json['chapter_name'],
         businessName: json['business']?['name'],
         companyName: json['business']?['name'],
       );

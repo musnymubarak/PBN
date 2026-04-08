@@ -19,6 +19,7 @@ import 'package:pbn/features/referrals/create_referral_page.dart';
 import 'package:pbn/features/referrals/referral_dashboard_page.dart';
 import 'package:pbn/features/events/events_page.dart';
 import 'package:pbn/features/profile/profile_page.dart';
+import 'package:pbn/features/support/support_page.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -115,9 +116,9 @@ class _DashboardPageState extends State<DashboardPage> {
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('GLOBAL OVERVIEW', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 2)),
+          const Text('INSIGHTS HUB', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 2)),
           const SizedBox(height: 4),
-          Text(auth.user?.fullName ?? (isProspect ? 'Prospect' : 'Member'), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.text, letterSpacing: -0.5)),
+          Text('Welcome, ${auth.user?.fullName.split(' ').first ?? 'Member'}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.text, letterSpacing: -0.5)),
         ],
       ),
       actions: [
@@ -206,15 +207,15 @@ class _DashboardPageState extends State<DashboardPage> {
           
           Column(children: [
             Row(children: [
-              Expanded(child: SizedBox(height: 85, child: StatCard(title: 'Sent', value: '${_data?.referrals.sentTotal ?? 0}', icon: TablerIcons.arrow_up_right, gradient: const [Color(0xFF3B82F6), Color(0xFF1D4ED8)]))),
+              Expanded(child: SizedBox(height: 95, child: StatCard(title: 'Sent', value: '${_data?.referrals.sentTotal ?? 0}', icon: TablerIcons.arrow_up_right, gradient: const [Color(0xFF3B82F6), Color(0xFF1D4ED8)]))),
               const SizedBox(width: 12),
-              Expanded(child: SizedBox(height: 85, child: StatCard(title: 'Ratio', value: '${(_data?.referrals.conversionRate ?? 0).toStringAsFixed(0)}%', icon: TablerIcons.chart_pie, gradient: const [Color(0xFF10B981), Color(0xFF064E3B)]))),
+              Expanded(child: SizedBox(height: 95, child: StatCard(title: 'Ratio', value: '${(_data?.referrals.conversionRate ?? 0).toStringAsFixed(0)}%', icon: TablerIcons.chart_pie, gradient: const [Color(0xFF10B981), Color(0xFF064E3B)]))),
             ]),
             const SizedBox(height: 12),
             Row(children: [
-              Expanded(child: SizedBox(height: 85, child: StatCard(title: 'Valuation', value: _formatCurrency(_data?.roi.totalValue ?? 0), icon: TablerIcons.trending_up, gradient: const [Color(0xFFF59E0B), Color(0xFF92400E)]))),
+              Expanded(child: SizedBox(height: 95, child: StatCard(title: 'ROI', value: _formatCurrency(_data?.roi.totalValue ?? 0), icon: TablerIcons.trending_up, gradient: const [Color(0xFFF59E0B), Color(0xFF92400E)]))),
               const SizedBox(width: 12),
-              Expanded(child: SizedBox(height: 85, child: StatCard(title: 'Incoming', value: '${_data?.referrals.receivedTotal ?? 0}', icon: TablerIcons.arrow_down_left, gradient: const [Color(0xFF8B5CF6), Color(0xFF5B21B6)]))),
+              Expanded(child: SizedBox(height: 95, child: StatCard(title: 'Incoming', value: '${_data?.referrals.receivedTotal ?? 0}', icon: TablerIcons.arrow_down_left, gradient: const [Color(0xFF8B5CF6), Color(0xFF5B21B6)]))),
             ]),
           ]),
           const SizedBox(height: 32),
@@ -225,7 +226,7 @@ class _DashboardPageState extends State<DashboardPage> {
             const SizedBox(width: 16),
             _modernActionTile(TablerIcons.chart_arrows_vertical, 'Global Rank', Colors.blue, () => Navigator.pushNamed(context, '/leaderboard')),
             const SizedBox(width: 16),
-            _modernActionTile(TablerIcons.help_circle, 'Support', Colors.pink, () {}),
+            _modernActionTile(TablerIcons.help_circle, 'Support', Colors.pink, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SupportPage()))),
           ]),
           const SizedBox(height: 40),
         ],
@@ -419,13 +420,13 @@ class _DashboardPageState extends State<DashboardPage> {
         selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 0.5),
         unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700),
         items: isProspect
-            ? [ const BottomNavigationBarItem(icon: Icon(TablerIcons.layout_dashboard), label: 'HOME'), const BottomNavigationBarItem(icon: Icon(TablerIcons.user), label: 'PROFILE') ]
+            ? [ const BottomNavigationBarItem(icon: Icon(TablerIcons.smart_home), label: 'Home'), const BottomNavigationBarItem(icon: Icon(TablerIcons.user_circle), label: 'Me') ]
             : [
-                const BottomNavigationBarItem(icon: Icon(TablerIcons.layout_dashboard), label: 'HOME'),
-                const BottomNavigationBarItem(icon: Icon(TablerIcons.users), label: 'MEMBERS'),
-                const BottomNavigationBarItem(icon: Icon(TablerIcons.arrows_exchange), label: 'REFERRALS'),
-                const BottomNavigationBarItem(icon: Icon(TablerIcons.calendar_event), label: 'AGENDA'),
-                const BottomNavigationBarItem(icon: Icon(TablerIcons.user), label: 'PROFILE'),
+                const BottomNavigationBarItem(icon: Icon(TablerIcons.smart_home), label: 'Home'),
+                const BottomNavigationBarItem(icon: Icon(TablerIcons.users), label: 'Members'),
+                const BottomNavigationBarItem(icon: Icon(TablerIcons.briefcase), label: 'Deals'),
+                const BottomNavigationBarItem(icon: Icon(TablerIcons.calendar_event), label: 'Schedule'),
+                const BottomNavigationBarItem(icon: Icon(TablerIcons.user_circle), label: 'Me'),
               ],
       ),
     );

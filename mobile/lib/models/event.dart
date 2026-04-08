@@ -5,7 +5,9 @@ class Event {
   final String startAt;
   final String? endAt;
   final String? location;
+  final String? meetingLink;
   final String chapterId;
+  final String eventType;
   final bool isPublished;
 
   Event({
@@ -15,7 +17,9 @@ class Event {
     required this.startAt,
     this.endAt,
     this.location,
+    this.meetingLink,
     required this.chapterId,
+    this.eventType = 'virtual',
     this.isPublished = true,
   });
 
@@ -26,7 +30,9 @@ class Event {
         startAt: json['start_at'] ?? '',
         endAt: json['end_at'],
         location: json['location'],
+        meetingLink: json['meeting_link'],
         chapterId: json['chapter_id'] ?? '',
+        eventType: json['event_type'] ?? 'virtual',
         isPublished: json['is_published'] ?? true,
       );
 }
