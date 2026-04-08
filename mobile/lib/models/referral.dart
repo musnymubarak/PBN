@@ -7,6 +7,7 @@ class Referral {
   final String? leadEmail;
   final String? description;
   final String status;
+  final double? actualValue;
   final String createdAt;
   final String updatedAt;
   final List<ReferralHistory> history;
@@ -20,6 +21,7 @@ class Referral {
     this.leadEmail,
     this.description,
     required this.status,
+    this.actualValue,
     required this.createdAt,
     required this.updatedAt,
     this.history = const [],
@@ -34,6 +36,7 @@ class Referral {
         leadEmail: json['lead_email'],
         description: json['description'],
         status: json['status'] ?? 'submitted',
+        actualValue: json['actual_value'] != null ? (json['actual_value'] as num).toDouble() : null,
         createdAt: json['created_at'] ?? '',
         updatedAt: json['updated_at'] ?? '',
         history: (json['history'] as List<dynamic>?)

@@ -166,6 +166,7 @@ class _ReferralDetailsSheet extends StatefulWidget {
 class _ReferralDetailsSheetState extends State<_ReferralDetailsSheet> {
   final _service = ReferralService();
   final _descriptionController = TextEditingController();
+  final _roiController = TextEditingController();
   late String _selectedStatus;
   bool _loading = false;
 
@@ -182,12 +183,17 @@ class _ReferralDetailsSheetState extends State<_ReferralDetailsSheet> {
   void initState() {
     super.initState();
     _selectedStatus = widget.referral.status;
+    if (widget.referral.actualValue != null) {
+      _roiController.text = widget.referral.actualValue.toString();
+    }
   }
 
   Future<void> _submit() async {
     setState(() => _loading = true);
     try {
-      await _service.updateStatus(widget.referral.id, _selectedStatus, description: _descriptionController.text.trim());
+      final textRoi = _roiController.text.trim();
+      final roiValue = textRoi.isNotEmpty ? double.tryParse(textRoi) : null;
+      await _service.updateStatus(widget.referral.id, _selectedStatus, description: _descriptionController.text.trim(), actualValue: roiValue);
       widget.onUpdate();
       if (mounted) Navigator.pop(context);
     } catch (_) {
@@ -226,6 +232,11 @@ class _ReferralDetailsSheetState extends State<_ReferralDetailsSheet> {
             _buildInfoRow(TablerIcons.mail, widget.referral.leadEmail!),
           ],
           
+          if (widget.referral.actualValue != null) ...[
+            const SizedBox(height: 12),
+            _buildInfoRow(TablerIcons.cash, 'ROI: Rs. ${widget.referral.actualValue!.toStringAsFixed(2)}'),
+          ],
+          
           if (widget.referral.description != null && widget.referral.description!.isNotEmpty) ...[
              const SizedBox(height: 24),
              Container(
@@ -248,6 +259,20 @@ class _ReferralDetailsSheetState extends State<_ReferralDetailsSheet> {
             const SizedBox(height: 16),
             _buildStatusGrid(),
             const SizedBox(height: 24),
+            TextField(
+              controller: _roiController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              style: const TextStyle(fontSize: 14, color: Colors.black, fontWeight: FontWeight.w600),
+              decoration: InputDecoration(
+                hintText: 'Enter Referral ROI / Return Value (Optional)',
+                hintStyle: const TextStyle(color: Colors.grey),
+                filled: true, fillColor: const Color(0xFFF9FAFB),
+                prefixIcon: const Icon(TablerIcons.cash, color: Colors.grey, size: 20),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Colors.black, width: 2)),
+              ),
+            ),
+            const SizedBox(height: 16),
             TextField(
               controller: _descriptionController,
               maxLines: 2,

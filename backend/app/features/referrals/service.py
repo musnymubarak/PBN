@@ -35,6 +35,7 @@ async def _serialize_referral(ref: Referral) -> Dict[str, Any]:
         "lead_contact": ref.client_phone,
         "lead_email": ref.client_email,
         "description": ref.description,
+        "actual_value": float(ref.actual_value) if ref.actual_value is not None else None,
         "status": ref.status.value,
         "created_at": ref.created_at.isoformat() if ref.created_at else None,
         "updated_at": ref.updated_at.isoformat() if ref.updated_at else None,
@@ -156,6 +157,8 @@ async def update_referral_status(ref_id: UUID, data: ReferralStatusUpdate, actor
         
     old_status = ref.status.value
     ref.status = data.status
+    if data.actual_value is not None:
+        ref.actual_value = data.actual_value
     
     history = ReferralStatusHistory(
         referral_id=ref.id,

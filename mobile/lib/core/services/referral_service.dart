@@ -32,10 +32,11 @@ class ReferralService {
     return list.map((j) => Referral.fromJson(j)).toList();
   }
 
-  Future<void> updateStatus(String refId, String status, {String? description}) async {
+  Future<void> updateStatus(String refId, String status, {String? description, double? actualValue}) async {
     await _api.patch('/referrals/$refId/status', data: {
       'status': status,
       if (description != null) 'description': description,
+      if (actualValue != null) 'actual_value': actualValue,
     });
   }
 }
