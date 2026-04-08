@@ -149,10 +149,7 @@ class _DashboardPageState extends State<DashboardPage> {
           _menuItem('rewards', TablerIcons.gift, 'Rewards Catalog'),
           _menuItem('payments', TablerIcons.credit_card, 'Billing'),
           _menuItem('chapters', TablerIcons.building_community, 'Chapters'),
-          const PopupMenuDivider(),
         ],
-        _menuItem('apply', TablerIcons.file_pencil, 'Application Form'),
-        _menuItem('my-applications', TablerIcons.file_search, 'Application Tracker'),
       ],
       onSelected: (route) => Navigator.pushNamed(context, '/$route'),
     );

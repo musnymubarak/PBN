@@ -206,6 +206,7 @@ async def get_leaderboard(chapter_id: UUID | None, period: str, db: AsyncSession
         rank_subq.c.val,
         rank_subq.c.rank_pos,
         User.full_name,
+        User.profile_photo,
         Business.business_name
     ).join(User, User.id == rank_subq.c.uid)\
      .outerjoin(Business, Business.owner_user_id == User.id)\
@@ -221,6 +222,7 @@ async def get_leaderboard(chapter_id: UUID | None, period: str, db: AsyncSession
             "user_id": str(r.uid),
             "full_name": r.full_name,
             "business_name": r.business_name,
+            "profile_photo": r.profile_photo,
             "converted_count": r.won_cnt,
             "sent_count": r.sent_cnt,
             "actual_value": float(r.val),

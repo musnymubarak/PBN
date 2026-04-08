@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:pbn/core/constants/app_colors.dart';
+import 'package:pbn/core/constants/api_config.dart';
 import 'package:pbn/core/services/dashboard_service.dart';
 
 class LeaderboardPage extends StatefulWidget {
@@ -26,8 +27,26 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
     setState(() => _loading = true);
     try {
       _entries = await _service.getLeaderboard(period: _period);
+      // Dummy data for visualizing the leaderboard style
+      if (_entries.length < 5) {
+        _entries.addAll([
+          {'user_id': 'mock-3', 'full_name': 'Michael Chen', 'sent_count': 5},
+          {'user_id': 'mock-4', 'full_name': 'Emily Watson', 'sent_count': 3},
+          {'user_id': 'mock-5', 'full_name': 'David Kim', 'sent_count': 2},
+        ]);
+        _entries.sort((a, b) => (b['sent_count'] ?? 0).compareTo(a['sent_count'] ?? 0));
+        // Keep top few so it doesn't duplicate if called multiple times, though setState re-builds
+        _entries = _entries.take(5).toList();
+      }
     } catch (_) {}
     if (mounted) setState(() => _loading = false);
+  }
+
+  String _getInitials(String name) {
+    if (name.trim().isEmpty) return '?';
+    final parts = name.split(' ').where((e) => e.isNotEmpty).toList();
+    if (parts.length == 1) return parts[0][0].toUpperCase();
+    return (parts[0][0] + parts[1][0]).toUpperCase();
   }
 
   @override
@@ -35,142 +54,99 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        toolbarHeight: 80,
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('PERFORMANCE RANKING',
-                style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.textSecondary,
-                    letterSpacing: 2)),
-            Text('Global Leaderboard',
-                style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.text)),
-          ],
-        ),
+        toolbarHeight: 60,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+        title: const Text('Top Referrers',
+            style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+                color: AppColors.text,
+                letterSpacing: -0.5)),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
           : RefreshIndicator(
               onRefresh: _loadData,
-              child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                children: [
-                  // ── Podium Section (Top 3) ──────────────────────────
-                  if (_entries.isNotEmpty) _buildPodium(_entries),
-                  const SizedBox(height: 24),
-
-                  // ── Period Selectors ───────────────────────────
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
+              color: AppColors.primary,
+              child: CustomScrollView(
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: Column(
                       children: [
-                        _periodChip('This Month', 'this_month'),
-                        const SizedBox(width: 8),
-                        _periodChip('This Quarter', 'this_quarter'),
-                        const SizedBox(width: 8),
-                        _periodChip('This Year', 'this_year'),
+                        const SizedBox(height: 10),
+                        // Segmented Control
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: _buildPeriodSelector(),
+                        ),
+                        
+                        // Podium
+                        if (_entries.isNotEmpty) 
+                          _buildPodium(_entries),
+                          
+                        const SizedBox(height: 16),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 24),
 
-                  const Text('RANKING TABLE',
-                      style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.textSecondary,
-                          letterSpacing: 1.5)),
-                  const SizedBox(height: 16),
-
-                  // ── Remaining List ──────────────────────────────
+                  // Remaining List
                   if (_entries.length > 3)
-                    ..._entries.sublist(3).asMap().entries.map((e) => _buildEntry(e.key + 4, e.value))
+                    SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) => Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: _buildEntry(index + 4, _entries[index + 3]),
+                        ),
+                        childCount: _entries.length - 3,
+                      ),
+                    )
                   else if (_entries.isEmpty)
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(32),
-                        child: Text('No ranking data for this period.',
-                            style: TextStyle(color: Colors.grey.shade400, fontWeight: FontWeight.w600)),
+                    SliverToBoxAdapter(
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(40),
+                          child: Column(
+                            children: [
+                              Icon(TablerIcons.mood_empty, size: 60, color: Colors.grey.shade300),
+                              const SizedBox(height: 16),
+                              Text('No referrals yet!',
+                                  style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.w800, fontSize: 16)),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
-                  const SizedBox(height: 40),
+                  const SliverToBoxAdapter(child: SizedBox(height: 40)),
                 ],
               ),
             ),
     );
   }
 
-  Widget _buildPodium(List<dynamic> entries) {
-    final top1 = entries.length >= 1 ? entries[0] : null;
-    final top2 = entries.length >= 2 ? entries[1] : null;
-    final top3 = entries.length >= 3 ? entries[2] : null;
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        // Rank 2
-        if (top2 != null)
-          _podiumItem(top2, 2, const Color(0xFFC0C0C0), 100),
-        const SizedBox(width: 12),
-        // Rank 1
-        if (top1 != null)
-          _podiumItem(top1, 1, const Color(0xFFFFD700), 125),
-        const SizedBox(width: 12),
-        // Rank 3
-        if (top3 != null)
-          _podiumItem(top3, 3, const Color(0xFFCD7F32), 90),
-      ],
-    );
-  }
-
-  Widget _podiumItem(dynamic user, int rank, Color color, double height) {
-    final initials = (user['full_name'] ?? '?').split(' ').map((e) => e[0]).join();
-    return Expanded(
-      child: Column(
-        children: [
-          Stack(
-            alignment: Alignment.bottomCenter,
-            children: [
-              Container(
-                width: 60, height: 60,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: color, width: 3),
-                  boxShadow: [BoxShadow(color: color.withOpacity(0.2), blurRadius: 10, spreadRadius: 2)],
-                ),
-                child: Center(child: Text(initials, style: TextStyle(fontWeight: FontWeight.w900, color: color, fontSize: 18))),
-              ),
-              Positioned(
-                bottom: -5,
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-                  child: Icon(TablerIcons.trophy, size: 10, color: Colors.white),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(user['full_name']?.split(' ').first ?? 'Unknown',
-              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: AppColors.text),
-              textAlign: TextAlign.center,
-              overflow: TextOverflow.ellipsis),
-          const SizedBox(height: 4),
-          Text('${user['referral_count']} Deals',
-              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 11, color: color)),
-        ],
+  Widget _buildPeriodSelector() {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            _periodTab('This Month', 'this_month'),
+            _periodTab('This Quarter', 'this_quarter'),
+            _periodTab('This Year', 'this_year'),
+            _periodTab('All Time', 'all_time'),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _periodChip(String label, String value) {
+  Widget _periodTab(String label, String value) {
     final selected = _period == value;
     return GestureDetector(
       onTap: () {
@@ -179,57 +155,214 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary : Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: selected ? AppColors.primary : Colors.grey.shade100),
-          boxShadow: selected ? [BoxShadow(color: AppColors.primary.withOpacity(0.2), blurRadius: 10, offset: const Offset(0, 4))] : [],
+          color: selected ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: selected ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))] : [],
         ),
-        child: Text(label.toUpperCase(),
-            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: selected ? Colors.white : AppColors.textSecondary, letterSpacing: 0.5)),
+        child: Text(label,
+            style: TextStyle(
+                fontSize: 12,
+                fontWeight: selected ? FontWeight.w900 : FontWeight.w600,
+                color: selected ? AppColors.text : Colors.grey.shade500)),
       ),
     );
   }
 
+  Widget _buildPodium(List<dynamic> entries) {
+    final top1 = entries.length >= 1 ? entries[0] : null;
+    final top2 = entries.length >= 2 ? entries[1] : null;
+    final top3 = entries.length >= 3 ? entries[2] : null;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 32, bottom: 24, left: 16, right: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          // Rank 2
+          if (top2 != null)
+            Expanded(child: _buildPodiumAvatar(top2, 2, const Color(0xFF94A3B8))),
+          
+          // Rank 1
+          if (top1 != null)
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 30),
+                child: _buildPodiumAvatar(top1, 1, const Color(0xFFF59E0B)),
+              ),
+            ),
+            
+          // Rank 3
+          if (top3 != null)
+            Expanded(child: _buildPodiumAvatar(top3, 3, const Color(0xFFB45309))),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPodiumAvatar(dynamic user, int rank, Color color) {
+    final name = (user['full_name'] ?? 'Unknown').toString().split(' ').first;
+    final count = user['sent_count'] ?? 0;
+    final initials = _getInitials(user['full_name']?.toString() ?? '?');
+    
+    final double avatarSize = rank == 1 ? 84 : 64;
+    
+    String? profilePhoto = user['profile_photo'];
+    String imageUrl = profilePhoto != null && profilePhoto.isNotEmpty
+        ? '${ApiConfig.baseUrl.replaceAll('/api/v1', '')}$profilePhoto'
+        : 'https://picsum.photos/seed/${Uri.encodeComponent(name)}/150/150';
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        if (rank == 1)
+          const Icon(TablerIcons.crown, color: Color(0xFFF59E0B), size: 32),
+        if (rank == 1)
+          const SizedBox(height: 8),
+
+        Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.bottomCenter,
+          children: [
+            Container(
+              width: avatarSize,
+              height: avatarSize,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white,
+                border: Border.all(color: color, width: rank == 1 ? 4 : 3),
+                boxShadow: [
+                  BoxShadow(color: color.withOpacity(0.3), blurRadius: 15, spreadRadius: 2, offset: const Offset(0, 4)),
+                ],
+              ),
+              child: ClipOval(
+                child: Image.network(
+                  imageUrl,
+                  width: avatarSize,
+                  height: avatarSize,
+                  fit: BoxFit.cover,
+                  errorBuilder: (ctx, err, stack) => Center(
+                    child: Text(
+                      initials,
+                      style: TextStyle(fontWeight: FontWeight.w900, color: color, fontSize: rank == 1 ? 28 : 20),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: -10,
+              child: Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: color,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.background, width: 2),
+                ),
+                child: Center(
+                  child: Text(
+                    '$rank',
+                    style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.white, fontSize: 12),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+        Text(
+          name,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: AppColors.text),
+        ),
+        const SizedBox(height: 6),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('$count', style: TextStyle(fontWeight: FontWeight.w900, color: color, fontSize: 13)),
+              const SizedBox(width: 4),
+              Icon(TablerIcons.users, size: 12, color: color),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildEntry(int rank, dynamic entry) {
-    final name = entry['full_name'] ?? 'Unknown';
-    final count = entry['referral_count'] ?? 0;
-    final initials = name.split(' ').map((e) => e[0]).join();
+    final name = (entry['full_name'] ?? 'Unknown').toString();
+    final count = entry['sent_count'] ?? 0;
+    final initials = _getInitials(name);
+    
+    String? profilePhoto = entry['profile_photo'];
+    String imageUrl = profilePhoto != null && profilePhoto.isNotEmpty
+        ? '${ApiConfig.baseUrl.replaceAll('/api/v1', '')}$profilePhoto'
+        : 'https://picsum.photos/seed/${Uri.encodeComponent(name)}/150/150';
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade100),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))
+        ],
       ),
       child: Row(
         children: [
-          Text('#$rank',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Colors.grey.shade300, letterSpacing: -1)),
-          const SizedBox(width: 16),
+          // Rank text
+          SizedBox(
+            width: 28,
+            child: Text('$rank',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Colors.grey.shade400)),
+          ),
+          
+          // Avatar
           Container(
             width: 40, height: 40,
-            decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(10)),
-            child: Center(child: Text(initials, style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.textSecondary, fontSize: 13))),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppColors.text)),
-                const SizedBox(height: 2),
-                Text('Active Global Member', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.textSecondary)),
-              ],
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFFE2E8F0), Color(0xFFCBD5E1)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              shape: BoxShape.circle,
+            ),
+            child: ClipOval(
+              child: Image.network(
+                imageUrl,
+                width: 40,
+                height: 40,
+                fit: BoxFit.cover,
+                errorBuilder: (ctx, err, stack) => Center(
+                  child: Text(initials, style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF475569), fontSize: 13))
+                ),
+              ),
             ),
           ),
+          const SizedBox(width: 14),
+          
+          // Name
+          Expanded(
+            child: Text(name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: AppColors.text, letterSpacing: -0.2)),
+          ),
+          
+          // Referral Stats
           Text('$count', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.primary, letterSpacing: -0.5)),
           const SizedBox(width: 4),
-          const Icon(TablerIcons.briefcase, color: AppColors.primary, size: 14),
+          const Icon(TablerIcons.users, color: Colors.grey, size: 16),
         ],
       ),
     );
