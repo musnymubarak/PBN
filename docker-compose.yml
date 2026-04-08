@@ -33,7 +33,7 @@ services:
     container_name: pbn-admin
     restart: unless-stopped
     ports:
-      - "8005:80"  # Combined entry point on port 8005
+      - "127.0.0.1:8005:80"  # Hidden from public, only accessible locally
     depends_on:
       - api
     networks:
