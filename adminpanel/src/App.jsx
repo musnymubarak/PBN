@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   IconChartBar, 
   IconUsers, 
@@ -26,6 +26,7 @@ import {
   IconLock,
   IconMail,
   IconAlertCircle,
+  IconChevronDown,
 } from '@tabler/icons-react';
 import { api } from './lib/api';
 import { useApi } from './hooks/useApi';
@@ -657,6 +658,58 @@ function ApplicationsPage() {
   );
 }
 
+// ── Custom Select Component ──────────────────────────────────────────────────
+
+function CustomSelect({ label, value, options, onChange, style }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find(opt => String(opt.id) === String(value)) || { name: label };
+
+  return (
+    <div className="custom-select-container" ref={containerRef} style={style}>
+      <button 
+        className={`custom-select-trigger ${isOpen ? 'active' : ''}`}
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <span>{selectedOption.name || selectedOption.label || label}</span>
+        <IconChevronDown size={18} className={`select-arrow ${isOpen ? 'rotated' : ''}`} />
+      </button>
+
+      {isOpen && (
+        <div className="custom-select-menu">
+          <div 
+            className="custom-select-option" 
+            onClick={() => { onChange(''); setIsOpen(false); }}
+            style={{ fontWeight: 700, borderBottom: '1px solid var(--border)' }}
+          >
+            {label}
+          </div>
+          {options.map((opt) => (
+            <div 
+              key={opt.id} 
+              className={`custom-select-option ${String(value) === String(opt.id) ? 'selected' : ''}`}
+              onClick={() => { onChange(opt.id); setIsOpen(false); }}
+            >
+              {opt.name || opt.label}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Members Directory Page ──────────────────────────────────────────────────
 
 function MembersPage() {
@@ -733,30 +786,40 @@ function MembersPage() {
               <input 
                 type="text" 
                 placeholder="Search by name, phone or chapter..." 
-                className="filter-input"
+                className="filter-input v2"
                 style={{ paddingLeft: '40px', width: '100%', height: '48px' }}
                 value={search}
                 onChange={e => { setSearch(e.target.value); setPage(1); }}
               />
             </div>
-            
-            <select className="filter-input" style={{ width: '200px', height: '48px' }} value={chapterFilter} onChange={e => { setChapterFilter(e.target.value); setPage(1); }}>
-              <option value="">All Chapters</option>
-              {chapters.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
+            <CustomSelect 
+              label="All Chapters" 
+              value={chapterFilter} 
+              options={chapters} 
+              onChange={(val) => { setChapterFilter(val); setPage(1); }}
+              style={{ width: '220px' }}
+            />
 
-            <select className="filter-input" style={{ width: '220px', height: '48px' }} value={industryFilter} onChange={e => { setIndustryFilter(e.target.value); setPage(1); }}>
-              <option value="">All Industries (Network)</option>
-              {industries.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
-            </select>
+            <CustomSelect 
+              label="All Industries (Network)" 
+              value={industryFilter} 
+              options={industries} 
+              onChange={(val) => { setIndustryFilter(val); setPage(1); }}
+              style={{ width: '240px' }}
+            />
 
-            <select className="filter-input" style={{ width: '180px', height: '48px' }} value={roleFilter} onChange={e => { setRoleFilter(e.target.value); setPage(1); }}>
-              <option value="">All Roles</option>
-              <option value="MEMBER">Members</option>
-              <option value="PROSPECT">Prospects</option>
-              <option value="CHAPTER_ADMIN">Chapter Admins</option>
-              <option value="PARTNER_ADMIN">Partner Admins</option>
-            </select>
+            <CustomSelect 
+              label="All Roles" 
+              value={roleFilter} 
+              options={[
+                { id: 'MEMBER', name: 'Members' },
+                { id: 'PROSPECT', name: 'Prospects' },
+                { id: 'CHAPTER_ADMIN', name: 'Chapter Admins' },
+                { id: 'PARTNER_ADMIN', name: 'Partner Admins' }
+              ]} 
+              onChange={(val) => { setRoleFilter(val); setPage(1); }}
+              style={{ width: '200px' }}
+            />
           </div>
         </div>
 

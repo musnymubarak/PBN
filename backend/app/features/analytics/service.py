@@ -301,7 +301,7 @@ async def get_admin_overview(db: AsyncSession) -> Dict[str, Any]:
         Chapter.name,
         func.count(ChapterMembership.id).label("members")
     ).outerjoin(ChapterMembership, ChapterMembership.chapter_id == Chapter.id)\
-     .group_by(Chapter.id)
+     .group_by(Chapter.id, Chapter.name)
      
     members_by_chapter = [{"chapter": r.name, "count": r.members} for r in (await db.execute(chap_stmt)).all()]
 
