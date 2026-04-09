@@ -78,6 +78,17 @@ async def reactivate_user_endpoint(
     return success_response(data=result, message="User reactivated successfully")
 
 
+@router.patch("/admin/users/{user_id}", summary="Update user account (Role/Status)")
+async def update_user_endpoint(
+    user_id: UUID,
+    payload: dict,
+    current_user: User = Depends(admin_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    result = await service.update_user(user_id, current_user.id, payload, db)
+    return success_response(data=result, message="User updated successfully")
+
+
 @router.get("/admin/users/{user_id}/masked", summary="Get masked PII data")
 async def masked_user_endpoint(
     user_id: UUID,

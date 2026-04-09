@@ -10,7 +10,7 @@ from decimal import Decimal
 
 from pydantic import BaseModel, field_validator
 
-from app.models.payments import PaymentType
+from app.models.payments import PaymentType, PaymentStatus
 
 
 class PaymentInitiate(BaseModel):
@@ -30,3 +30,20 @@ class PaymentInitiate(BaseModel):
 
 class SimulateWebhook(BaseModel):
     payment_id: UUID
+
+
+class PaymentCreateAdmin(BaseModel):
+    user_id: UUID
+    amount: Decimal
+    payment_type: PaymentType
+    reason: Optional[str] = None
+    notes: Optional[str] = None
+    status: PaymentStatus = PaymentStatus.COMPLETED
+
+
+class PaymentUpdateAdmin(BaseModel):
+    amount: Optional[Decimal] = None
+    payment_type: Optional[PaymentType] = None
+    reason: Optional[str] = None
+    notes: Optional[str] = None
+    status: Optional[PaymentStatus] = None

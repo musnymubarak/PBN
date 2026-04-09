@@ -181,6 +181,46 @@ async def reactivate_user(user_id: UUID, actor_id: UUID, db: AsyncSession) -> Di
     return _serialize_user(user)
 
 
+async def update_user(
+    user_id: UUID, 
+    actor_id: UUID, 
+    data: Dict[str, Any], 
+    db: AsyncSession
+) -> Dict[str, Any]:
+    """Update user role or status manually (Admin only)."""
+    user = (await db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
+    if not user:
+        raise NotFoundException("User not found")
+
+    old_val = _serialize_user(user)
+    
+    if "role" in data:
+        user.role = data["role"]
+    if "is_active" in data:
+        user.is_active = data["is_active"]
+        # Also toggle chapter membership if it exists
+        await db.execute(
+            update(ChapterMembership)
+            .where(ChapterMembership.user_id == user_id)
+            .values(is_active=data["is_active"])
+        )
+
+    # Audit
+    audit = AuditLog(
+        actor_id=actor_id,
+        entity_type="user",
+        entity_id=user.id,
+        action="admin_update",
+        old_value=old_val,
+        new_value=_serialize_user(user),
+    )
+    db.add(audit)
+    await db.flush()
+    await db.commit()
+
+    return _serialize_user(user)
+
+
 async def list_audit_logs(
     entity_type: str | None,
     action: str | None,

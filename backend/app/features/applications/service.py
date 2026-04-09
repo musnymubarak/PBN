@@ -222,14 +222,14 @@ async def update_application_status(
                 phone_number=app.contact_number,
                 full_name=app.full_name,
                 email=app.email,
-                role=UserRole.MEMBER,
+                role=UserRole.PROSPECT,
                 password_hash=hash_password("pbn123"), # Default password for initial login
             )
             db.add(user)
             await db.flush()
         else:
-            if user.role == UserRole.PROSPECT:
-                user.role = UserRole.MEMBER
+            if user.role != UserRole.SUPER_ADMIN: # Don't downgrade admins
+                user.role = UserRole.PROSPECT
                 user.full_name = app.full_name
                 if app.email:
                     user.email = app.email
@@ -283,7 +283,8 @@ async def update_application_status(
                 industry_category_id=app.industry_category_id,
                 membership_type=MembershipType.STANDARD,
                 start_date=date.today(),
-                end_date=date.today() + timedelta(days=365)
+                end_date=date.today() + timedelta(days=365),
+                is_active=False # Must be activated manually after payment
             )
             db.add(new_mem)
 

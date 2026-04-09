@@ -15,7 +15,7 @@ from app.core.config import get_settings
 from app.core.dependencies import get_db
 from app.core.response import success_response, error_response
 from app.features.auth.dependencies import get_current_user, require_role
-from app.features.payments.schemas import PaymentInitiate, SimulateWebhook
+from app.features.payments.schemas import PaymentInitiate, SimulateWebhook, PaymentCreateAdmin, PaymentUpdateAdmin
 from app.features.payments import service
 from app.models.user import User, UserRole
 
@@ -89,8 +89,29 @@ async def payment_status_endpoint(
 async def admin_payments_endpoint(
     status: Optional[str] = Query(None),
     payment_type: Optional[str] = Query(None),
-    current_user: User = Depends(require_role([UserRole.SUPER_ADMIN])),
+    current_user: User = Depends(require_role([UserRole.SUPER_ADMIN, UserRole.CHAPTER_ADMIN])),
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
     payments = await service.list_all_payments(status, payment_type, db)
     return success_response(data=payments)
+
+
+@router.post("/admin/payments", summary="Admin: record manual payment", status_code=201)
+async def admin_record_payment_endpoint(
+    data: PaymentCreateAdmin,
+    current_user: User = Depends(require_role([UserRole.SUPER_ADMIN, UserRole.CHAPTER_ADMIN])),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    result = await service.record_manual_payment(current_user.id, data, db)
+    return success_response(data=service._serialize_payment(result), message="Manual payment recorded", status_code=201)
+
+
+@router.patch("/admin/payments/{payment_id}", summary="Admin: update payment details")
+async def admin_update_payment_endpoint(
+    payment_id: UUID,
+    data: PaymentUpdateAdmin,
+    current_user: User = Depends(require_role([UserRole.SUPER_ADMIN, UserRole.CHAPTER_ADMIN])),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    result = await service.update_payment(payment_id, current_user.id, data, db)
+    return success_response(data=service._serialize_payment(result), message="Payment updated successfully")

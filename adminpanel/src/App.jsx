@@ -152,7 +152,8 @@ const MENU_GROUPS = [
     links: [
       { id: 'applications', icon: IconClipboardList, label: 'Applications' },
       { id: 'referrals', icon: IconHierarchy2, label: 'Referral Pipeline' },
-      { id: 'revenue', icon: IconCoin, label: 'Revenue & ROI' },
+      { id: 'payments', icon: IconCoin, label: 'Payments' },
+      { id: 'revenue', icon: IconChartBar, label: 'Revenue & ROI' },
     ]
   },
   {
@@ -710,6 +711,79 @@ function CustomSelect({ label, value, options, onChange, style }) {
   );
 }
 
+// ── User Edit Modal ──────────────────────────────────────────────────────────
+
+function UserEditModal({ user, onClose, onUpdate, chapters = [] }) {
+  const [role, setRole] = useState(user.role);
+  const [isActive, setIsActive] = useState(user.is_active);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await api.updateUser(user.id, { role, is_active: isActive });
+      onUpdate();
+      onClose();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 450 }}>
+        <div className="modal-header">
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Manage Member</h2>
+          <button onClick={onClose}><IconX size={20} /></button>
+        </div>
+        <form onSubmit={handleSubmit} style={{ padding: '1.5rem' }}>
+          {error && <div className="login-error" style={{ marginBottom: '1rem' }}>{error}</div>}
+          
+          <div style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
+            <div className="avatar-sm" style={{ width: 64, height: 64, fontSize: '1.5rem', margin: '0 auto 0.75rem', background: '#f1f5f9', color: 'var(--primary)' }}>
+              {user.full_name ? user.full_name[0] : '?'}
+            </div>
+            <h3 style={{ fontWeight: 800 }}>{user.full_name}</h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>{user.phone_number}</p>
+          </div>
+
+          <div className="login-field" style={{ marginBottom: '1rem' }}>
+            <label>User Role</label>
+            <select value={role} onChange={e => setRole(e.target.value)} className="filter-input">
+              <option value="PROSPECT">Prospect (Pending Payment)</option>
+              <option value="MEMBER">Member (Verified)</option>
+              <option value="CHAPTER_ADMIN">Chapter Admin</option>
+              <option value="SUPER_ADMIN">Super Admin</option>
+            </select>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', padding: '1rem', background: '#f8fafc', borderRadius: '12px' }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>Membership Active</div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Toggle access to network features</div>
+            </div>
+            <input 
+              type="checkbox" 
+              checked={isActive} 
+              onChange={e => setIsActive(e.target.checked)}
+              style={{ width: 20, height: 20, cursor: 'pointer' }}
+            />
+          </div>
+
+          <button type="submit" className="login-btn" disabled={loading}>
+            {loading ? 'Saving...' : 'Update Member Status'}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+
 // ── Members Directory Page ──────────────────────────────────────────────────
 
 function MembersPage() {
@@ -722,6 +796,7 @@ function MembersPage() {
   const [chapterFilter, setChapterFilter] = useState('');
   const [industryFilter, setIndustryFilter] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
+  const [selectedUser, setSelectedUser] = useState(null);
 
   const [chapters, setChapters] = useState([]);
   const [industries, setIndustries] = useState([]);
@@ -845,7 +920,7 @@ function MembersPage() {
             ) : users.length === 0 ? (
               <tr><td colSpan={6} style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>No members found matching your criteria.</td></tr>
             ) : users.map(user => (
-              <tr key={user.id}>
+              <tr key={user.id} className="table-row-clickable" onClick={() => setSelectedUser(user)}>
                 <td>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                     <div className="avatar-sm" style={{ background: '#f1f5f9', color: 'var(--primary)' }}>
@@ -894,6 +969,289 @@ function MembersPage() {
           )}
         </div>
       </div>
+
+      {selectedUser && (
+        <UserEditModal 
+          user={selectedUser} 
+          chapters={chapters} 
+          onClose={() => setSelectedUser(null)} 
+          onUpdate={fetchMembers} 
+        />
+      )}
+    </section>
+  );
+}
+
+
+
+// ── Payments Page ─────────────────────────────────────────────────────────────
+
+function RecordPaymentModal({ onClose, onRecord, users = [] }) {
+  const [userId, setUserId] = useState('');
+  const [amount, setAmount] = useState('15000');
+  const [paymentType, setPaymentType] = useState('membership');
+  const [reason, setReason] = useState('');
+  const [notes, setNotes] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!userId) return setError('Please select a user');
+    if (!reason) return setError('Please provide a payment reason');
+    
+    setLoading(true);
+    setError('');
+    try {
+      await api.recordPayment({
+        user_id: userId,
+        amount: parseFloat(amount),
+        payment_type: paymentType,
+        reason,
+        notes,
+        status: 'completed'
+      });
+      onRecord();
+      onClose();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 500 }}>
+        <div className="modal-header">
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Record Manual Payment</h2>
+          <button onClick={onClose}><IconX size={20} /></button>
+        </div>
+        <form onSubmit={handleSubmit} style={{ padding: '1.5rem' }}>
+          {error && <div className="login-error" style={{ marginBottom: '1rem' }}>{error}</div>}
+          
+          <div className="login-field" style={{ marginBottom: '1rem' }}>
+            <label>Select User</label>
+            <select value={userId} onChange={e => setUserId(e.target.value)} className="filter-input" style={{ width: '100%', height: 42 }}>
+              <option value="">Choose a member/prospect...</option>
+              {users.map(u => (
+                <option key={u.id} value={u.id}>{u.full_name} ({u.phone_number})</option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+            <div className="login-field">
+              <label>Amount (LKR)</label>
+              <input type="number" value={amount} onChange={e => setAmount(e.target.value)} required className="filter-input" />
+            </div>
+            <div className="login-field">
+              <label>Type</label>
+              <select value={paymentType} onChange={e => setPaymentType(e.target.value)} className="filter-input">
+                <option value="membership">Membership</option>
+                <option value="meeting_fee">Meeting Fee</option>
+                <option value="renewal">Renewal</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="login-field" style={{ marginBottom: '1rem' }}>
+            <label>Payment Reason</label>
+            <input 
+              type="text" 
+              placeholder="e.g. Annual Membership Fee 2025" 
+              value={reason} 
+              onChange={e => setReason(e.target.value)} 
+              className="filter-input"
+              required 
+            />
+          </div>
+
+          <div className="login-field" style={{ marginBottom: '1.5rem' }}>
+            <label>Admin Notes</label>
+            <textarea 
+              value={notes} 
+              onChange={e => setNotes(e.target.value)} 
+              className="action-textarea" 
+              placeholder="Internal notes..."
+              style={{ minHeight: 80 }}
+            />
+          </div>
+
+          <button type="submit" className="login-btn" disabled={loading}>
+            {loading ? 'Recording...' : 'Record Payment'}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function UpdatePaymentModal({ payment, onClose, onUpdate }) {
+  const [reason, setReason] = useState(payment.reason || '');
+  const [notes, setNotes] = useState(payment.notes || '');
+  const [status, setStatus] = useState(payment.status || 'completed');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await api.updatePayment(payment.id, { reason, notes, status });
+      onUpdate();
+      onClose();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 500 }}>
+        <div className="modal-header">
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Update Payment</h2>
+          <button onClick={onClose}><IconX size={20} /></button>
+        </div>
+        <form onSubmit={handleSubmit} style={{ padding: '1.5rem' }}>
+          {error && <div className="login-error" style={{ marginBottom: '1rem' }}>{error}</div>}
+          
+          <div className="login-field" style={{ marginBottom: '1rem' }}>
+            <label>Payment Reason</label>
+            <input type="text" value={reason} onChange={e => setReason(e.target.value)} className="filter-input" required />
+          </div>
+
+          <div className="login-field" style={{ marginBottom: '1rem' }}>
+            <label>Status</label>
+            <select value={status} onChange={e => setStatus(e.target.value)} className="filter-input">
+              <option value="pending">Pending</option>
+              <option value="completed">Completed</option>
+              <option value="failed">Failed</option>
+              <option value="refunded">Refunded</option>
+            </select>
+          </div>
+
+          <div className="login-field" style={{ marginBottom: '1.5rem' }}>
+            <label>Admin Notes</label>
+            <textarea value={notes} onChange={e => setNotes(e.target.value)} className="action-textarea" style={{ minHeight: 80 }} />
+          </div>
+
+          <button type="submit" className="login-btn" disabled={loading}>
+            {loading ? 'Updating...' : 'Save Changes'}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function PaymentsPage() {
+  const [payments, setPayments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showRecordModal, setShowRecordModal] = useState(false);
+  const [editingPayment, setEditingPayment] = useState(null);
+  const [users, setUsers] = useState([]);
+
+  const fetchPayments = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await api.listPayments();
+      setPayments(data || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPayments();
+    api.listUsers({ limit: 1000 }).then(data => setUsers(data.users || []));
+  }, [fetchPayments]);
+
+  return (
+    <section className="dashboard-body">
+      <div className="page-title-wrap" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h1 className="page-title">Payment Management</h1>
+          <p style={{ color: 'var(--text-secondary)', marginTop: '0.4rem', fontWeight: 500 }}>
+            Track and record all network transactions and membership fees.
+          </p>
+        </div>
+        <button className="btn-primary" onClick={() => setShowRecordModal(true)} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          <IconCoin size={20} /> Record Direct Payment
+        </button>
+      </div>
+
+      <div className="data-section">
+        <div className="section-head">
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Transaction History</h3>
+          <button className="view-detail-btn" onClick={fetchPayments}><IconRefresh size={18} /></button>
+        </div>
+
+        <table className="modern-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>User</th>
+              <th>Reason</th>
+              <th>Type</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr><td colSpan={7} style={{ textAlign: 'center', padding: '3rem' }}>Loading payments...</td></tr>
+            ) : payments.length === 0 ? (
+              <tr><td colSpan={7} style={{ textAlign: 'center', padding: '3rem' }}>No payments found.</td></tr>
+            ) : payments.map(p => (
+              <tr key={p.id}>
+                <td style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                  {new Date(p.created_at).toLocaleDateString()}
+                </td>
+                <td>
+                  <div style={{ fontWeight: 600 }}>{p.user_name || 'Unknown'}</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{p.user_phone}</div>
+                </td>
+                <td style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {p.reason || '—'}
+                </td>
+                <td><span className="id-badge">{p.payment_type}</span></td>
+                <td style={{ fontWeight: 700 }}>{formatCurrency(p.amount)}</td>
+                <td>
+                  <span className={`pill ${p.status === 'completed' ? 'pill-approved' : 'pill-pending'}`}>
+                    {p.status}
+                  </span>
+                </td>
+                <td>
+                  <button className="view-detail-btn" onClick={() => setEditingPayment(p)}>
+                    <IconSettings size={18} />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {showRecordModal && (
+        <RecordPaymentModal 
+          users={users} 
+          onClose={() => setShowRecordModal(false)} 
+          onRecord={fetchPayments} 
+        />
+      )}
+      {editingPayment && (
+        <UpdatePaymentModal 
+          payment={editingPayment} 
+          onClose={() => setEditingPayment(null)} 
+          onUpdate={fetchPayments} 
+        />
+      )}
     </section>
   );
 }
@@ -950,6 +1308,9 @@ export default function App() {
     }
     if (activeTab === 'members') {
       return <MembersPage />;
+    }
+    if (activeTab === 'payments') {
+      return <PaymentsPage />;
     }
 
     // Default: Overview dashboard
