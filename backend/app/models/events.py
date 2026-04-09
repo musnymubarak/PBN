@@ -109,7 +109,7 @@ class EventAttendance(Base, TimestampMixin):
 
     event: Mapped["Event"] = sqlalchemy.orm.relationship("Event", back_populates="attendances")
     user: Mapped["User"] = sqlalchemy.orm.relationship("User", foreign_keys=[user_id])
-    marked_by_user: Mapped["User"] = sqlalchemy.orm.relationship("User", foreign_keys=[marked_by])
+    marked_by_user: Mapped["User" | None] = sqlalchemy.orm.relationship("User", foreign_keys=[marked_by])
 
     def __repr__(self) -> str:
         return f"<Attendance event={self.event_id} user={self.user_id}>"

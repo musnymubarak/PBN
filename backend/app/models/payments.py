@@ -61,7 +61,7 @@ class Payment(Base, TimestampMixin):
 
     # Relationships
     user: Mapped["User"] = relationship("User", foreign_keys=[user_id])
-    recorded_by: Mapped["User"] = relationship("User", foreign_keys=[recorded_by_id])
+    recorded_by: Mapped["User" | None] = relationship("User", foreign_keys=[recorded_by_id])
 
     def __repr__(self) -> str:
         return f"<Payment {self.amount} {self.currency} [{self.status.value}]>"
