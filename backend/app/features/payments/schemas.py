@@ -30,3 +30,9 @@ class PaymentInitiate(BaseModel):
 
 class SimulateWebhook(BaseModel):
     payment_id: UUID
+
+
+class PaymentUpdate(BaseModel):
+    amount: Optional[Decimal] = None
+    status: Optional[str] = None
+    payment_type: Optional[PaymentType] = None

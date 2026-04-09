@@ -15,6 +15,8 @@ from decimal import Decimal
 from typing import Any, Dict, List
 from uuid import UUID
 
+from app.features.payments.schemas import PaymentUpdate
+
 from sqlalchemy import select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -248,3 +250,25 @@ async def list_all_payments(
         stmt = stmt.where(Payment.payment_type == type_filter)
     result = await db.execute(stmt)
     return [_serialize_payment(p) for p in result.scalars().all()]
+
+
+async def update_payment(
+    payment_id: UUID, data: PaymentUpdate, db: AsyncSession
+) -> Dict[str, Any]:
+    """Admin: Update an existing payment record."""
+    payment = (await db.execute(
+        select(Payment).where(Payment.id == payment_id)
+    )).scalar_one_or_none()
+
+    if not payment:
+        raise NotFoundException("Payment not found")
+
+    if data.amount is not None:
+        payment.amount = data.amount
+    if data.status:
+        payment.status = PaymentStatus(data.status)
+    if data.payment_type:
+        payment.payment_type = data.payment_type
+
+    await db.flush()
+    return _serialize_payment(payment)

@@ -89,8 +89,19 @@ async def payment_status_endpoint(
 async def admin_payments_endpoint(
     status: Optional[str] = Query(None),
     payment_type: Optional[str] = Query(None),
-    current_user: User = Depends(require_role([UserRole.SUPER_ADMIN])),
+    current_user: User = Depends(require_role([UserRole.SUPER_ADMIN, UserRole.CHAPTER_ADMIN])),
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
     payments = await service.list_all_payments(status, payment_type, db)
     return success_response(data=payments)
+
+
+@router.patch("/admin/payments/{payment_id}", summary="Admin: update payment details")
+async def admin_update_payment_endpoint(
+    payment_id: UUID,
+    data: service.PaymentUpdate,
+    current_user: User = Depends(require_role([UserRole.SUPER_ADMIN])),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    result = await service.update_payment(payment_id, data, db)
+    return success_response(data=result, message="Payment updated successfully")
