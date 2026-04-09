@@ -27,6 +27,7 @@ async function apiFetch(path, options = {}) {
 export const api = {
   getAdminOverview: () => apiFetch('/admin/analytics/overview'),
   listUsers: (params = {}) => apiFetch(`/admin/users?${new URLSearchParams(params)}`),
+  listIndustryCategories: () => apiFetch('/industry-categories'),
   listIndustries: () => apiFetch('/admin/industries'),
   listReferrals: () => apiFetch('/referrals/my/given'),
   listPayments: (params = {}) => apiFetch(`/admin/payments?${new URLSearchParams(params)}`),
@@ -46,6 +47,11 @@ export const api = {
   updateApplicationStatus: (id, body) =>
     apiFetch(`/applications/${id}/status`, {
       method: 'PATCH',
+      body: JSON.stringify(body),
+    }),
+  createApplication: (body) =>
+    apiFetch('/applications', {
+      method: 'POST',
       body: JSON.stringify(body),
     }),
 

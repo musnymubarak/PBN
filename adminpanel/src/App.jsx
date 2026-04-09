@@ -27,6 +27,7 @@ import {
   IconMail,
   IconAlertCircle,
   IconChevronDown,
+  IconPlus,
 } from '@tabler/icons-react';
 import { api } from './lib/api';
 import { useApi } from './hooks/useApi';
@@ -499,6 +500,155 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
 }
 
 
+
+function CreateApplicationModal({ onClose, onCreated }) {
+  const [formData, setFormData] = useState({
+    full_name: '',
+    business_name: '',
+    contact_number: '',
+    email: '',
+    district: '',
+    industry_category_id: ''
+  });
+  const [industries, setIndustries] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [loadingIndustries, setLoadingIndustries] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    api.listIndustryCategories()
+      .then(data => setIndustries(data))
+      .catch(err => console.error('Failed to load industries:', err))
+      .finally(() => setLoadingIndustries(false));
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.industry_category_id) {
+      setError('Please select an industry category');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      await api.createApplication(formData);
+      onCreated();
+    } catch (err) {
+      setError(err.message || 'Failed to create application');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 550 }}>
+        <div className="modal-header">
+          <div>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>New Application</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Manual application entry</p>
+          </div>
+          <button type="button" onClick={onClose}><IconX size={20} /></button>
+        </div>
+        
+        <form onSubmit={handleSubmit} style={{ padding: '1.5rem' }}>
+          {error && <div className="login-error" style={{ marginBottom: '1.25rem' }}>{error}</div>}
+          
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
+            <div className="login-field" style={{ marginBottom: 0 }}>
+              <label>Applicant Name *</label>
+              <input 
+                type="text" 
+                className="filter-input v2"
+                placeholder="Full Name"
+                required
+                value={formData.full_name}
+                onChange={e => setFormData({...formData, full_name: e.target.value})}
+              />
+            </div>
+            <div className="login-field" style={{ marginBottom: 0 }}>
+              <label>Business Name *</label>
+              <input 
+                type="text" 
+                className="filter-input v2"
+                placeholder="Trade Name"
+                required
+                value={formData.business_name}
+                onChange={e => setFormData({...formData, business_name: e.target.value})}
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
+            <div className="login-field" style={{ marginBottom: 0 }}>
+              <label>Contact Number *</label>
+              <input 
+                type="tel" 
+                className="filter-input v2"
+                placeholder="+94..."
+                required
+                value={formData.contact_number}
+                onChange={e => setFormData({...formData, contact_number: e.target.value})}
+              />
+            </div>
+            <div className="login-field" style={{ marginBottom: 0 }}>
+              <label>Email Address</label>
+              <input 
+                type="email" 
+                className="filter-input v2"
+                placeholder="optional@email.com"
+                value={formData.email}
+                onChange={e => setFormData({...formData, email: e.target.value})}
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+            <div className="login-field" style={{ marginBottom: 0 }}>
+              <label>District</label>
+              <input 
+                type="text" 
+                className="filter-input v2"
+                placeholder="e.g. Colombo"
+                value={formData.district}
+                onChange={e => setFormData({...formData, district: e.target.value})}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>Industry *</label>
+              <CustomSelect 
+                label={loadingIndustries ? "Loading..." : "Select Industry..."}
+                value={formData.industry_category_id}
+                options={industries}
+                onChange={val => setFormData({...formData, industry_category_id: val})}
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+            <button 
+              type="submit" 
+              className="login-btn" 
+              disabled={loading}
+              style={{ flex: 2 }}
+            >
+              {loading ? 'Creating...' : 'Create Application'}
+            </button>
+            <button 
+              type="button" 
+              className="login-btn" 
+              onClick={onClose}
+              style={{ flex: 1, background: '#94a3b8' }}
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 // ── Applications Page ───────────────────────────────────────────────────────
 
 function ApplicationsPage() {
@@ -509,6 +659,7 @@ function ApplicationsPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage] = useState(1);
   const [selectedAppId, setSelectedAppId] = useState(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const fetchApps = useCallback(async () => {
     setLoading(true);
@@ -577,6 +728,14 @@ function ApplicationsPage() {
                 </button>
               ))}
             </div>
+            <button
+              className="btn-primary"
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.25rem', background: '#10b981' }}
+              onClick={() => setShowCreateModal(true)}
+            >
+              <IconPlus size={16} />
+              Add Application
+            </button>
             <button
               className="btn-primary"
               style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.25rem' }}
@@ -665,16 +824,25 @@ function ApplicationsPage() {
             </div>
           )}
         </div>
-      </div>
 
-      {/* Detail Modal */}
-      {selectedAppId && (
-        <ApplicationDetailModal
-          appId={selectedAppId}
-          onClose={() => setSelectedAppId(null)}
-          onStatusUpdated={fetchApps}
-        />
-      )}
+        {selectedAppId && (
+          <ApplicationDetailModal 
+            appId={selectedAppId} 
+            onClose={() => setSelectedAppId(null)} 
+            onStatusUpdated={fetchApps}
+          />
+        )}
+
+        {showCreateModal && (
+          <CreateApplicationModal 
+            onClose={() => setShowCreateModal(false)}
+            onCreated={() => {
+              setShowCreateModal(false);
+              fetchApps();
+            }}
+          />
+        )}
+      </div>
     </section>
   );
 }
