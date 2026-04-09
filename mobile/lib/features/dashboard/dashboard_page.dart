@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/providers/auth_provider.dart';
 import 'package:pbn/core/providers/notification_provider.dart';
@@ -482,7 +483,6 @@ class _DashboardPageState extends State<DashboardPage> {
 
   String _formatCurrency(double v) {
     if (v >= 1000000) return 'LKR ${(v / 1000000).toStringAsFixed(1)}M';
-    if (v >= 1000) return 'LKR ${(v / 1000).toStringAsFixed(0)}K';
-    return 'LKR ${v.toStringAsFixed(0)}';
+    return 'LKR ${NumberFormat("#,##0").format(v)}';
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
+import 'package:intl/intl.dart';
 import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/services/referral_service.dart';
 import 'package:pbn/models/referral.dart';
@@ -198,12 +199,12 @@ class _ReferralDetailsSheetState extends State<_ReferralDetailsSheet> {
   bool _loading = false;
 
   final List<Map<String, String>> _statuses = [
-    {'value': 'submitted', 'label': 'Submitted'},
+    {'value': 'submitted', 'label': 'New'},
     {'value': 'contacted', 'label': 'Contacted'},
-    {'value': 'negotiation', 'label': 'Negotiated'},
-    {'value': 'in_progress', 'label': 'Pending'},
-    {'value': 'success', 'label': 'Converted'},
-    {'value': 'closed_lost', 'label': 'Rejected'},
+    {'value': 'negotiation', 'label': 'Discussing'},
+    {'value': 'in_progress', 'label': 'Waiting'},
+    {'value': 'success', 'label': 'Success'},
+    {'value': 'closed_lost', 'label': 'Lost'},
   ];
 
   @override
@@ -285,7 +286,7 @@ class _ReferralDetailsSheetState extends State<_ReferralDetailsSheet> {
                   ],
                   if (widget.referral.actualValue != null) ...[
                     const Padding(padding: EdgeInsets.symmetric(vertical: 12), child: Divider(height: 1)),
-                    _buildDetailRow(TablerIcons.cash, 'Realized ROI', 'LKR ${widget.referral.actualValue!.toStringAsFixed(2)}'),
+                    _buildDetailRow(TablerIcons.cash, 'Realized ROI', 'LKR ${NumberFormat("#,##0").format(widget.referral.actualValue)}'),
                   ],
                   
                   if (widget.referral.description != null && widget.referral.description!.isNotEmpty) ...[

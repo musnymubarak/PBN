@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
+import 'package:intl/intl.dart';
 import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/services/payment_service.dart';
 import 'package:pbn/models/payment.dart';
@@ -92,7 +93,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: 1.5)),
                         const SizedBox(height: 12),
-                        Text('LKR ${totalPaid.toStringAsFixed(0)}',
+                        Text('LKR ${NumberFormat('#,##0').format(totalPaid)}',
                             style: const TextStyle(
                                 fontSize: 36,
                                 fontWeight: FontWeight.w900,
@@ -181,7 +182,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text('LKR ${p.amount.toStringAsFixed(0)}', 
+              Text('LKR ${NumberFormat('#,##0').format(p.amount)}', 
                 style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppColors.text, letterSpacing: -0.5)),
               const SizedBox(height: 6),
               Container(
