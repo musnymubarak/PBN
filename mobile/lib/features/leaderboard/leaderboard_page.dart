@@ -132,16 +132,13 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
         color: Colors.grey.shade100,
         borderRadius: BorderRadius.circular(20),
       ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            _periodTab('This Month', 'this_month'),
-            _periodTab('This Quarter', 'this_quarter'),
-            _periodTab('This Year', 'this_year'),
-            _periodTab('All Time', 'all_time'),
-          ],
-        ),
+      child: Row(
+        children: [
+          Expanded(child: _periodTab('This Month', 'this_month')),
+          Expanded(child: _periodTab('This Quarter', 'this_quarter')),
+          Expanded(child: _periodTab('This Year', 'this_year')),
+          Expanded(child: _periodTab('All Time', 'all_time')),
+        ],
       ),
     );
   }
@@ -155,17 +152,20 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
           color: selected ? Colors.white : Colors.transparent,
           borderRadius: BorderRadius.circular(16),
           boxShadow: selected ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))] : [],
         ),
-        child: Text(label,
-            style: TextStyle(
-                fontSize: 12,
-                fontWeight: selected ? FontWeight.w900 : FontWeight.w600,
-                color: selected ? AppColors.text : Colors.grey.shade500)),
+        child: Center(
+          child: Text(label,
+              maxLines: 1,
+              style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: selected ? FontWeight.w900 : FontWeight.w600,
+                  color: selected ? AppColors.text : Colors.grey.shade500)),
+        ),
       ),
     );
   }
