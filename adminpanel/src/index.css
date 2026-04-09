@@ -376,6 +376,7 @@ body {
 .pill-approved { background: #ecfdf5; color: #059669; }
 .pill-rejected { background: #fef2f2; color: #dc2626; }
 .pill-waitlisted { background: #f9fafb; color: #6b7280; }
+.pill-awaiting-payment { background: #fff7ed; color: #c2410c; }
 
 /* ── Filter Chips ────────────────────────────────────────────────────────── */
 
@@ -1059,6 +1060,18 @@ body {
 .action-btn-main:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.btn-disabled-visual {
+  border-color: #cbd5e1 !important;
+  color: #94a3b8 !important;
+  cursor: not-allowed !important;
+  opacity: 0.6;
+}
+
+.btn-disabled-visual:hover {
+  background: transparent !important;
+  transform: none !important;
 }
 
 .app-status-banner {

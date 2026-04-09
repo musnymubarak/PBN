@@ -194,9 +194,23 @@ async def _apply_payment_side_effects(payment: Payment, db: AsyncSession) -> Non
             )
             db.add(rsvp)
 
-            # As per user request, automatic upgrade is disabled.
-            # Admin will manually upgrade the user from the dashboard.
-            pass
+    elif payment.payment_type == PaymentType.MEMBERSHIP:
+        # 1. Activate the ChapterMembership for this user
+        ship_stmt = select(ChapterMembership).where(
+            ChapterMembership.user_id == payment.user_id,
+            ChapterMembership.is_active.is_(False)
+        ).order_by(desc(ChapterMembership.created_at)).limit(1)
+        
+        membership = (await db.execute(ship_stmt)).scalar_one_or_none()
+        if membership:
+            membership.is_active = True
+            
+        # 2. Upgrade user role from PROSPECT to MEMBER
+        from app.models.user import User, UserRole
+        usr_stmt = select(User).where(User.id == payment.user_id)
+        user = (await db.execute(usr_stmt)).scalar_one_or_none()
+        if user and user.role == UserRole.PROSPECT:
+            user.role = UserRole.MEMBER
 
 
 async def simulate_webhook(payment_id: UUID, db: AsyncSession) -> Dict[str, Any]:

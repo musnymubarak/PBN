@@ -221,6 +221,7 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
   const [modalStatus, setModalStatus] = useState(null); // Local choice for status
   const [chapters, setChapters] = useState([]);
   const [selectedChapterId, setSelectedChapterId] = useState('');
+  const [paymentStatus, setPaymentStatus] = useState('pending');
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
@@ -268,6 +269,7 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
         status: newStatus,
         notes: actionNotes || undefined,
         chapter_id: selectedChapterId || undefined,
+        payment_status: newStatus === 'approved' ? paymentStatus : undefined,
       });
       onStatusUpdated();
       onClose();
@@ -319,7 +321,7 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
               Review and manage this membership application
             </p>
           </div>
-          <button className="modal-close-btn" onClick={onClose}>
+          <button type="button" className="modal-close-btn" onClick={onClose}>
             <IconX size={20} />
           </button>
         </div>
@@ -411,34 +413,46 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
                   <IconCheck size={18} /> Approve Application
                 </h4>
                 <p style={{ fontSize: '0.85rem', color: '#166534', marginBottom: '1.25rem' }}>
-                  Please select the chapter to which this member will be assigned.
+                  Select the chapter and confirming the initial payment status if previously received.
                 </p>
-                <div className="login-field" style={{ marginBottom: '1.25rem' }}>
-                  <label style={{ color: '#166534' }}>Target Chapter</label>
-                  <select 
-                    value={selectedChapterId} 
-                    onChange={e => setSelectedChapterId(e.target.value)}
-                    style={{ width: '100%', padding: '0.75rem', borderRadius: '10px', border: '1.5px solid #86efac', outline: 'none' }}
-                  >
-                    <option value="">Select a chapter...</option>
-                    {chapters.map(c => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
+                  <div>
+                    <label style={{ color: '#166534', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem', display: 'block' }}>Target Chapter</label>
+                    <CustomSelect 
+                      label="Select a chapter..." 
+                      value={selectedChapterId} 
+                      options={chapters} 
+                      onChange={setSelectedChapterId}
+                      style={{ background: 'white' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ color: '#166534', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem', display: 'block' }}>Payment status</label>
+                    <CustomSelect 
+                      label="Payment status..." 
+                      value={paymentStatus} 
+                      options={[
+                        { id: 'pending', name: 'Pending (Pay later)' },
+                        { id: 'completed', name: 'Completed (Paid)' }
+                      ]} 
+                      onChange={setPaymentStatus}
+                      style={{ background: 'white' }}
+                    />
+                  </div>
                 </div>
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
                   <button 
                     className="login-btn" 
-                    style={{ flex: 1, background: '#10b981', padding: '0.75rem' }}
+                    style={{ flex: 1, background: '#10b981', padding: '0.75rem', height: '52px' }}
                     onClick={() => handleStatusUpdate('approved')}
                     disabled={updating || !selectedChapterId}
                   >
-                    Confirm Approval
+                    Confirm & Approve
                   </button>
                   <button 
                     className="login-btn" 
-                    style={{ flex: 1, background: '#94a3b8', padding: '0.75rem' }}
-                    onClick={() => setModalStatus(null)}
+                    style={{ flex: 1, background: '#94a3b8', padding: '0.75rem', height: '52px' }}
+                    onClick={() => { setModalStatus(null); setSelectedChapterId(''); }}
                   >
                     Cancel
                   </button>
@@ -456,18 +470,24 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
                   />
                 </div>
                 <div className="action-buttons">
-                  {availableActions.map(action => (
-                    <button
-                      key={action.status}
-                      className="action-btn-main"
-                      style={{ '--btn-color': action.color }}
-                      disabled={updating}
-                      onClick={() => handleStatusUpdate(action.status)}
-                    >
-                      <action.icon size={18} />
-                      {updating ? 'Updating...' : action.label}
-                    </button>
-                  ))}
+                  {availableActions.map(action => {
+                    const isDecision = ['approved', 'rejected', 'waitlisted'].includes(action.status);
+                    const needsFitCall = detail.status === 'pending' && isDecision;
+                    
+                    return (
+                      <button
+                        key={action.status}
+                        className={`action-btn-main ${needsFitCall ? 'btn-disabled-visual' : ''}`}
+                        style={{ '--btn-color': needsFitCall ? '#cbd5e1' : action.color }}
+                        disabled={updating}
+                        onClick={() => handleStatusUpdate(action.status)}
+                        title={needsFitCall ? "Schedule a Fit Call first" : ""}
+                      >
+                        <action.icon size={18} />
+                        {updating ? 'Updating...' : action.label}
+                      </button>
+                    );
+                  })}
                 </div>
               </>
             )}
@@ -680,6 +700,7 @@ function CustomSelect({ label, value, options, onChange, style }) {
   return (
     <div className="custom-select-container" ref={containerRef} style={style}>
       <button 
+        type="button"
         className={`custom-select-trigger ${isOpen ? 'active' : ''}`}
         onClick={() => setIsOpen(!isOpen)}
       >
@@ -738,7 +759,7 @@ function UserEditModal({ user, onClose, onUpdate, chapters = [] }) {
       <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 450 }}>
         <div className="modal-header">
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Manage Member</h2>
-          <button onClick={onClose}><IconX size={20} /></button>
+          <button type="button" onClick={onClose}><IconX size={20} /></button>
         </div>
         <form onSubmit={handleSubmit} style={{ padding: '1.5rem' }}>
           {error && <div className="login-error" style={{ marginBottom: '1rem' }}>{error}</div>}
@@ -751,14 +772,19 @@ function UserEditModal({ user, onClose, onUpdate, chapters = [] }) {
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>{user.phone_number}</p>
           </div>
 
-          <div className="login-field" style={{ marginBottom: '1rem' }}>
-            <label>User Role</label>
-            <select value={role} onChange={e => setRole(e.target.value)} className="filter-input">
-              <option value="PROSPECT">Prospect (Pending Payment)</option>
-              <option value="MEMBER">Member (Verified)</option>
-              <option value="CHAPTER_ADMIN">Chapter Admin</option>
-              <option value="SUPER_ADMIN">Super Admin</option>
-            </select>
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>User Role</label>
+            <CustomSelect 
+              label="Select role..." 
+              value={role} 
+              options={[
+                { id: 'PROSPECT', name: 'Prospect (Pending Payment)' },
+                { id: 'MEMBER', name: 'Member (Verified)' },
+                { id: 'CHAPTER_ADMIN', name: 'Chapter Admin' },
+                { id: 'SUPER_ADMIN', name: 'Super Admin' }
+              ]} 
+              onChange={setRole}
+            />
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', padding: '1rem', background: '#f8fafc', borderRadius: '12px' }}>
@@ -944,8 +970,14 @@ function MembersPage() {
                   </span>
                 </td>
                 <td>
-                  <span className={`pill ${user.is_active ? 'pill-approved' : 'pill-rejected'}`}>
-                    {user.is_active ? 'Active' : 'Inactive'}
+                  <span className={`pill ${
+                    user.is_active 
+                      ? 'pill-approved' 
+                      : user.role === 'PROSPECT' 
+                        ? 'pill-awaiting-payment' 
+                        : 'pill-rejected'
+                  }`}>
+                    {user.is_active ? 'Active' : user.role === 'PROSPECT' ? 'Awaiting Payment' : 'Inactive'}
                   </span>
                 </td>
                 <td style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
@@ -1025,33 +1057,38 @@ function RecordPaymentModal({ onClose, onRecord, users = [] }) {
       <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 500 }}>
         <div className="modal-header">
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Record Manual Payment</h2>
-          <button onClick={onClose}><IconX size={20} /></button>
+          <button type="button" onClick={onClose}><IconX size={20} /></button>
         </div>
         <form onSubmit={handleSubmit} style={{ padding: '1.5rem' }}>
           {error && <div className="login-error" style={{ marginBottom: '1rem' }}>{error}</div>}
           
-          <div className="login-field" style={{ marginBottom: '1rem' }}>
-            <label>Select User</label>
-            <select value={userId} onChange={e => setUserId(e.target.value)} className="filter-input" style={{ width: '100%', height: 42 }}>
-              <option value="">Choose a member/prospect...</option>
-              {users.map(u => (
-                <option key={u.id} value={u.id}>{u.full_name} ({u.phone_number})</option>
-              ))}
-            </select>
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>Select User</label>
+            <CustomSelect 
+              label="Choose a member/prospect..." 
+              value={userId} 
+              options={users.map(u => ({ id: u.id, name: `${u.full_name} (${u.phone_number})` }))} 
+              onChange={setUserId}
+            />
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
             <div className="login-field">
               <label>Amount (LKR)</label>
-              <input type="number" value={amount} onChange={e => setAmount(e.target.value)} required className="filter-input" />
+              <input type="number" value={amount} onChange={e => setAmount(e.target.value)} required className="filter-input" style={{ height: '52px' }} />
             </div>
-            <div className="login-field">
-              <label>Type</label>
-              <select value={paymentType} onChange={e => setPaymentType(e.target.value)} className="filter-input">
-                <option value="membership">Membership</option>
-                <option value="meeting_fee">Meeting Fee</option>
-                <option value="renewal">Renewal</option>
-              </select>
+            <div>
+              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>Type</label>
+              <CustomSelect 
+                label="Select type..." 
+                value={paymentType} 
+                options={[
+                  { id: 'membership', name: 'Membership' },
+                  { id: 'meeting_fee', name: 'Meeting Fee' },
+                  { id: 'renewal', name: 'Renewal' }
+                ]} 
+                onChange={setPaymentType}
+              />
             </div>
           </div>
 
@@ -1113,7 +1150,7 @@ function UpdatePaymentModal({ payment, onClose, onUpdate }) {
       <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 500 }}>
         <div className="modal-header">
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Update Payment</h2>
-          <button onClick={onClose}><IconX size={20} /></button>
+          <button type="button" onClick={onClose}><IconX size={20} /></button>
         </div>
         <form onSubmit={handleSubmit} style={{ padding: '1.5rem' }}>
           {error && <div className="login-error" style={{ marginBottom: '1rem' }}>{error}</div>}
@@ -1123,14 +1160,19 @@ function UpdatePaymentModal({ payment, onClose, onUpdate }) {
             <input type="text" value={reason} onChange={e => setReason(e.target.value)} className="filter-input" required />
           </div>
 
-          <div className="login-field" style={{ marginBottom: '1rem' }}>
-            <label>Status</label>
-            <select value={status} onChange={e => setStatus(e.target.value)} className="filter-input">
-              <option value="pending">Pending</option>
-              <option value="completed">Completed</option>
-              <option value="failed">Failed</option>
-              <option value="refunded">Refunded</option>
-            </select>
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>Status</label>
+            <CustomSelect 
+              label="Select status..." 
+              value={status} 
+              options={[
+                { id: 'pending', name: 'Pending' },
+                { id: 'completed', name: 'Completed' },
+                { id: 'failed', name: 'Failed' },
+                { id: 'refunded', name: 'Refunded' }
+              ]} 
+              onChange={setStatus}
+            />
           </div>
 
           <div className="login-field" style={{ marginBottom: '1.5rem' }}>
