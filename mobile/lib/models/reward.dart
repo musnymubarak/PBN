@@ -59,6 +59,7 @@ class Offer {
   final double discountPercent;
   final bool isActive;
   final bool isRedeemedByMe;
+  final String redemptionMethod; // 'qr' or 'coupon'
 
   Offer({
     required this.id,
@@ -67,6 +68,7 @@ class Offer {
     required this.discountPercent,
     this.isActive = true,
     this.isRedeemedByMe = false,
+    this.redemptionMethod = 'qr',
   });
 
   factory Offer.fromJson(Map<String, dynamic> json) => Offer(
@@ -76,6 +78,7 @@ class Offer {
         discountPercent: (json['discount_percentage'] ?? json['discount_percent'] ?? 0).toDouble(),
         isActive: json['is_active'] ?? true,
         isRedeemedByMe: json['is_redeemed_by_me'] ?? false,
+        redemptionMethod: json['redemption_method'] ?? 'qr',
       );
 }
 

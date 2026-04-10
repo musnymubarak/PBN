@@ -70,8 +70,8 @@ class OfferType(str, enum.Enum):
 
 
 class RedemptionMethod(str, enum.Enum):
-    QR = "qr"
-    COUPON = "coupon"
+    qr = "qr"
+    coupon = "coupon"
 
 
 class TokenStatus(str, enum.Enum):
@@ -101,7 +101,7 @@ class Offer(Base, TimestampMixin):
     redemption_method: Mapped[RedemptionMethod] = mapped_column(
         Enum(RedemptionMethod, name="redemption_method", create_type=True), 
         nullable=False, 
-        default=RedemptionMethod.QR
+        default=RedemptionMethod.qr
     )
     discount_percentage: Mapped[int | None] = mapped_column(nullable=True)
     start_date: Mapped[date] = mapped_column(Date, nullable=False)

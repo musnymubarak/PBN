@@ -58,6 +58,7 @@ async def _serialize_offer(offer: Offer, user_id: UUID | None = None, db: AsyncS
         "start_date": offer.start_date.isoformat(),
         "end_date": offer.end_date.isoformat(),
         "is_active": offer.is_active,
+        "redemption_method": offer.redemption_method.value if hasattr(offer.redemption_method, 'value') else offer.redemption_method,
         "redemption_instructions": offer.redemption_instructions,
         "redeemed_count": len(getattr(offer, "redemptions", [])),
         "is_redeemed_by_me": is_redeemed,
@@ -124,6 +125,7 @@ async def create_offer(partner_id: UUID, data: OfferCreate, db: AsyncSession) ->
         start_date=data.start_date,
         end_date=data.end_date,
         is_active=data.is_active,
+        redemption_method=data.redemption_method,
         redemption_instructions=data.redemption_instructions
     )
     db.add(offer)

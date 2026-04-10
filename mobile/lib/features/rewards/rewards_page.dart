@@ -39,6 +39,12 @@ class _RewardsPageState extends State<RewardsPage> {
   Future<void> _handleRedeem(Offer offer, String partnerName) async {
     if (offer.isRedeemedByMe) return;
 
+    if (offer.redemptionMethod == 'coupon') {
+      await _showCouponRedeemDialog(offer, partnerName);
+      return;
+    }
+
+    // Default to QR
     final result = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
@@ -52,6 +58,100 @@ class _RewardsPageState extends State<RewardsPage> {
 
     if (result == true) {
       _loadData();
+    }
+  }
+
+  Future<void> _showCouponRedeemDialog(Offer offer, String partnerName) async {
+    setState(() => _loading = true);
+    try {
+      final coupon = await _service.generateCoupon(offer.id);
+      if (!mounted) return;
+      setState(() => _loading = false);
+
+      await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          contentPadding: EdgeInsets.zero,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.05),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                ),
+                child: Column(
+                  children: [
+                    const Icon(TablerIcons.ticket, color: AppColors.primary, size: 48),
+                    const SizedBox(height: 16),
+                    Text(offer.title, 
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: AppColors.text)),
+                    Text(partnerName, 
+                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.textSecondary)),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  children: [
+                    const Text('YOUR COUPON CODE', 
+                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 10, letterSpacing: 2, color: AppColors.textSecondary)),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                      decoration: BoxDecoration(
+                        color: AppColors.background,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.grey.shade200, width: 2),
+                      ),
+                      child: Text(coupon.code, 
+                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 28, letterSpacing: 4, color: AppColors.primary)),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(offer.description ?? 'Use this code at checkout to claim your reward.',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.textSecondary)),
+                    const SizedBox(height: 32),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 54,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          // Copy to clipboard logic could be added here
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Code copied to clipboard!'))
+                          );
+                        },
+                        icon: const Icon(TablerIcons.copy),
+                        label: const Text('COPY & CLOSE', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+      _loadData();
+    } catch (e) {
+      if (mounted) {
+        setState(() => _loading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to generate coupon: ${e.toString()}'))
+        );
+      }
     }
   }
 
@@ -210,17 +310,39 @@ class _RewardsPageState extends State<RewardsPage> {
                         fontSize: 13,
                         color: isRedeemed ? Colors.grey : AppColors.text,
                         decoration: isRedeemed ? TextDecoration.lineThrough : null)),
-                if (o.discountPercent > 0) ...[
-                  const SizedBox(height: 4),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                        color: isRedeemed ? Colors.grey.withOpacity(0.1) : Colors.green.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(4)),
-                    child: Text('${o.discountPercent.toStringAsFixed(0)}% OFF',
-                        style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: isRedeemed ? Colors.grey : Colors.green)),
-                  ),
-                ],
+                Row(
+                  children: [
+                    if (o.discountPercent > 0) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                            color: isRedeemed ? Colors.grey.withOpacity(0.1) : Colors.green.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(4)),
+                        child: Text('${o.discountPercent.toStringAsFixed(0)}% OFF',
+                            style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: isRedeemed ? Colors.grey : Colors.green)),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(4)),
+                      child: Row(
+                        children: [
+                          Icon(
+                            o.redemptionMethod == 'qr' ? TablerIcons.qrcode : TablerIcons.ticket,
+                            size: 10,
+                            color: isRedeemed ? Colors.grey : Colors.blue.shade700,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(o.redemptionMethod.toUpperCase(),
+                              style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: isRedeemed ? Colors.grey : Colors.blue.shade700)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
