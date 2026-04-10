@@ -20,12 +20,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
   // -- ULTRA-HD CRYSTAL CLEAR IMAGE ROTATION --
   final List<String> _bgImages = [
-    'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=1200', // Modern Skyscraper
-    'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&q=80&w=1200', // Professional Meeting
-    'https://images.unsplash.com/photo-1504384308090-c894fd31f16c?auto=format&fit=crop&q=80&w=1200', // Tech Workspace
-    'https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&q=80&w=1200', // Network Networking
-    'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&q=80&w=1200', // Modern Collaboration
-    'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=1200', // Shared Office
+    'assets/onboard_1.png',
+    'assets/onboard_2.png',
+    'assets/onboard_3.png',
   ];
 
   final List<Map<String, dynamic>> _onboardingData = [
@@ -43,7 +40,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
     },
     {
       'title': 'ELITE\nREWARDS',
-      'subtitle': 'Unlock exclusive business perks, awards, and points as you thrive in our ecosystem.',
+      'subtitle': 'Unlock exclusive business perks, rewards, and points as you thrive in our ecosystem.',
       'icon': TablerIcons.award,
       'color': const Color(0xFFF59E0B),
     },
@@ -52,17 +49,17 @@ class _OnboardingPageState extends State<OnboardingPage> {
   @override
   void initState() {
     super.initState();
-    // Continuous Background Animation Loop (Every 5s)
-    _bgTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+    // Continuous Background Animation Loop (Every 3s)
+    _bgTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
       if (mounted) {
         setState(() => _bgImageIndex = (_bgImageIndex + 1) % _bgImages.length);
       }
     });
 
-    // Main Content Auto-Play (Every 7s)
-    _pageTimer = Timer.periodic(const Duration(seconds: 7), (timer) {
+    // Main Content Auto-Play (Every 5s)
+    _pageTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
       if (mounted && _currentPage < _onboardingData.length - 1) {
-        _pageController.nextPage(duration: const Duration(milliseconds: 1000), curve: Curves.easeInOutCubic);
+        _pageController.nextPage(duration: const Duration(milliseconds: 500), curve: Curves.easeInOutCubic);
       }
     });
   }
@@ -84,10 +81,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
           // Dynamic Background Image with Smooth Cross-Fade (CONTINUOUS)
           Positioned.fill(
             child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 2000), // Longer, cinematic cross-fade
+              duration: const Duration(milliseconds: 800), // More dynamic cross-fade
               child: SizedBox.expand(
                 key: ValueKey(_bgImages[_bgImageIndex]),
-                child: Image.network(
+                child: Image.asset(
                   _bgImages[_bgImageIndex],
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) => Container(color: const Color(0xFF0F172A)),
@@ -123,7 +120,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
             itemBuilder: (context, index) {
               final item = _onboardingData[index];
               return Padding(
-                padding: const EdgeInsets.fromLTRB(40, 0, 40, 200), // Pushes content to bottom
+                padding: const EdgeInsets.fromLTRB(40, 0, 40, 300), // Pushes content higher to avoid button overlap
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.end,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -205,7 +202,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           children: [
                             Expanded(
                               child: ElevatedButton(
-                                onPressed: () => Navigator.pushReplacementNamed(context, '/login'),
+                                onPressed: () => Navigator.pushReplacementNamed(context, '/apply'),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.white,
                                   foregroundColor: Colors.black,
@@ -228,7 +225,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                       text: TextSpan(
                         children: [
                           TextSpan(text: 'Already a member? ', style: TextStyle(color: Colors.white.withOpacity(0.6))),
-                          const TextSpan(text: 'Sign In', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
+                          const TextSpan(text: 'Log In', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
                         ],
                       ),
                     ),
