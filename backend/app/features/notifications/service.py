@@ -140,18 +140,8 @@ async def broadcast_notification(
 
             # 2. Persistence and Dispatch
             if _init_firebase():
-                # Filter out obvious mock or malformed tokens to prevent Multicast failure
-                valid_tokens = [
-                    u.fcm_token for u in users 
-                    if u.fcm_token and len(u.fcm_token) > 20 and not u.fcm_token.startswith('mock-')
-                ]
-                
-                if not valid_tokens:
-                    logger.info("Broadcast [SKIPPED]: No valid real tokens found after filtering.")
-                    return
-
                 try:
-                    # Create notifications in DB for everyone
+                    # 2a. Create notifications in DB for everyone
                     for u in users:
                         notif = Notification(
                             user_id=u.id,
@@ -163,25 +153,34 @@ async def broadcast_notification(
                             is_read=False,
                         )
                         session.add(notif)
-                    
                     await session.commit()
 
-                    # FCM Multicast
-                    message = messaging.MulticastMessage(
-                        notification=messaging.Notification(title=title, body=body),
-                        data=data if data else {},
-                        tokens=valid_tokens,
-                    )
-                    response = messaging.send_multicast(message)
+                    # 2b. Individual Dispatch Loop (Proven reliability over Multicast)
+                    success_count = 0
+                    failure_count = 0
                     
-                    logger.info(f"Broadcast [DISPATCHED]: {response.success_count} success, {response.failure_count} failure")
+                    for u in users:
+                        # Skip mock or obviously invalid tokens
+                        token = u.fcm_token
+                        if not token or len(token) < 20 or token.startswith('mock-'):
+                            continue
+
+                        try:
+                            message = messaging.Message(
+                                notification=messaging.Notification(title=title, body=body),
+                                data=data if data else {},
+                                token=token,
+                            )
+                            messaging.send(message)
+                            success_count += 1
+                        except Exception as e:
+                            failure_count += 1
+                            logger.warning(f"Broadcast item failed for user {u.id}: {e}")
                     
-                    if response.failure_count > 0:
-                        for idx, resp in enumerate(response.responses):
-                            if not resp.success:
-                                logger.warning(f"FCM Multicast Failure at index {idx}: {resp.exception}")
+                    logger.info(f"Broadcast [COMPLETED]: {success_count} success, {failure_count} failure")
+
                 except Exception as e:
-                    logger.error(f"Broadcast [FAILED] during dispatch: {e}")
+                    logger.error(f"Broadcast [FAILED] during processing: {e}")
             else:
                 logger.info(f"Broadcast [STUB]: '{title}' to {len(users)} users (Firebase not init).")
 
