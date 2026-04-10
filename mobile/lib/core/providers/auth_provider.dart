@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pbn/core/services/auth_service.dart';
+import 'package:pbn/core/services/notification_service.dart';
+import 'package:pbn/core/services/push_notification_service.dart';
 import 'package:pbn/core/services/secure_storage.dart';
 import 'package:pbn/models/user.dart';
 
@@ -8,6 +10,7 @@ enum AuthStatus { unknown, authenticated, unauthenticated }
 /// Global auth state accessible via Provider.
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
+  final NotificationService _notificationService = NotificationService();
 
   AuthStatus _status = AuthStatus.unknown;
   User? _user;
@@ -30,6 +33,7 @@ class AuthProvider extends ChangeNotifier {
       if (hasTokens) {
         _user = await _authService.getProfile();
         _status = AuthStatus.authenticated;
+        _registerFcmToken();
       } else {
         _status = AuthStatus.unauthenticated;
       }
@@ -52,6 +56,7 @@ class AuthProvider extends ChangeNotifier {
       await _authService.login(identifier, password);
       _user = await _authService.getProfile();
       _status = AuthStatus.authenticated;
+      _registerFcmToken();
       _loading = false;
       notifyListeners();
       return true;
@@ -70,5 +75,18 @@ class AuthProvider extends ChangeNotifier {
     _status = AuthStatus.unauthenticated;
     _error = null;
     notifyListeners();
+  }
+
+  /// Get FCM token and send to backend
+  Future<void> _registerFcmToken() async {
+    try {
+      final token = await PushNotificationService.getToken();
+      if (token != null) {
+        await _notificationService.registerFcmToken(token);
+        debugPrint("FCM token registered: $token");
+      }
+    } catch (e) {
+      debugPrint("Failed to register FCM token: $e");
+    }
   }
 }

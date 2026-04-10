@@ -15,6 +15,7 @@ from decimal import Decimal
 from typing import Any, Dict, List
 from uuid import UUID
 
+from app.features.notifications.service import send_push_notification
 from app.features.payments.schemas import PaymentCreateAdmin, PaymentUpdateAdmin
 
 from sqlalchemy import select, desc
@@ -158,6 +159,18 @@ async def process_webhook(payload: dict, db: AsyncSession) -> Dict[str, Any]:
 
         # Side effects
         await _apply_payment_side_effects(payment, db)
+        
+        # Notify User
+        try:
+            await send_push_notification(
+                user_id=payment.user_id,
+                title="Payment Successful",
+                body=f"Your payment of LKR {float(payment.amount):,.0f} has been confirmed.",
+                notification_type="PAYMENT_SUCCESS",
+                data={"payment_id": str(payment.id)}
+            )
+        except Exception:
+            pass
     else:
         payment.status = PaymentStatus.FAILED
         payment.gateway_response = payload
@@ -295,6 +308,18 @@ async def record_manual_payment(
     # Still apply side effects (RSVPs etc) if it's completed immediately
     if payment.status == PaymentStatus.COMPLETED:
         await _apply_payment_side_effects(payment, db)
+        
+        # Notify User
+        try:
+            await send_push_notification(
+                user_id=payment.user_id,
+                title="Payment Recorded",
+                body=f"A payment for {payment.reason or payment.payment_type.value} has been recorded by admin.",
+                notification_type="PAYMENT_RECORDED",
+                data={"payment_id": str(payment.id)}
+            )
+        except Exception:
+            pass
         
     return payment
 

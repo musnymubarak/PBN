@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "754550495731",
+    "project_id": "prime-business-network",
+    "storage_bucket": "prime-business-network.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:754550495731:android:c26a41f5a9f8baa8edda86",
+        "android_client_info": {
+          "package_name": "com.pbn.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyADf61QyKdK7hf_dLYMvsGzADzVaMN1Ess"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

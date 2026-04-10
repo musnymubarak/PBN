@@ -31,3 +31,6 @@ redis_data/
 
 # User Uploads
 uploads/
+
+# Secrets
+*.json

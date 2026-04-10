@@ -4,6 +4,10 @@ import 'package:pbn/models/notification_item.dart';
 class NotificationService {
   final _api = ApiClient();
 
+  Future<void> registerFcmToken(String fcmToken) async {
+    await _api.post('/notifications/token', data: {'fcm_token': fcmToken});
+  }
+
   Future<List<NotificationItem>> listNotifications() async {
     final res = await _api.get('/notifications');
     final list = _api.unwrap(res) as List<dynamic>;

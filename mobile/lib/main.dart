@@ -19,8 +19,18 @@ import 'package:pbn/features/applications/apply_page.dart';
 import 'package:pbn/features/applications/my_applications_page.dart';
 import 'package:pbn/features/partner/partner_dashboard_page.dart';
 import 'package:pbn/features/auth/onboarding_page.dart';
+import 'package:pbn/core/services/push_notification_service.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Push Notifications
+  try {
+    await PushNotificationService.initialize();
+  } catch (e) {
+    debugPrint("Firebase/Push initialization failed: $e");
+  }
+
   runApp(
     MultiProvider(
       providers: [

@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload, joinedload
 
 from app.core.exceptions import BadRequestException, NotFoundException, ForbiddenException
+from app.features.notifications.service import send_push_notification
 from app.features.referrals.schemas import ReferralCreate, ReferralStatusUpdate
 from app.models.referrals import Referral, ReferralStatus, ReferralStatusHistory
 from app.models.user import User
@@ -95,6 +96,18 @@ async def create_referral(data: ReferralCreate, actor_id: UUID, db: AsyncSession
         .where(Referral.id == referral.id)
     )
     loaded_ref = (await db.execute(ref_stmt)).scalar_one()
+
+    # Send Notification to Recipient
+    try:
+        await send_push_notification(
+            user_id=loaded_ref.to_member_id,
+            title="New Referral Received",
+            body=f"{loaded_ref.from_member.full_name} sent you a new lead: {loaded_ref.client_name}",
+            notification_type="NEW_REFERRAL",
+            data={"referral_id": str(loaded_ref.id)}
+        )
+    except Exception:
+        pass
 
     return await _serialize_referral(loaded_ref)
 
@@ -192,5 +205,18 @@ async def update_referral_status(ref_id: UUID, data: ReferralStatusUpdate, actor
         await redis.delete(f"dashboard:user:{ref.to_member_id}")
     except Exception:
         pass
+
+    # Send Notification to Sender about status change
+    if old_status != ref.status.value:
+        try:
+            await send_push_notification(
+                user_id=ref.from_member_id,
+                title="Referral Status Updated",
+                body=f"Your referral for {ref.client_name} is now {ref.status.value}",
+                notification_type="REFERRAL_UPDATE",
+                data={"referral_id": str(ref.id)}
+            )
+        except Exception:
+            pass
 
     return await _serialize_referral(ref)

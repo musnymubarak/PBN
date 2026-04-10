@@ -18,6 +18,7 @@ from jose import jwt
 
 from app.core.exceptions import BadRequestException, NotFoundException
 from app.features.auth.service import hash_password
+from app.features.notifications.service import send_push_notification
 from app.features.applications.schemas import (
     ApplicationCreate,
     ApplicationStatusUpdate,
@@ -320,6 +321,18 @@ async def update_application_status(
                 district=app.district,
             )
             db.add(business)
+
+        # Notify User
+        try:
+            await send_push_notification(
+                user_id=user.id,
+                title="Application Approved!",
+                body=f"Welcome to PBN! Your application for {app.business_name} has been approved.",
+                notification_type="APPLICATION_APPROVED",
+                data={"application_id": str(app.id)}
+            )
+        except Exception:
+            pass
 
     await db.flush()
     return app
