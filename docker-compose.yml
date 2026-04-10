@@ -1,17 +1,17 @@
 version: "3.9"
 
 services:
-  # ── FastAPI Backend ──────────────────────────────────────
+  # ── Backend (API) ─────────────────────────────────────────
   api:
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
     container_name: pbn-api
     restart: unless-stopped
-    ports:
-      - "8005:8000"
+    # We do NOT expose port 8000 to the host here. 
+    # It will only be accessible via the adminpanel gateway.
     env_file:
-      - .env
+      - ./backend/.env
     environment:
       - DATABASE_URL=postgresql+asyncpg://pbn_user:pbn_secret_password@postgres:5432/pbn_db
       - REDIS_URL=redis://redis:6379/0
@@ -20,8 +20,22 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    volumes:
-      - .:/app
+    networks:
+      - pbn-network
+
+  # ── Admin Panel & Gateway ─────────────────────────────────
+  adminpanel:
+    build:
+      context: ./adminpanel
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=/api/v1
+    container_name: pbn-admin
+    restart: unless-stopped
+    ports:
+      - "8005:80"           # Accessible to the mobile app
+    depends_on:
+      - api
     networks:
       - pbn-network
 
@@ -65,7 +79,11 @@ services:
 
 volumes:
   postgres_data:
+    external: true
+    name: backend_postgres_data
   redis_data:
+    external: true
+    name: backend_redis_data
 
 networks:
   pbn-network:

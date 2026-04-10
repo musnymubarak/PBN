@@ -8,6 +8,7 @@ import math
 import random
 import string
 from datetime import date, datetime, timedelta, timezone
+from decimal import Decimal
 from typing import List, Tuple
 from uuid import UUID
 
@@ -32,6 +33,7 @@ from app.models.memberships import ChapterMembership, MembershipType
 from app.models.privilege_cards import PrivilegeCard
 from app.models.user import User, UserRole
 from app.models.chapters import Chapter
+from app.models.payments import Payment, PaymentStatus, PaymentType
 from app.core.config import get_settings
 
 settings = get_settings()
@@ -222,14 +224,14 @@ async def update_application_status(
                 phone_number=app.contact_number,
                 full_name=app.full_name,
                 email=app.email,
-                role=UserRole.MEMBER,
+                role=UserRole.PROSPECT,
                 password_hash=hash_password("pbn123"), # Default password for initial login
             )
             db.add(user)
             await db.flush()
         else:
-            if user.role == UserRole.PROSPECT:
-                user.role = UserRole.MEMBER
+            if user.role != UserRole.SUPER_ADMIN: # Don't downgrade admins
+                user.role = UserRole.PROSPECT
                 user.full_name = app.full_name
                 if app.email:
                     user.email = app.email
@@ -283,9 +285,41 @@ async def update_application_status(
                 industry_category_id=app.industry_category_id,
                 membership_type=MembershipType.STANDARD,
                 start_date=date.today(),
-                end_date=date.today() + timedelta(days=365)
+                end_date=date.today() + timedelta(days=365),
+                is_active=(data.payment_status == "completed") # Active if paid
             )
             db.add(new_mem)
+            
+            # Automatically create a payment record for the membership
+            # Use data.payment_status if provided, else default to PENDING
+            p_status = PaymentStatus.PENDING
+            if data.payment_status == "completed":
+                p_status = PaymentStatus.COMPLETED
+
+            membership_payment = Payment(
+                user_id=user.id,
+                amount=Decimal("15000.00"),
+                currency="LKR",
+                payment_type=PaymentType.MEMBERSHIP,
+                reason=f"Membership fee for {app.business_name}",
+                status=p_status,
+                recorded_by_id=actor.id,
+            )
+            db.add(membership_payment)
+            
+            # If payment is completed, upgrade the user role immediately
+            if p_status == PaymentStatus.COMPLETED:
+                user.role = UserRole.MEMBER
+
+            # Also create the Business profile for the user
+            from app.models.businesses import Business
+            business = Business(
+                owner_user_id=user.id,
+                business_name=app.business_name,
+                industry_category_id=app.industry_category_id,
+                district=app.district,
+            )
+            db.add(business)
 
     await db.flush()
     return app

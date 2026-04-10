@@ -85,3 +85,4 @@ class ApplicationStatusUpdate(BaseModel):
     notes: Optional[str] = None
     fit_call_date: Optional[datetime] = None
     chapter_id: Optional[UUID] = None  # Needed if approving to assign a chapter
+    payment_status: Optional[str] = None # 'pending' or 'completed'

@@ -27,8 +27,17 @@ async function apiFetch(path, options = {}) {
 export const api = {
   getAdminOverview: () => apiFetch('/admin/analytics/overview'),
   listUsers: (params = {}) => apiFetch(`/admin/users?${new URLSearchParams(params)}`),
+  listIndustries: () => apiFetch('/admin/industries'),
   listReferrals: () => apiFetch('/referrals/my/given'),
-  listPayments: () => apiFetch('/admin/payments'),
+  listPayments: (params = {}) => apiFetch(`/admin/payments?${new URLSearchParams(params)}`),
+  recordPayment: (body) => apiFetch('/admin/payments', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  }),
+  updatePayment: (id, body) => apiFetch(`/admin/payments/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+  }),
   exportData: () => apiFetch('/admin/export'),
 
   // Applications
@@ -57,4 +66,10 @@ export const api = {
 
   // Chapters
   listChapters: () => apiFetch('/chapters'),
+
+  // Users
+  updateUser: (id, body) => apiFetch(`/admin/users/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+  }),
 };

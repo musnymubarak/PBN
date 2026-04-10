@@ -19,6 +19,7 @@ from app.features.payments.schemas import PaymentUpdate
 
 from sqlalchemy import select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from app.core.config import get_settings
 from app.core.exceptions import BadRequestException, NotFoundException
@@ -44,11 +45,15 @@ def _serialize_payment(p: Payment) -> Dict[str, Any]:
         "amount": float(p.amount),
         "currency": p.currency,
         "payment_type": p.payment_type.value,
+        "reason": p.reason,
+        "notes": p.notes,
         "reference_id": p.reference_id,
         "gateway_reference": p.gateway_reference,
         "status": p.status.value,
         "created_at": p.created_at.isoformat() if p.created_at else None,
         "updated_at": p.updated_at.isoformat() if p.updated_at else None,
+        "user_name": p.user.full_name if "user" in p.__dict__ and p.user else None,
+        "user_phone": p.user.phone_number if "user" in p.__dict__ and p.user else None,
     }
 
 
@@ -191,17 +196,23 @@ async def _apply_payment_side_effects(payment: Payment, db: AsyncSession) -> Non
             )
             db.add(rsvp)
 
-    elif payment.payment_type in (PaymentType.MEMBERSHIP, PaymentType.RENEWAL):
-        # Extend membership by 1 year
-        mem = (await db.execute(
-            select(ChapterMembership).where(
-                ChapterMembership.user_id == payment.user_id,
-                ChapterMembership.is_active == True,
-            )
-        )).scalar_one_or_none()
-        if mem:
-            base_date = mem.end_date if mem.end_date else datetime.now(timezone.utc).date()
-            mem.end_date = base_date + timedelta(days=365)
+    elif payment.payment_type == PaymentType.MEMBERSHIP:
+        # 1. Activate the ChapterMembership for this user
+        ship_stmt = select(ChapterMembership).where(
+            ChapterMembership.user_id == payment.user_id,
+            ChapterMembership.is_active.is_(False)
+        ).order_by(desc(ChapterMembership.created_at)).limit(1)
+        
+        membership = (await db.execute(ship_stmt)).scalar_one_or_none()
+        if membership:
+            membership.is_active = True
+            
+        # 2. Upgrade user role from PROSPECT to MEMBER
+        from app.models.user import User, UserRole
+        usr_stmt = select(User).where(User.id == payment.user_id)
+        user = (await db.execute(usr_stmt)).scalar_one_or_none()
+        if user and user.role == UserRole.PROSPECT:
+            user.role = UserRole.MEMBER
 
 
 async def simulate_webhook(payment_id: UUID, db: AsyncSession) -> Dict[str, Any]:
@@ -242,8 +253,8 @@ async def get_payment_status(payment_id: UUID, user_id: UUID | None, is_admin: b
 async def list_all_payments(
     status_filter: str | None, type_filter: str | None, db: AsyncSession
 ) -> List[Dict[str, Any]]:
-    """Admin: list all payments with optional filters."""
-    stmt = select(Payment).order_by(desc(Payment.created_at))
+    """Admin: list all payments with user info and optional filters."""
+    stmt = select(Payment).options(joinedload(Payment.user)).order_by(desc(Payment.created_at))
     if status_filter:
         stmt = stmt.where(Payment.status == status_filter)
     if type_filter:
@@ -252,23 +263,86 @@ async def list_all_payments(
     return [_serialize_payment(p) for p in result.scalars().all()]
 
 
-async def update_payment(
-    payment_id: UUID, data: PaymentUpdate, db: AsyncSession
-) -> Dict[str, Any]:
-    """Admin: Update an existing payment record."""
-    payment = (await db.execute(
-        select(Payment).where(Payment.id == payment_id)
-    )).scalar_one_or_none()
+async def record_manual_payment(
+    actor_id: UUID,
+    data: PaymentCreateAdmin,
+    db: AsyncSession,
+) -> Payment:
+    """Record a payment manually by an admin."""
+    payment = Payment(
+        user_id=data.user_id,
+        amount=data.amount,
+        currency="LKR",
+        payment_type=data.payment_type,
+        reason=data.reason,
+        notes=data.notes,
+        status=data.status,
+        recorded_by_id=actor_id,
+    )
+    db.add(payment)
+    await db.flush()
+    
+    # Audit
+    audit = AuditLog(
+        actor_id=actor_id,
+        entity_type="payment",
+        entity_id=payment.id,
+        action="manual_record",
+        new_value=_serialize_payment(payment),
+    )
+    db.add(audit)
+    
+    # Still apply side effects (RSVPs etc) if it's completed immediately
+    if payment.status == PaymentStatus.COMPLETED:
+        await _apply_payment_side_effects(payment, db)
+        
+    return payment
 
+
+async def update_payment(
+    payment_id: UUID,
+    actor_id: UUID,
+    data: PaymentUpdateAdmin,
+    db: AsyncSession,
+) -> Payment:
+    """Update payment details manually (Admin only)."""
+    stmt = select(Payment).where(Payment.id == payment_id)
+    res = await db.execute(stmt)
+    payment = res.scalar_one_or_none()
     if not payment:
         raise NotFoundException("Payment not found")
 
+    old_val = _serialize_payment(payment)
+
     if data.amount is not None:
         payment.amount = data.amount
-    if data.status:
-        payment.status = PaymentStatus(data.status)
-    if data.payment_type:
+    if data.payment_type is not None:
         payment.payment_type = data.payment_type
+    if data.reason is not None:
+        payment.reason = data.reason
+    if data.notes is not None:
+        payment.notes = data.notes
+    
+    trigger_side_effects = False
+    if data.status is not None:
+        if payment.status != PaymentStatus.COMPLETED and data.status == PaymentStatus.COMPLETED:
+            trigger_side_effects = True
+        payment.status = data.status
 
     await db.flush()
-    return _serialize_payment(payment)
+
+    # Audit
+    audit = AuditLog(
+        actor_id=actor_id,
+        entity_type="payment",
+        entity_id=payment.id,
+        action="admin_update",
+        old_value=old_val,
+        new_value=_serialize_payment(payment),
+    )
+    db.add(audit)
+
+    if trigger_side_effects:
+        await _apply_payment_side_effects(payment, db)
+
+    return payment

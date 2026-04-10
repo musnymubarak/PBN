@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   IconChartBar, 
   IconUsers, 
@@ -26,6 +26,7 @@ import {
   IconLock,
   IconMail,
   IconAlertCircle,
+  IconChevronDown,
 } from '@tabler/icons-react';
 import { api } from './lib/api';
 import { useApi } from './hooks/useApi';
@@ -151,7 +152,8 @@ const MENU_GROUPS = [
     links: [
       { id: 'applications', icon: IconClipboardList, label: 'Applications' },
       { id: 'referrals', icon: IconHierarchy2, label: 'Referral Pipeline' },
-      { id: 'revenue', icon: IconCoin, label: 'Revenue & ROI' },
+      { id: 'payments', icon: IconCoin, label: 'Payments' },
+      { id: 'revenue', icon: IconChartBar, label: 'Revenue & ROI' },
     ]
   },
   {
@@ -219,6 +221,7 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
   const [modalStatus, setModalStatus] = useState(null); // Local choice for status
   const [chapters, setChapters] = useState([]);
   const [selectedChapterId, setSelectedChapterId] = useState('');
+  const [paymentStatus, setPaymentStatus] = useState('pending');
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
@@ -266,6 +269,7 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
         status: newStatus,
         notes: actionNotes || undefined,
         chapter_id: selectedChapterId || undefined,
+        payment_status: newStatus === 'approved' ? paymentStatus : undefined,
       });
       onStatusUpdated();
       onClose();
@@ -317,7 +321,7 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
               Review and manage this membership application
             </p>
           </div>
-          <button className="modal-close-btn" onClick={onClose}>
+          <button type="button" className="modal-close-btn" onClick={onClose}>
             <IconX size={20} />
           </button>
         </div>
@@ -409,34 +413,46 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
                   <IconCheck size={18} /> Approve Application
                 </h4>
                 <p style={{ fontSize: '0.85rem', color: '#166534', marginBottom: '1.25rem' }}>
-                  Please select the chapter to which this member will be assigned.
+                  Select the chapter and confirming the initial payment status if previously received.
                 </p>
-                <div className="login-field" style={{ marginBottom: '1.25rem' }}>
-                  <label style={{ color: '#166534' }}>Target Chapter</label>
-                  <select 
-                    value={selectedChapterId} 
-                    onChange={e => setSelectedChapterId(e.target.value)}
-                    style={{ width: '100%', padding: '0.75rem', borderRadius: '10px', border: '1.5px solid #86efac', outline: 'none' }}
-                  >
-                    <option value="">Select a chapter...</option>
-                    {chapters.map(c => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
+                  <div>
+                    <label style={{ color: '#166534', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem', display: 'block' }}>Target Chapter</label>
+                    <CustomSelect 
+                      label="Select a chapter..." 
+                      value={selectedChapterId} 
+                      options={chapters} 
+                      onChange={setSelectedChapterId}
+                      style={{ background: 'white' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ color: '#166534', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem', display: 'block' }}>Payment status</label>
+                    <CustomSelect 
+                      label="Payment status..." 
+                      value={paymentStatus} 
+                      options={[
+                        { id: 'pending', name: 'Pending (Pay later)' },
+                        { id: 'completed', name: 'Completed (Paid)' }
+                      ]} 
+                      onChange={setPaymentStatus}
+                      style={{ background: 'white' }}
+                    />
+                  </div>
                 </div>
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
                   <button 
                     className="login-btn" 
-                    style={{ flex: 1, background: '#10b981', padding: '0.75rem' }}
+                    style={{ flex: 1, background: '#10b981', padding: '0.75rem', height: '52px' }}
                     onClick={() => handleStatusUpdate('approved')}
                     disabled={updating || !selectedChapterId}
                   >
-                    Confirm Approval
+                    Confirm & Approve
                   </button>
                   <button 
                     className="login-btn" 
-                    style={{ flex: 1, background: '#94a3b8', padding: '0.75rem' }}
-                    onClick={() => setModalStatus(null)}
+                    style={{ flex: 1, background: '#94a3b8', padding: '0.75rem', height: '52px' }}
+                    onClick={() => { setModalStatus(null); setSelectedChapterId(''); }}
                   >
                     Cancel
                   </button>
@@ -454,18 +470,24 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
                   />
                 </div>
                 <div className="action-buttons">
-                  {availableActions.map(action => (
-                    <button
-                      key={action.status}
-                      className="action-btn-main"
-                      style={{ '--btn-color': action.color }}
-                      disabled={updating}
-                      onClick={() => handleStatusUpdate(action.status)}
-                    >
-                      <action.icon size={18} />
-                      {updating ? 'Updating...' : action.label}
-                    </button>
-                  ))}
+                  {availableActions.map(action => {
+                    const isDecision = ['approved', 'rejected', 'waitlisted'].includes(action.status);
+                    const needsFitCall = detail.status === 'pending' && isDecision;
+                    
+                    return (
+                      <button
+                        key={action.status}
+                        className={`action-btn-main ${needsFitCall ? 'btn-disabled-visual' : ''}`}
+                        style={{ '--btn-color': needsFitCall ? '#cbd5e1' : action.color }}
+                        disabled={updating}
+                        onClick={() => handleStatusUpdate(action.status)}
+                        title={needsFitCall ? "Schedule a Fit Call first" : ""}
+                      >
+                        <action.icon size={18} />
+                        {updating ? 'Updating...' : action.label}
+                      </button>
+                    );
+                  })}
                 </div>
               </>
             )}
@@ -657,6 +679,626 @@ function ApplicationsPage() {
   );
 }
 
+// ── Custom Select Component ──────────────────────────────────────────────────
+
+function CustomSelect({ label, value, options, onChange, style }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find(opt => String(opt.id) === String(value)) || { name: label };
+
+  return (
+    <div className="custom-select-container" ref={containerRef} style={style}>
+      <button 
+        type="button"
+        className={`custom-select-trigger ${isOpen ? 'active' : ''}`}
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <span>{selectedOption.name || selectedOption.label || label}</span>
+        <IconChevronDown size={18} className={`select-arrow ${isOpen ? 'rotated' : ''}`} />
+      </button>
+
+      {isOpen && (
+        <div className="custom-select-menu">
+          <div 
+            className="custom-select-option" 
+            onClick={() => { onChange(''); setIsOpen(false); }}
+            style={{ fontWeight: 700, borderBottom: '1px solid var(--border)' }}
+          >
+            {label}
+          </div>
+          {options.map((opt) => (
+            <div 
+              key={opt.id} 
+              className={`custom-select-option ${String(value) === String(opt.id) ? 'selected' : ''}`}
+              onClick={() => { onChange(opt.id); setIsOpen(false); }}
+            >
+              {opt.name || opt.label}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── User Edit Modal ──────────────────────────────────────────────────────────
+
+function UserEditModal({ user, onClose, onUpdate, chapters = [] }) {
+  const [role, setRole] = useState(user.role);
+  const [isActive, setIsActive] = useState(user.is_active);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await api.updateUser(user.id, { role, is_active: isActive });
+      onUpdate();
+      onClose();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 450 }}>
+        <div className="modal-header">
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Manage Member</h2>
+          <button type="button" onClick={onClose}><IconX size={20} /></button>
+        </div>
+        <form onSubmit={handleSubmit} style={{ padding: '1.5rem' }}>
+          {error && <div className="login-error" style={{ marginBottom: '1rem' }}>{error}</div>}
+          
+          <div style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
+            <div className="avatar-sm" style={{ width: 64, height: 64, fontSize: '1.5rem', margin: '0 auto 0.75rem', background: '#f1f5f9', color: 'var(--primary)' }}>
+              {user.full_name ? user.full_name[0] : '?'}
+            </div>
+            <h3 style={{ fontWeight: 800 }}>{user.full_name}</h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>{user.phone_number}</p>
+          </div>
+
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>User Role</label>
+            <CustomSelect 
+              label="Select role..." 
+              value={role} 
+              options={[
+                { id: 'PROSPECT', name: 'Prospect (Pending Payment)' },
+                { id: 'MEMBER', name: 'Member (Verified)' },
+                { id: 'CHAPTER_ADMIN', name: 'Chapter Admin' },
+                { id: 'SUPER_ADMIN', name: 'Super Admin' }
+              ]} 
+              onChange={setRole}
+            />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', padding: '1rem', background: '#f8fafc', borderRadius: '12px' }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>Membership Active</div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Toggle access to network features</div>
+            </div>
+            <input 
+              type="checkbox" 
+              checked={isActive} 
+              onChange={e => setIsActive(e.target.checked)}
+              style={{ width: 20, height: 20, cursor: 'pointer' }}
+            />
+          </div>
+
+          <button type="submit" className="login-btn" disabled={loading}>
+            {loading ? 'Saving...' : 'Update Member Status'}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+
+// ── Members Directory Page ──────────────────────────────────────────────────
+
+function MembersPage() {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [total, setTotal] = useState(0);
+  const [pages, setPages] = useState(0);
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
+  const [chapterFilter, setChapterFilter] = useState('');
+  const [industryFilter, setIndustryFilter] = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
+  const [selectedUser, setSelectedUser] = useState(null);
+
+  const [chapters, setChapters] = useState([]);
+  const [industries, setIndustries] = useState([]);
+
+  const fetchMembers = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = { page, limit: 15 };
+      if (search) params.search = search;
+      if (chapterFilter) params.chapter_id = chapterFilter;
+      if (industryFilter) params.industry_id = industryFilter;
+      if (roleFilter) params.role = roleFilter;
+      
+      const result = await api.listUsers(params);
+      setUsers(result.users || []);
+      setTotal(result.total || 0);
+      setPages(Math.ceil(result.total / (result.page_size || 15)) || 1);
+    } catch (err) {
+      console.error('Failed to load members:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, search, chapterFilter, industryFilter, roleFilter]);
+
+  useEffect(() => {
+    fetchMembers();
+  }, [fetchMembers]);
+
+  useEffect(() => {
+    Promise.all([
+      api.listChapters().catch(() => ({ data: [] })),
+      api.listIndustries().catch(() => ({ data: [] }))
+    ]).then(([cData, iData]) => {
+      const c = cData?.data || (Array.isArray(cData) ? cData : []);
+      const i = iData?.data || (Array.isArray(iData) ? iData : []);
+      setChapters(c);
+      setIndustries(i);
+    });
+  }, []);
+
+  return (
+    <section className="dashboard-body">
+      <div className="page-title-wrap">
+        <h1 className="page-title">Member Directory</h1>
+        <p style={{ color: 'var(--text-secondary)', marginTop: '0.4rem', fontWeight: 500 }}>
+          Browse, filter, and search through all members and prospects in the network.
+        </p>
+      </div>
+
+      <div className="data-section">
+        <div className="section-head" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Network Registry</h3>
+            <button className="btn-primary" onClick={() => { setPage(1); fetchMembers(); }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <IconRefresh size={18} /> Refresh
+            </button>
+          </div>
+
+          <div className="directory-filters" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+            <div style={{ flex: 1, minWidth: '250px', position: 'relative' }}>
+              <IconSearch size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+              <input 
+                type="text" 
+                placeholder="Search by name, phone or chapter..." 
+                className="filter-input v2"
+                style={{ paddingLeft: '40px', width: '100%', height: '48px' }}
+                value={search}
+                onChange={e => { setSearch(e.target.value); setPage(1); }}
+              />
+            </div>
+            <CustomSelect 
+              label="All Chapters" 
+              value={chapterFilter} 
+              options={chapters} 
+              onChange={(val) => { setChapterFilter(val); setPage(1); }}
+              style={{ width: '220px' }}
+            />
+
+            <CustomSelect 
+              label="All Industries (Network)" 
+              value={industryFilter} 
+              options={industries} 
+              onChange={(val) => { setIndustryFilter(val); setPage(1); }}
+              style={{ width: '240px' }}
+            />
+
+            <CustomSelect 
+              label="All Roles" 
+              value={roleFilter} 
+              options={[
+                { id: 'MEMBER', name: 'Members' },
+                { id: 'PROSPECT', name: 'Prospects' },
+                { id: 'CHAPTER_ADMIN', name: 'Chapter Admins' },
+                { id: 'PARTNER_ADMIN', name: 'Partner Admins' }
+              ]} 
+              onChange={(val) => { setRoleFilter(val); setPage(1); }}
+              style={{ width: '200px' }}
+            />
+          </div>
+        </div>
+
+        <table className="modern-table">
+          <thead>
+            <tr>
+              <th>Member Name</th>
+              <th>Chapter</th>
+              <th>Network (Industry)</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Joined Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr><td colSpan={6} style={{ textAlign: 'center', padding: '3rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{ width: 28, height: 28, border: '3px solid #e2e8f0', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                  Loading directory...
+                </div>
+              </td></tr>
+            ) : users.length === 0 ? (
+              <tr><td colSpan={6} style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>No members found matching your criteria.</td></tr>
+            ) : users.map(user => (
+              <tr key={user.id} className="table-row-clickable" onClick={() => setSelectedUser(user)}>
+                <td>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div className="avatar-sm" style={{ background: '#f1f5f9', color: 'var(--primary)' }}>
+                      {user.full_name ? user.full_name[0] : '?'}
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 700 }}>{user.full_name || 'Unnamed User'}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{user.phone_number}</div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  {user.chapter_name ? (
+                    <span className="id-badge" style={{ background: '#e0f2fe', color: '#0369a1' }}>{user.chapter_name}</span>
+                  ) : <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>No Chapter</span>}
+                </td>
+                <td>{user.industry_name || '—'}</td>
+                <td>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 600, color: user.role === 'PROSPECT' ? '#f59e0b' : '#64748b' }}>
+                    {user.role}
+                  </span>
+                </td>
+                <td>
+                  <span className={`pill ${
+                    user.is_active 
+                      ? 'pill-approved' 
+                      : user.role === 'PROSPECT' 
+                        ? 'pill-awaiting-payment' 
+                        : 'pill-rejected'
+                  }`}>
+                    {user.is_active ? 'Active' : user.role === 'PROSPECT' ? 'Awaiting Payment' : 'Inactive'}
+                  </span>
+                </td>
+                <td style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                  {user.created_at ? new Date(user.created_at).toLocaleDateString() : '—'}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {/* Pagination */}
+        <div style={{ padding: '1.25rem 2.5rem', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+            {total > 0 ? `Showing page ${page} of ${pages} · ${total} users` : 'No members found'}
+          </p>
+          {pages > 1 && (
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button className="pagination-btn" disabled={page <= 1} onClick={() => setPage(p => p - 1)}><IconChevronLeft size={16} /> Prev</button>
+              <button className="pagination-btn" disabled={page >= pages} onClick={() => setPage(p => p + 1)}>Next <IconChevronRight size={16} /></button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {selectedUser && (
+        <UserEditModal 
+          user={selectedUser} 
+          chapters={chapters} 
+          onClose={() => setSelectedUser(null)} 
+          onUpdate={fetchMembers} 
+        />
+      )}
+    </section>
+  );
+}
+
+
+
+// ── Payments Page ─────────────────────────────────────────────────────────────
+
+function RecordPaymentModal({ onClose, onRecord, users = [] }) {
+  const [userId, setUserId] = useState('');
+  const [amount, setAmount] = useState('15000');
+  const [paymentType, setPaymentType] = useState('membership');
+  const [reason, setReason] = useState('');
+  const [notes, setNotes] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!userId) return setError('Please select a user');
+    if (!reason) return setError('Please provide a payment reason');
+    
+    setLoading(true);
+    setError('');
+    try {
+      await api.recordPayment({
+        user_id: userId,
+        amount: parseFloat(amount),
+        payment_type: paymentType,
+        reason,
+        notes,
+        status: 'completed'
+      });
+      onRecord();
+      onClose();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 500 }}>
+        <div className="modal-header">
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Record Manual Payment</h2>
+          <button type="button" onClick={onClose}><IconX size={20} /></button>
+        </div>
+        <form onSubmit={handleSubmit} style={{ padding: '1.5rem' }}>
+          {error && <div className="login-error" style={{ marginBottom: '1rem' }}>{error}</div>}
+          
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>Select User</label>
+            <CustomSelect 
+              label="Choose a member/prospect..." 
+              value={userId} 
+              options={users.map(u => ({ id: u.id, name: `${u.full_name} (${u.phone_number})` }))} 
+              onChange={setUserId}
+            />
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+            <div className="login-field">
+              <label>Amount (LKR)</label>
+              <input type="number" value={amount} onChange={e => setAmount(e.target.value)} required className="filter-input" style={{ height: '52px' }} />
+            </div>
+            <div>
+              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>Type</label>
+              <CustomSelect 
+                label="Select type..." 
+                value={paymentType} 
+                options={[
+                  { id: 'membership', name: 'Membership' },
+                  { id: 'meeting_fee', name: 'Meeting Fee' },
+                  { id: 'renewal', name: 'Renewal' }
+                ]} 
+                onChange={setPaymentType}
+              />
+            </div>
+          </div>
+
+          <div className="login-field" style={{ marginBottom: '1rem' }}>
+            <label>Payment Reason</label>
+            <input 
+              type="text" 
+              placeholder="e.g. Annual Membership Fee 2025" 
+              value={reason} 
+              onChange={e => setReason(e.target.value)} 
+              className="filter-input"
+              required 
+            />
+          </div>
+
+          <div className="login-field" style={{ marginBottom: '1.5rem' }}>
+            <label>Admin Notes</label>
+            <textarea 
+              value={notes} 
+              onChange={e => setNotes(e.target.value)} 
+              className="action-textarea" 
+              placeholder="Internal notes..."
+              style={{ minHeight: 80 }}
+            />
+          </div>
+
+          <button type="submit" className="login-btn" disabled={loading}>
+            {loading ? 'Recording...' : 'Record Payment'}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function UpdatePaymentModal({ payment, onClose, onUpdate }) {
+  const [reason, setReason] = useState(payment.reason || '');
+  const [notes, setNotes] = useState(payment.notes || '');
+  const [status, setStatus] = useState(payment.status || 'completed');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await api.updatePayment(payment.id, { reason, notes, status });
+      onUpdate();
+      onClose();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 500 }}>
+        <div className="modal-header">
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Update Payment</h2>
+          <button type="button" onClick={onClose}><IconX size={20} /></button>
+        </div>
+        <form onSubmit={handleSubmit} style={{ padding: '1.5rem' }}>
+          {error && <div className="login-error" style={{ marginBottom: '1rem' }}>{error}</div>}
+          
+          <div className="login-field" style={{ marginBottom: '1rem' }}>
+            <label>Payment Reason</label>
+            <input type="text" value={reason} onChange={e => setReason(e.target.value)} className="filter-input" required />
+          </div>
+
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>Status</label>
+            <CustomSelect 
+              label="Select status..." 
+              value={status} 
+              options={[
+                { id: 'pending', name: 'Pending' },
+                { id: 'completed', name: 'Completed' },
+                { id: 'failed', name: 'Failed' },
+                { id: 'refunded', name: 'Refunded' }
+              ]} 
+              onChange={setStatus}
+            />
+          </div>
+
+          <div className="login-field" style={{ marginBottom: '1.5rem' }}>
+            <label>Admin Notes</label>
+            <textarea value={notes} onChange={e => setNotes(e.target.value)} className="action-textarea" style={{ minHeight: 80 }} />
+          </div>
+
+          <button type="submit" className="login-btn" disabled={loading}>
+            {loading ? 'Updating...' : 'Save Changes'}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function PaymentsPage() {
+  const [payments, setPayments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showRecordModal, setShowRecordModal] = useState(false);
+  const [editingPayment, setEditingPayment] = useState(null);
+  const [users, setUsers] = useState([]);
+
+  const fetchPayments = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await api.listPayments();
+      setPayments(data || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPayments();
+    api.listUsers({ limit: 1000 }).then(data => setUsers(data.users || []));
+  }, [fetchPayments]);
+
+  return (
+    <section className="dashboard-body">
+      <div className="page-title-wrap" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h1 className="page-title">Payment Management</h1>
+          <p style={{ color: 'var(--text-secondary)', marginTop: '0.4rem', fontWeight: 500 }}>
+            Track and record all network transactions and membership fees.
+          </p>
+        </div>
+        <button className="btn-primary" onClick={() => setShowRecordModal(true)} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          <IconCoin size={20} /> Record Direct Payment
+        </button>
+      </div>
+
+      <div className="data-section">
+        <div className="section-head">
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Transaction History</h3>
+          <button className="view-detail-btn" onClick={fetchPayments}><IconRefresh size={18} /></button>
+        </div>
+
+        <table className="modern-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>User</th>
+              <th>Reason</th>
+              <th>Type</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr><td colSpan={7} style={{ textAlign: 'center', padding: '3rem' }}>Loading payments...</td></tr>
+            ) : payments.length === 0 ? (
+              <tr><td colSpan={7} style={{ textAlign: 'center', padding: '3rem' }}>No payments found.</td></tr>
+            ) : payments.map(p => (
+              <tr key={p.id}>
+                <td style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                  {new Date(p.created_at).toLocaleDateString()}
+                </td>
+                <td>
+                  <div style={{ fontWeight: 600 }}>{p.user_name || 'Unknown'}</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{p.user_phone}</div>
+                </td>
+                <td style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {p.reason || '—'}
+                </td>
+                <td><span className="id-badge">{p.payment_type}</span></td>
+                <td style={{ fontWeight: 700 }}>{formatCurrency(p.amount)}</td>
+                <td>
+                  <span className={`pill ${p.status === 'completed' ? 'pill-approved' : 'pill-pending'}`}>
+                    {p.status}
+                  </span>
+                </td>
+                <td>
+                  <button className="view-detail-btn" onClick={() => setEditingPayment(p)}>
+                    <IconSettings size={18} />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {showRecordModal && (
+        <RecordPaymentModal 
+          users={users} 
+          onClose={() => setShowRecordModal(false)} 
+          onRecord={fetchPayments} 
+        />
+      )}
+      {editingPayment && (
+        <UpdatePaymentModal 
+          payment={editingPayment} 
+          onClose={() => setEditingPayment(null)} 
+          onUpdate={fetchPayments} 
+        />
+      )}
+    </section>
+  );
+}
+
+
 
 // ── Main App ────────────────────────────────────────────────────────────────
 
@@ -665,10 +1307,12 @@ export default function App() {
   const [adminUser, setAdminUser] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
   const { data: overview, loading: overviewLoading, error: overviewError } = useApi(
-    isAuthenticated ? api.getAdminOverview : () => Promise.resolve(null)
+    isAuthenticated ? api.getAdminOverview : () => Promise.resolve(null),
+    [isAuthenticated]
   );
   const { data: referrals, loading: referralsLoading } = useApi(
-    isAuthenticated ? api.listReferrals : () => Promise.resolve(null)
+    isAuthenticated ? api.listReferrals : () => Promise.resolve(null),
+    [isAuthenticated]
   );
 
   const handleLogin = (user) => {
@@ -703,6 +1347,12 @@ export default function App() {
   const renderContent = () => {
     if (activeTab === 'applications') {
       return <ApplicationsPage />;
+    }
+    if (activeTab === 'members') {
+      return <MembersPage />;
+    }
+    if (activeTab === 'payments') {
+      return <PaymentsPage />;
     }
 
     // Default: Overview dashboard
@@ -825,12 +1475,30 @@ export default function App() {
           ))}
         </nav>
 
-        <div className="sidebar-footer" style={{ marginTop: 'auto', padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-             <IconUser size={18} stroke={1.5} color="rgba(255,255,255,0.5)" />
-             <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>Support Hub</span>
-          </div>
-          <IconLogout size={18} stroke={1.5} color="rgba(255,255,255,0.3)" style={{ cursor: 'pointer' }} onClick={handleLogout} />
+        <div className="sidebar-footer" style={{ marginTop: 'auto', padding: '1.25rem' }}>
+          <button 
+            onClick={handleLogout}
+            style={{ 
+              width: '100%', 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '0.75rem', 
+              padding: '0.875rem 1rem', 
+              background: 'rgba(239, 68, 68, 0.1)', 
+              color: '#f87171', 
+              border: '1px solid rgba(239, 68, 68, 0.2)', 
+              borderRadius: '12px', 
+              cursor: 'pointer',
+              fontSize: '0.875rem',
+              fontWeight: 700,
+              transition: 'all 0.2s'
+            }}
+            onMouseOver={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'}
+            onMouseOut={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
+          >
+            <IconLogout size={18} stroke={2} />
+            Sign Out
+          </button>
         </div>
       </aside>
 
