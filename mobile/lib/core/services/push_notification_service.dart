@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -7,14 +8,17 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:pbn/core/services/notification_service.dart';
 
 class PushNotificationService {
-  static FirebaseMessaging get _messaging => FirebaseMessaging.instance;
-  static final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
+  static GlobalKey<NavigatorState>? _navigatorKey;
+  static final _messaging = FirebaseMessaging.instance;
+  static final _localNotifications = FlutterLocalNotificationsPlugin();
+  static final _notifService = NotificationService();
   
   static bool _initialized = false;
 
   /// Root initialization (should be called in main.dart)
-  static Future<void> initialize() async {
+  static Future<void> initialize({GlobalKey<NavigatorState>? navigatorKey}) async {
     if (_initialized) return;
+    _navigatorKey = navigatorKey;
 
     // Firebase Messaging is only supported on Android/iOS/Web
     // Skipping initialization on Windows/Desktop to prevent crashes
@@ -43,7 +47,9 @@ class PushNotificationService {
       initializationSettings,
       onDidReceiveNotificationResponse: (details) {
         // Handle notification tap when app is in foreground
-        _handleNotificationTap(details.payload);
+        if (details.payload != null) {
+          _navigateByNotificationData({'route': details.payload});
+        }
       },
     );
 
@@ -56,13 +62,13 @@ class PushNotificationService {
 
     // Background Tap
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      _handleNotificationTap(message.data['referral_id'] ?? message.data['application_id']);
+      _handleNotificationTap(message);
     });
 
     // Terminated Tap
     final initialMessage = await _messaging.getInitialMessage();
     if (initialMessage != null) {
-      _handleNotificationTap(initialMessage.data['referral_id'] ?? initialMessage.data['application_id']);
+      _handleNotificationTap(initialMessage);
     }
 
     _initialized = true;
@@ -98,16 +104,35 @@ class PushNotificationService {
           ),
           iOS: const DarwinNotificationDetails(),
         ),
-        payload: message.data['referral_id'] ?? message.data['application_id'],
+        payload: message.data['route'],
       );
     }
   }
 
-  /// Navigate or perform action based on notification content
-  static void _handleNotificationTap(String? payload) {
-    if (payload == null) return;
-    // TODO: Implement navigation logic (usually via a GlobalKey for Navigator or a deep-linking service)
-    print("Notification tapped with payload: $payload");
+  /// Deep linking and state management when notification is tapped
+  static void _handleNotificationTap(RemoteMessage message) {
+    debugPrint("Notification Tapped: ${message.messageId}");
+    
+    // 1. Mark as read on backend (Fire and forget)
+    final String? dbId = message.data['id'] ?? message.data['notification_id'];
+    if (dbId != null) {
+      _notifService.markRead(dbId).catchError((_) => null);
+    }
+
+    // 2. Navigation
+    _navigateByNotificationData(message.data);
+  }
+
+  static void _navigateByNotificationData(Map<String, dynamic> data) {
+    if (_navigatorKey == null) return;
+    
+    final route = data['route'];
+    if (route != null) {
+      _navigatorKey!.currentState?.pushNamed(route);
+    } else {
+      // Default fallback
+      _navigatorKey!.currentState?.pushNamed('/notifications');
+    }
   }
 
   /// Subscribe to specific user topic (optional but useful)

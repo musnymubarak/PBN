@@ -167,7 +167,7 @@ async def process_webhook(payload: dict, db: AsyncSession) -> Dict[str, Any]:
                 title="Payment Successful",
                 body=f"Your payment of LKR {float(payment.amount):,.0f} has been confirmed.",
                 notification_type="PAYMENT_SUCCESS",
-                data={"payment_id": str(payment.id)}
+                data={"payment_id": str(payment.id), "route": "/payments"}
             )
         except Exception:
             pass
@@ -316,7 +316,7 @@ async def record_manual_payment(
                 title="Payment Recorded",
                 body=f"A payment for {payment.reason or payment.payment_type.value} has been recorded by admin.",
                 notification_type="PAYMENT_RECORDED",
-                data={"payment_id": str(payment.id)}
+                data={"payment_id": str(payment.id), "route": "/payments"}
             )
         except Exception:
             pass

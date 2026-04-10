@@ -26,7 +26,7 @@ Future<void> main() async {
   
   // Initialize Push Notifications
   try {
-    await PushNotificationService.initialize();
+    await PushNotificationService.initialize(navigatorKey: PBNApp.navigatorKey);
   } catch (e) {
     debugPrint("Firebase/Push initialization failed: $e");
   }
@@ -43,11 +43,14 @@ Future<void> main() async {
 }
 
 class PBNApp extends StatelessWidget {
+  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
   const PBNApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'Prime Business Network',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
@@ -65,6 +68,7 @@ class PBNApp extends StatelessWidget {
         '/leaderboard': (context) => const AuthGuard(child: LeaderboardPage()),
         '/chapters': (context) => const AuthGuard(child: ChaptersPage()),
         '/apply': (context) => const ApplyPage(),
+        '/my-referrals': (context) => const AuthGuard(child: MyReferralsPage()),
         '/my-applications': (context) => const AuthGuard(child: MyApplicationsPage()),
         '/partner_dashboard': (context) => const AuthGuard(child: PartnerDashboardPage()),
       },

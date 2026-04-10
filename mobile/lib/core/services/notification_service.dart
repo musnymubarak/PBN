@@ -10,7 +10,8 @@ class NotificationService {
 
   Future<List<NotificationItem>> listNotifications() async {
     final res = await _api.get('/notifications');
-    final list = _api.unwrap(res) as List<dynamic>;
+    final data = _api.unwrap(res);
+    final List<dynamic> list = data['notifications'] ?? [];
     return list.map((j) => NotificationItem.fromJson(j)).toList();
   }
 
@@ -23,6 +24,7 @@ class NotificationService {
   Future<void> markRead(String notificationId) async {
     await _api.patch('/notifications/$notificationId/read');
   }
+
 
   Future<void> markAllRead() async {
     await _api.patch('/notifications/read-all');

@@ -75,7 +75,14 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   Widget _buildNotificationCard(NotificationItem notif) {
     return GestureDetector(
-      onTap: () { if (!notif.isRead) _markRead(notif.id); },
+      onTap: () {
+        if (!notif.isRead) _markRead(notif.id);
+        
+        final route = notif.data?['route'];
+        if (route != null) {
+          Navigator.pushNamed(context, route);
+        }
+      },
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(16),

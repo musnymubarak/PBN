@@ -104,7 +104,7 @@ async def create_referral(data: ReferralCreate, actor_id: UUID, db: AsyncSession
             title="New Referral Received",
             body=f"{loaded_ref.from_member.full_name} sent you a new lead: {loaded_ref.client_name}",
             notification_type="NEW_REFERRAL",
-            data={"referral_id": str(loaded_ref.id)}
+            data={"referral_id": str(loaded_ref.id), "route": "/my-referrals"}
         )
     except Exception:
         pass
@@ -214,7 +214,7 @@ async def update_referral_status(ref_id: UUID, data: ReferralStatusUpdate, actor
                 title="Referral Status Updated",
                 body=f"Your referral for {ref.client_name} is now {ref.status.value}",
                 notification_type="REFERRAL_UPDATE",
-                data={"referral_id": str(ref.id)}
+                data={"referral_id": str(ref.id), "route": "/my-referrals"}
             )
         except Exception:
             pass

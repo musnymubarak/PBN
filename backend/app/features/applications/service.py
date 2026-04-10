@@ -329,7 +329,7 @@ async def update_application_status(
                 title="Application Approved!",
                 body=f"Welcome to PBN! Your application for {app.business_name} has been approved.",
                 notification_type="APPLICATION_APPROVED",
-                data={"application_id": str(app.id)}
+                data={"application_id": str(app.id), "route": "/my-applications"}
             )
         except Exception:
             pass
