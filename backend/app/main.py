@@ -141,6 +141,11 @@ def _register_routes(app: FastAPI) -> None:
     from app.features.payments.router import router as pay_router
     from app.features.notifications.router import router as notif_router
     from app.features.admin.router import router as admin_router
+    from fastapi.staticfiles import StaticFiles
+    import os
+
+    os.makedirs("uploads/profiles", exist_ok=True)
+    app.mount("/static", StaticFiles(directory="uploads"), name="static")
 
     app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
     app.include_router(app_router, prefix=settings.API_V1_PREFIX)

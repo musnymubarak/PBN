@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:pbn/core/constants/app_colors.dart';
+import 'package:pbn/core/constants/api_config.dart';
 import 'package:pbn/core/services/chapter_service.dart';
 import 'package:pbn/models/member.dart';
 
@@ -27,10 +28,13 @@ class _MembersPageState extends State<MembersPage> {
   Future<void> _loadMembers() async {
     setState(() => _loading = true);
     try {
-      final memberships = await _chapterService.getMyMemberships();
-      if (memberships.isNotEmpty) {
-        _members = await _chapterService.getChapterMembers(memberships.first.chapter.id);
+      final chapters = await _chapterService.listChapters();
+      List<Member> allMembers = [];
+      for (var chapter in chapters) {
+        final members = await _chapterService.getChapterMembers(chapter.id);
+        allMembers.addAll(members);
       }
+      _members = allMembers;
     } catch (_) {}
     _filtered = _members;
     if (mounted) setState(() => _loading = false);
@@ -103,89 +107,114 @@ class _MembersPageState extends State<MembersPage> {
 
   Widget _buildModernMemberCard(Member member) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 20),
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20, offset: const Offset(0, 10)),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(28),
-        child: Stack(
-          children: [
-            // Decorative background shape
-            Positioned(right: -10, top: -10, child: Icon(TablerIcons.square_rotated, color: AppColors.primary.withOpacity(0.03), size: 100)),
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 64, height: 64,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(colors: [AppColors.primary, AppColors.primary.withOpacity(0.7)]),
-                          borderRadius: BorderRadius.circular(22),
-                          boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 4))],
-                        ),
-                        child: Center(child: Text(member.initials, style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.white, fontSize: 20))),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(member.fullName, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: AppColors.text, letterSpacing: -0.5)),
-                            const SizedBox(height: 4),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(8)),
-                              child: Text(member.industry.toUpperCase(), style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: AppColors.primary, letterSpacing: 1)),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  const Divider(height: 1, color: AppColors.background),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('COMPANY', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1)),
-                          const SizedBox(height: 4),
-                          Text(member.company, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.text)),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          _contactBtn(TablerIcons.phone, Colors.blue),
-                          const SizedBox(width: 8),
-                          _contactBtn(TablerIcons.messages, const Color(0xFF10B981)),
-                        ],
-                      ),
-                    ],
-                  ),
-                ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // TOP HEADER: Dark Gradient
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF0A2540), Color(0xFF1E3A8A)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
+              borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(16), topRight: Radius.circular(16)),
             ),
-          ],
-        ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Avatar
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Image.network(
+                      member.profilePhoto != null 
+                          ? '${ApiConfig.baseUrl.replaceAll('/api/v1', '')}${member.profilePhoto}'
+                          : 'https://i.pravatar.cc/150?u=${member.userId}',
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stack) => Container(
+                        color: const Color(0xFF1E3A8A),
+                        child: Center(
+                          child: Text(member.initials,
+                              style: const TextStyle(fontWeight: FontWeight.w800, color: Colors.white, fontSize: 16)),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                // Title
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(member.fullName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17, color: Colors.white, letterSpacing: -0.3)),
+                      const SizedBox(height: 4),
+                      Text(member.company,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.white.withOpacity(0.7))),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // BOTTOM CONTENT: White Background
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(member.industry.toUpperCase(),
+                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.primary, letterSpacing: 0.5)),
+                ),
+                if (member.chapterName != null && member.chapterName!.isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(member.chapterName!.toUpperCase(),
+                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.orange, letterSpacing: 0.5)),
+                  ),
+              ],
+            ),
+          ),
+        ],
       ),
-    );
-  }
-
-  Widget _contactBtn(IconData icon, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
-      child: Icon(icon, color: color, size: 18),
     );
   }
 }

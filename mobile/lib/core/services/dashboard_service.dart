@@ -14,7 +14,8 @@ class DashboardService {
       if (chapterId != null) 'chapter_id': chapterId,
       'period': period,
     });
-    return _api.unwrap(res) as List<dynamic>;
+    final data = _api.unwrap(res);
+    return (data['entries'] as List?)?.cast<dynamic>() ?? [];
   }
 
   Future<List<dynamic>> getRoi({String period = 'last_6_months'}) async {

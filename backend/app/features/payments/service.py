@@ -15,6 +15,8 @@ from decimal import Decimal
 from typing import Any, Dict, List
 from uuid import UUID
 
+from app.features.payments.schemas import PaymentUpdate
+
 from sqlalchemy import select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload

@@ -152,19 +152,31 @@ async def update_referral_status(ref_id: UUID, data: ReferralStatusUpdate, actor
     if ref.to_member_id != actor_id:
         raise ForbiddenException("Only the recipient of the referral can update the status")
         
-    if ref.status == data.status:
-        raise BadRequestException("Referral is already in this status")
+    actual_value_changed = data.actual_value is not None and data.actual_value != float(ref.actual_value if ref.actual_value is not None else 0)
+    
+    if ref.status == data.status and not data.description and not actual_value_changed:
+        raise BadRequestException("No updates provided")
         
     old_status = ref.status.value
-    ref.status = data.status
+    if ref.status != data.status:
+        ref.status = data.status
+        
     if data.actual_value is not None:
         ref.actual_value = data.actual_value
+        
+    history_msg = []
+    if old_status != ref.status.value:
+        history_msg.append(f"Status updated to {ref.status.value}")
+    if actual_value_changed:
+        history_msg.append(f"ROI updated to {data.actual_value}")
+        
+    default_msg = " | ".join(history_msg) if history_msg else "Updated referral"
     
     history = ReferralStatusHistory(
         referral_id=ref.id,
         old_status=old_status,
-        new_status=data.status.value,
-        notes=data.description or f"Status updated to {data.status.value}",
+        new_status=ref.status.value,
+        notes=data.description or default_msg,
         changed_by=actor_id
     )
     db.add(history)
@@ -172,5 +184,13 @@ async def update_referral_status(ref_id: UUID, data: ReferralStatusUpdate, actor
     
     # Reload history because we just added one, but the object in memory might not have it unless we append to collection or refresh
     await db.refresh(ref, ['history'])
+
+    try:
+        from app.core.redis import get_redis_client
+        redis = get_redis_client()
+        await redis.delete(f"dashboard:user:{ref.from_member_id}")
+        await redis.delete(f"dashboard:user:{ref.to_member_id}")
+    except Exception:
+        pass
 
     return await _serialize_referral(ref)

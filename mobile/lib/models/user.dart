@@ -2,6 +2,7 @@ class User {
   final String id;
   final String phoneNumber;
   final String? email;
+  final String? profilePhoto;
   final String fullName;
   final String role;
   final bool isActive;
@@ -12,6 +13,7 @@ class User {
     required this.id,
     required this.phoneNumber,
     this.email,
+    this.profilePhoto,
     required this.fullName,
     required this.role,
     required this.isActive,
@@ -23,6 +25,7 @@ class User {
         id: json['id'] ?? '',
         phoneNumber: json['phone_number'] ?? '',
         email: json['email'],
+        profilePhoto: json['profile_photo'],
         fullName: json['full_name'] ?? '',
         role: json['role'] ?? 'prospect',
         isActive: json['is_active'] ?? true,

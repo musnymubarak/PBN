@@ -54,12 +54,13 @@ async def get_dashboard(user_id: UUID, db: AsyncSession) -> Dict[str, Any]:
                 ReferralStatus.NEGOTIATION, ReferralStatus.IN_PROGRESS,
             ]))).label("pending_followup"),
             func.count(1).filter((Referral.from_member_id == user_id) & (Referral.status == ReferralStatus.SUCCESS)).label("sent_won"),
+            func.count(1).filter((Referral.to_member_id == user_id) & (Referral.status == ReferralStatus.SUCCESS)).label("received_won"),
         )
         ref_stats = (await db.execute(ref_stmt)).one()
 
         roi_stmt = select(
-            func.coalesce(func.sum(Referral.actual_value).filter((Referral.from_member_id == user_id) & (Referral.status == ReferralStatus.SUCCESS)), 0).label("total_value"),
-            func.coalesce(func.sum(Referral.actual_value).filter((Referral.from_member_id == user_id) & (Referral.status == ReferralStatus.SUCCESS) & (Referral.closed_at >= first_day_of_month)), 0).label("month_value"),
+            func.coalesce(func.sum(Referral.actual_value).filter(Referral.to_member_id == user_id), 0).label("total_value"),
+            func.coalesce(func.sum(Referral.actual_value).filter((Referral.to_member_id == user_id) & (Referral.closed_at >= first_day_of_month)), 0).label("month_value"),
         )
         roi_stats = (await db.execute(roi_stmt)).one()
 
@@ -89,7 +90,7 @@ async def get_dashboard(user_id: UUID, db: AsyncSession) -> Dict[str, Any]:
 
         total_val = float(roi_stats.total_value)
         month_val = float(roi_stats.month_value)
-        avg_deal = total_val / ref_stats.sent_won if ref_stats.sent_won > 0 else 0.0
+        avg_deal = total_val / ref_stats.received_won if ref_stats.received_won > 0 else 0.0
 
         # ── Sequential: next_event depends on membership ─────────────────────
 
@@ -205,6 +206,7 @@ async def get_leaderboard(chapter_id: UUID | None, period: str, db: AsyncSession
         rank_subq.c.val,
         rank_subq.c.rank_pos,
         User.full_name,
+        User.profile_photo,
         Business.business_name
     ).join(User, User.id == rank_subq.c.uid)\
      .outerjoin(Business, Business.owner_user_id == User.id)\
@@ -220,6 +222,7 @@ async def get_leaderboard(chapter_id: UUID | None, period: str, db: AsyncSession
             "user_id": str(r.uid),
             "full_name": r.full_name,
             "business_name": r.business_name,
+            "profile_photo": r.profile_photo,
             "converted_count": r.won_cnt,
             "sent_count": r.sent_cnt,
             "actual_value": float(r.val),
