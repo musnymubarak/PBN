@@ -16,6 +16,7 @@ from app.core.response import success_response
 from app.features.auth.dependencies import get_current_user, require_role
 from app.features.chapters.schemas import ChapterMemberResponse, ChapterResponse, MyMembershipResponse
 from app.features.chapters.service import (
+    get_all_members,
     get_chapter_members,
     get_my_memberships,
     list_active_chapters,
@@ -24,6 +25,24 @@ from app.features.chapters.service import (
 from app.models.user import User, UserRole
 
 router = APIRouter(tags=["Chapters"])
+
+
+@router.get(
+    "/chapters/members/all",
+    summary="List all active members across all chapters",
+)
+async def list_all_members_endpoint(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    members = await get_all_members(db)
+    for m in members:
+        m["user_id"] = str(m["user_id"])
+        m["industry_category"]["id"] = str(m["industry_category"]["id"])
+        if m["business"]:
+            m["business"]["id"] = str(m["business"]["id"])
+            
+    return success_response(data=members)
 
 
 @router.get("/chapters", summary="List active chapters", response_model=None)

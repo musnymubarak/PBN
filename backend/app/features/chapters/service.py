@@ -26,6 +26,51 @@ async def list_active_chapters(db: AsyncSession) -> List[Chapter]:
     return list(result.scalars().all())
 
 
+async def get_all_members(db: AsyncSession) -> List[Dict[str, Any]]:
+    """Fetch all active members across all chapters in a single optimized query."""
+    stmt = (
+        select(ChapterMembership, User, IndustryCategory, Business, Chapter)
+        .join(User, ChapterMembership.user_id == User.id)
+        .join(Chapter, ChapterMembership.chapter_id == Chapter.id)
+        .join(IndustryCategory, ChapterMembership.industry_category_id == IndustryCategory.id)
+        .outerjoin(Business, Business.owner_user_id == User.id)
+        .where(ChapterMembership.is_active.is_(True))
+        .order_by(User.full_name)
+    )
+    result = await db.execute(stmt)
+    rows = result.all()
+
+    members = []
+    for mem, user, ind, biz, chap in rows:
+        member_data = {
+            "user_id": user.id,
+            "full_name": user.full_name,
+            "email": user.email,
+            "phone_number": user.phone_number,
+            "profile_photo": user.profile_photo,
+            "chapter_name": chap.name,
+            "company": biz.business_name if biz else "Independent",
+            "membership_type": mem.membership_type,
+            "start_date": mem.start_date,
+            "end_date": mem.end_date,
+            "industry": ind.name,  # simplified for mobile list
+            "industry_category": {
+                "id": ind.id,
+                "name": ind.name,
+                "slug": ind.slug,
+            },
+            "business": {
+                "id": biz.id,
+                "business_name": biz.business_name,
+                "district": biz.district,
+                "website": biz.website,
+            } if biz else None,
+        }
+        members.append(member_data)
+
+    return members
+
+
 async def get_chapter_members(chapter_id: UUID, db: AsyncSession) -> List[Dict[str, Any]]:
     # Check if chapter exists
     chap_stmt = select(Chapter).where(Chapter.id == chapter_id)

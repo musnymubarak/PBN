@@ -28,13 +28,7 @@ class _MembersPageState extends State<MembersPage> {
   Future<void> _loadMembers() async {
     setState(() => _loading = true);
     try {
-      final chapters = await _chapterService.listChapters();
-      List<Member> allMembers = [];
-      for (var chapter in chapters) {
-        final members = await _chapterService.getChapterMembers(chapter.id);
-        allMembers.addAll(members);
-      }
-      _members = allMembers;
+      _members = await _chapterService.getAllMembers();
     } catch (_) {}
     _filtered = _members;
     if (mounted) setState(() => _loading = false);
