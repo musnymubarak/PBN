@@ -68,7 +68,7 @@ class PBNApp extends StatelessWidget {
         '/leaderboard': (context) => const AuthGuard(child: LeaderboardPage()),
         '/chapters': (context) => const AuthGuard(child: ChaptersPage()),
         '/apply': (context) => const ApplyPage(),
-        '/my-referrals': (context) => const AuthGuard(child: MyReferralsPage()),
+        '/my-referrals': (context) => const AuthGuard(child: MyReferralsPage(isReceived: true)),
         '/my-applications': (context) => const AuthGuard(child: MyApplicationsPage()),
         '/partner_dashboard': (context) => const AuthGuard(child: PartnerDashboardPage()),
       },

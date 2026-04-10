@@ -186,3 +186,20 @@ async def mark_all_read(user_id: UUID, db: AsyncSession) -> None:
     )
     await db.execute(stmt)
     await db.commit()
+
+
+async def delete_notification(notification_id: UUID, user_id: UUID, db: AsyncSession) -> None:
+    """Delete a specific notification."""
+    notif = (
+        await db.execute(
+            select(Notification).where(
+                Notification.id == notification_id, Notification.user_id == user_id
+            )
+        )
+    ).scalar_one_or_none()
+
+    if not notif:
+        raise NotFoundException("Notification not found")
+
+    await db.delete(notif)
+    await db.commit()

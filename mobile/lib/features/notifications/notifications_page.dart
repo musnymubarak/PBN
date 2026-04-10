@@ -43,6 +43,14 @@ class _NotificationsPageState extends State<NotificationsPage> {
     } catch (_) {}
   }
 
+  Future<void> _deleteNotification(String id) async {
+    try {
+      await _service.deleteNotification(id);
+      setState(() { _notifications.removeWhere((n) => n.id == id); });
+      if (mounted) context.read<NotificationProvider>().fetchUnreadCount();
+    } catch (_) {}
+  }
+
   @override
   Widget build(BuildContext context) {
     final unread = _notifications.where((n) => !n.isRead).length;
@@ -74,40 +82,53 @@ class _NotificationsPageState extends State<NotificationsPage> {
   }
 
   Widget _buildNotificationCard(NotificationItem notif) {
-    return GestureDetector(
-      onTap: () {
-        if (!notif.isRead) _markRead(notif.id);
-        
-        final route = notif.data?['route'];
-        if (route != null) {
-          Navigator.pushNamed(context, route);
-        }
-      },
-      child: Container(
+    return Dismissible(
+      key: Key(notif.id),
+      direction: DismissDirection.endToStart,
+      background: Container(
         margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: notif.isRead ? Colors.white : const Color(0xFFF0F7FF),
-          borderRadius: BorderRadius.circular(14),
-          border: notif.isRead ? null : Border.all(color: AppColors.primary.withOpacity(0.15)),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 6)],
-        ),
-        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: (notif.isRead ? Colors.grey : AppColors.primary).withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-            child: Icon(TablerIcons.bell, size: 20, color: notif.isRead ? Colors.grey : AppColors.primary),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        alignment: Alignment.centerRight,
+        decoration: BoxDecoration(color: Colors.redAccent, borderRadius: BorderRadius.circular(14)),
+        child: const Icon(TablerIcons.trash, color: Colors.white, size: 24),
+      ),
+      onDismissed: (_) => _deleteNotification(notif.id),
+      child: GestureDetector(
+        onTap: () {
+          if (!notif.isRead) _markRead(notif.id);
+          
+          final route = notif.data?['route'];
+          print("DEBUG: Tapped notification. Data: ${notif.data}, Route found: $route");
+          if (route != null) {
+            Navigator.pushNamed(context, route);
+          }
+        },
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: notif.isRead ? Colors.white : const Color(0xFFF0F7FF),
+            borderRadius: BorderRadius.circular(14),
+            border: notif.isRead ? null : Border.all(color: AppColors.primary.withOpacity(0.15)),
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 6)],
           ),
-          const SizedBox(width: 14),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(notif.title, style: TextStyle(fontWeight: notif.isRead ? FontWeight.w600 : FontWeight.w800, fontSize: 14)),
-            const SizedBox(height: 4),
-            Text(notif.body, style: TextStyle(fontSize: 12, color: Colors.grey.shade600), maxLines: 2, overflow: TextOverflow.ellipsis),
-            const SizedBox(height: 6),
-            Text(notif.sentAt.split('T').first, style: TextStyle(fontSize: 11, color: Colors.grey.shade400)),
-          ])),
-          if (!notif.isRead) Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle)),
-        ]),
+          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(color: (notif.isRead ? Colors.grey : AppColors.primary).withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+              child: Icon(TablerIcons.bell, size: 20, color: notif.isRead ? Colors.grey : AppColors.primary),
+            ),
+            const SizedBox(width: 14),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(notif.title, style: TextStyle(fontWeight: notif.isRead ? FontWeight.w600 : FontWeight.w800, fontSize: 14)),
+              const SizedBox(height: 4),
+              Text(notif.body, style: TextStyle(fontSize: 12, color: Colors.grey.shade600), maxLines: 2, overflow: TextOverflow.ellipsis),
+              const SizedBox(height: 6),
+              Text(notif.sentAt.split('T').first, style: TextStyle(fontSize: 11, color: Colors.grey.shade400)),
+            ])),
+            if (!notif.isRead) Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle)),
+          ]),
+        ),
       ),
     );
   }

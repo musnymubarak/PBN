@@ -111,7 +111,7 @@ class PushNotificationService {
 
   /// Deep linking and state management when notification is tapped
   static void _handleNotificationTap(RemoteMessage message) {
-    debugPrint("Notification Tapped: ${message.messageId}");
+    debugPrint("DEBUG: PushNotification tapped. Data: ${message.data}, Route: ${message.data['route']}");
     
     // 1. Mark as read on backend (Fire and forget)
     final String? dbId = message.data['id'] ?? message.data['notification_id'];

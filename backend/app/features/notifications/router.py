@@ -71,6 +71,16 @@ async def mark_all_read_endpoint(
     return success_response(message="All notifications marked as read")
 
 
+@router.delete("/notifications/{notification_id}", summary="Delete specific notification")
+async def delete_notification_endpoint(
+    notification_id: UUID,
+    current_user: User = Depends(auth_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    await service.delete_notification(notification_id, current_user.id, db)
+    return success_response(message="Notification deleted successfully")
+
+
 @router.post("/notifications/dev/test-push", summary="Trigger a test push notification (dev only)")
 async def test_push_endpoint(
     background_tasks: BackgroundTasks,
