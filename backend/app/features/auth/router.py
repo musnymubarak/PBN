@@ -189,9 +189,35 @@ async def upload_profile_photo(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ) -> ORJSONResponse:
-    """Upload or update the user's profile photo."""
+    """Upload or update the user's profile photo with validation."""
+    from app.core.exceptions import BadRequestException
+
+    # 1. Size Validation (5MB limit)
+    MAX_SIZE = 5 * 1024 * 1024
+    if file.size and file.size > MAX_SIZE:
+        raise BadRequestException(
+            message=f"File too large. Maximum size allowed is 5MB. Your file is {file.size / (1024*1024):.1f}MB.",
+            code="FILE_TOO_LARGE"
+        )
+
+    # 2. Format Validation (MIME type and extension)
+    ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"]
+    if file.content_type not in ALLOWED_TYPES:
+        raise BadRequestException(
+            message="Invalid file format. Only JPEG, PNG, and WebP images are allowed.",
+            code="INVALID_FORMAT"
+        )
+
     os.makedirs("uploads/profiles", exist_ok=True)
-    ext = file.filename.split(".")[-1] if "." in file.filename else "jpg"
+    ext = file.filename.split(".")[-1].lower() if "." in file.filename else "jpg"
+    
+    # Extra check for valid extension string
+    if ext not in ["jpg", "jpeg", "png", "webp"]:
+         raise BadRequestException(
+            message="Invalid file extension. Only .jpg, .jpeg, .png, and .webp are allowed.",
+            code="INVALID_EXTENSION"
+        )
+
     filename = f"{current_user.id}_{uuid.uuid4().hex[:8]}.{ext}"
     file_path = f"uploads/profiles/{filename}"
     
