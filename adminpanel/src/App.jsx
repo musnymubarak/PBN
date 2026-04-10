@@ -28,6 +28,9 @@ import {
   IconAlertCircle,
   IconChevronDown,
   IconPlus,
+  IconBuildingStore,
+  IconGift,
+  IconStackPop,
 } from '@tabler/icons-react';
 import { api } from './lib/api';
 import { useApi } from './hooks/useApi';
@@ -155,6 +158,12 @@ const MENU_GROUPS = [
       { id: 'referrals', icon: IconHierarchy2, label: 'Referral Pipeline' },
       { id: 'payments', icon: IconCoin, label: 'Payments' },
       { id: 'revenue', icon: IconChartBar, label: 'Revenue & ROI' },
+    ]
+  },
+  {
+    label: 'Expansion',
+    links: [
+      { id: 'rewards', icon: IconBuildingStore, label: 'Rewards Hub' },
     ]
   },
   {
@@ -1468,6 +1477,306 @@ function PaymentsPage() {
 
 
 
+
+// ── Partners & Rewards Page ────────────────────────────────────────────────
+
+function CreatePartnerModal({ onClose, onCreated }) {
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    logo_url: '',
+    website: '',
+    is_active: true
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    try {
+      await api.createPartner(formData);
+      onCreated();
+    } catch (err) {
+      setError(err.message || 'Failed to create partner');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 500 }}>
+        <div className="modal-header">
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Add New Partner</h2>
+          <button type="button" onClick={onClose}><IconX size={20} /></button>
+        </div>
+        <form onSubmit={handleSubmit} style={{ padding: '1.5rem' }}>
+          {error && <div className="login-error" style={{ marginBottom: '1rem' }}>{error}</div>}
+          <div className="login-field">
+            <label>Business Name *</label>
+            <input 
+              type="text" 
+              className="filter-input v2"
+              required 
+              value={formData.name}
+              onChange={e => setFormData({...formData, name: e.target.value})}
+            />
+          </div>
+          <div className="login-field">
+            <label>Logo URL (Image Link)</label>
+            <input 
+              type="url" 
+              className="filter-input v2"
+              placeholder="https://..."
+              value={formData.logo_url}
+              onChange={e => setFormData({...formData, logo_url: e.target.value})}
+            />
+          </div>
+          <div className="login-field">
+            <label>Website</label>
+            <input 
+              type="url" 
+              className="filter-input v2"
+              placeholder="https://partner-website.com"
+              value={formData.website}
+              onChange={e => setFormData({...formData, website: e.target.value})}
+            />
+          </div>
+          <div className="login-field">
+            <label>Description</label>
+            <textarea 
+              className="action-textarea"
+              style={{ minHeight: 80 }}
+              value={formData.description}
+              onChange={e => setFormData({...formData, description: e.target.value})}
+            />
+          </div>
+          <button type="submit" className="login-btn" disabled={loading}>
+            {loading ? 'Creating...' : 'Create Partner'}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function CreateOfferModal({ partner, onClose, onCreated }) {
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    offer_type: 'offline_qr',
+    discount_percentage: 10,
+    start_date: new Date().toISOString().split('T')[0],
+    end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    redemption_instructions: 'Show your PBN Privilege Card at the counter.',
+    is_active: true
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    try {
+      await api.createOffer(partner.id, formData);
+      onCreated();
+    } catch (err) {
+      setError(err.message || 'Failed to create reward');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 550 }}>
+        <div className="modal-header">
+          <div>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>New Reward Offer</h2>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Adding for {partner.name}</p>
+          </div>
+          <button type="button" onClick={onClose}><IconX size={20} /></button>
+        </div>
+        <form onSubmit={handleSubmit} style={{ padding: '1.5rem' }}>
+          {error && <div className="login-error" style={{ marginBottom: '1rem' }}>{error}</div>}
+          
+          <div className="login-field">
+            <label>Offer Title *</label>
+            <input 
+              type="text" 
+              className="filter-input v2"
+              placeholder="e.g., 20% Off All Purchases"
+              required 
+              value={formData.title}
+              onChange={e => setFormData({...formData, title: e.target.value})}
+            />
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+            <div className="login-field" style={{ marginBottom: 0 }}>
+              <label>Type</label>
+              <select 
+                className="filter-input v2" 
+                style={{ height: 48 }}
+                value={formData.offer_type}
+                onChange={e => setFormData({...formData, offer_type: e.target.value})}
+              >
+                <option value="offline_qr">In-Person (QR Scan)</option>
+                <option value="online_coupon">Online (Coupon Code)</option>
+              </select>
+            </div>
+            <div className="login-field" style={{ marginBottom: 0 }}>
+              <label>Discount %</label>
+              <input 
+                type="number" 
+                className="filter-input v2"
+                value={formData.discount_percentage}
+                onChange={e => setFormData({...formData, discount_percentage: parseInt(e.target.value)})}
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+             <div className="login-field" style={{ marginBottom: 0 }}>
+              <label>Start Date</label>
+              <input 
+                type="date" 
+                className="filter-input v2"
+                value={formData.start_date}
+                onChange={e => setFormData({...formData, start_date: e.target.value})}
+              />
+            </div>
+            <div className="login-field" style={{ marginBottom: 0 }}>
+              <label>End Date</label>
+              <input 
+                type="date" 
+                className="filter-input v2"
+                value={formData.end_date}
+                onChange={e => setFormData({...formData, end_date: e.target.value})}
+              />
+            </div>
+          </div>
+
+          <div className="login-field">
+            <label>Redemption Instructions</label>
+            <textarea 
+              className="action-textarea"
+              style={{ minHeight: 60 }}
+              value={formData.redemption_instructions}
+              onChange={e => setFormData({...formData, redemption_instructions: e.target.value})}
+            />
+          </div>
+
+          <div className="modal-info-box" style={{ background: '#f0fdf4', color: '#166534', padding: '1rem', borderRadius: '12px', fontSize: '0.85rem', marginBottom: '1.5rem', display: 'flex', gap: '0.75rem' }}>
+            <IconBell size={20} />
+            <p><strong>Note:</strong> Creating this reward will automatically notify all app members via push notification.</p>
+          </div>
+
+          <button type="submit" className="login-btn" disabled={loading}>
+            {loading ? 'Processing...' : 'Create & Notify Users'}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function PartnersPage() {
+  const [partners, setPartners] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showAddPartner, setShowAddPartner] = useState(false);
+  const [addingOfferTo, setAddingOfferTo] = useState(null);
+
+  const fetchPartners = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await api.listPartners(false);
+      setPartners(data || []);
+    } catch (err) {
+      console.error('Failed to load partners:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchPartners(); }, [fetchPartners]);
+
+  return (
+    <section className="dashboard-body">
+      <div className="page-title-wrap">
+        <h1 className="page-title">Rewards & Network Partners</h1>
+        <p style={{ color: 'var(--text-secondary)', marginTop: '0.4rem', fontWeight: 500 }}>
+          Manage business alliances and member exclusive privileges.
+        </p>
+      </div>
+
+      <div className="stat-grid" style={{ marginBottom: '2rem' }}>
+        <StatCard title="TOTAL PARTNERS" value={partners.length} icon={IconBuildingStore} color="#2563eb" />
+        <StatCard title="ACTIVE OFFERS" value={partners.reduce((acc, p) => acc + (p.offers?.length || 0), 0)} icon={IconGift} color="#059669" />
+        <StatCard title="PARTNER REVENUE" value="LKR 4.2M" icon={IconCoin} color="#f59e0b" />
+      </div>
+
+      <div className="data-section">
+        <div className="section-head">
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Partner Directory</h3>
+          <button className="btn-primary" onClick={() => setShowAddPartner(true)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <IconPlus size={18} /> Add Partner
+          </button>
+        </div>
+
+        {loading ? (
+          <div style={{ padding: '4rem', textAlign: 'center' }}>Loading partners...</div>
+        ) : (
+          <div className="partners-list" style={{ padding: '0 1.5rem 1.5rem' }}>
+            {partners.length === 0 ? (
+              <div style={{ padding: '3rem', textAlign: 'center', color: '#94a3b8' }}>No partners registered yet.</div>
+            ) : partners.map(partner => (
+              <div key={partner.id} className="partner-card-row" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', padding: '1.5rem', border: '1px solid #e2e8f0', borderRadius: '16px', marginBottom: '1rem', background: 'white' }}>
+                <div style={{ width: 64, height: 64, borderRadius: '12px', background: '#f8fafc', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e2e8f0' }}>
+                  {partner.logo_url ? <img src={partner.logo_url} style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : <IconBuildingStore size={24} color="#94a3b8" />}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <h4 style={{ fontSize: '1.1rem', fontWeight: 700 }}>{partner.name}</h4>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>{partner.offers?.length || 0} active rewards</p>
+                </div>
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                  <button 
+                    className="view-detail-btn" 
+                    title="Add New Reward" 
+                    style={{ background: '#f0fdf4', color: '#059669', borderColor: '#bbf7d0' }}
+                    onClick={() => setAddingOfferTo(partner)}
+                  >
+                    <IconPlus size={20} />
+                  </button>
+                  <button className="view-detail-btn" title="Edit Partner"><IconSettings size={20} /></button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {showAddPartner && (
+        <CreatePartnerModal 
+          onClose={() => setShowAddPartner(false)} 
+          onCreated={() => { setShowAddPartner(false); fetchPartners(); }} 
+        />
+      )}
+      {addingOfferTo && (
+        <CreateOfferModal 
+          partner={addingOfferTo} 
+          onClose={() => setAddingOfferTo(null)} 
+          onCreated={() => { setAddingOfferTo(null); fetchPartners(); }} 
+        />
+      )}
+    </section>
+  );
+}
+
+
 // ── Main App ────────────────────────────────────────────────────────────────
 
 export default function App() {
@@ -1521,6 +1830,9 @@ export default function App() {
     }
     if (activeTab === 'payments') {
       return <PaymentsPage />;
+    }
+    if (activeTab === 'rewards') {
+      return <PartnersPage />;
     }
 
     // Default: Overview dashboard

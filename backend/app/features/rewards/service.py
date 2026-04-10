@@ -17,6 +17,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.core.exceptions import BadRequestException, NotFoundException
 from app.features.rewards.schemas import PartnerCreate, OfferCreate
+from app.features.notifications.service import broadcast_notification
 from app.models.privilege_cards import (
     PrivilegeCard, Partner, Offer, OfferRedemption,
     RedemptionToken, CouponCode, TokenStatus, CouponStatus,
@@ -127,6 +128,14 @@ async def create_offer(partner_id: UUID, data: OfferCreate, db: AsyncSession) ->
     )
     db.add(offer)
     await db.flush()
+    
+    # Trigger Global Notification
+    await broadcast_notification(
+        title=f"🎁 New Reward: {offer.title}",
+        body=f"Exclusive deal from {partner.name}. Check it out in the Rewards section!",
+        notification_type="new_reward",
+        data={"route": "/rewards"}
+    )
 
     fresh_stmt = select(Offer).options(selectinload(Offer.redemptions)).where(Offer.id == offer.id)
     fresh_offer = (await db.execute(fresh_stmt)).scalar_one()

@@ -78,4 +78,15 @@ export const api = {
     method: 'PATCH',
     body: JSON.stringify(body),
   }),
+
+  // Rewards & Partners
+  listPartners: (activeOnly = false) => apiFetch(`/rewards/partners?active_only=${activeOnly}`),
+  createPartner: (body) => apiFetch('/rewards/partners', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  }),
+  createOffer: (partnerId, body) => apiFetch(`/rewards/partners/${partnerId}/offers`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  }),
 };

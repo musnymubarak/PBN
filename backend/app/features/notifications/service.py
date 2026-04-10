@@ -117,6 +117,65 @@ async def send_push_notification(
             logger.error(f"send_push_notification failed: {e}")
 
 
+async def broadcast_notification(
+    title: str,
+    body: str,
+    notification_type: str,
+    data: Dict[str, str] | None = None,
+) -> None:
+    """
+    Background Task: Emits a structural Notification to ALL active users and triggers FCM broadcast.
+    """
+    async with async_session_factory() as session:
+        try:
+            now = datetime.now(timezone.utc)
+            
+            # 1. Fetch all active users with FCM tokens
+            stmt = select(User).where(User.is_active == True, User.fcm_token.isnot(None))
+            users = (await session.execute(stmt)).scalars().all()
+            
+            if not users:
+                logger.info("Broadcast [SKIPPED]: No active users with tokens found.")
+                return
+
+            # 2. Persistence and Dispatch
+            if _init_firebase():
+                tokens = [u.fcm_token for u in users]
+                try:
+                    # Create notifications in DB for everyone
+                    # (Note: For massive scale, this should be chunked/queued)
+                    for u in users:
+                        notif = Notification(
+                            user_id=u.id,
+                            title=title,
+                            body=body,
+                            notification_type=notification_type,
+                            data=data,
+                            sent_at=now,
+                            is_read=False,
+                        )
+                        session.add(notif)
+                    
+                    await session.commit()
+
+                    # FCM Multicast
+                    message = messaging.MulticastMessage(
+                        notification=messaging.Notification(title=title, body=body),
+                        data=data if data else {},
+                        tokens=tokens,
+                    )
+                    response = messaging.send_multicast(message)
+                    logger.info(f"Broadcast [DISPATCHED]: {response.success_count} success, {response.failure_count} failure")
+                except Exception as e:
+                    logger.error(f"Broadcast [FAILED]: {e}")
+            else:
+                logger.info(f"Broadcast [STUB]: '{title}' to {len(users)} users.")
+
+        except Exception as e:
+            await session.rollback()
+            logger.error(f"broadcast_notification failed: {e}")
+
+
 def _serialize_notification(n: Notification) -> Dict[str, Any]:
     return {
         "id": str(n.id),
