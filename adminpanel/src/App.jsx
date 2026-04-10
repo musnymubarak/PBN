@@ -1529,27 +1529,26 @@ function CreatePartnerModal({ onClose, onCreated }) {
               type="url"
               className="filter-input v2"
               placeholder="https://..."
-              value={formData.logo_url}
               onChange={e => setFormData({ ...formData, logo_url: e.target.value })}
             />
           </div>
-          <div className="login-field">
+            <div className="login-field">
             <label>Website</label>
-            <input
-              type="url"
+            <input 
+              type="url" 
               className="filter-input v2"
               placeholder="https://partner-website.com"
               value={formData.website}
-              onChange={e => setFormData({ ...formData, website: e.target.value })}
+              onChange={e => setFormData({...formData, website: e.target.value})}
             />
           </div>
           <div className="login-field">
             <label>Description</label>
-            <textarea
+            <textarea 
               className="action-textarea"
               style={{ minHeight: 80 }}
               value={formData.description}
-              onChange={e => setFormData({ ...formData, description: e.target.value })}
+              onChange={e => setFormData({...formData, description: e.target.value})}
             />
           </div>
           <button type="submit" className="login-btn" disabled={loading}>
@@ -1586,6 +1585,12 @@ function CreateOfferModal({ partner, onClose, onCreated }) {
     } catch (err) {
       setError(err.message || 'Failed to create reward');
     } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 550 }}>
         <div className="modal-header">
           <div>
@@ -1596,16 +1601,16 @@ function CreateOfferModal({ partner, onClose, onCreated }) {
         </div>
         <form onSubmit={handleSubmit} style={{ padding: '1.5rem' }}>
           {error && <div className="login-error" style={{ marginBottom: '1rem' }}>{error}</div>}
-
+          
           <div className="login-field">
             <label>Offer Title *</label>
-            <input
-              type="text"
+            <input 
+              type="text" 
               className="filter-input v2"
               placeholder="e.g., 20% Off All Purchases"
-              required
+              required 
               value={formData.title}
-              onChange={e => setFormData({ ...formData, title: e.target.value })}
+              onChange={e => setFormData({...formData, title: e.target.value})}
             />
           </div>
 
@@ -1648,33 +1653,33 @@ function CreateOfferModal({ partner, onClose, onCreated }) {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-            <div className="login-field" style={{ marginBottom: 0 }}>
+             <div className="login-field" style={{ marginBottom: 0 }}>
               <label>Start Date</label>
-              <input
-                type="date"
+              <input 
+                type="date" 
                 className="filter-input v2"
                 value={formData.start_date}
-                onChange={e => setFormData({ ...formData, start_date: e.target.value })}
+                onChange={e => setFormData({...formData, start_date: e.target.value})}
               />
             </div>
             <div className="login-field" style={{ marginBottom: 0 }}>
               <label>End Date</label>
-              <input
-                type="date"
+              <input 
+                type="date" 
                 className="filter-input v2"
                 value={formData.end_date}
-                onChange={e => setFormData({ ...formData, end_date: e.target.value })}
+                onChange={e => setFormData({...formData, end_date: e.target.value})}
               />
             </div>
           </div>
 
           <div className="login-field">
             <label>Redemption Instructions</label>
-            <textarea
+            <textarea 
               className="action-textarea"
               style={{ minHeight: 60 }}
               value={formData.redemption_instructions}
-              onChange={e => setFormData({ ...formData, redemption_instructions: e.target.value })}
+              onChange={e => setFormData({...formData, redemption_instructions: e.target.value})}
             />
           </div>
 
