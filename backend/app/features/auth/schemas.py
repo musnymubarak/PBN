@@ -17,8 +17,17 @@ _SRI_LANKA_PHONE = re.compile(r"^\+94\d{9}$")
 
 def _validate_phone(v: str) -> str:
     v = v.strip()
+    
+    # Handle 07XXXXXXXX format
+    if re.match(r"^0\d{9}$", v):
+        v = "+94" + v[1:]
+    
+    # Handle 7XXXXXXXX format
+    if re.match(r"^\d{9}$", v):
+        v = "+94" + v
+        
     if not _SRI_LANKA_PHONE.match(v):
-        raise ValueError("Phone must be in Sri Lanka format: +94XXXXXXXXX")
+        raise ValueError("Phone must be in Sri Lanka format: +94XXXXXXXXX, 07XXXXXXXX or 7XXXXXXXX")
     return v
 
 
