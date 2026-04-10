@@ -140,10 +140,18 @@ async def broadcast_notification(
 
             # 2. Persistence and Dispatch
             if _init_firebase():
-                tokens = [u.fcm_token for u in users]
+                # Filter out obvious mock or malformed tokens to prevent Multicast failure
+                valid_tokens = [
+                    u.fcm_token for u in users 
+                    if u.fcm_token and len(u.fcm_token) > 20 and not u.fcm_token.startswith('mock-')
+                ]
+                
+                if not valid_tokens:
+                    logger.info("Broadcast [SKIPPED]: No valid real tokens found after filtering.")
+                    return
+
                 try:
                     # Create notifications in DB for everyone
-                    # (Note: For massive scale, this should be chunked/queued)
                     for u in users:
                         notif = Notification(
                             user_id=u.id,
@@ -162,14 +170,20 @@ async def broadcast_notification(
                     message = messaging.MulticastMessage(
                         notification=messaging.Notification(title=title, body=body),
                         data=data if data else {},
-                        tokens=tokens,
+                        tokens=valid_tokens,
                     )
                     response = messaging.send_multicast(message)
+                    
                     logger.info(f"Broadcast [DISPATCHED]: {response.success_count} success, {response.failure_count} failure")
+                    
+                    if response.failure_count > 0:
+                        for idx, resp in enumerate(response.responses):
+                            if not resp.success:
+                                logger.warning(f"FCM Multicast Failure at index {idx}: {resp.exception}")
                 except Exception as e:
-                    logger.error(f"Broadcast [FAILED]: {e}")
+                    logger.error(f"Broadcast [FAILED] during dispatch: {e}")
             else:
-                logger.info(f"Broadcast [STUB]: '{title}' to {len(users)} users.")
+                logger.info(f"Broadcast [STUB]: '{title}' to {len(users)} users (Firebase not init).")
 
         except Exception as e:
             await session.rollback()
