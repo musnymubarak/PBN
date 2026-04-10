@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { 
-  IconChartBar, 
-  IconUsers, 
-  IconHierarchy2, 
-  IconCoin, 
-  IconSettings, 
-  IconBell, 
-  IconSearch, 
-  IconUser, 
-  IconFilter, 
+import {
+  IconChartBar,
+  IconUsers,
+  IconHierarchy2,
+  IconCoin,
+  IconSettings,
+  IconBell,
+  IconSearch,
+  IconUser,
+  IconFilter,
   IconDotsVertical,
   IconArrowUpRight,
   IconClock,
@@ -201,11 +201,11 @@ const formatCurrency = (val) => {
 // ── Status Helpers ──────────────────────────────────────────────────────────
 
 const STATUS_CONFIG = {
-  pending:            { label: 'Pending',          class: 'pill-pending',     color: '#f59e0b', bg: '#fffbeb' },
+  pending: { label: 'Pending', class: 'pill-pending', color: '#f59e0b', bg: '#fffbeb' },
   fit_call_scheduled: { label: 'Fit Call Scheduled', class: 'pill-scheduled', color: '#8b5cf6', bg: '#f5f3ff' },
-  approved:           { label: 'Approved',         class: 'pill-approved',    color: '#059669', bg: '#ecfdf5' },
-  rejected:           { label: 'Rejected',         class: 'pill-rejected',    color: '#dc2626', bg: '#fef2f2' },
-  waitlisted:         { label: 'Waitlisted',       class: 'pill-waitlisted',  color: '#6b7280', bg: '#f9fafb' },
+  approved: { label: 'Approved', class: 'pill-approved', color: '#059669', bg: '#ecfdf5' },
+  rejected: { label: 'Rejected', class: 'pill-rejected', color: '#dc2626', bg: '#fef2f2' },
+  waitlisted: { label: 'Waitlisted', class: 'pill-waitlisted', color: '#6b7280', bg: '#f9fafb' },
 };
 
 const getStatusConfig = (status) => STATUS_CONFIG[status] || { label: status, class: '', color: '#6b7280', bg: '#f9fafb' };
@@ -256,7 +256,7 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
     if (!msg) return 'An unexpected error occurred.';
     // Remove "API 400: /path - " technical parts
     const parts = msg.split(' - ');
-    if (parts.length > 1) return parts[1].split(' (')[0]; 
+    if (parts.length > 1) return parts[1].split(' (')[0];
     return msg;
   };
 
@@ -428,39 +428,39 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
                   <div>
                     <label style={{ color: '#166534', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem', display: 'block' }}>Target Chapter</label>
-                    <CustomSelect 
-                      label="Select a chapter..." 
-                      value={selectedChapterId} 
-                      options={chapters} 
+                    <CustomSelect
+                      label="Select a chapter..."
+                      value={selectedChapterId}
+                      options={chapters}
                       onChange={setSelectedChapterId}
                       style={{ background: 'white' }}
                     />
                   </div>
                   <div>
                     <label style={{ color: '#166534', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem', display: 'block' }}>Payment status</label>
-                    <CustomSelect 
-                      label="Payment status..." 
-                      value={paymentStatus} 
+                    <CustomSelect
+                      label="Payment status..."
+                      value={paymentStatus}
                       options={[
                         { id: 'pending', name: 'Pending (Pay later)' },
                         { id: 'completed', name: 'Completed (Paid)' }
-                      ]} 
+                      ]}
                       onChange={setPaymentStatus}
                       style={{ background: 'white' }}
                     />
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
-                  <button 
-                    className="login-btn" 
+                  <button
+                    className="login-btn"
                     style={{ flex: 1, background: '#10b981', padding: '0.75rem', height: '52px' }}
                     onClick={() => handleStatusUpdate('approved')}
                     disabled={updating || !selectedChapterId}
                   >
                     Confirm & Approve
                   </button>
-                  <button 
-                    className="login-btn" 
+                  <button
+                    className="login-btn"
                     style={{ flex: 1, background: '#94a3b8', padding: '0.75rem', height: '52px' }}
                     onClick={() => { setModalStatus(null); setSelectedChapterId(''); }}
                   >
@@ -483,7 +483,7 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
                   {availableActions.map(action => {
                     const isDecision = ['approved', 'rejected', 'waitlisted'].includes(action.status);
                     const needsFitCall = detail.status === 'pending' && isDecision;
-                    
+
                     return (
                       <button
                         key={action.status}
@@ -559,31 +559,31 @@ function CreateApplicationModal({ onClose, onCreated }) {
           </div>
           <button type="button" onClick={onClose}><IconX size={20} /></button>
         </div>
-        
+
         <form onSubmit={handleSubmit} style={{ padding: '1.5rem' }}>
           {error && <div className="login-error" style={{ marginBottom: '1.25rem' }}>{error}</div>}
-          
+
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
             <div className="login-field" style={{ marginBottom: 0 }}>
               <label>Applicant Name *</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 className="filter-input v2"
                 placeholder="Full Name"
                 required
                 value={formData.full_name}
-                onChange={e => setFormData({...formData, full_name: e.target.value})}
+                onChange={e => setFormData({ ...formData, full_name: e.target.value })}
               />
             </div>
             <div className="login-field" style={{ marginBottom: 0 }}>
               <label>Business Name *</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 className="filter-input v2"
                 placeholder="Trade Name"
                 required
                 value={formData.business_name}
-                onChange={e => setFormData({...formData, business_name: e.target.value})}
+                onChange={e => setFormData({ ...formData, business_name: e.target.value })}
               />
             </div>
           </div>
@@ -591,23 +591,23 @@ function CreateApplicationModal({ onClose, onCreated }) {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
             <div className="login-field" style={{ marginBottom: 0 }}>
               <label>Contact Number *</label>
-              <input 
-                type="tel" 
+              <input
+                type="tel"
                 className="filter-input v2"
                 placeholder="+94..."
                 required
                 value={formData.contact_number}
-                onChange={e => setFormData({...formData, contact_number: e.target.value})}
+                onChange={e => setFormData({ ...formData, contact_number: e.target.value })}
               />
             </div>
             <div className="login-field" style={{ marginBottom: 0 }}>
               <label>Email Address</label>
-              <input 
-                type="email" 
+              <input
+                type="email"
                 className="filter-input v2"
                 placeholder="optional@email.com"
                 value={formData.email}
-                onChange={e => setFormData({...formData, email: e.target.value})}
+                onChange={e => setFormData({ ...formData, email: e.target.value })}
               />
             </div>
           </div>
@@ -615,37 +615,37 @@ function CreateApplicationModal({ onClose, onCreated }) {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
             <div className="login-field" style={{ marginBottom: 0 }}>
               <label>District</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 className="filter-input v2"
                 placeholder="e.g. Colombo"
                 value={formData.district}
-                onChange={e => setFormData({...formData, district: e.target.value})}
+                onChange={e => setFormData({ ...formData, district: e.target.value })}
               />
             </div>
             <div>
               <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>Industry *</label>
-              <CustomSelect 
+              <CustomSelect
                 label={loadingIndustries ? "Loading..." : "Select Industry..."}
                 value={formData.industry_category_id}
                 options={industries}
-                onChange={val => setFormData({...formData, industry_category_id: val})}
+                onChange={val => setFormData({ ...formData, industry_category_id: val })}
               />
             </div>
           </div>
 
           <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-            <button 
-              type="submit" 
-              className="login-btn" 
+            <button
+              type="submit"
+              className="login-btn"
               disabled={loading}
               style={{ flex: 2 }}
             >
               {loading ? 'Creating...' : 'Create Application'}
             </button>
-            <button 
-              type="button" 
-              className="login-btn" 
+            <button
+              type="button"
+              className="login-btn"
               onClick={onClose}
               style={{ flex: 1, background: '#94a3b8' }}
             >
@@ -835,15 +835,15 @@ function ApplicationsPage() {
         </div>
 
         {selectedAppId && (
-          <ApplicationDetailModal 
-            appId={selectedAppId} 
-            onClose={() => setSelectedAppId(null)} 
+          <ApplicationDetailModal
+            appId={selectedAppId}
+            onClose={() => setSelectedAppId(null)}
             onStatusUpdated={fetchApps}
           />
         )}
 
         {showCreateModal && (
-          <CreateApplicationModal 
+          <CreateApplicationModal
             onClose={() => setShowCreateModal(false)}
             onCreated={() => {
               setShowCreateModal(false);
@@ -876,7 +876,7 @@ function CustomSelect({ label, value, options, onChange, style }) {
 
   return (
     <div className="custom-select-container" ref={containerRef} style={style}>
-      <button 
+      <button
         type="button"
         className={`custom-select-trigger ${isOpen ? 'active' : ''}`}
         onClick={() => setIsOpen(!isOpen)}
@@ -887,16 +887,16 @@ function CustomSelect({ label, value, options, onChange, style }) {
 
       {isOpen && (
         <div className="custom-select-menu">
-          <div 
-            className="custom-select-option" 
+          <div
+            className="custom-select-option"
             onClick={() => { onChange(''); setIsOpen(false); }}
             style={{ fontWeight: 700, borderBottom: '1px solid var(--border)' }}
           >
             {label}
           </div>
           {options.map((opt) => (
-            <div 
-              key={opt.id} 
+            <div
+              key={opt.id}
               className={`custom-select-option ${String(value) === String(opt.id) ? 'selected' : ''}`}
               onClick={() => { onChange(opt.id); setIsOpen(false); }}
             >
@@ -940,7 +940,7 @@ function UserEditModal({ user, onClose, onUpdate, chapters = [] }) {
         </div>
         <form onSubmit={handleSubmit} style={{ padding: '1.5rem' }}>
           {error && <div className="login-error" style={{ marginBottom: '1rem' }}>{error}</div>}
-          
+
           <div style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
             <div className="avatar-sm" style={{ width: 64, height: 64, fontSize: '1.5rem', margin: '0 auto 0.75rem', background: '#f1f5f9', color: 'var(--primary)' }}>
               {user.full_name ? user.full_name[0] : '?'}
@@ -951,15 +951,15 @@ function UserEditModal({ user, onClose, onUpdate, chapters = [] }) {
 
           <div style={{ marginBottom: '1rem' }}>
             <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>User Role</label>
-            <CustomSelect 
-              label="Select role..." 
-              value={role} 
+            <CustomSelect
+              label="Select role..."
+              value={role}
               options={[
                 { id: 'PROSPECT', name: 'Prospect (Pending Payment)' },
                 { id: 'MEMBER', name: 'Member (Verified)' },
                 { id: 'CHAPTER_ADMIN', name: 'Chapter Admin' },
                 { id: 'SUPER_ADMIN', name: 'Super Admin' }
-              ]} 
+              ]}
               onChange={setRole}
             />
           </div>
@@ -969,9 +969,9 @@ function UserEditModal({ user, onClose, onUpdate, chapters = [] }) {
               <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>Membership Active</div>
               <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Toggle access to network features</div>
             </div>
-            <input 
-              type="checkbox" 
-              checked={isActive} 
+            <input
+              type="checkbox"
+              checked={isActive}
               onChange={e => setIsActive(e.target.checked)}
               style={{ width: 20, height: 20, cursor: 'pointer' }}
             />
@@ -1012,7 +1012,7 @@ function MembersPage() {
       if (chapterFilter) params.chapter_id = chapterFilter;
       if (industryFilter) params.industry_id = industryFilter;
       if (roleFilter) params.role = roleFilter;
-      
+
       const result = await api.listUsers(params);
       setUsers(result.users || []);
       setTotal(result.total || 0);
@@ -1061,40 +1061,40 @@ function MembersPage() {
           <div className="directory-filters" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
             <div style={{ flex: 1, minWidth: '250px', position: 'relative' }}>
               <IconSearch size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-              <input 
-                type="text" 
-                placeholder="Search by name, phone or chapter..." 
+              <input
+                type="text"
+                placeholder="Search by name, phone or chapter..."
                 className="filter-input v2"
                 style={{ paddingLeft: '40px', width: '100%', height: '48px' }}
                 value={search}
                 onChange={e => { setSearch(e.target.value); setPage(1); }}
               />
             </div>
-            <CustomSelect 
-              label="All Chapters" 
-              value={chapterFilter} 
-              options={chapters} 
+            <CustomSelect
+              label="All Chapters"
+              value={chapterFilter}
+              options={chapters}
               onChange={(val) => { setChapterFilter(val); setPage(1); }}
               style={{ width: '220px' }}
             />
 
-            <CustomSelect 
-              label="All Industries (Network)" 
-              value={industryFilter} 
-              options={industries} 
+            <CustomSelect
+              label="All Industries (Network)"
+              value={industryFilter}
+              options={industries}
               onChange={(val) => { setIndustryFilter(val); setPage(1); }}
               style={{ width: '240px' }}
             />
 
-            <CustomSelect 
-              label="All Roles" 
-              value={roleFilter} 
+            <CustomSelect
+              label="All Roles"
+              value={roleFilter}
               options={[
                 { id: 'MEMBER', name: 'Members' },
                 { id: 'PROSPECT', name: 'Prospects' },
                 { id: 'CHAPTER_ADMIN', name: 'Chapter Admins' },
                 { id: 'PARTNER_ADMIN', name: 'Partner Admins' }
-              ]} 
+              ]}
               onChange={(val) => { setRoleFilter(val); setPage(1); }}
               style={{ width: '200px' }}
             />
@@ -1147,13 +1147,12 @@ function MembersPage() {
                   </span>
                 </td>
                 <td>
-                  <span className={`pill ${
-                    user.is_active 
-                      ? 'pill-approved' 
-                      : user.role === 'PROSPECT' 
-                        ? 'pill-awaiting-payment' 
+                  <span className={`pill ${user.is_active
+                      ? 'pill-approved'
+                      : user.role === 'PROSPECT'
+                        ? 'pill-awaiting-payment'
                         : 'pill-rejected'
-                  }`}>
+                    }`}>
                     {user.is_active ? 'Active' : user.role === 'PROSPECT' ? 'Awaiting Payment' : 'Inactive'}
                   </span>
                 </td>
@@ -1180,11 +1179,11 @@ function MembersPage() {
       </div>
 
       {selectedUser && (
-        <UserEditModal 
-          user={selectedUser} 
-          chapters={chapters} 
-          onClose={() => setSelectedUser(null)} 
-          onUpdate={fetchMembers} 
+        <UserEditModal
+          user={selectedUser}
+          chapters={chapters}
+          onClose={() => setSelectedUser(null)}
+          onUpdate={fetchMembers}
         />
       )}
     </section>
@@ -1208,7 +1207,7 @@ function RecordPaymentModal({ onClose, onRecord, users = [] }) {
     e.preventDefault();
     if (!userId) return setError('Please select a user');
     if (!reason) return setError('Please provide a payment reason');
-    
+
     setLoading(true);
     setError('');
     try {
@@ -1238,13 +1237,13 @@ function RecordPaymentModal({ onClose, onRecord, users = [] }) {
         </div>
         <form onSubmit={handleSubmit} style={{ padding: '1.5rem' }}>
           {error && <div className="login-error" style={{ marginBottom: '1rem' }}>{error}</div>}
-          
+
           <div style={{ marginBottom: '1rem' }}>
             <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>Select User</label>
-            <CustomSelect 
-              label="Choose a member/prospect..." 
-              value={userId} 
-              options={users.map(u => ({ id: u.id, name: `${u.full_name} (${u.phone_number})` }))} 
+            <CustomSelect
+              label="Choose a member/prospect..."
+              value={userId}
+              options={users.map(u => ({ id: u.id, name: `${u.full_name} (${u.phone_number})` }))}
               onChange={setUserId}
             />
           </div>
@@ -1256,14 +1255,14 @@ function RecordPaymentModal({ onClose, onRecord, users = [] }) {
             </div>
             <div>
               <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>Type</label>
-              <CustomSelect 
-                label="Select type..." 
-                value={paymentType} 
+              <CustomSelect
+                label="Select type..."
+                value={paymentType}
                 options={[
                   { id: 'membership', name: 'Membership' },
                   { id: 'meeting_fee', name: 'Meeting Fee' },
                   { id: 'renewal', name: 'Renewal' }
-                ]} 
+                ]}
                 onChange={setPaymentType}
               />
             </div>
@@ -1271,22 +1270,22 @@ function RecordPaymentModal({ onClose, onRecord, users = [] }) {
 
           <div className="login-field" style={{ marginBottom: '1rem' }}>
             <label>Payment Reason</label>
-            <input 
-              type="text" 
-              placeholder="e.g. Annual Membership Fee 2025" 
-              value={reason} 
-              onChange={e => setReason(e.target.value)} 
+            <input
+              type="text"
+              placeholder="e.g. Annual Membership Fee 2025"
+              value={reason}
+              onChange={e => setReason(e.target.value)}
               className="filter-input"
-              required 
+              required
             />
           </div>
 
           <div className="login-field" style={{ marginBottom: '1.5rem' }}>
             <label>Admin Notes</label>
-            <textarea 
-              value={notes} 
-              onChange={e => setNotes(e.target.value)} 
-              className="action-textarea" 
+            <textarea
+              value={notes}
+              onChange={e => setNotes(e.target.value)}
+              className="action-textarea"
               placeholder="Internal notes..."
               style={{ minHeight: 80 }}
             />
@@ -1331,7 +1330,7 @@ function UpdatePaymentModal({ payment, onClose, onUpdate }) {
         </div>
         <form onSubmit={handleSubmit} style={{ padding: '1.5rem' }}>
           {error && <div className="login-error" style={{ marginBottom: '1rem' }}>{error}</div>}
-          
+
           <div className="login-field" style={{ marginBottom: '1rem' }}>
             <label>Payment Reason</label>
             <input type="text" value={reason} onChange={e => setReason(e.target.value)} className="filter-input" required />
@@ -1339,15 +1338,15 @@ function UpdatePaymentModal({ payment, onClose, onUpdate }) {
 
           <div style={{ marginBottom: '1.5rem' }}>
             <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>Status</label>
-            <CustomSelect 
-              label="Select status..." 
-              value={status} 
+            <CustomSelect
+              label="Select status..."
+              value={status}
               options={[
                 { id: 'pending', name: 'Pending' },
                 { id: 'completed', name: 'Completed' },
                 { id: 'failed', name: 'Failed' },
                 { id: 'refunded', name: 'Refunded' }
-              ]} 
+              ]}
               onChange={setStatus}
             />
           </div>
@@ -1458,17 +1457,17 @@ function PaymentsPage() {
       </div>
 
       {showRecordModal && (
-        <RecordPaymentModal 
-          users={users} 
-          onClose={() => setShowRecordModal(false)} 
-          onRecord={fetchPayments} 
+        <RecordPaymentModal
+          users={users}
+          onClose={() => setShowRecordModal(false)}
+          onRecord={fetchPayments}
         />
       )}
       {editingPayment && (
-        <UpdatePaymentModal 
-          payment={editingPayment} 
-          onClose={() => setEditingPayment(null)} 
-          onUpdate={fetchPayments} 
+        <UpdatePaymentModal
+          payment={editingPayment}
+          onClose={() => setEditingPayment(null)}
+          onUpdate={fetchPayments}
         />
       )}
     </section>
@@ -1516,41 +1515,41 @@ function CreatePartnerModal({ onClose, onCreated }) {
           {error && <div className="login-error" style={{ marginBottom: '1rem' }}>{error}</div>}
           <div className="login-field">
             <label>Business Name *</label>
-            <input 
-              type="text" 
+            <input
+              type="text"
               className="filter-input v2"
-              required 
+              required
               value={formData.name}
-              onChange={e => setFormData({...formData, name: e.target.value})}
+              onChange={e => setFormData({ ...formData, name: e.target.value })}
             />
           </div>
           <div className="login-field">
             <label>Logo URL (Image Link)</label>
-            <input 
-              type="url" 
+            <input
+              type="url"
               className="filter-input v2"
               placeholder="https://..."
               value={formData.logo_url}
-              onChange={e => setFormData({...formData, logo_url: e.target.value})}
+              onChange={e => setFormData({ ...formData, logo_url: e.target.value })}
             />
           </div>
           <div className="login-field">
             <label>Website</label>
-            <input 
-              type="url" 
+            <input
+              type="url"
               className="filter-input v2"
               placeholder="https://partner-website.com"
               value={formData.website}
-              onChange={e => setFormData({...formData, website: e.target.value})}
+              onChange={e => setFormData({ ...formData, website: e.target.value })}
             />
           </div>
           <div className="login-field">
             <label>Description</label>
-            <textarea 
+            <textarea
               className="action-textarea"
               style={{ minHeight: 80 }}
               value={formData.description}
-              onChange={e => setFormData({...formData, description: e.target.value})}
+              onChange={e => setFormData({ ...formData, description: e.target.value })}
             />
           </div>
           <button type="submit" className="login-btn" disabled={loading}>
@@ -1566,7 +1565,8 @@ function CreateOfferModal({ partner, onClose, onCreated }) {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    offer_type: 'offline_qr',
+    offer_type: 'discount',
+    redemption_method: 'qr',
     discount_percentage: 10,
     start_date: new Date().toISOString().split('T')[0],
     end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -1586,12 +1586,6 @@ function CreateOfferModal({ partner, onClose, onCreated }) {
     } catch (err) {
       setError(err.message || 'Failed to create reward');
     } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 550 }}>
         <div className="modal-header">
           <div>
@@ -1602,71 +1596,85 @@ function CreateOfferModal({ partner, onClose, onCreated }) {
         </div>
         <form onSubmit={handleSubmit} style={{ padding: '1.5rem' }}>
           {error && <div className="login-error" style={{ marginBottom: '1rem' }}>{error}</div>}
-          
+
           <div className="login-field">
             <label>Offer Title *</label>
-            <input 
-              type="text" 
+            <input
+              type="text"
               className="filter-input v2"
               placeholder="e.g., 20% Off All Purchases"
-              required 
+              required
               value={formData.title}
-              onChange={e => setFormData({...formData, title: e.target.value})}
+              onChange={e => setFormData({ ...formData, title: e.target.value })}
             />
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
             <div className="login-field" style={{ marginBottom: 0 }}>
-              <label>Type</label>
+              <label>Deal Category</label>
               <select 
                 className="filter-input v2" 
                 style={{ height: 48 }}
                 value={formData.offer_type}
                 onChange={e => setFormData({...formData, offer_type: e.target.value})}
               >
-                <option value="offline_qr">In-Person (QR Scan)</option>
-                <option value="online_coupon">Online (Coupon Code)</option>
+                <option value="discount">Direct Discount</option>
+                <option value="free_item">Free Item/Gift</option>
+                <option value="service">Complimentary Service</option>
               </select>
             </div>
             <div className="login-field" style={{ marginBottom: 0 }}>
-              <label>Discount %</label>
-              <input 
-                type="number" 
-                className="filter-input v2"
-                value={formData.discount_percentage}
-                onChange={e => setFormData({...formData, discount_percentage: parseInt(e.target.value)})}
-              />
+              <label>Redemption Method</label>
+              <select 
+                className="filter-input v2" 
+                style={{ height: 48 }}
+                value={formData.redemption_method}
+                onChange={e => setFormData({...formData, redemption_method: e.target.value})}
+              >
+                <option value="qr">In-Person (QR Scan)</option>
+                <option value="coupon">Online (Coupon Code)</option>
+              </select>
             </div>
           </div>
 
+          <div className="login-field">
+            <label>Discount % (if applicable)</label>
+            <input 
+              type="number" 
+              className="filter-input v2"
+              value={formData.discount_percentage}
+              onChange={e => setFormData({...formData, discount_percentage: parseInt(e.target.value)})}
+            />
+          </div>
+
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-             <div className="login-field" style={{ marginBottom: 0 }}>
+            <div className="login-field" style={{ marginBottom: 0 }}>
               <label>Start Date</label>
-              <input 
-                type="date" 
+              <input
+                type="date"
                 className="filter-input v2"
                 value={formData.start_date}
-                onChange={e => setFormData({...formData, start_date: e.target.value})}
+                onChange={e => setFormData({ ...formData, start_date: e.target.value })}
               />
             </div>
             <div className="login-field" style={{ marginBottom: 0 }}>
               <label>End Date</label>
-              <input 
-                type="date" 
+              <input
+                type="date"
                 className="filter-input v2"
                 value={formData.end_date}
-                onChange={e => setFormData({...formData, end_date: e.target.value})}
+                onChange={e => setFormData({ ...formData, end_date: e.target.value })}
               />
             </div>
           </div>
 
           <div className="login-field">
             <label>Redemption Instructions</label>
-            <textarea 
+            <textarea
               className="action-textarea"
               style={{ minHeight: 60 }}
               value={formData.redemption_instructions}
-              onChange={e => setFormData({...formData, redemption_instructions: e.target.value})}
+              onChange={e => setFormData({ ...formData, redemption_instructions: e.target.value })}
             />
           </div>
 
@@ -1743,9 +1751,9 @@ function PartnersPage() {
                   <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>{partner.offers?.length || 0} active rewards</p>
                 </div>
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
-                  <button 
-                    className="view-detail-btn" 
-                    title="Add New Reward" 
+                  <button
+                    className="view-detail-btn"
+                    title="Add New Reward"
                     style={{ background: '#f0fdf4', color: '#059669', borderColor: '#bbf7d0' }}
                     onClick={() => setAddingOfferTo(partner)}
                   >
@@ -1760,16 +1768,16 @@ function PartnersPage() {
       </div>
 
       {showAddPartner && (
-        <CreatePartnerModal 
-          onClose={() => setShowAddPartner(false)} 
-          onCreated={() => { setShowAddPartner(false); fetchPartners(); }} 
+        <CreatePartnerModal
+          onClose={() => setShowAddPartner(false)}
+          onCreated={() => { setShowAddPartner(false); fetchPartners(); }}
         />
       )}
       {addingOfferTo && (
-        <CreateOfferModal 
-          partner={addingOfferTo} 
-          onClose={() => setAddingOfferTo(null)} 
-          onCreated={() => { setAddingOfferTo(null); fetchPartners(); }} 
+        <CreateOfferModal
+          partner={addingOfferTo}
+          onClose={() => setAddingOfferTo(null)}
+          onCreated={() => { setAddingOfferTo(null); fetchPartners(); }}
         />
       )}
     </section>
@@ -1910,14 +1918,14 @@ export default function App() {
               ))}
             </tbody>
           </table>
-          
+
           <div style={{ padding: '1.5rem 2.5rem', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-             <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
-               {displayReferrals.length > 0 ? `Showing ${displayReferrals.length} entries` : 'No records available'}
-             </p>
-             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', cursor: 'pointer', color: 'var(--secondary)', fontWeight: 700, fontSize: '0.875rem' }}>
-               See Full Global Timeline <IconChevronRight size={18} />
-             </div>
+            <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+              {displayReferrals.length > 0 ? `Showing ${displayReferrals.length} entries` : 'No records available'}
+            </p>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', cursor: 'pointer', color: 'var(--secondary)', fontWeight: 700, fontSize: '0.875rem' }}>
+              See Full Global Timeline <IconChevronRight size={18} />
+            </div>
           </div>
         </div>
       </section>
@@ -1941,8 +1949,8 @@ export default function App() {
               <p className="nav-label">{group.label}</p>
               <ul className="nav-list">
                 {group.links.map(link => (
-                  <li 
-                    key={link.id} 
+                  <li
+                    key={link.id}
                     className={`nav-item ${activeTab === link.id ? 'active' : ''}`}
                     onClick={() => setActiveTab(link.id)}
                   >
@@ -1956,18 +1964,18 @@ export default function App() {
         </nav>
 
         <div className="sidebar-footer" style={{ marginTop: 'auto', padding: '1.25rem' }}>
-          <button 
+          <button
             onClick={handleLogout}
-            style={{ 
-              width: '100%', 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '0.75rem', 
-              padding: '0.875rem 1rem', 
-              background: 'rgba(239, 68, 68, 0.1)', 
-              color: '#f87171', 
-              border: '1px solid rgba(239, 68, 68, 0.2)', 
-              borderRadius: '12px', 
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              padding: '0.875rem 1rem',
+              background: 'rgba(239, 68, 68, 0.1)',
+              color: '#f87171',
+              border: '1px solid rgba(239, 68, 68, 0.2)',
+              borderRadius: '12px',
               cursor: 'pointer',
               fontSize: '0.875rem',
               fontWeight: 700,
@@ -1995,11 +2003,11 @@ export default function App() {
             <div className="action-btn"><IconSettings size={20} /></div>
             <div style={{ width: '1px', height: '24px', background: '#e2e8f0', margin: '0 0.5rem' }}></div>
             <div className="header-profile" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
-               <div style={{ textAlign: 'right' }}>
-                 <p style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>Deepthi Perera</p>
-                 <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Account Manager</p>
-               </div>
-               <div style={{ width: 42, height: 42, borderRadius: 12, background: 'linear-gradient(135deg, var(--primary), #3b82f6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 800, fontSize: '0.9rem', border: '2px solid white', boxShadow: 'var(--shadow)' }}>DP</div>
+              <div style={{ textAlign: 'right' }}>
+                <p style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>Deepthi Perera</p>
+                <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Account Manager</p>
+              </div>
+              <div style={{ width: 42, height: 42, borderRadius: 12, background: 'linear-gradient(135deg, var(--primary), #3b82f6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 800, fontSize: '0.9rem', border: '2px solid white', boxShadow: 'var(--shadow)' }}>DP</div>
             </div>
           </div>
         </header>
