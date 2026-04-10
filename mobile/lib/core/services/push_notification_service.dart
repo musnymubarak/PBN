@@ -1,11 +1,13 @@
 import 'dart:async';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:pbn/core/services/notification_service.dart';
 
 class PushNotificationService {
-  static final FirebaseMessaging _messaging = FirebaseMessaging.instance;
+  static FirebaseMessaging get _messaging => FirebaseMessaging.instance;
   static final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
   
   static bool _initialized = false;
@@ -13,6 +15,14 @@ class PushNotificationService {
   /// Root initialization (should be called in main.dart)
   static Future<void> initialize() async {
     if (_initialized) return;
+
+    // Firebase Messaging is only supported on Android/iOS/Web
+    // Skipping initialization on Windows/Desktop to prevent crashes
+    if (kIsWeb || !Platform.isAndroid && !Platform.isIOS) {
+      debugPrint("Push Notifications skip: Not on Mobile/Web");
+      _initialized = true;
+      return;
+    }
 
     // 1. Initialize Firebase (Requires google-services.json / GoogleService-Info.plist)
     await Firebase.initializeApp();
