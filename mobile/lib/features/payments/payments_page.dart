@@ -172,7 +172,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(p.paymentType.replaceAll('_', ' ').toUpperCase(), 
+                Text(p.reason ?? p.paymentType.replaceAll('_', ' ').toUpperCase(), 
                   style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: AppColors.text, letterSpacing: -0.2)),
                 const SizedBox(height: 4),
                 Text(_formatDate(p.createdAt), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.textSecondary)),
