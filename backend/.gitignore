@@ -28,3 +28,6 @@ Thumbs.db
 # Docker
 postgres_data/
 redis_data/
+
+# User Uploads
+uploads/

@@ -85,3 +85,6 @@ windows/flutter/ephemeral/
 linux/flutter/ephemeral/
 macos/Flutter/ephemeral/
 *.iml
+
+# -- User Uploads -----------------------------------------
+backend/uploads/
