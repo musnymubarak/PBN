@@ -5,6 +5,7 @@ import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:pbn/core/constants/app_colors.dart';
+import 'package:pbn/core/constants/api_config.dart';
 import 'package:pbn/core/providers/auth_provider.dart';
 import 'package:pbn/core/providers/notification_provider.dart';
 import 'package:pbn/core/services/dashboard_service.dart';
@@ -33,6 +34,7 @@ class _DashboardPageState extends State<DashboardPage> {
   int _currentIndex = 0;
   DashboardData? _data;
   PrivilegeCard? _card;
+  List<dynamic> _leaderboard = [];
   bool _loading = true;
   String? _error;
 
@@ -83,11 +85,23 @@ class _DashboardPageState extends State<DashboardPage> {
           _card = results[1] as PrivilegeCard?;
           _loading = false;
         });
+        _loadLeaderboard();
         if (mounted) context.read<NotificationProvider>().fetchUnreadCount();
       }
     } catch (e) {
       if (mounted) setState(() { _error = 'Failed to load dashboard'; _loading = false; });
     }
+  }
+
+  Future<void> _loadLeaderboard() async {
+    try {
+      final entries = await _dashboardService.getLeaderboard(period: 'all_time');
+      if (mounted) {
+        setState(() {
+          _leaderboard = entries.take(3).toList();
+        });
+      }
+    } catch (_) {}
   }
 
   @override
@@ -217,10 +231,13 @@ class _DashboardPageState extends State<DashboardPage> {
             ]),
           ]),
           const SizedBox(height: 32),
+          _buildLeaderboardPreview(),
+          
+          const SizedBox(height: 32),
           const Text('EXPLORE NETWORK', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1.5)),
           const SizedBox(height: 20),
           Row(children: [
-            _modernActionTile(TablerIcons.stars, 'Awards', Colors.amber, () => Navigator.pushNamed(context, '/rewards')),
+            _modernActionTile(TablerIcons.stars, 'Rewards', Colors.amber, () => Navigator.pushNamed(context, '/rewards')),
             const SizedBox(width: 16),
             _modernActionTile(TablerIcons.chart_arrows_vertical, 'Global Rank', Colors.blue, () => Navigator.pushNamed(context, '/leaderboard')),
             const SizedBox(width: 16),
@@ -484,5 +501,102 @@ class _DashboardPageState extends State<DashboardPage> {
   String _formatCurrency(double v) {
     if (v >= 1000000) return 'LKR ${(v / 1000000).toStringAsFixed(1)}M';
     return 'LKR ${NumberFormat("#,##0").format(v)}';
+  }
+
+  Widget _buildLeaderboardPreview() {
+    if (_leaderboard.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text('TOP CONNECTORS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF64748B), letterSpacing: 1.5)),
+            GestureDetector(
+              onTap: () => Navigator.pushNamed(context, '/leaderboard'),
+              child: const Text('VIEW ALL', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.primary, letterSpacing: 1)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20, offset: const Offset(0, 10)),
+            ],
+          ),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  if (_leaderboard.length >= 2) _buildMiniPodium(_leaderboard[1], 2, const Color(0xFF94A3B8)),
+                  if (_leaderboard.length >= 1) _buildMiniPodium(_leaderboard[0], 1, const Color(0xFFF59E0B)),
+                  if (_leaderboard.length >= 3) _buildMiniPodium(_leaderboard[2], 3, const Color(0xFFB45309)),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMiniPodium(dynamic res, int rank, Color color) {
+    final name = (res['full_name'] ?? 'Member').toString().split(' ').first;
+    final count = res['sent_count'] ?? 0;
+    final initials = (res['full_name'] ?? '?').toString().substring(0, 1).toUpperCase();
+    
+    final double size = rank == 1 ? 60 : 48;
+    
+    String? profilePhoto = res['profile_photo'];
+    String imageUrl = profilePhoto != null && profilePhoto.isNotEmpty
+        ? '${ApiConfig.baseUrl.replaceAll('/api/v1', '')}$profilePhoto'
+        : 'https://picsum.photos/seed/${Uri.encodeComponent(name)}/100/100';
+
+    return Column(
+      children: [
+        if (rank == 1) const Icon(TablerIcons.crown, color: Color(0xFFF59E0B), size: 20),
+        if (rank == 1) const SizedBox(height: 4),
+        Stack(
+          alignment: Alignment.bottomCenter,
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              width: size, height: size,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: color, width: rank == 1 ? 3 : 2),
+                boxShadow: [BoxShadow(color: color.withOpacity(0.2), blurRadius: 10, spreadRadius: 1)],
+              ),
+              child: ClipOval(
+                child: Image.network(
+                  imageUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (c, e, s) => Center(child: Text(initials, style: TextStyle(fontWeight: FontWeight.w900, color: color, fontSize: rank == 1 ? 18 : 14))),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: -6,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 2)),
+                child: Text('$rank', style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w900)),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Text(name, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.text)),
+        const SizedBox(height: 4),
+        Text('$count Sent', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: color)),
+      ],
+    );
   }
 }

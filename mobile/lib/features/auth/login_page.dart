@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:provider/provider.dart';
@@ -50,144 +51,183 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // ── Premium Header ──────────────────────────
-            Container(
-              height: MediaQuery.of(context).size.height * 0.38,
-              width: double.infinity,
-              decoration: const BoxDecoration(
-                color: Color(0xFF030D16),
-                borderRadius: BorderRadius.only(bottomLeft: Radius.circular(24), bottomRight: Radius.circular(24)),
-              ),
-              child: Stack(
-                children: [
-                  Positioned(right: -70, top: -70,
-                    child: Container(
-                      width: 240, 
-                      height: 240, 
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle, 
-                        gradient: RadialGradient(
-                          colors: [const Color(0xFF1E293B).withOpacity(0.4), Colors.transparent],
-                        ),
-                      ),
-                    ),
-                  ),
-                  Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const SizedBox(height: 30),
-                        Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF0F172A), 
-                            borderRadius: BorderRadius.circular(14), 
-                            border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.35), width: 0.8)
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(14),
-                            child: Hero(tag: 'logo',
-                              child: Image.asset('assets/logo.png', height: 110, fit: BoxFit.contain,
-                                errorBuilder: (c, e, s) => const Icon(TablerIcons.briefcase, size: 80, color: AppColors.accent),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        const Text('PRIME BUSINESS NETWORK', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 3)),
-                      ],
-                    ),
-                  ),
-                ],
+      backgroundColor: AppColors.background,
+      body: Stack(
+        children: [
+          // ── DECORATIVE SOFT ACCENTS ──────────────────────────
+          Positioned(
+            top: -50, right: -50,
+            child: Container(
+              width: 250, height: 250,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.blue.withOpacity(0.03),
               ),
             ),
-            // ── Login Form ──────────────────────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 40),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Sign In',
-                    style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 32, fontWeight: FontWeight.w800, letterSpacing: -0.5),
-                  ),
-                  const SizedBox(height: 4),
-                  Text('Enter your credentials to access the network',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade500, fontSize: 15),
-                  ),
-                  const SizedBox(height: 40),
+          ),
 
-                  // Identifier Field
-                  Text('EMAIL OR PHONE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.grey.shade400, letterSpacing: 1.2)),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _identifierController,
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-                    decoration: InputDecoration(
-                      hintText: 'Email or Phone Number', 
-                      prefixIcon: const Icon(TablerIcons.user, size: 20), 
-                      filled: true, 
-                      fillColor: const Color(0xFFF8FAFC),
-                      contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
-                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
-                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.primary, width: 1)),
+          // ── MAIN CONTENT ─────────────────────────────
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 28),
+              child: Column(
+                children: [
+                  const SizedBox(height: 40),
+                  // Premium Floating Logo
+                  Hero(
+                    tag: 'logo',
+                    child: Container(
+                      height: 110, width: 110, // Slightly more compact logo
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0F172A),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 40, spreadRadius: 2, offset: const Offset(0, 10))
+                        ],
+                      ),
+                      child: ClipOval(
+                        child: Image.asset('assets/logo.png', fit: BoxFit.cover,
+                          errorBuilder: (c, e, s) => const Icon(TablerIcons.briefcase, size: 50, color: Colors.white24),
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 24),
-
-                  // Password Field
-                  Text('PASSWORD', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.grey.shade400, letterSpacing: 1.2)),
+                  const Text('PRIME BUSINESS NETWORK', 
+                    style: TextStyle(color: Color(0xFF0F172A), fontSize: 13, fontWeight: FontWeight.w900, letterSpacing: 5)
+                  ),
                   const SizedBox(height: 8),
-                  TextField(
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18, letterSpacing: 2),
-                    decoration: InputDecoration(
-                      hintText: '••••••••', 
-                      prefixIcon: const Icon(TablerIcons.lock, size: 20),
-                      suffixIcon: IconButton(
-                        icon: Icon(_obscurePassword ? TablerIcons.eye : TablerIcons.eye_off, size: 20),
-                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                      ),
-                      filled: true, 
-                      fillColor: const Color(0xFFF8FAFC),
-                      contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
-                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
-                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.primary, width: 1)),
+                  const Text('EXECUTIVE PORTAL', 
+                    style: TextStyle(color: Color(0xFF64748B), fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 3)
+                  ),
+                  const SizedBox(height: 30),
+
+                  // Premium Form Container
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 30, offset: const Offset(0, 15)),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 32),
-
-                  CustomButton(
-                    text: 'SIGN IN',
-                    onPressed: _handleLogin,
-                    isLoading: auth.loading,
-                  ),
-
-                  const SizedBox(height: 40),
-                  Center(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text("New to Prime Network?", style: TextStyle(color: Colors.grey.shade500)),
-                        TextButton(
-                          onPressed: () => Navigator.pushNamed(context, '/apply'),
-                          child: const Text('Apply Now', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w900)),
+                        const Text('Log In', style: TextStyle(color: AppColors.text, fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -1)),
+                        const SizedBox(height: 4),
+                        Text('Secure Executive Access', style: TextStyle(color: AppColors.textSecondary.withOpacity(0.6), fontSize: 12, fontWeight: FontWeight.w500)),
+                        const SizedBox(height: 20),
+
+                        _buildLabel('EMAIL OR PHONE'),
+                        const SizedBox(height: 8),
+                        _buildPremiumTextField(
+                          controller: _identifierController,
+                          hint: 'Enter credentials',
+                          icon: TablerIcons.mail,
+                        ),
+                        const SizedBox(height: 16),
+
+                        _buildLabel('PASSWORD'),
+                        const SizedBox(height: 8),
+                        _buildPremiumTextField(
+                          controller: _passwordController,
+                          hint: '••••••••',
+                          icon: TablerIcons.lock,
+                          isPassword: true,
+                          obscure: _obscurePassword,
+                          onToggleObscure: () => setState(() => _obscurePassword = !_obscurePassword),
+                        ),
+                        
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: () {},
+                            style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 30), tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                            child: Text('Forgot Password?', style: TextStyle(color: Colors.grey.shade400, fontSize: 11, fontWeight: FontWeight.w700)),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+
+                        SizedBox(
+                          width: double.infinity,
+                          child: CustomButton(
+                            text: 'LOG IN TO DASHBOARD',
+                            onPressed: _handleLogin,
+                            isLoading: auth.loading,
+                            backgroundColor: const Color(0xFF0F172A),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        Center(
+                          child: Column(
+                            children: [
+                              Text("Join our elite partner network?", 
+                                style: TextStyle(color: AppColors.textSecondary.withOpacity(0.7), fontSize: 11, fontWeight: FontWeight.w500)
+                              ),
+                              const SizedBox(height: 2),
+                              InkWell(
+                                onTap: () => Navigator.pushNamed(context, '/apply'),
+                                child: const Text('Apply for Membership', 
+                                  style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w900, fontSize: 13, decoration: TextDecoration.underline)
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
                   ),
+                  const SizedBox(height: 40),
                 ],
               ),
             ),
-          ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLabel(String text) {
+    return Text(text, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.textSecondary.withOpacity(0.4), letterSpacing: 1.5));
+  }
+
+  Widget _buildPremiumTextField({
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
+    bool isPassword = false,
+    bool obscure = false,
+    VoidCallback? onToggleObscure,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.black.withOpacity(0.01)),
+      ),
+      child: TextField(
+        controller: controller,
+        obscureText: obscure,
+        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.text),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: TextStyle(color: Colors.grey.shade300, fontSize: 14, fontWeight: FontWeight.w600),
+          prefixIcon: Icon(icon, size: 18, color: const Color(0xFF94A3B8)),
+          suffixIcon: isPassword ? IconButton(
+            icon: Icon(obscure ? TablerIcons.eye : TablerIcons.eye_off, size: 18, color: const Color(0xFF94A3B8)),
+            onPressed: onToggleObscure,
+          ) : null,
+          filled: true,
+          fillColor: Colors.transparent,
+          contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFF0F172A), width: 1.5)),
         ),
       ),
     );
   }
 }
+
