@@ -40,6 +40,30 @@ class _ProfilePageState extends State<ProfilePage> {
       final picker = ImagePicker();
       final pickedFile = await picker.pickImage(source: ImageSource.gallery);
       if (pickedFile == null) return;
+
+      // ── Client-side Validation ──────────────────────────
+      final int fileSize = await pickedFile.length();
+      const int maxSizeBytes = 5 * 1024 * 1024; // 5MB
+      final String ext = pickedFile.path.split('.').last.toLowerCase();
+      final List<String> allowedExts = ['jpg', 'jpeg', 'png', 'webp'];
+
+      if (fileSize > maxSizeBytes) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('File too large. Maximum allowed size is 5MB. Your file: ${(fileSize / (1024 * 1024)).toStringAsFixed(1)}MB.')),
+          );
+        }
+        return;
+      }
+
+      if (!allowedExts.contains(ext)) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Invalid format. Only JPG, PNG, and WebP are allowed.')),
+          );
+        }
+        return;
+      }
       
       setState(() => _loading = true);
       
@@ -58,7 +82,11 @@ class _ProfilePageState extends State<ProfilePage> {
       await context.read<AuthProvider>().tryAutoLogin(); 
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profile photo updated successfully!')));
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to upload photo.')));
+      String message = 'Failed to upload photo.';
+      if (e is DioException) {
+        message = e.response?.data?['message'] ?? message;
+      }
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -117,7 +145,11 @@ class _ProfilePageState extends State<ProfilePage> {
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profile updated successfully!')));
                     }
                   } catch (e) {
-                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to update profile.')));
+                    String message = 'Failed to update profile.';
+                    if (e is DioException) {
+                      message = e.response?.data?['message'] ?? message;
+                    }
+                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
                   }
                   setModalState(() => saving = false);
                 },
