@@ -22,6 +22,8 @@ services:
         condition: service_healthy
     networks:
       - pbn-network
+    volumes:
+      - backend_uploads:/app/uploads
 
   # ── Admin Panel & Gateway ─────────────────────────────────
   adminpanel:
@@ -84,6 +86,9 @@ volumes:
   redis_data:
     external: true
     name: backend_redis_data
+  backend_uploads:
+    external: true
+    name: backend_uploads_data
 
 networks:
   pbn-network:

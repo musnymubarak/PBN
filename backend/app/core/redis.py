@@ -26,19 +26,26 @@ async def init_redis() -> aioredis.Redis:
     """Initialise and return the Redis client, falling back to fakeredis."""
     global redis_client
 
+    # In development, fail fast if real Redis is missing
+    timeout = 1.0 if settings.ENVIRONMENT == "development" else 5.0
+
     try:
         pool = aioredis.ConnectionPool.from_url(
             settings.REDIS_URL,
             decode_responses=True,
             max_connections=20,
+            socket_connect_timeout=timeout,
+            socket_timeout=timeout,
         )
         client = aioredis.Redis(connection_pool=pool)
         await client.ping()
+        
         redis_client = client
         logger.info("Connected to Redis at %s", settings.REDIS_URL)
-    except Exception:
+    except Exception as e:
         logger.warning(
-            "Real Redis unavailable – falling back to fakeredis (dev only)."
+            "Real Redis unavailable (%s) – falling back to fakeredis (dev only).",
+            str(e)
         )
         try:
             import fakeredis.aioredis as fake
