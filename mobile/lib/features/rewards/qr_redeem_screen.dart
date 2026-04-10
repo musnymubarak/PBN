@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/services/reward_service.dart';
@@ -140,11 +141,11 @@ class _QrRedeemScreenState extends State<QrRedeemScreen>
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Redeem Offer',
-            style: TextStyle(fontWeight: FontWeight.w800)),
+        title: const Text('Redemption',
+            style: TextStyle(fontWeight: FontWeight.w900)),
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.close),
+          icon: const Icon(TablerIcons.x),
           onPressed: () => Navigator.pop(context, _confirmed),
         ),
       ),
@@ -166,19 +167,19 @@ class _QrRedeemScreenState extends State<QrRedeemScreen>
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
-          // Partner & Offer Info
+          // Partner & Offer Info Split Card Header
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                   colors: [Color(0xFF0A2540), Color(0xFF1E3A8A)]),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                    color: AppColors.primary.withOpacity(0.2),
-                    blurRadius: 16,
-                    offset: const Offset(0, 6)),
+                    color: AppColors.primary.withOpacity(0.25),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10)),
               ],
             ),
             child: Column(
@@ -187,18 +188,19 @@ class _QrRedeemScreenState extends State<QrRedeemScreen>
                 Text(
                   _tokenResult!.partnerName.toUpperCase(),
                   style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
+                      color: Colors.blueAccent,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
                       letterSpacing: 2),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 Text(
                   _tokenResult!.offerTitle,
                   style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800),
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.5),
                 ),
               ],
             ),
@@ -208,69 +210,81 @@ class _QrRedeemScreenState extends State<QrRedeemScreen>
 
           // QR Code Card
           Container(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.grey.shade100),
               boxShadow: [
                 BoxShadow(
                     color: Colors.black.withOpacity(0.04),
-                    blurRadius: 12),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8)),
               ],
             ),
             child: Column(
               children: [
                 const Text(
-                  'Show this QR to the store',
+                  'Store Redemption QR',
                   style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16,
-                      color: Color(0xFF1E293B)),
+                      fontWeight: FontWeight.w900,
+                      fontSize: 18,
+                      color: AppColors.text,
+                      letterSpacing: -0.5),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 8),
                 Text(
-                  'The partner will scan this to verify your offer',
+                  'Present this to the partner for scanning',
                   style: TextStyle(
-                      fontSize: 13, color: Colors.grey.shade500),
+                      fontSize: 13, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 20),
-                QrImageView(
-                  data: _tokenResult!.qrUrl,
-                  version: QrVersions.auto,
-                  size: 220,
-                  backgroundColor: Colors.white,
-                  eyeStyle: const QrEyeStyle(
-                    eyeShape: QrEyeShape.square,
-                    color: Color(0xFF0A2540),
+                const SizedBox(height: 32),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.grey.shade50),
                   ),
-                  dataModuleStyle: const QrDataModuleStyle(
-                    dataModuleShape: QrDataModuleShape.square,
-                    color: Color(0xFF0A2540),
+                  child: QrImageView(
+                    data: _tokenResult!.qrUrl,
+                    version: QrVersions.auto,
+                    size: 200,
+                    backgroundColor: Colors.white,
+                    eyeStyle: const QrEyeStyle(
+                      eyeShape: QrEyeShape.square,
+                      color: Color(0xFF0A2540),
+                    ),
+                    dataModuleStyle: const QrDataModuleStyle(
+                      dataModuleShape: QrDataModuleShape.square,
+                      color: Color(0xFF0A2540),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 32),
 
                 // Countdown
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 10),
+                      horizontal: 20, vertical: 12),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFEF3C7),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(14),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.timer_outlined,
+                      const Icon(TablerIcons.clock,
                           size: 18, color: Color(0xFF92400E)),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 10),
                       Text(
                         'Expires in ${_formatDuration(_remaining)}',
                         style: const TextStyle(
                             color: Color(0xFF92400E),
-                            fontWeight: FontWeight.w700,
-                            fontSize: 14),
+                            fontWeight: FontWeight.w900,
+                            fontSize: 13,
+                            letterSpacing: 0.2),
                       ),
                     ],
                   ),
@@ -279,55 +293,25 @@ class _QrRedeemScreenState extends State<QrRedeemScreen>
             ),
           ),
 
-          const SizedBox(height: 16),
-
-          // Instruction
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(Icons.info_outline,
-                      color: AppColors.primary, size: 20),
-                ),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Text(
-                    'After scanning, you\'ll need to sign on the partner\'s device to claim this offer.',
-                    style: TextStyle(fontSize: 13, height: 1.4),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          const SizedBox(height: 20),
 
           // Polling indicator
-          const SizedBox(height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               SizedBox(
-                width: 16,
-                height: 16,
+                width: 14,
+                height: 14,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: Colors.grey.shade400,
+                  color: AppColors.primary.withOpacity(0.3),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 12),
               Text(
-                'Waiting for partner to confirm...',
+                'Awaiting partner verification...',
                 style: TextStyle(
-                    fontSize: 13, color: Colors.grey.shade500),
+                    fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w600),
               ),
             ],
           ),
@@ -341,7 +325,7 @@ class _QrRedeemScreenState extends State<QrRedeemScreen>
       child: ScaleTransition(
         scale: _scaleAnim,
         child: Padding(
-          padding: const EdgeInsets.all(32),
+          padding: const EdgeInsets.all(40),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -349,39 +333,44 @@ class _QrRedeemScreenState extends State<QrRedeemScreen>
                 width: 100,
                 height: 100,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFD1FAE5),
+                  color: Colors.green.shade50,
                   shape: BoxShape.circle,
+                  border: Border.all(color: Colors.green.shade100, width: 2),
                   boxShadow: [
                     BoxShadow(
-                        color: const Color(0xFF10B981).withOpacity(0.2),
-                        blurRadius: 30),
+                        color: Colors.green.withOpacity(0.1),
+                        blurRadius: 40),
                   ],
                 ),
                 child:
-                    const Icon(Icons.check, size: 56, color: Color(0xFF059669)),
+                    Icon(TablerIcons.circle_check, size: 56, color: Colors.green.shade600),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
               const Text(
-                'Offer Claimed! 🎉',
-                style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900),
+                'Redeemed! 🎉',
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: AppColors.text, letterSpacing: -1),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               Text(
-                '${_tokenResult!.offerTitle} has been successfully redeemed.',
+                'Your exclusive offer has been successfully claimed.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 15, color: Colors.grey.shade600),
+                style: TextStyle(fontSize: 15, color: AppColors.textSecondary, fontWeight: FontWeight.w500, height: 1.5),
               ),
               if (_signerName != null) ...[
-                const SizedBox(height: 8),
-                Text(
-                  'Signed by: $_signerName',
-                  style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey.shade500,
-                      fontStyle: FontStyle.italic),
+                const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.grey.shade100)),
+                  child: Text(
+                    'Partner: $_signerName',
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.text,
+                        fontWeight: FontWeight.w800),
+                  ),
                 ),
               ],
-              const SizedBox(height: 32),
+              const SizedBox(height: 48),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -389,13 +378,13 @@ class _QrRedeemScreenState extends State<QrRedeemScreen>
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(vertical: 20),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14)),
-                    textStyle: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w700),
+                        borderRadius: BorderRadius.circular(16)),
+                    elevation: 10,
+                    shadowColor: AppColors.primary.withOpacity(0.4),
                   ),
-                  child: const Text('Done'),
+                  child: const Text('DISMISS', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.5, fontSize: 13)),
                 ),
               ),
             ],
@@ -408,45 +397,45 @@ class _QrRedeemScreenState extends State<QrRedeemScreen>
   Widget _buildExpired() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(40),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
               width: 100,
               height: 100,
-              decoration: const BoxDecoration(
-                color: Color(0xFFFEE2E2),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
                 shape: BoxShape.circle,
+                border: Border.all(color: Colors.red.shade100, width: 2),
               ),
-              child: const Icon(Icons.timer_off, size: 56, color: Color(0xFFEF4444)),
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              'QR Code Expired',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'This QR code has expired. Please go back and try again.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 15, color: Colors.grey.shade600),
+              child: Icon(TablerIcons.clock_off, size: 56, color: Colors.red.shade600),
             ),
             const SizedBox(height: 32),
+            const Text(
+              'Session Expired',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: AppColors.text),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'The security token has expired. Please initiate redemption again.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.5),
+            ),
+            const SizedBox(height: 40),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () => Navigator.pop(context, false),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.grey.shade300,
-                  foregroundColor: Colors.grey.shade700,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: Colors.white,
+                  foregroundColor: AppColors.text,
+                  padding: const EdgeInsets.symmetric(vertical: 18),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
-                  textStyle:
-                      const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                      borderRadius: BorderRadius.circular(16), side: const BorderSide(color: Colors.grey, width: 1.5)),
+                  elevation: 0,
                 ),
-                child: const Text('Go Back'),
+                child: const Text('GO BACK', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)),
               ),
             ),
           ],
@@ -458,32 +447,33 @@ class _QrRedeemScreenState extends State<QrRedeemScreen>
   Widget _buildError() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(40),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
               width: 100,
               height: 100,
-              decoration: const BoxDecoration(
-                color: Color(0xFFFEE2E2),
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
                 shape: BoxShape.circle,
+                border: Border.all(color: Colors.orange.shade100, width: 2),
               ),
               child:
-                  const Icon(Icons.error_outline, size: 56, color: Color(0xFFEF4444)),
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              'Something went wrong',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _error ?? 'Unknown error',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                  Icon(TablerIcons.alert_triangle, size: 56, color: Colors.orange.shade600),
             ),
             const SizedBox(height: 32),
+            const Text(
+              'System Error',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              _error ?? 'An unexpected error occurred.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: 40),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -491,11 +481,11 @@ class _QrRedeemScreenState extends State<QrRedeemScreen>
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  padding: const EdgeInsets.symmetric(vertical: 18),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
+                      borderRadius: BorderRadius.circular(16)),
                 ),
-                child: const Text('Go Back'),
+                child: const Text('RETRY', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)),
               ),
             ),
           ],

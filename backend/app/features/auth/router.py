@@ -10,8 +10,11 @@ GET  /api/v1/auth/me          → current user profile
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, UploadFile, File
 from fastapi.responses import ORJSONResponse
+import os
+import shutil
+import uuid
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -24,6 +27,11 @@ from app.features.auth.schemas import (
     SendOTPRequest,
     VerifyOTPRequest,
 )
+from pydantic import BaseModel
+
+class UpdateProfileRequest(BaseModel):
+    full_name: str
+    phone_number: str
 from app.features.auth.service import (
     login,
     logout,
@@ -145,8 +153,55 @@ async def me_endpoint(
             "full_name": current_user.full_name,
             "role": current_user.role.value,
             "is_active": current_user.is_active,
+            "profile_photo": current_user.profile_photo,
             "created_at": current_user.created_at.isoformat(),
             "updated_at": current_user.updated_at.isoformat(),
         },
         status_code=200,
+    )
+
+@router.put("/me", summary="Update current user profile")
+async def update_me_endpoint(
+    body: UpdateProfileRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+) -> ORJSONResponse:
+    """Update the authenticated user's profile."""
+    current_user.full_name = body.full_name
+    current_user.phone_number = body.phone_number
+    await db.commit()
+    
+    return success_response(
+        data={
+            "id": str(current_user.id),
+            "phone_number": current_user.phone_number,
+            "email": current_user.email,
+            "full_name": current_user.full_name,
+            "role": current_user.role.value,
+            "profile_photo": current_user.profile_photo,
+        },
+        status_code=200,
+    )
+
+@router.post("/me/photo", summary="Upload profile photo")
+async def upload_profile_photo(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+) -> ORJSONResponse:
+    """Upload or update the user's profile photo."""
+    os.makedirs("uploads/profiles", exist_ok=True)
+    ext = file.filename.split(".")[-1] if "." in file.filename else "jpg"
+    filename = f"{current_user.id}_{uuid.uuid4().hex[:8]}.{ext}"
+    file_path = f"uploads/profiles/{filename}"
+    
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+        
+    current_user.profile_photo = f"/static/profiles/{filename}"
+    await db.commit()
+    
+    return success_response(
+        data={"profile_photo": current_user.profile_photo},
+        status_code=200
     )

@@ -39,6 +39,8 @@ class ChapterMemberResponse(BaseModel):
     full_name: str
     email: Optional[str] = None
     phone_number: str
+    profile_photo: Optional[str] = None
+    chapter_name: str
     membership_type: MembershipType
     industry_category: IndustryCategorySimple
     business: Optional[MemberBusinessSimple] = None

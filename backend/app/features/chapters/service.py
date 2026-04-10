@@ -55,6 +55,8 @@ async def get_chapter_members(chapter_id: UUID, db: AsyncSession) -> List[Dict[s
             "full_name": user.full_name,
             "email": user.email,
             "phone_number": user.phone_number,
+            "profile_photo": user.profile_photo,
+            "chapter_name": chap.name,
             "membership_type": mem.membership_type,
             "start_date": mem.start_date,
             "end_date": mem.end_date,

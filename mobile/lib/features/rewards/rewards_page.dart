@@ -50,7 +50,6 @@ class _RewardsPageState extends State<RewardsPage> {
       ),
     );
 
-    // If the offer was redeemed, refresh the data
     if (result == true) {
       _loadData();
     }
@@ -61,167 +60,195 @@ class _RewardsPageState extends State<RewardsPage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-          title: const Text('Rewards',
-              style: TextStyle(fontWeight: FontWeight.w800))),
+        toolbarHeight: 80,
+        title: const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('REWARDS CATALOG',
+                style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.textSecondary,
+                    letterSpacing: 2)),
+            Text('Exclusive Offers',
+                style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.text)),
+          ],
+        ),
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
           : RefreshIndicator(
               onRefresh: _loadData,
               child: ListView(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(20),
                 children: [
                   if (_card != null) ...[
+                    const Text('YOUR ACTIVE PASS',
+                        style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.textSecondary,
+                            letterSpacing: 1.5)),
+                    const SizedBox(height: 16),
                     PrivilegeCardWidget(card: _card!),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 32),
                   ],
-                  const Text('Partner Offers',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-                  const SizedBox(height: 12),
+                  
+                  const Text('PARTNER OFFERS',
+                      style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.textSecondary,
+                          letterSpacing: 1.5)),
+                  const SizedBox(height: 16),
+                  
                   if (_partners.isEmpty)
-                    Center(
-                        child: Padding(
-                            padding: const EdgeInsets.all(40),
-                            child: Text('No partner offers available',
-                                style: TextStyle(
-                                    color: Colors.grey.shade500)))),
-                  ..._partners.map((p) => Container(
-                        margin: const EdgeInsets.only(bottom: 14),
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                  color: Colors.black.withOpacity(0.03),
-                                  blurRadius: 8)
-                            ]),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(children: [
-                              Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                    color:
-                                        AppColors.accent.withOpacity(0.1),
-                                    borderRadius:
-                                        BorderRadius.circular(12)),
-                                child: const Icon(
-                                    TablerIcons.building_store,
-                                    color: AppColors.accent),
-                              ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
-                                  children: [
-                                    Text(p.name,
-                                        style: const TextStyle(
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 15)),
-                                    if (p.description != null)
-                                      Text(p.description!,
-                                          style: TextStyle(
-                                              fontSize: 12,
-                                              color:
-                                                  Colors.grey.shade500),
-                                          maxLines: 1,
-                                          overflow:
-                                              TextOverflow.ellipsis),
-                                  ],
-                                ),
-                              ),
-                            ]),
-                            if (p.offers.isNotEmpty) ...[
-                              const SizedBox(height: 12),
-                              ...p.offers.map((o) => _buildOfferRow(o, p.name)),
-                            ],
-                          ],
-                        ),
-                      )),
+                    _buildEmptyState()
+                  else
+                    ..._partners.map((p) => _buildPartnerCard(p)),
+                  
+                  const SizedBox(height: 40),
                 ],
               ),
             ),
     );
   }
 
-  Widget _buildOfferRow(Offer o, String partnerName) {
-    final isRedeemed = o.isRedeemedByMe;
-
-    return Padding(
-      padding: const EdgeInsets.only(top: 8),
-      child: Opacity(
-        opacity: isRedeemed ? 0.5 : 1.0,
-        child: Row(
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 60),
+        child: Column(
           children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(o.title,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
-                        decoration: isRedeemed
-                            ? TextDecoration.lineThrough
-                            : null,
-                      )),
-                  if (o.discountPercent > 0)
-                    Text(
-                      '${o.discountPercent.toStringAsFixed(0)}% off',
-                      style: TextStyle(
-                          fontSize: 12,
-                          color: isRedeemed
-                              ? Colors.grey.shade500
-                              : Colors.green.shade600,
-                          fontWeight: FontWeight.w700),
-                    ),
-                ],
-              ),
-            ),
-            SizedBox(
-              height: 32,
-              child: isRedeemed
-                  ? Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade200,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      alignment: Alignment.center,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.check_circle,
-                              size: 14, color: Colors.grey.shade500),
-                          const SizedBox(width: 4),
-                          Text('Redeemed',
-                              style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.grey.shade500)),
-                        ],
-                      ),
-                    )
-                  : ElevatedButton(
-                      onPressed: () => _handleRedeem(o, partnerName),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: 14),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8)),
-                        textStyle: const TextStyle(
-                            fontSize: 12, fontWeight: FontWeight.w700),
-                      ),
-                      child: const Text('Redeem'),
-                    ),
-            ),
+            Icon(TablerIcons.gift_off, size: 64, color: Colors.grey.shade300),
+            const SizedBox(height: 16),
+            Text('No active offers available',
+                style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.w700)),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildPartnerCard(Partner p) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.shade100),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Partner Header
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(TablerIcons.building_store, color: AppColors.primary, size: 24),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(p.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppColors.text)),
+                      if (p.description != null)
+                        Text(p.description!, 
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.textSecondary),
+                          maxLines: 1, overflow: TextOverflow.ellipsis),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+          // Offers List
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: p.offers.map((o) => _buildOfferItem(o, p.name)).toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOfferItem(Offer o, String partnerName) {
+    final isRedeemed = o.isRedeemedByMe;
+    final color = isRedeemed ? Colors.grey : AppColors.primary;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isRedeemed ? Colors.grey.shade50.withOpacity(0.5) : AppColors.background,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(o.title,
+                    style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        color: isRedeemed ? Colors.grey : AppColors.text,
+                        decoration: isRedeemed ? TextDecoration.lineThrough : null)),
+                if (o.discountPercent > 0) ...[
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                        color: isRedeemed ? Colors.grey.withOpacity(0.1) : Colors.green.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(4)),
+                    child: Text('${o.discountPercent.toStringAsFixed(0)}% OFF',
+                        style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: isRedeemed ? Colors.grey : Colors.green)),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          if (isRedeemed)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Row(
+                children: [
+                  Icon(TablerIcons.circle_check, size: 14, color: Colors.grey.shade400),
+                  const SizedBox(width: 4),
+                  Text('USED', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey.shade400, letterSpacing: 0.5)),
+                ],
+              ),
+            )
+          else
+            ElevatedButton(
+              onPressed: () => _handleRedeem(o, partnerName),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              ),
+              child: const Text('REDEEM', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1)),
+            ),
+        ],
       ),
     );
   }
