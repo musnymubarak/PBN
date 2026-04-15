@@ -13,6 +13,7 @@ from typing import Any, Dict, List
 from uuid import UUID
 
 from sqlalchemy import desc, select, update, func
+from sqlalchemy.orm import contains_eager, aliased
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import NotFoundException, BadRequestException
@@ -258,26 +259,58 @@ async def get_masked_user_data(user_id: UUID, db: AsyncSession) -> Dict[str, Any
     return _serialize_user(user, mask=True)
 
 
-async def list_all_referrals(db: AsyncSession) -> List[Dict[str, Any]]:
-    """List all referrals across the platform for the admin dashboard."""
+async def list_all_referrals(
+    search: str | None,
+    status: str | None,
+    page: int,
+    page_size: int,
+    db: AsyncSession
+) -> Dict[str, Any]:
+    """List all referrals with optional filtering, search, and pagination."""
     from sqlalchemy.orm import joinedload, selectinload
     from app.models.referrals import ReferralStatusHistory
+    from app.models.user import User as UserModel
+
+    # Subqueries for names to make searching easier
+    FromUser = aliased(UserModel)
+    ToUser = aliased(UserModel)
 
     stmt = (
         select(Referral)
+        .join(FromUser, Referral.from_member_id == FromUser.id)
+        .join(ToUser, Referral.to_member_id == ToUser.id)
         .options(
-            joinedload(Referral.from_member),
-            joinedload(Referral.to_member),
+            contains_eager(Referral.from_member, alias=FromUser),
+            contains_eager(Referral.to_member, alias=ToUser),
             selectinload(Referral.history),
         )
         .order_by(desc(Referral.created_at))
     )
+
+    if status:
+        stmt = stmt.where(Referral.status == status)
+
+    if search:
+        pattern = f"%{search}%"
+        stmt = stmt.where(
+            (Referral.client_name.ilike(pattern)) |
+            (Referral.description.ilike(pattern)) |
+            (FromUser.full_name.ilike(pattern)) |
+            (ToUser.full_name.ilike(pattern))
+        )
+
+    # Count total
+    count_stmt = select(func.count(1)).select_from(stmt.subquery())
+    total = (await db.execute(count_stmt)).scalar_one()
+
+    # Paginate
+    stmt = stmt.offset((page - 1) * page_size).limit(page_size)
     result = await db.execute(stmt)
     referrals = result.scalars().unique().all()
 
-    out: List[Dict[str, Any]] = []
+    referral_list = []
     for ref in referrals:
-        out.append({
+        referral_list.append({
             "id": str(ref.id),
             "from_user": {
                 "id": str(ref.from_member.id),
@@ -308,7 +341,13 @@ async def list_all_referrals(db: AsyncSession) -> List[Dict[str, Any]]:
                 for h in ref.history
             ],
         })
-    return out
+
+    return {
+        "referrals": referral_list,
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+    }
 
 
 async def export_platform_data(db: AsyncSession) -> Dict[str, Any]:

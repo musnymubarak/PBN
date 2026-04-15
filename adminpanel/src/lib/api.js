@@ -31,7 +31,14 @@ export const api = {
   listIndustryCategories: () => apiFetch('/industry-categories'),
   listIndustries: () => apiFetch('/admin/industries'),
   listReferrals: () => apiFetch('/referrals/my/given'),
-  listAllReferrals: () => apiFetch('/admin/referrals').catch(() => apiFetch('/referrals/my/given')),
+  listAllReferrals: (params = {}) => {
+    const qs = new URLSearchParams();
+    if (params.page) qs.append('page', params.page);
+    if (params.limit) qs.append('page_size', params.limit);
+    if (params.search) qs.append('search', params.search);
+    if (params.status) qs.append('status', params.status);
+    return apiFetch(`/admin/referrals?${qs.toString()}`).catch(() => apiFetch('/referrals/my/given'));
+  },
   listPayments: (params = {}) => apiFetch(`/admin/payments?${new URLSearchParams(params)}`),
   recordPayment: (body) => apiFetch('/admin/payments', {
     method: 'POST',

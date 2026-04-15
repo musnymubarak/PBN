@@ -555,10 +555,12 @@ function CreateApplicationModal({ onClose, onCreated }) {
             <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>New Application</h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Manual application entry</p>
           </div>
-          <button type="button" onClick={onClose}><IconX size={20} /></button>
+          <button type="button" className="modal-close-btn" onClick={onClose}>
+            <IconX size={20} />
+          </button>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ padding: '1.5rem' }}>
+        <form onSubmit={handleSubmit} style={{ padding: '1.5rem 1.5rem 8rem' }}>
           {error && <div className="login-error" style={{ marginBottom: '1.25rem' }}>{error}</div>}
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
@@ -934,7 +936,9 @@ function UserEditModal({ user, onClose, onUpdate, chapters = [] }) {
       <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 450 }}>
         <div className="modal-header">
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Manage Member</h2>
-          <button type="button" onClick={onClose}><IconX size={20} /></button>
+          <button type="button" className="modal-close-btn" onClick={onClose}>
+            <IconX size={20} />
+          </button>
         </div>
         <form onSubmit={handleSubmit} style={{ padding: '1.5rem' }}>
           {error && <div className="login-error" style={{ marginBottom: '1rem' }}>{error}</div>}
@@ -1231,9 +1235,11 @@ function RecordPaymentModal({ onClose, onRecord, users = [] }) {
       <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 500 }}>
         <div className="modal-header">
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Record Manual Payment</h2>
-          <button type="button" onClick={onClose}><IconX size={20} /></button>
+          <button type="button" className="modal-close-btn" onClick={onClose}>
+            <IconX size={20} />
+          </button>
         </div>
-        <form onSubmit={handleSubmit} style={{ padding: '1.5rem' }}>
+        <form onSubmit={handleSubmit} style={{ padding: '1.5rem 1.5rem 8rem' }}>
           {error && <div className="login-error" style={{ marginBottom: '1rem' }}>{error}</div>}
 
           <div style={{ marginBottom: '1rem' }}>
@@ -1324,7 +1330,9 @@ function UpdatePaymentModal({ payment, onClose, onUpdate }) {
       <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 500 }}>
         <div className="modal-header">
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Update Payment</h2>
-          <button type="button" onClick={onClose}><IconX size={20} /></button>
+          <button type="button" className="modal-close-btn" onClick={onClose}>
+            <IconX size={20} />
+          </button>
         </div>
         <form onSubmit={handleSubmit} style={{ padding: '1.5rem' }}>
           {error && <div className="login-error" style={{ marginBottom: '1rem' }}>{error}</div>}
@@ -1507,9 +1515,11 @@ function CreatePartnerModal({ onClose, onCreated }) {
       <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 500 }}>
         <div className="modal-header">
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Add New Partner</h2>
-          <button type="button" onClick={onClose}><IconX size={20} /></button>
+          <button type="button" className="modal-close-btn" onClick={onClose}>
+            <IconX size={20} />
+          </button>
         </div>
-        <form onSubmit={handleSubmit} style={{ padding: '1.5rem' }}>
+        <form onSubmit={handleSubmit} style={{ padding: '1.5rem 1.5rem 8rem' }}>
           {error && <div className="login-error" style={{ marginBottom: '1rem' }}>{error}</div>}
           <div className="login-field">
             <label>Business Name *</label>
@@ -1595,7 +1605,9 @@ function CreateOfferModal({ partner, onClose, onCreated }) {
             <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>New Reward Offer</h2>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Adding for {partner.name}</p>
           </div>
-          <button type="button" onClick={onClose}><IconX size={20} /></button>
+          <button type="button" className="modal-close-btn" onClick={onClose}>
+            <IconX size={20} />
+          </button>
         </div>
         <form onSubmit={handleSubmit} style={{ padding: '1.5rem' }}>
           {error && <div className="login-error" style={{ marginBottom: '1rem' }}>{error}</div>}
@@ -1797,7 +1809,41 @@ function PartnersPage() {
 
 // ── Referrals Page ────────────────────────────────────────────────────────
 function ReferralsPage() {
-  const { data: referrals, loading } = useApi(api.listAllReferrals, []);
+  const [referrals, setReferrals] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [total, setTotal] = useState(0);
+  const [pages, setPages] = useState(0);
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+
+  const fetchReferrals = useCallback(async () => {
+    setLoading(true);
+    try {
+      const result = await api.listAllReferrals({ 
+        page, 
+        limit: 15,
+        search,
+        status: statusFilter
+      });
+      // Handle both old array response and new paginated object response
+      if (result.referrals) {
+        setReferrals(result.referrals);
+        setTotal(result.total);
+        setPages(Math.ceil(result.total / (result.page_size || 15)));
+      } else {
+        setReferrals(result || []);
+        setTotal(result?.length || 0);
+        setPages(1);
+      }
+    } catch (err) {
+      console.error('Failed to load referrals:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, search, statusFilter]);
+  
+  useEffect(() => { fetchReferrals(); }, [fetchReferrals]);
   
   return (
     <section className="dashboard-body">
@@ -1809,9 +1855,42 @@ function ReferralsPage() {
       </div>
 
       <div className="data-section">
-        <div className="section-head">
-          <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Global Referral Stream</h3>
-          <button className="view-detail-btn" onClick={() => window.location.reload()}><IconRefresh size={18} /></button>
+        <div className="section-head" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Global Referral Stream</h3>
+            <button className="btn-primary" onClick={() => { setPage(1); fetchReferrals(); }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <IconRefresh size={18} /> Refresh
+            </button>
+          </div>
+
+          <div className="directory-filters" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+            <div style={{ flex: 1, minWidth: '300px', position: 'relative' }}>
+              <IconSearch size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+              <input
+                type="text"
+                placeholder="Search lead name, description or member..."
+                className="filter-input v2"
+                style={{ paddingLeft: '40px', width: '100%', height: '48px' }}
+                value={search}
+                onChange={e => { setSearch(e.target.value); setPage(1); }}
+              />
+            </div>
+
+            <CustomSelect
+              label="All Statuses"
+              value={statusFilter}
+              options={[
+                { id: 'submitted', name: 'Submitted' },
+                { id: 'contacted', name: 'Contacted' },
+                { id: 'negotiation', name: 'Negotiation' },
+                { id: 'in_progress', name: 'In Progress' },
+                { id: 'success', name: 'Closed Won' },
+                { id: 'closed_lost', name: 'Closed Lost' }
+              ]}
+              onChange={(val) => { setStatusFilter(val); setPage(1); }}
+              style={{ width: '220px' }}
+            />
+          </div>
         </div>
 
         <table className="modern-table">
@@ -1820,6 +1899,7 @@ function ReferralsPage() {
               <th>ID</th>
               <th>From</th>
               <th>To</th>
+              <th>Lead Name</th>
               <th>Value</th>
               <th>Status</th>
               <th>Date</th>
@@ -1827,17 +1907,18 @@ function ReferralsPage() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={6} style={{ textAlign: 'center', padding: '3rem' }}>Loading referrals...</td></tr>
+              <tr><td colSpan={7} style={{ textAlign: 'center', padding: '3rem' }}>Loading referrals...</td></tr>
             ) : !referrals || referrals.length === 0 ? (
-              <tr><td colSpan={6} style={{ textAlign: 'center', padding: '3rem' }}>No referrals found.</td></tr>
+              <tr><td colSpan={7} style={{ textAlign: 'center', padding: '3rem' }}>No referrals found.</td></tr>
             ) : referrals.map((ref, idx) => (
               <tr key={ref.id || idx}>
                 <td><span className="id-badge">REF-{String(ref.id || idx).slice(0, 4)}</span></td>
                 <td style={{ fontWeight: 600 }}>{ref.from_user?.full_name || '—'}</td>
                 <td>{ref.target_user?.full_name || '—'}</td>
+                <td style={{ fontWeight: 600 }}>{ref.lead_name || '—'}</td>
                 <td style={{ fontWeight: 700 }}>{ref.actual_value ? `LKR ${ref.actual_value.toLocaleString()}` : '—'}</td>
                 <td>
-                  <span className={`pill ${ref.status === 'closed_won' ? 'pill-approved' : 'pill-pending'}`}>
+                  <span className={`pill ${ref.status === 'success' ? 'pill-approved' : ref.status === 'closed_lost' ? 'pill-rejected' : 'pill-pending'}`}>
                     {ref.status || 'pending'}
                   </span>
                 </td>
@@ -1846,6 +1927,23 @@ function ReferralsPage() {
             ))}
           </tbody>
         </table>
+
+        {/* Pagination */}
+        <div style={{ padding: '1.25rem 2.5rem', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+            {total > 0 ? `Showing page ${page} of ${pages} · ${total} referrals` : 'No results matching criteria'}
+          </p>
+          {pages > 1 && (
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button className="pagination-btn" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
+                <IconChevronLeft size={16} /> Prev
+              </button>
+              <button className="pagination-btn" disabled={page >= pages} onClick={() => setPage(p => p + 1)}>
+                Next <IconChevronRight size={16} />
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </section>
   );
@@ -1888,7 +1986,7 @@ function RevenuePage() {
           <tbody>
             {paymentsLoading ? (
               <tr><td colSpan={5} style={{ textAlign: 'center', padding: '2rem' }}>Loading payments...</td></tr>
-            ) : payments?.slice(0, 10).map(p => (
+            ) : (Array.isArray(payments) ? payments : payments?.data || []).slice(0, 10).map(p => (
               <tr key={p.id}>
                 <td>{new Date(p.created_at).toLocaleDateString()}</td>
                 <td style={{ fontWeight: 600 }}>{p.user_name}</td>
@@ -1970,7 +2068,9 @@ function ChangePasswordModal({ onClose, showToast }) {
       <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 400 }}>
         <div className="modal-header">
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Change Password</h2>
-          <button type="button" onClick={onClose}><IconX size={20} /></button>
+          <button type="button" className="modal-close-btn" onClick={onClose}>
+            <IconX size={20} />
+          </button>
         </div>
         <form onSubmit={handleSubmit} style={{ padding: '1.5rem' }}>
           {error && <div className="login-error" style={{ marginBottom: '1rem' }}>{error}</div>}
@@ -2340,9 +2440,9 @@ export default function App() {
             <tbody>
               {referralsLoading ? (
                 <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>Loading referrals...</td></tr>
-              ) : !referrals || referrals.length === 0 ? (
+              ) : (!referrals || (Array.isArray(referrals) ? referrals.length === 0 : !referrals.referrals || referrals.referrals.length === 0)) ? (
                 <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>No referral data available</td></tr>
-              ) : referrals.slice(0, 8).map((ref, idx) => (
+              ) : (Array.isArray(referrals) ? referrals : referrals.referrals).slice(0, 8).map((ref, idx) => (
                 <tr key={ref.id || idx}>
                   <td><span className="id-badge">{ref.id ? `REF-${String(ref.id).slice(0, 4)}` : `REF-${idx}`}</span></td>
                   <td style={{ fontWeight: 600 }}>{ref.from_user?.full_name || '—'}</td>
@@ -2362,7 +2462,7 @@ export default function App() {
 
           <div style={{ padding: '1.5rem 2.5rem', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
-              {referrals?.length > 0 ? `Showing latest entries` : 'No records available'}
+              {(Array.isArray(referrals) ? referrals?.length : referrals?.referrals?.length) > 0 ? `Showing latest entries` : 'No records available'}
             </p>
             <button
               onClick={() => setActiveTab('referrals')}

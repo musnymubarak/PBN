@@ -9,8 +9,11 @@ import random
 import string
 from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
-from typing import List, Tuple
+import logging
+from typing import List, Tuple, TYPE_CHECKING
 from uuid import UUID
+
+logger = logging.getLogger(__name__)
 
 from sqlalchemy import select, desc, func
 from sqlalchemy.ext.asyncio import AsyncSession
