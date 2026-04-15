@@ -4,6 +4,7 @@ import 'package:pbn/core/theme/app_theme.dart';
 import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/providers/auth_provider.dart';
 import 'package:pbn/core/providers/notification_provider.dart';
+import 'package:pbn/core/providers/member_provider.dart';
 import 'package:pbn/features/auth/login_page.dart';
 import 'package:pbn/features/auth/splash_page.dart';
 import 'package:pbn/features/dashboard/dashboard_page.dart';
@@ -20,6 +21,7 @@ import 'package:pbn/features/applications/my_applications_page.dart';
 import 'package:pbn/features/partner/partner_dashboard_page.dart';
 import 'package:pbn/features/auth/onboarding_page.dart';
 import 'package:pbn/core/services/push_notification_service.dart';
+import 'package:pbn/core/services/prefs_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,6 +29,7 @@ Future<void> main() async {
   // Initialize Push Notifications
   try {
     await PushNotificationService.initialize(navigatorKey: PBNApp.navigatorKey);
+    await PrefsService.init();
   } catch (e) {
     debugPrint("Firebase/Push initialization failed: $e");
   }
@@ -36,6 +39,7 @@ Future<void> main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
+        ChangeNotifierProvider(create: (_) => MemberProvider()),
       ],
       child: const PBNApp(),
     ),
