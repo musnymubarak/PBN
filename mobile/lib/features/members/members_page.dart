@@ -26,18 +26,37 @@ class _MembersPageState extends State<MembersPage> {
   }
 
   Future<void> _loadMembers() async {
+    if (!mounted) return;
     setState(() => _loading = true);
+    
     try {
-      _members = await _chapterService.getAllMembers();
-    } catch (_) {}
-    _filtered = _members;
-    if (mounted) setState(() => _loading = false);
+      final fetchedMembers = await _chapterService.getAllMembers();
+      if (mounted) {
+        setState(() {
+          _members = fetchedMembers;
+          _filtered = _members;
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading members: $e');
+      if (mounted) {
+        setState(() {
+          _loading = false;
+        });
+      }
+    }
   }
 
   void _filterMembers(String query) {
     setState(() {
       _search = query;
-      _filtered = _members.where((m) => m.fullName.toLowerCase().contains(query.toLowerCase()) || m.industry.toLowerCase().contains(query.toLowerCase()) || m.company.toLowerCase().contains(query.toLowerCase())).toList();
+      _filtered = _members.where((m) {
+        final matchesName = m.fullName.toLowerCase().contains(query.toLowerCase());
+        final matchesIndustry = m.industry.toLowerCase().contains(query.toLowerCase());
+        final matchesCompany = m.company.toLowerCase().contains(query.toLowerCase());
+        return matchesName || matchesIndustry || matchesCompany;
+      }).toList();
     });
   }
 
@@ -50,8 +69,14 @@ class _MembersPageState extends State<MembersPage> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('NETWORK', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 2)),
-            Text('${_members.length} Members', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.text)),
+            const Text(
+              'NETWORK', 
+              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 2)
+            ),
+            Text(
+              '${_members.length} Members', 
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.text)
+            ),
           ],
         ),
       ),
@@ -92,11 +117,19 @@ class _MembersPageState extends State<MembersPage> {
   }
 
   Widget _buildEmptyState() {
-    return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-      Icon(TablerIcons.users_group, size: 64, color: Colors.grey.shade300),
-      const SizedBox(height: 16),
-      Text(_search.isEmpty ? 'No members found' : 'No results for "$_search"', style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.w700)),
-    ]));
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center, 
+        children: [
+          Icon(TablerIcons.users_group, size: 64, color: Colors.grey.shade300),
+          const SizedBox(height: 16),
+          Text(
+            _search.isEmpty ? 'No members found' : 'No results for "$_search"', 
+            style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.w700)
+          ),
+        ]
+      )
+    );
   }
 
   Widget _buildModernMemberCard(Member member) {
