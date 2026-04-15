@@ -1747,13 +1747,14 @@ function PartnersPage() {
             {partners.length === 0 ? (
               <div style={{ padding: '3rem', textAlign: 'center', color: '#94a3b8' }}>No partners registered yet.</div>
             ) : partners.map(partner => (
-              <div key={partner.id} className="partner-card-row" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', padding: '1.5rem', border: '1px solid #e2e8f0', borderRadius: '16px', marginBottom: '1rem', background: 'white' }}>
+              <div key={partner.id} className="partner-card-row" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', padding: '1.5rem', border: '1px solid #e2e8f0', borderRadius: '12px', marginBottom: '1rem', background: 'white' }}>
                 <div style={{ width: 64, height: 64, borderRadius: '12px', background: '#f8fafc', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e2e8f0' }}>
                   {partner.logo_url ? <img src={partner.logo_url} style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : <IconBuildingStore size={24} color="#94a3b8" />}
                 </div>
                 <div style={{ flex: 1 }}>
                   <h4 style={{ fontSize: '1.1rem', fontWeight: 700 }}>{partner.name}</h4>
                   <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>{partner.offers?.length || 0} active rewards</p>
+                  {partner.website && <a href={partner.website} target="_blank" rel="noreferrer" style={{ fontSize: '0.8rem', color: 'var(--secondary)', textDecoration: 'none', marginTop: '0.25rem', display: 'inline-block' }}>{partner.website}</a>}
                 </div>
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
                   <button
@@ -1764,7 +1765,13 @@ function PartnersPage() {
                   >
                     <IconPlus size={20} />
                   </button>
-                  <button className="view-detail-btn" title="Edit Partner"><IconSettings size={20} /></button>
+                  <button
+                    className="view-detail-btn"
+                    title="Edit Partner"
+                    onClick={() => alert(`Edit functionality for "${partner.name}" coming soon. Use the API to update partner details directly.`)}
+                  >
+                    <IconSettings size={20} />
+                  </button>
                 </div>
               </div>
             ))}
@@ -1790,12 +1797,172 @@ function PartnersPage() {
 }
 
 
+// ── Referrals Page ────────────────────────────────────────────────────────
+function ReferralsPage() {
+  const { data: referrals, loading } = useApi(api.listAllReferrals, []);
+  
+  return (
+    <section className="dashboard-body">
+      <div className="page-title-wrap">
+        <h1 className="page-title">Referral Pipeline</h1>
+        <p style={{ color: 'var(--text-secondary)', marginTop: '0.4rem', fontWeight: 500 }}>
+          Monitoring business exchanges and conversion velocity across the network.
+        </p>
+      </div>
+
+      <div className="data-section">
+        <div className="section-head">
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Global Referral Stream</h3>
+          <button className="view-detail-btn" onClick={() => window.location.reload()}><IconRefresh size={18} /></button>
+        </div>
+
+        <table className="modern-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>From</th>
+              <th>To</th>
+              <th>Value</th>
+              <th>Status</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr><td colSpan={6} style={{ textAlign: 'center', padding: '3rem' }}>Loading referrals...</td></tr>
+            ) : !referrals || referrals.length === 0 ? (
+              <tr><td colSpan={6} style={{ textAlign: 'center', padding: '3rem' }}>No referrals found.</td></tr>
+            ) : referrals.map((ref, idx) => (
+              <tr key={ref.id || idx}>
+                <td><span className="id-badge">REF-{String(ref.id || idx).slice(0, 4)}</span></td>
+                <td style={{ fontWeight: 600 }}>{ref.from_user?.full_name || '—'}</td>
+                <td>{ref.target_user?.full_name || '—'}</td>
+                <td style={{ fontWeight: 700 }}>{ref.actual_value ? `LKR ${ref.actual_value.toLocaleString()}` : '—'}</td>
+                <td>
+                  <span className={`pill ${ref.status === 'closed_won' ? 'pill-approved' : 'pill-pending'}`}>
+                    {ref.status || 'pending'}
+                  </span>
+                </td>
+                <td style={{ color: 'var(--text-secondary)' }}>{new Date(ref.created_at).toLocaleDateString()}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+// ── Revenue Page ──────────────────────────────────────────────────────────
+function RevenuePage() {
+  const { data: overview } = useApi(api.getAdminOverview, []);
+  const { data: payments, loading: paymentsLoading } = useApi(api.listPayments, []);
+
+  return (
+    <section className="dashboard-body">
+      <div className="page-title-wrap">
+        <h1 className="page-title">Revenue & ROI Analysis</h1>
+        <p style={{ color: 'var(--text-secondary)', marginTop: '0.4rem', fontWeight: 500 }}>
+          Financial health and network growth metrics.
+        </p>
+      </div>
+
+      <div className="stat-grid" style={{ marginBottom: '2rem' }}>
+        <StatCard title="TOTAL REVENUE" value={formatCurrency(overview?.total_value)} icon={IconCoin} color="#059669" />
+        <StatCard title="PENDING PAYMENTS" value={payments?.filter(p => p.status === 'pending').length || 0} icon={IconClock} color="#f59e0b" />
+        <StatCard title="AVG CONVERSION" value={overview?.conversion_rate ? `${overview.conversion_rate}%` : '—'} icon={IconChartBar} color="#2563eb" />
+      </div>
+
+      <div className="data-section">
+        <div className="section-head">
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Recent Financial Activity</h3>
+        </div>
+        <table className="modern-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Member</th>
+              <th>Type</th>
+              <th>Amount</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {paymentsLoading ? (
+              <tr><td colSpan={5} style={{ textAlign: 'center', padding: '2rem' }}>Loading payments...</td></tr>
+            ) : payments?.slice(0, 10).map(p => (
+              <tr key={p.id}>
+                <td>{new Date(p.created_at).toLocaleDateString()}</td>
+                <td style={{ fontWeight: 600 }}>{p.user_name}</td>
+                <td>{p.payment_type}</td>
+                <td style={{ fontWeight: 700 }}>{formatCurrency(p.amount)}</td>
+                <td><span className={`pill ${p.status === 'completed' ? 'pill-approved' : 'pill-pending'}`}>{p.status}</span></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+// ── Settings Page ─────────────────────────────────────────────────────────
+function SettingsPage() {
+  return (
+    <section className="dashboard-body">
+      <div className="page-title-wrap">
+        <h1 className="page-title">Global Settings</h1>
+        <p style={{ color: 'var(--text-secondary)', marginTop: '0.4rem', fontWeight: 500 }}>
+          Manage network configuration and administrative preferences.
+        </p>
+      </div>
+      <div className="modern-card" style={{ maxWidth: 600 }}>
+        <h3 style={{ marginBottom: '1.5rem' }}>System Preferences</h3>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>Administrator settings and configuration options will appear here.</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <button className="btn-primary" style={{ width: 'fit-content' }}>Manage Chapter Admins</button>
+          <button className="btn-primary" style={{ width: 'fit-content', background: '#94a3b8' }}>Update System Rules</button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ── Security Logs Page ────────────────────────────────────────────────────
+function SecurityLogsPage() {
+  return (
+    <section className="dashboard-body">
+      <div className="page-title-wrap">
+        <h1 className="page-title">Security & Audit Logs</h1>
+        <p style={{ color: 'var(--text-secondary)', marginTop: '0.4rem', fontWeight: 500 }}>
+          Timeline of critical administrative actions and system events.
+        </p>
+      </div>
+      <div className="data-section">
+        <div style={{ padding: '4rem', textAlign: 'center' }}>
+          <IconLock size={48} color="#cbd5e1" style={{ marginBottom: '1rem' }} />
+          <h3 style={{ color: 'var(--text-secondary)' }}>Audit Logging Module</h3>
+          <p style={{ color: '#94a3b8', marginTop: '0.5rem' }}>Real-time audit logs are currently being initialized for the network.</p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+
+
 // ── Main App ────────────────────────────────────────────────────────────────
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => !!localStorage.getItem('access_token'));
   const [adminUser, setAdminUser] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
+  
+  useEffect(() => {
+    // If we have a token but no user data, try to fetch current user or just rely on the stored login data
+    // For now, we'll assume the login process sets the adminUser.
+  }, []);
+
   const { data: overview, loading: overviewLoading, error: overviewError } = useApi(
     isAuthenticated ? api.getAdminOverview : () => Promise.resolve(null),
     [isAuthenticated]
@@ -1847,6 +2014,18 @@ export default function App() {
     if (activeTab === 'rewards') {
       return <PartnersPage />;
     }
+    if (activeTab === 'referrals') {
+      return <ReferralsPage />;
+    }
+    if (activeTab === 'revenue') {
+      return <RevenuePage />;
+    }
+    if (activeTab === 'settings') {
+      return <SettingsPage />;
+    }
+    if (activeTab === 'notifications') {
+      return <SecurityLogsPage />;
+    }
 
     // Default: Overview dashboard
     return (
@@ -1864,8 +2043,8 @@ export default function App() {
           </div>
         ) : (
           <div className="stat-grid">
-            <StatCard title="TOTAL REVENUE (ROI)" value={formatCurrency(overview?.total_value)} icon={IconCoin} trend={12.4} color="#059669" />
-            <StatCard title="ACTIVE MEMBER BASE" value={overview?.total_members?.toLocaleString() ?? '—'} icon={IconUsers} trend={5.2} color="#2563eb" />
+            <StatCard title="TOTAL REVENUE (ROI)" value={formatCurrency(overview?.total_value)} icon={IconCoin} color="#059669" />
+            <StatCard title="ACTIVE MEMBER BASE" value={overview?.total_members?.toLocaleString() ?? '—'} icon={IconUsers} color="#2563eb" />
             <StatCard title="REFERRAL VELOCITY" value={overview?.conversion_rate != null ? `${overview.conversion_rate}%` : '—'} icon={IconHierarchy2} color="#f59e0b" />
             <StatCard title="TOTAL REFERRALS" value={overview?.total_referrals?.toLocaleString() ?? '—'} icon={IconClock} color="#7c3aed" />
           </div>
@@ -1878,11 +2057,26 @@ export default function App() {
               <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>Insights into the latest cross-chapter business exchanges.</p>
             </div>
             <div style={{ display: 'flex', gap: '1rem' }}>
-              <button className="btn-primary" style={{ background: 'white', color: 'var(--text-primary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <button 
+                className="btn-primary" 
+                style={{ background: 'white', color: 'var(--text-primary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                onClick={() => alert('Search filters are available in the dedicated Referrals and Directory pages.')}
+              >
                 <IconFilter size={18} />
                 Advanced Filtering
               </button>
-              <button className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <button 
+                className="btn-primary" 
+                style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}
+                onClick={async () => {
+                  try {
+                    await api.exportData();
+                    alert('Data report export started. Please check your downloads shortly.');
+                  } catch (e) {
+                    alert('Export failed: ' + e.message);
+                  }
+                }}
+              >
                 <IconFileExport size={18} />
                 Export Data Reports
               </button>
@@ -1909,9 +2103,9 @@ export default function App() {
               ) : displayReferrals.map((ref, idx) => (
                 <tr key={ref.id || idx}>
                   <td><span className="id-badge">{ref.id ? `REF-${String(ref.id).slice(0, 4)}` : `REF-${idx}`}</span></td>
-                  <td style={{ fontWeight: 600 }}>{ref.from_member_name || '—'}</td>
-                  <td>{ref.to_member_name || '—'}</td>
-                  <td style={{ fontWeight: 700 }}>{ref.estimated_value ? formatCurrency(ref.estimated_value) : '—'}</td>
+                  <td style={{ fontWeight: 600 }}>{ref.from_user?.full_name || '—'}</td>
+                  <td>{ref.target_user?.full_name || '—'}</td>
+                  <td style={{ fontWeight: 700 }}>{ref.actual_value ? formatCurrency(ref.actual_value) : '—'}</td>
                   <td>
                     <span className={`pill ${ref.status === 'closed_won' ? 'pill-completed' : 'pill-pending'}`}>
                       {ref.status || 'Unknown'}
@@ -1928,9 +2122,12 @@ export default function App() {
             <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
               {displayReferrals.length > 0 ? `Showing ${displayReferrals.length} entries` : 'No records available'}
             </p>
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', cursor: 'pointer', color: 'var(--secondary)', fontWeight: 700, fontSize: '0.875rem' }}>
+            <button
+              onClick={() => setActiveTab('referrals')}
+              style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', cursor: 'pointer', color: 'var(--secondary)', fontWeight: 700, fontSize: '0.875rem', background: 'none', border: 'none', fontFamily: 'inherit' }}
+            >
               See Full Global Timeline <IconChevronRight size={18} />
-            </div>
+            </button>
           </div>
         </div>
       </section>
@@ -1956,6 +2153,7 @@ export default function App() {
                 {group.links.map(link => (
                   <li
                     key={link.id}
+                    data-label={link.label}
                     className={`nav-item ${activeTab === link.id ? 'active' : ''}`}
                     onClick={() => setActiveTab(link.id)}
                   >
@@ -2009,10 +2207,12 @@ export default function App() {
             <div style={{ width: '1px', height: '24px', background: '#e2e8f0', margin: '0 0.5rem' }}></div>
             <div className="header-profile" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
               <div style={{ textAlign: 'right' }}>
-                <p style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>Deepthi Perera</p>
-                <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Account Manager</p>
+                <p style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>{adminUser?.full_name || 'Admin User'}</p>
+                <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>{adminUser?.role || 'Administrator'}</p>
               </div>
-              <div style={{ width: 42, height: 42, borderRadius: 12, background: 'linear-gradient(135deg, var(--primary), #3b82f6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 800, fontSize: '0.9rem', border: '2px solid white', boxShadow: 'var(--shadow)' }}>DP</div>
+              <div style={{ width: 42, height: 42, borderRadius: 12, background: 'linear-gradient(135deg, var(--primary), #3b82f6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 800, fontSize: '0.9rem', border: '2px solid white', boxShadow: 'var(--shadow)' }}>
+                {adminUser?.full_name ? adminUser.full_name.split(' ').map(n => n[0]).join('').toUpperCase() : 'AD'}
+              </div>
             </div>
           </div>
         </header>

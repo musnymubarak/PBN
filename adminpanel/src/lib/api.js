@@ -30,6 +30,7 @@ export const api = {
   listIndustryCategories: () => apiFetch('/industry-categories'),
   listIndustries: () => apiFetch('/admin/industries'),
   listReferrals: () => apiFetch('/referrals/my/given'),
+  listAllReferrals: () => apiFetch('/admin/referrals').catch(() => apiFetch('/referrals/my/given')),
   listPayments: (params = {}) => apiFetch(`/admin/payments?${new URLSearchParams(params)}`),
   recordPayment: (body) => apiFetch('/admin/payments', {
     method: 'POST',

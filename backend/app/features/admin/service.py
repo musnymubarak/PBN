@@ -258,6 +258,59 @@ async def get_masked_user_data(user_id: UUID, db: AsyncSession) -> Dict[str, Any
     return _serialize_user(user, mask=True)
 
 
+async def list_all_referrals(db: AsyncSession) -> List[Dict[str, Any]]:
+    """List all referrals across the platform for the admin dashboard."""
+    from sqlalchemy.orm import joinedload, selectinload
+    from app.models.referrals import ReferralStatusHistory
+
+    stmt = (
+        select(Referral)
+        .options(
+            joinedload(Referral.from_member),
+            joinedload(Referral.to_member),
+            selectinload(Referral.history),
+        )
+        .order_by(desc(Referral.created_at))
+    )
+    result = await db.execute(stmt)
+    referrals = result.scalars().unique().all()
+
+    out: List[Dict[str, Any]] = []
+    for ref in referrals:
+        out.append({
+            "id": str(ref.id),
+            "from_user": {
+                "id": str(ref.from_member.id),
+                "full_name": ref.from_member.full_name,
+                "phone_number": ref.from_member.phone_number,
+            },
+            "target_user": {
+                "id": str(ref.to_member.id),
+                "full_name": ref.to_member.full_name,
+                "phone_number": ref.to_member.phone_number,
+            },
+            "lead_name": ref.client_name,
+            "lead_contact": ref.client_phone,
+            "lead_email": ref.client_email,
+            "description": ref.description,
+            "actual_value": float(ref.actual_value) if ref.actual_value is not None else None,
+            "status": ref.status.value,
+            "created_at": ref.created_at.isoformat() if ref.created_at else None,
+            "updated_at": ref.updated_at.isoformat() if ref.updated_at else None,
+            "history": [
+                {
+                    "id": str(h.id),
+                    "old_status": h.old_status,
+                    "new_status": h.new_status,
+                    "description": h.notes,
+                    "created_at": h.created_at.isoformat() if h.created_at else None,
+                }
+                for h in ref.history
+            ],
+        })
+    return out
+
+
 async def export_platform_data(db: AsyncSession) -> Dict[str, Any]:
     """Export aggregate platform health metrics for admin dashboard."""
     total_users = (await db.execute(select(func.count(1)).select_from(User))).scalar_one()

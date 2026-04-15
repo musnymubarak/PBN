@@ -119,3 +119,12 @@ async def export_data_endpoint(
 ) -> ORJSONResponse:
     result = await service.export_platform_data(db)
     return success_response(data=result)
+
+
+@router.get("/admin/referrals", summary="List all referrals (admin)")
+async def list_all_referrals_endpoint(
+    current_user: User = Depends(admin_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    result = await service.list_all_referrals(db)
+    return success_response(data=result)

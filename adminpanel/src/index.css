@@ -234,7 +234,7 @@ body {
 .modern-card {
   background: white;
   padding: 2rem;
-  border-radius: 24px;
+  border-radius: 18px;
   box-shadow: var(--shadow);
   border: 1px solid var(--border);
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -248,7 +248,7 @@ body {
 .card-icon-container {
   width: 50px;
   height: 50px;
-  border-radius: 16px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -286,7 +286,7 @@ body {
 /* Table Design */
 .data-section {
   background: white;
-  border-radius: 28px;
+  border-radius: 18px;
   box-shadow: var(--shadow);
   border: 1px solid var(--border);
   overflow: hidden;
@@ -358,10 +358,101 @@ body {
   transform: scale(1.02);
 }
 
-@media (max-width: 1200px) {
-  .sidebar { width: 90px; padding: 2rem 1rem; }
-  .logo-text, .nav-item span, .nav-label { display: none; }
-  .nav-item { justify-content: center; padding: 1rem; }
+/* ── Responsiveness ── */
+
+/* X-Large Desktop (1600px+) */
+@media (min-width: 1600px) {
+  :root {
+    --sidebar-width: 300px;
+  }
+}
+
+/* Large Desktop (1400px - 1599px) */
+@media (max-width: 1599px) {
+  :root {
+    --sidebar-width: 260px;
+  }
+  .dashboard-body {
+    padding: 2rem 2.5rem;
+  }
+  .top-header {
+    padding: 1.25rem 2.5rem;
+  }
+}
+
+/* Medium Desktop (1200px - 1399px) */
+@media (max-width: 1399px) {
+  :root {
+    --sidebar-width: 240px;
+  }
+  .dashboard-body {
+    padding: 1.5rem 2rem;
+  }
+  .top-header {
+    padding: 1rem 2rem;
+  }
+  .modern-table th, .modern-table td {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+  .stat-grid {
+    gap: 1.5rem;
+  }
+  .search-nav {
+    width: 320px;
+  }
+}
+
+/* Small Desktop / Large Tablet Landscape (1024px - 1199px) */
+@media (max-width: 1199px) {
+  :root {
+    --sidebar-width: 80px;
+  }
+  .logo-text, .nav-item span, .nav-label, .sidebar-footer span {
+    display: none;
+  }
+  .nav-item {
+    justify-content: center;
+    padding: 1rem;
+    position: relative;
+  }
+  .nav-item:hover::after {
+    content: attr(data-label);
+    position: absolute;
+    left: 100%;
+    margin-left: 10px;
+    background: var(--primary);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    white-space: nowrap;
+    z-index: 100;
+    font-size: 0.8rem;
+    box-shadow: var(--shadow-lg);
+  }
+  .logo-section {
+    justify-content: center;
+    padding-left: 0;
+  }
+  .modern-card {
+    padding: 1.5rem;
+  }
+  .card-val {
+    font-size: 1.75rem;
+  }
+  .search-nav {
+    width: 280px;
+  }
+  .header-profile p {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Ensuring base styles for smaller screens although user focused on desktops */
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ── Spin Animation ──────────────────────────────────────────────────────── */
@@ -507,7 +598,7 @@ body {
 
 .modal-content {
   background: white;
-  border-radius: 28px;
+  border-radius: 18px;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   max-width: 680px;
   width: 90%;
@@ -743,7 +834,7 @@ body {
   max-width: 95vw;
   min-height: 560px;
   background: white;
-  border-radius: 32px;
+  border-radius: 18px;
   box-shadow:
     0 25px 60px -12px rgba(0, 0, 0, 0.12),
     0 0 0 1px rgba(148, 163, 184, 0.08);
