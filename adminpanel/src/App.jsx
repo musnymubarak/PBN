@@ -68,9 +68,6 @@ function LoginPage({ onLogin }) {
         {/* Left branding panel */}
         <div className="login-branding">
           <div>
-            <div className="login-logo-wrap">
-              <img src="/logo.png" alt="PBN" style={{ width: 48, height: 48, objectFit: 'contain' }} />
-            </div>
             <h1 className="login-brand-title">Prime <span style={{ color: 'var(--accent)' }}>Business</span> Network</h1>
             <p className="login-brand-desc">
               Centralized admin hub for managing the network's members, referrals, and business growth across chapters.
@@ -2387,9 +2384,6 @@ export default function App() {
       {/* Premium Sidebar */}
       <aside className="sidebar">
         <div className="logo-section">
-          <div className="logo-icon-wrap" style={{ background: 'transparent' }}>
-            <img src="/logo.png" alt="PBN Logo" style={{ width: '40px', height: '40px', objectFit: 'contain' }} />
-          </div>
           <span className="logo-text">Prime <span style={{ color: 'var(--accent)', WebkitTextFillColor: 'var(--accent)' }}>Business</span> Network</span>
         </div>
 

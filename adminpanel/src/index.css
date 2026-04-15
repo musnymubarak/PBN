@@ -69,7 +69,6 @@ body {
 .logo-section {
   display: flex;
   align-items: center;
-  gap: 1rem;
   margin-bottom: 3.5rem;
   padding-left: 0.5rem;
 }
