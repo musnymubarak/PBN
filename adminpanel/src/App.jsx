@@ -2390,7 +2390,6 @@ export default function App() {
         <nav className="nav-container">
           {MENU_GROUPS.map((group, i) => (
             <div key={i} className="nav-group">
-              <p className="nav-label">{group.label}</p>
               <ul className="nav-list">
                 {group.links.map(link => (
                   <li
