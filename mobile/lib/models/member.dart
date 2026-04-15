@@ -33,6 +33,17 @@ class Member {
         companyName: json['business']?['name'],
       );
 
+  Map<String, dynamic> toJson() => {
+        'user_id': userId,
+        'full_name': fullName,
+        'email': email,
+        'phone_number': phoneNumber,
+        'profile_photo': profilePhoto,
+        'industry_category': {'name': industryName},
+        'chapter_name': chapterName,
+        'business': {'name': businessName},
+      };
+
   String get displayName => fullName;
   String get industry => industryName;
   String get company => companyName ?? businessName ?? 'Independent';

@@ -93,8 +93,15 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  const Text('PRIME BUSINESS NETWORK', 
-                    style: TextStyle(color: Color(0xFF0F172A), fontSize: 13, fontWeight: FontWeight.w900, letterSpacing: 5)
+                  RichText(
+                    text: const TextSpan(
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, letterSpacing: 5),
+                      children: [
+                        TextSpan(text: 'PRIME ', style: TextStyle(color: Color(0xFF0F172A))),
+                        TextSpan(text: 'BUSINESS ', style: TextStyle(color: AppColors.accent)),
+                        TextSpan(text: 'NETWORK', style: TextStyle(color: Color(0xFF0F172A))),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 8),
                   const Text('EXECUTIVE PORTAL', 
