@@ -70,7 +70,7 @@ function LoginPage({ onLogin }) {
             <div className="login-logo-wrap">
               <img src="/logo.png" alt="PBN" style={{ width: 48, height: 48, objectFit: 'contain' }} />
             </div>
-            <h1 className="login-brand-title">Prime <span style={{ color: 'var(--accent)' }}>Business</span><br />Network</h1>
+            <h1 className="login-brand-title">Prime <span style={{ color: 'var(--accent)' }}>Business</span> Network</h1>
             <p className="login-brand-desc">
               Centralized admin hub for managing the network's members, referrals, and business growth across chapters.
             </p>
@@ -1906,22 +1906,225 @@ function RevenuePage() {
   );
 }
 
+// ── Toast System ───────────────────────────────────────────────────────────
+const useToast = () => {
+  const [toasts, setToasts] = useState([]);
+
+  const showToast = useCallback((message, type = 'success') => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 4000);
+  }, []);
+
+  return { toasts, showToast };
+};
+
+const ToastContainer = ({ toasts }) => {
+  const getColor = (type) => {
+    switch(type) {
+      case 'error': return '#ef4444';
+      case 'warning': return '#f59e0b';
+      default: return '#059669';
+    }
+  };
+
+  return (
+    <div className="toast-container">
+      {toasts.map(t => (
+        <div key={t.id} className="toast" style={{ '--toast-color': getColor(t.type) }}>
+          {t.type === 'error' ? <IconAlertCircle color={getColor(t.type)} size={20} /> : <IconCheck color={getColor(t.type)} size={20} />}
+          <span style={{ fontWeight: 600, fontSize: '0.875rem' }}>{t.message}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// ── Change Password Modal ───────────────────────────────────────────────────
+function ChangePasswordModal({ onClose, showToast }) {
+  const [formData, setFormData] = useState({ current_password: '', new_password: '', confirm_password: '' });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (formData.new_password !== formData.confirm_password) {
+      setError('Passwords do not match');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      await api.changePassword(formData);
+      showToast('Password changed successfully');
+      onClose();
+    } catch (err) {
+      setError(err.message || 'Failed to change password');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 400 }}>
+        <div className="modal-header">
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Change Password</h2>
+          <button type="button" onClick={onClose}><IconX size={20} /></button>
+        </div>
+        <form onSubmit={handleSubmit} style={{ padding: '1.5rem' }}>
+          {error && <div className="login-error" style={{ marginBottom: '1rem' }}>{error}</div>}
+          <div className="login-field">
+            <label>Current Password</label>
+            <div className="login-input-wrap">
+               <IconLock size={18} className="login-input-icon" />
+               <input type="password" value={formData.current_password} onChange={e => setFormData({...formData, current_password: e.target.value})} required placeholder="••••••••" style={{ paddingLeft: '2.75rem' }} />
+            </div>
+          </div>
+          <div className="login-field">
+            <label>New Password</label>
+             <div className="login-input-wrap">
+               <IconLock size={18} className="login-input-icon" />
+               <input type="password" value={formData.new_password} onChange={e => setFormData({...formData, new_password: e.target.value})} required placeholder="••••••••" style={{ paddingLeft: '2.75rem' }} />
+            </div>
+          </div>
+          <div className="login-field">
+            <label>Confirm New Password</label>
+             <div className="login-input-wrap">
+               <IconLock size={18} className="login-input-icon" />
+               <input type="password" value={formData.confirm_password} onChange={e => setFormData({...formData, confirm_password: e.target.value})} required placeholder="••••••••" style={{ paddingLeft: '2.75rem' }} />
+            </div>
+          </div>
+          <button type="submit" className="login-btn" disabled={loading}>
+            {loading ? 'Changing...' : 'Update Password'}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ── Notification Panel ───────────────────────────────────────────────────────
+function NotificationPanel({ notifications, onDismiss, onMarkAllRead, onClose }) {
+  return (
+    <div className="notifications-panel" onClick={e => e.stopPropagation()}>
+      <div className="notifications-header">
+        <h3 style={{ fontSize: '1rem', fontWeight: 800 }}>Notifications</h3>
+        <button 
+          onClick={onMarkAllRead}
+          style={{ background: 'none', border: 'none', color: 'var(--secondary)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+        >
+          Mark all as read
+        </button>
+      </div>
+      <div className="notifications-list">
+        {notifications.length === 0 ? (
+          <div style={{ padding: '3rem', textAlign: 'center', color: '#94a3b8' }}>
+            <IconBell size={32} stroke={1.5} style={{ marginBottom: '0.75rem', opacity: 0.5 }} />
+            <p style={{ fontSize: '0.875rem', fontWeight: 600 }}>All caught up!</p>
+          </div>
+        ) : notifications.map(n => (
+          <div key={n.id} className={`notification-item ${!n.read ? 'unread' : ''}`} onClick={() => onDismiss(n.id)}>
+            <div className="notif-icon-wrap" style={{ background: n.color + '15', color: n.color }}>
+              <n.icon size={20} />
+            </div>
+            <div className="notif-content">
+              <div className="notif-title">{n.title}</div>
+              <div className="notif-desc">{n.description}</div>
+              <div className="notif-time">{n.time}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── Settings Page ─────────────────────────────────────────────────────────
-function SettingsPage() {
+function SettingsPage({ adminUser, onShowChangePassword, showToast }) {
+  const [notifPreferences, setNotifPreferences] = useState({
+    applications: true,
+    payments: true,
+    reminders: true,
+    security: false
+  });
+
+  const toggleNotif = (key) => {
+    setNotifPreferences(prev => ({ ...prev, [key]: !prev[key] }));
+    showToast(`Preference updated for ${key}`);
+  };
+
   return (
     <section className="dashboard-body">
       <div className="page-title-wrap">
         <h1 className="page-title">Global Settings</h1>
         <p style={{ color: 'var(--text-secondary)', marginTop: '0.4rem', fontWeight: 500 }}>
-          Manage network configuration and administrative preferences.
+          Manage your administrative profile and platform preferences.
         </p>
       </div>
-      <div className="modern-card" style={{ maxWidth: 600 }}>
-        <h3 style={{ marginBottom: '1.5rem' }}>System Preferences</h3>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>Administrator settings and configuration options will appear here.</p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <button className="btn-primary" style={{ width: 'fit-content' }}>Manage Chapter Admins</button>
-          <button className="btn-primary" style={{ width: 'fit-content', background: '#94a3b8' }}>Update System Rules</button>
+
+      <div className="settings-grid">
+        <div className="settings-section" style={{ flex: 1 }}>
+          <div className="settings-header">
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <IconUser size={22} color="var(--secondary)" /> My Profile
+            </h3>
+          </div>
+          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+             <div style={{ width: 80, height: 80, borderRadius: 20, background: 'linear-gradient(135deg, var(--primary), #3b82f6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 800, fontSize: '1.5rem', margin: '0 auto 1rem', border: '4px solid white', boxShadow: 'var(--shadow)' }}>
+                {adminUser?.full_name ? adminUser.full_name.split(' ').map(n => n[0]).join('').toUpperCase() : 'AD'}
+              </div>
+              <h4 style={{ fontSize: '1.25rem', fontWeight: 800 }}>{adminUser?.full_name}</h4>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>{adminUser?.role} • {adminUser?.email}</p>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+             <button className="btn-primary" onClick={onShowChangePassword} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                <IconLock size={18} /> Change Account Password
+             </button>
+             <button className="btn-primary" style={{ background: '#f1f5f9', color: 'var(--text-primary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                <IconMail size={18} /> Update Contact Email
+             </button>
+          </div>
+        </div>
+
+        <div className="settings-section" style={{ flex: 1 }}>
+          <div className="settings-header">
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <IconBell size={22} color="var(--accent)" /> Notification Preferences
+            </h3>
+          </div>
+          <div className="settings-row">
+            <div>
+              <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>New Applications</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Notify when a potential member submits application</div>
+            </div>
+            <label className="toggle-switch">
+              <input type="checkbox" checked={notifPreferences.applications} onChange={() => toggleNotif('applications')} />
+              <span className="slider"></span>
+            </label>
+          </div>
+          <div className="settings-row">
+            <div>
+              <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>Payment Alerts</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Real-time updates on membership and renewal fees</div>
+            </div>
+            <label className="toggle-switch">
+              <input type="checkbox" checked={notifPreferences.payments} onChange={() => toggleNotif('payments')} />
+              <span className="slider"></span>
+            </label>
+          </div>
+          <div className="settings-row">
+            <div>
+              <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>Meeting Reminders</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Automated nudges for upcoming chapter fit-calls</div>
+            </div>
+            <label className="toggle-switch">
+              <input type="checkbox" checked={notifPreferences.reminders} onChange={() => toggleNotif('reminders')} />
+              <span className="slider"></span>
+            </label>
+          </div>
         </div>
       </div>
     </section>
@@ -1957,24 +2160,39 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => !!localStorage.getItem('access_token'));
   const [adminUser, setAdminUser] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const { toasts, showToast } = useToast();
   
+  // Real notifications state
+  const [notifications, setNotifications] = useState([
+    { id: 1, title: 'New Application', description: 'Amila Perera submitted a membership application.', time: '2 mins ago', icon: IconClipboardList, color: '#2563eb', read: false },
+    { id: 2, title: 'Meeting Reminder', description: 'Fit call with Tech Solutions scheduled for 4 PM.', time: '1 hour ago', icon: IconClock, color: '#f59e0b', read: false },
+    { id: 3, title: 'Referral Won', description: 'Ref-9821 closed successfully by Kusal M.', time: '3 hours ago', icon: IconCheck, color: '#059669', read: true }
+  ]);
+
   useEffect(() => {
-    // If we have a token but no user data, try to fetch current user or just rely on the stored login data
-    // For now, we'll assume the login process sets the adminUser.
-  }, []);
+    // If we have a token but no user data, try to fetch current user
+    if (isAuthenticated && !adminUser) {
+      api.getCurrentUser().then(data => setAdminUser(data)).catch(() => handleLogout());
+    }
+  }, [isAuthenticated, adminUser]);
 
   const { data: overview, loading: overviewLoading, error: overviewError } = useApi(
     isAuthenticated ? api.getAdminOverview : () => Promise.resolve(null),
     [isAuthenticated]
   );
+  
   const { data: referrals, loading: referralsLoading } = useApi(
-    isAuthenticated ? api.listReferrals : () => Promise.resolve(null),
+    isAuthenticated ? api.listAllReferrals : () => Promise.resolve(null),
     [isAuthenticated]
   );
 
   const handleLogin = (user) => {
     setAdminUser(user);
     setIsAuthenticated(true);
+    showToast(`Welcome back, ${user.full_name || 'Admin'}!`);
   };
 
   const handleLogout = () => {
@@ -1982,50 +2200,34 @@ export default function App() {
     localStorage.removeItem('refresh_token');
     setIsAuthenticated(false);
     setAdminUser(null);
+    setShowProfileMenu(false);
+  };
+
+  const dismissNotification = (id) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+  };
+
+  const markAllRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    showToast('All notifications marked as read');
   };
 
   if (!isAuthenticated) {
     return <LoginPage onLogin={handleLogin} />;
   }
 
-  if (overviewLoading && activeTab === 'overview') {
-    return (
-      <div className="loading-state" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontSize: '1.1rem', fontWeight: 600, color: '#64748b', background: '#f8fafc' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ width: 40, height: 40, border: '3px solid #e2e8f0', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 1rem' }}></div>
-          Loading dashboard...
-        </div>
-      </div>
-    );
-  }
-
-  const displayReferrals = referrals || [];
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   const renderContent = () => {
-    if (activeTab === 'applications') {
-      return <ApplicationsPage />;
-    }
-    if (activeTab === 'members') {
-      return <MembersPage />;
-    }
-    if (activeTab === 'payments') {
-      return <PaymentsPage />;
-    }
-    if (activeTab === 'rewards') {
-      return <PartnersPage />;
-    }
-    if (activeTab === 'referrals') {
-      return <ReferralsPage />;
-    }
-    if (activeTab === 'revenue') {
-      return <RevenuePage />;
-    }
-    if (activeTab === 'settings') {
-      return <SettingsPage />;
-    }
-    if (activeTab === 'notifications') {
-      return <SecurityLogsPage />;
-    }
+    const commonProps = { adminUser, showToast, onShowChangePassword: () => setShowChangePassword(true) };
+    if (activeTab === 'applications') return <ApplicationsPage />;
+    if (activeTab === 'members') return <MembersPage />;
+    if (activeTab === 'payments') return <PaymentsPage />;
+    if (activeTab === 'rewards') return <PartnersPage />;
+    if (activeTab === 'referrals') return <ReferralsPage />;
+    if (activeTab === 'revenue') return <RevenuePage />;
+    if (activeTab === 'settings') return <SettingsPage {...commonProps} />;
+    if (activeTab === 'notifications') return <SecurityLogsPage />;
 
     // Default: Overview dashboard
     return (
@@ -2071,9 +2273,9 @@ export default function App() {
                 onClick={async () => {
                   try {
                     await api.exportData();
-                    alert('Data report export started. Please check your downloads shortly.');
+                    showToast('Data report export started');
                   } catch (e) {
-                    alert('Export failed: ' + e.message);
+                    showToast('Export failed: ' + e.message, 'error');
                   }
                 }}
               >
@@ -2098,9 +2300,9 @@ export default function App() {
             <tbody>
               {referralsLoading ? (
                 <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>Loading referrals...</td></tr>
-              ) : displayReferrals.length === 0 ? (
+              ) : !referrals || referrals.length === 0 ? (
                 <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>No referral data available</td></tr>
-              ) : displayReferrals.map((ref, idx) => (
+              ) : referrals.slice(0, 8).map((ref, idx) => (
                 <tr key={ref.id || idx}>
                   <td><span className="id-badge">{ref.id ? `REF-${String(ref.id).slice(0, 4)}` : `REF-${idx}`}</span></td>
                   <td style={{ fontWeight: 600 }}>{ref.from_user?.full_name || '—'}</td>
@@ -2120,7 +2322,7 @@ export default function App() {
 
           <div style={{ padding: '1.5rem 2.5rem', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
-              {displayReferrals.length > 0 ? `Showing ${displayReferrals.length} entries` : 'No records available'}
+              {referrals?.length > 0 ? `Showing latest entries` : 'No records available'}
             </p>
             <button
               onClick={() => setActiveTab('referrals')}
@@ -2135,7 +2337,10 @@ export default function App() {
   };
 
   return (
-    <div className="app-wrapper">
+    <div className="app-wrapper" onClick={() => { setShowNotifications(false); setShowProfileMenu(false); }}>
+      <ToastContainer toasts={toasts} />
+      {showChangePassword && <ChangePasswordModal onClose={() => setShowChangePassword(false)} showToast={showToast} />}
+
       {/* Premium Sidebar */}
       <aside className="sidebar">
         <div className="logo-section">
@@ -2166,7 +2371,7 @@ export default function App() {
           ))}
         </nav>
 
-        <div className="sidebar-footer" style={{ marginTop: 'auto', padding: '1.25rem' }}>
+        <div className="sidebar-footer" style={{ marginTop: 'auto', padding: '0.5rem' }}>
           <button
             onClick={handleLogout}
             style={{
@@ -2184,11 +2389,9 @@ export default function App() {
               fontWeight: 700,
               transition: 'all 0.2s'
             }}
-            onMouseOver={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'}
-            onMouseOut={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
           >
             <IconLogout size={18} stroke={2} />
-            Sign Out
+            <span>Sign Out</span>
           </button>
         </div>
       </aside>
@@ -2202,17 +2405,58 @@ export default function App() {
           </div>
 
           <div className="header-actions">
-            <div className="action-btn"><IconBell size={20} /></div>
-            <div className="action-btn"><IconSettings size={20} /></div>
+            <div className="profile-dropdown-container">
+              <div 
+                className="action-btn" 
+                onClick={(e) => { e.stopPropagation(); setShowNotifications(!showNotifications); setShowProfileMenu(false); }}
+                style={{ position: 'relative' }}
+              >
+                <IconBell size={20} />
+                {unreadCount > 0 && <span className="notification-badge">{unreadCount}</span>}
+              </div>
+              {showNotifications && (
+                <NotificationPanel 
+                  notifications={notifications} 
+                  onDismiss={dismissNotification}
+                  onMarkAllRead={markAllRead}
+                  onClose={() => setShowNotifications(false)}
+                />
+              )}
+            </div>
+
+            <div className="action-btn" onClick={() => setActiveTab('settings')}><IconSettings size={20} /></div>
+            
             <div style={{ width: '1px', height: '24px', background: '#e2e8f0', margin: '0 0.5rem' }}></div>
-            <div className="header-profile" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
-              <div style={{ textAlign: 'right' }}>
-                <p style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>{adminUser?.full_name || 'Admin User'}</p>
-                <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>{adminUser?.role || 'Administrator'}</p>
+            
+            <div className="profile-dropdown-container">
+              <div 
+                className="header-profile" 
+                onClick={(e) => { e.stopPropagation(); setShowProfileMenu(!showProfileMenu); setShowNotifications(false); }}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}
+              >
+                <div style={{ textAlign: 'right' }}>
+                  <p style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>{adminUser?.full_name || 'Admin User'}</p>
+                  <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>{adminUser?.role || 'Administrator'}</p>
+                </div>
+                <div style={{ width: 42, height: 42, borderRadius: 12, background: 'linear-gradient(135deg, var(--primary), #3b82f6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 800, fontSize: '0.9rem', border: '2px solid white', boxShadow: 'var(--shadow)' }}>
+                  {adminUser?.full_name ? adminUser.full_name.split(' ').map(n => n[0]).join('').toUpperCase() : 'AD'}
+                </div>
               </div>
-              <div style={{ width: 42, height: 42, borderRadius: 12, background: 'linear-gradient(135deg, var(--primary), #3b82f6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 800, fontSize: '0.9rem', border: '2px solid white', boxShadow: 'var(--shadow)' }}>
-                {adminUser?.full_name ? adminUser.full_name.split(' ').map(n => n[0]).join('').toUpperCase() : 'AD'}
-              </div>
+
+              {showProfileMenu && (
+                <div className="profile-menu" onClick={e => e.stopPropagation()}>
+                  <div className="profile-menu-item" onClick={() => { setActiveTab('settings'); setShowProfileMenu(false); }}>
+                    <IconUser size={18} /> My Profile
+                  </div>
+                  <div className="profile-menu-item" onClick={() => { setShowChangePassword(true); setShowProfileMenu(false); }}>
+                    <IconLock size={18} /> Change Password
+                  </div>
+                  <div style={{ height: '1px', background: 'var(--border)', margin: '0.5rem 0' }}></div>
+                  <div className="profile-menu-item danger" onClick={handleLogout}>
+                    <IconLogout size={18} /> Sign Out
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </header>

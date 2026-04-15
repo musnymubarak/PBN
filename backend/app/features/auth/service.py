@@ -384,3 +384,27 @@ async def login(
         },
     }
 
+
+async def change_password(
+    user: User,
+    current_password: str,
+    new_password: str,
+    db: AsyncSession,
+) -> None:
+    """Verify current password and update to new password."""
+    if not user.password_hash:
+        raise BadRequestException(
+            message="Password not set for this account. Please use OTP login first.",
+            code="NO_PASSWORD_SET"
+        )
+
+    if not pwd_context.verify(current_password, user.password_hash):
+        raise UnauthorizedException(
+            message="Incorrect current password.",
+            code="INVALID_CURRENT_PASSWORD"
+        )
+
+    user.password_hash = hash_password(new_password)
+    await db.commit()
+    logger.info("Password changed for user: %s", user.id)
+

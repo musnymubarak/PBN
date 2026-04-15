@@ -26,6 +26,7 @@ from app.features.auth.schemas import (
     RefreshTokenRequest,
     SendOTPRequest,
     VerifyOTPRequest,
+    ChangePasswordRequest,
 )
 from pydantic import BaseModel
 
@@ -38,6 +39,7 @@ from app.features.auth.service import (
     refresh_access_token,
     send_otp,
     verify_otp,
+    change_password,
 )
 from app.models.user import User
 
@@ -229,5 +231,19 @@ async def upload_profile_photo(
     
     return success_response(
         data={"profile_photo": current_user.profile_photo},
+        status_code=200
+    )
+
+
+@router.put("/change-password", summary="Change current user password")
+async def change_password_endpoint(
+    body: ChangePasswordRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+) -> ORJSONResponse:
+    """Verify current password and update to new password for the logged in user."""
+    await change_password(current_user, body.current_password, body.new_password, db)
+    return success_response(
+        data={"message": "Password changed successfully"},
         status_code=200
     )

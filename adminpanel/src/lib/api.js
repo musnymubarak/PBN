@@ -26,6 +26,7 @@ async function apiFetch(path, options = {}) {
 
 export const api = {
   getAdminOverview: () => apiFetch('/admin/analytics/overview'),
+  getCurrentUser: () => apiFetch('/auth/me'),
   listUsers: (params = {}) => apiFetch(`/admin/users?${new URLSearchParams(params)}`),
   listIndustryCategories: () => apiFetch('/industry-categories'),
   listIndustries: () => apiFetch('/admin/industries'),
@@ -77,6 +78,11 @@ export const api = {
   // Users
   updateUser: (id, body) => apiFetch(`/admin/users/${id}`, {
     method: 'PATCH',
+    body: JSON.stringify(body),
+  }),
+
+  changePassword: (body) => apiFetch('/auth/change-password', {
+    method: 'PUT',
     body: JSON.stringify(body),
   }),
 
