@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:provider/provider.dart';
 import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/constants/api_config.dart';
-import 'package:pbn/core/services/chapter_service.dart';
+import 'package:pbn/core/providers/member_provider.dart';
 import 'package:pbn/models/member.dart';
 
 class MembersPage extends StatefulWidget {
@@ -13,45 +15,26 @@ class MembersPage extends StatefulWidget {
 }
 
 class _MembersPageState extends State<MembersPage> {
-  final _chapterService = ChapterService();
-  List<Member> _members = [];
   List<Member> _filtered = [];
-  bool _loading = true;
   String _search = '';
 
   @override
   void initState() {
     super.initState();
-    _loadMembers();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = context.read<MemberProvider>();
+      if (provider.members.isEmpty) {
+        provider.fetchMembers();
+      } else {
+        provider.fetchMembers(background: true);
+      }
+    });
   }
 
-  Future<void> _loadMembers() async {
-    if (!mounted) return;
-    setState(() => _loading = true);
-    
-    try {
-      final fetchedMembers = await _chapterService.getAllMembers();
-      if (mounted) {
-        setState(() {
-          _members = fetchedMembers;
-          _filtered = _members;
-          _loading = false;
-        });
-      }
-    } catch (e) {
-      debugPrint('Error loading members: $e');
-      if (mounted) {
-        setState(() {
-          _loading = false;
-        });
-      }
-    }
-  }
-
-  void _filterMembers(String query) {
+  void _filterMembers(List<Member> members, String query) {
     setState(() {
       _search = query;
-      _filtered = _members.where((m) {
+      _filtered = members.where((m) {
         final matchesName = m.fullName.toLowerCase().contains(query.toLowerCase());
         final matchesIndustry = m.industry.toLowerCase().contains(query.toLowerCase());
         final matchesCompany = m.company.toLowerCase().contains(query.toLowerCase());
@@ -62,6 +45,10 @@ class _MembersPageState extends State<MembersPage> {
 
   @override
   Widget build(BuildContext context) {
+    final provider = context.watch<MemberProvider>();
+    final members = provider.members;
+    final displayList = _search.isEmpty ? members : _filtered;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -74,7 +61,7 @@ class _MembersPageState extends State<MembersPage> {
               style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 2)
             ),
             Text(
-              '${_members.length} Members', 
+              '${members.length} Members', 
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.text)
             ),
           ],
@@ -85,7 +72,7 @@ class _MembersPageState extends State<MembersPage> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             child: TextField(
-              onChanged: _filterMembers,
+              onChanged: (q) => _filterMembers(members, q),
               decoration: InputDecoration(
                 hintText: 'Search by name or industry...',
                 prefixIcon: const Icon(TablerIcons.search, size: 20, color: AppColors.primary),
@@ -98,16 +85,16 @@ class _MembersPageState extends State<MembersPage> {
             ),
           ),
           Expanded(
-            child: _loading
+            child: provider.loading && members.isEmpty
                 ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-                : _filtered.isEmpty
+                : displayList.isEmpty
                     ? _buildEmptyState()
                     : RefreshIndicator(
-                        onRefresh: _loadMembers,
+                        onRefresh: () => provider.fetchMembers(),
                         child: ListView.builder(
                           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                          itemCount: _filtered.length,
-                          itemBuilder: (context, i) => _buildModernMemberCard(_filtered[i]),
+                          itemCount: displayList.length,
+                          itemBuilder: (context, i) => _buildModernMemberCard(displayList[i]),
                         ),
                       ),
           ),
@@ -175,12 +162,16 @@ class _MembersPageState extends State<MembersPage> {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(10),
-                    child: Image.network(
-                      member.profilePhoto != null 
+                    child: CachedNetworkImage(
+                      imageUrl: member.profilePhoto != null 
                           ? '${ApiConfig.baseUrl.replaceAll('/api/v1', '')}${member.profilePhoto}'
                           : 'https://i.pravatar.cc/150?u=${member.userId}',
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stack) => Container(
+                      placeholder: (context, url) => Container(
+                        color: Colors.grey.shade100,
+                        child: const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+                      ),
+                      errorWidget: (context, url, error) => Container(
                         color: const Color(0xFF1E3A8A),
                         child: Center(
                           child: Text(member.initials,

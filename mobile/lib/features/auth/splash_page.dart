@@ -3,6 +3,7 @@ import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:provider/provider.dart';
 import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/providers/auth_provider.dart';
+import 'package:pbn/core/services/prefs_service.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -34,7 +35,11 @@ class _SplashPageState extends State<SplashPage> {
         Navigator.pushReplacementNamed(context, '/dashboard');
       }
     } else {
-      Navigator.pushReplacementNamed(context, '/onboarding');
+      if (PrefsService.isFirstRun()) {
+        Navigator.pushReplacementNamed(context, '/onboarding');
+      } else {
+        Navigator.pushReplacementNamed(context, '/login');
+      }
     }
   }
 
@@ -89,8 +94,15 @@ class _SplashPageState extends State<SplashPage> {
               children: [
                 Text('from', style: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 10, letterSpacing: 1),),
                 const SizedBox(height: 6),
-                Text('PRIME BUSINESS NETWORK',
-                  style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 3),
+                RichText(
+                  text: TextSpan(
+                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 3),
+                    children: [
+                      TextSpan(text: 'PRIME ', style: TextStyle(color: Colors.white.withOpacity(0.8))),
+                      const TextSpan(text: 'BUSINESS ', style: TextStyle(color: AppColors.accent)),
+                      TextSpan(text: 'NETWORK', style: TextStyle(color: Colors.white.withOpacity(0.8))),
+                    ],
+                  ),
                 ),
               ],
             ),

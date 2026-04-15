@@ -3,6 +3,7 @@ import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:pbn/core/constants/app_colors.dart';
 import 'dart:async';
 import 'dart:ui';
+import 'package:pbn/core/services/prefs_service.dart';
 
 class OnboardingPage extends StatefulWidget {
   const OnboardingPage({super.key});
@@ -202,7 +203,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           children: [
                             Expanded(
                               child: ElevatedButton(
-                                onPressed: () => Navigator.pushReplacementNamed(context, '/apply'),
+                                onPressed: () {
+                                  PrefsService.markFirstRunDone();
+                                  Navigator.pushReplacementNamed(context, '/apply');
+                                },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.white,
                                   foregroundColor: Colors.black,
@@ -220,7 +224,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
                   ),
                   const SizedBox(height: 20),
                   TextButton(
-                    onPressed: () => Navigator.pushReplacementNamed(context, '/login'),
+                    onPressed: () {
+                      PrefsService.markFirstRunDone();
+                      Navigator.pushReplacementNamed(context, '/login');
+                    },
                     child: RichText(
                       text: TextSpan(
                         children: [
