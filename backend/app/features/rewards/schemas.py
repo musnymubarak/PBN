@@ -10,7 +10,7 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
-from app.models.privilege_cards import OfferType
+from app.models.privilege_cards import OfferType, RedemptionMethod
 
 
 class PrivilegeCardResponse(BaseModel):
@@ -33,6 +33,7 @@ class OfferCreate(BaseModel):
     title: str
     description: Optional[str] = None
     offer_type: OfferType
+    redemption_method: RedemptionMethod
     discount_percentage: Optional[int] = None
     start_date: date
     end_date: date
@@ -45,6 +46,7 @@ class OfferResponse(BaseModel):
     title: str
     description: Optional[str]
     offer_type: str
+    redemption_method: str
     discount_percentage: Optional[int]
     start_date: date
     end_date: date

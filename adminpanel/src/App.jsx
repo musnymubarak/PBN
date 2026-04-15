@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { 
-  IconChartBar, 
-  IconUsers, 
-  IconHierarchy2, 
-  IconCoin, 
-  IconSettings, 
-  IconBell, 
-  IconSearch, 
-  IconUser, 
-  IconFilter, 
+import {
+  IconChartBar,
+  IconUsers,
+  IconHierarchy2,
+  IconCoin,
+  IconSettings,
+  IconBell,
+  IconSearch,
+  IconUser,
+  IconFilter,
   IconDotsVertical,
   IconArrowUpRight,
   IconClock,
@@ -31,6 +31,7 @@ import {
   IconBuildingStore,
   IconGift,
   IconStackPop,
+  IconUserCheck,
 } from '@tabler/icons-react';
 import { api } from './lib/api';
 import { useApi } from './hooks/useApi';
@@ -67,10 +68,7 @@ function LoginPage({ onLogin }) {
         {/* Left branding panel */}
         <div className="login-branding">
           <div>
-            <div className="login-logo-wrap">
-              <img src="/logo.png" alt="PBN" style={{ width: 48, height: 48, objectFit: 'contain' }} />
-            </div>
-            <h1 className="login-brand-title">Prime <span style={{ color: 'var(--accent)' }}>Business</span><br />Network</h1>
+            <h1 className="login-brand-title">Prime <span style={{ color: 'var(--accent)' }}>Business</span> Network</h1>
             <p className="login-brand-desc">
               Centralized admin hub for managing the network's members, referrals, and business growth across chapters.
             </p>
@@ -201,11 +199,11 @@ const formatCurrency = (val) => {
 // ── Status Helpers ──────────────────────────────────────────────────────────
 
 const STATUS_CONFIG = {
-  pending:            { label: 'Pending',          class: 'pill-pending',     color: '#f59e0b', bg: '#fffbeb' },
+  pending: { label: 'Pending', class: 'pill-pending', color: '#f59e0b', bg: '#fffbeb' },
   fit_call_scheduled: { label: 'Fit Call Scheduled', class: 'pill-scheduled', color: '#8b5cf6', bg: '#f5f3ff' },
-  approved:           { label: 'Approved',         class: 'pill-approved',    color: '#059669', bg: '#ecfdf5' },
-  rejected:           { label: 'Rejected',         class: 'pill-rejected',    color: '#dc2626', bg: '#fef2f2' },
-  waitlisted:         { label: 'Waitlisted',       class: 'pill-waitlisted',  color: '#6b7280', bg: '#f9fafb' },
+  approved: { label: 'Approved', class: 'pill-approved', color: '#059669', bg: '#ecfdf5' },
+  rejected: { label: 'Rejected', class: 'pill-rejected', color: '#dc2626', bg: '#fef2f2' },
+  waitlisted: { label: 'Waitlisted', class: 'pill-waitlisted', color: '#6b7280', bg: '#f9fafb' },
 };
 
 const getStatusConfig = (status) => STATUS_CONFIG[status] || { label: status, class: '', color: '#6b7280', bg: '#f9fafb' };
@@ -256,7 +254,7 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
     if (!msg) return 'An unexpected error occurred.';
     // Remove "API 400: /path - " technical parts
     const parts = msg.split(' - ');
-    if (parts.length > 1) return parts[1].split(' (')[0]; 
+    if (parts.length > 1) return parts[1].split(' (')[0];
     return msg;
   };
 
@@ -428,39 +426,39 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
                   <div>
                     <label style={{ color: '#166534', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem', display: 'block' }}>Target Chapter</label>
-                    <CustomSelect 
-                      label="Select a chapter..." 
-                      value={selectedChapterId} 
-                      options={chapters} 
+                    <CustomSelect
+                      label="Select a chapter..."
+                      value={selectedChapterId}
+                      options={chapters}
                       onChange={setSelectedChapterId}
                       style={{ background: 'white' }}
                     />
                   </div>
                   <div>
                     <label style={{ color: '#166534', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem', display: 'block' }}>Payment status</label>
-                    <CustomSelect 
-                      label="Payment status..." 
-                      value={paymentStatus} 
+                    <CustomSelect
+                      label="Payment status..."
+                      value={paymentStatus}
                       options={[
                         { id: 'pending', name: 'Pending (Pay later)' },
                         { id: 'completed', name: 'Completed (Paid)' }
-                      ]} 
+                      ]}
                       onChange={setPaymentStatus}
                       style={{ background: 'white' }}
                     />
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
-                  <button 
-                    className="login-btn" 
+                  <button
+                    className="login-btn"
                     style={{ flex: 1, background: '#10b981', padding: '0.75rem', height: '52px' }}
                     onClick={() => handleStatusUpdate('approved')}
                     disabled={updating || !selectedChapterId}
                   >
                     Confirm & Approve
                   </button>
-                  <button 
-                    className="login-btn" 
+                  <button
+                    className="login-btn"
                     style={{ flex: 1, background: '#94a3b8', padding: '0.75rem', height: '52px' }}
                     onClick={() => { setModalStatus(null); setSelectedChapterId(''); }}
                   >
@@ -483,7 +481,7 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
                   {availableActions.map(action => {
                     const isDecision = ['approved', 'rejected', 'waitlisted'].includes(action.status);
                     const needsFitCall = detail.status === 'pending' && isDecision;
-                    
+
                     return (
                       <button
                         key={action.status}
@@ -557,33 +555,35 @@ function CreateApplicationModal({ onClose, onCreated }) {
             <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>New Application</h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Manual application entry</p>
           </div>
-          <button type="button" onClick={onClose}><IconX size={20} /></button>
+          <button type="button" className="modal-close-btn" onClick={onClose}>
+            <IconX size={20} />
+          </button>
         </div>
-        
-        <form onSubmit={handleSubmit} style={{ padding: '1.5rem' }}>
+
+        <form onSubmit={handleSubmit} style={{ padding: '1.5rem 1.5rem 8rem' }}>
           {error && <div className="login-error" style={{ marginBottom: '1.25rem' }}>{error}</div>}
-          
+
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
             <div className="login-field" style={{ marginBottom: 0 }}>
               <label>Applicant Name *</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 className="filter-input v2"
                 placeholder="Full Name"
                 required
                 value={formData.full_name}
-                onChange={e => setFormData({...formData, full_name: e.target.value})}
+                onChange={e => setFormData({ ...formData, full_name: e.target.value })}
               />
             </div>
             <div className="login-field" style={{ marginBottom: 0 }}>
               <label>Business Name *</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 className="filter-input v2"
                 placeholder="Trade Name"
                 required
                 value={formData.business_name}
-                onChange={e => setFormData({...formData, business_name: e.target.value})}
+                onChange={e => setFormData({ ...formData, business_name: e.target.value })}
               />
             </div>
           </div>
@@ -591,23 +591,23 @@ function CreateApplicationModal({ onClose, onCreated }) {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
             <div className="login-field" style={{ marginBottom: 0 }}>
               <label>Contact Number *</label>
-              <input 
-                type="tel" 
+              <input
+                type="tel"
                 className="filter-input v2"
                 placeholder="+94..."
                 required
                 value={formData.contact_number}
-                onChange={e => setFormData({...formData, contact_number: e.target.value})}
+                onChange={e => setFormData({ ...formData, contact_number: e.target.value })}
               />
             </div>
             <div className="login-field" style={{ marginBottom: 0 }}>
               <label>Email Address</label>
-              <input 
-                type="email" 
+              <input
+                type="email"
                 className="filter-input v2"
                 placeholder="optional@email.com"
                 value={formData.email}
-                onChange={e => setFormData({...formData, email: e.target.value})}
+                onChange={e => setFormData({ ...formData, email: e.target.value })}
               />
             </div>
           </div>
@@ -615,37 +615,37 @@ function CreateApplicationModal({ onClose, onCreated }) {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
             <div className="login-field" style={{ marginBottom: 0 }}>
               <label>District</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 className="filter-input v2"
                 placeholder="e.g. Colombo"
                 value={formData.district}
-                onChange={e => setFormData({...formData, district: e.target.value})}
+                onChange={e => setFormData({ ...formData, district: e.target.value })}
               />
             </div>
             <div>
               <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>Industry *</label>
-              <CustomSelect 
+              <CustomSelect
                 label={loadingIndustries ? "Loading..." : "Select Industry..."}
                 value={formData.industry_category_id}
                 options={industries}
-                onChange={val => setFormData({...formData, industry_category_id: val})}
+                onChange={val => setFormData({ ...formData, industry_category_id: val })}
               />
             </div>
           </div>
 
           <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-            <button 
-              type="submit" 
-              className="login-btn" 
+            <button
+              type="submit"
+              className="login-btn"
               disabled={loading}
               style={{ flex: 2 }}
             >
               {loading ? 'Creating...' : 'Create Application'}
             </button>
-            <button 
-              type="button" 
-              className="login-btn" 
+            <button
+              type="button"
+              className="login-btn"
               onClick={onClose}
               style={{ flex: 1, background: '#94a3b8' }}
             >
@@ -835,15 +835,15 @@ function ApplicationsPage() {
         </div>
 
         {selectedAppId && (
-          <ApplicationDetailModal 
-            appId={selectedAppId} 
-            onClose={() => setSelectedAppId(null)} 
+          <ApplicationDetailModal
+            appId={selectedAppId}
+            onClose={() => setSelectedAppId(null)}
             onStatusUpdated={fetchApps}
           />
         )}
 
         {showCreateModal && (
-          <CreateApplicationModal 
+          <CreateApplicationModal
             onClose={() => setShowCreateModal(false)}
             onCreated={() => {
               setShowCreateModal(false);
@@ -876,7 +876,7 @@ function CustomSelect({ label, value, options, onChange, style }) {
 
   return (
     <div className="custom-select-container" ref={containerRef} style={style}>
-      <button 
+      <button
         type="button"
         className={`custom-select-trigger ${isOpen ? 'active' : ''}`}
         onClick={() => setIsOpen(!isOpen)}
@@ -887,16 +887,16 @@ function CustomSelect({ label, value, options, onChange, style }) {
 
       {isOpen && (
         <div className="custom-select-menu">
-          <div 
-            className="custom-select-option" 
+          <div
+            className="custom-select-option"
             onClick={() => { onChange(''); setIsOpen(false); }}
             style={{ fontWeight: 700, borderBottom: '1px solid var(--border)' }}
           >
             {label}
           </div>
           {options.map((opt) => (
-            <div 
-              key={opt.id} 
+            <div
+              key={opt.id}
               className={`custom-select-option ${String(value) === String(opt.id) ? 'selected' : ''}`}
               onClick={() => { onChange(opt.id); setIsOpen(false); }}
             >
@@ -936,11 +936,13 @@ function UserEditModal({ user, onClose, onUpdate, chapters = [] }) {
       <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 450 }}>
         <div className="modal-header">
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Manage Member</h2>
-          <button type="button" onClick={onClose}><IconX size={20} /></button>
+          <button type="button" className="modal-close-btn" onClick={onClose}>
+            <IconX size={20} />
+          </button>
         </div>
         <form onSubmit={handleSubmit} style={{ padding: '1.5rem' }}>
           {error && <div className="login-error" style={{ marginBottom: '1rem' }}>{error}</div>}
-          
+
           <div style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
             <div className="avatar-sm" style={{ width: 64, height: 64, fontSize: '1.5rem', margin: '0 auto 0.75rem', background: '#f1f5f9', color: 'var(--primary)' }}>
               {user.full_name ? user.full_name[0] : '?'}
@@ -951,15 +953,15 @@ function UserEditModal({ user, onClose, onUpdate, chapters = [] }) {
 
           <div style={{ marginBottom: '1rem' }}>
             <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>User Role</label>
-            <CustomSelect 
-              label="Select role..." 
-              value={role} 
+            <CustomSelect
+              label="Select role..."
+              value={role}
               options={[
                 { id: 'PROSPECT', name: 'Prospect (Pending Payment)' },
                 { id: 'MEMBER', name: 'Member (Verified)' },
                 { id: 'CHAPTER_ADMIN', name: 'Chapter Admin' },
                 { id: 'SUPER_ADMIN', name: 'Super Admin' }
-              ]} 
+              ]}
               onChange={setRole}
             />
           </div>
@@ -969,9 +971,9 @@ function UserEditModal({ user, onClose, onUpdate, chapters = [] }) {
               <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>Membership Active</div>
               <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Toggle access to network features</div>
             </div>
-            <input 
-              type="checkbox" 
-              checked={isActive} 
+            <input
+              type="checkbox"
+              checked={isActive}
               onChange={e => setIsActive(e.target.checked)}
               style={{ width: 20, height: 20, cursor: 'pointer' }}
             />
@@ -1012,7 +1014,7 @@ function MembersPage() {
       if (chapterFilter) params.chapter_id = chapterFilter;
       if (industryFilter) params.industry_id = industryFilter;
       if (roleFilter) params.role = roleFilter;
-      
+
       const result = await api.listUsers(params);
       setUsers(result.users || []);
       setTotal(result.total || 0);
@@ -1061,40 +1063,40 @@ function MembersPage() {
           <div className="directory-filters" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
             <div style={{ flex: 1, minWidth: '250px', position: 'relative' }}>
               <IconSearch size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-              <input 
-                type="text" 
-                placeholder="Search by name, phone or chapter..." 
+              <input
+                type="text"
+                placeholder="Search by name, phone or chapter..."
                 className="filter-input v2"
                 style={{ paddingLeft: '40px', width: '100%', height: '48px' }}
                 value={search}
                 onChange={e => { setSearch(e.target.value); setPage(1); }}
               />
             </div>
-            <CustomSelect 
-              label="All Chapters" 
-              value={chapterFilter} 
-              options={chapters} 
+            <CustomSelect
+              label="All Chapters"
+              value={chapterFilter}
+              options={chapters}
               onChange={(val) => { setChapterFilter(val); setPage(1); }}
               style={{ width: '220px' }}
             />
 
-            <CustomSelect 
-              label="All Industries (Network)" 
-              value={industryFilter} 
-              options={industries} 
+            <CustomSelect
+              label="All Industries (Network)"
+              value={industryFilter}
+              options={industries}
               onChange={(val) => { setIndustryFilter(val); setPage(1); }}
               style={{ width: '240px' }}
             />
 
-            <CustomSelect 
-              label="All Roles" 
-              value={roleFilter} 
+            <CustomSelect
+              label="All Roles"
+              value={roleFilter}
               options={[
                 { id: 'MEMBER', name: 'Members' },
                 { id: 'PROSPECT', name: 'Prospects' },
                 { id: 'CHAPTER_ADMIN', name: 'Chapter Admins' },
                 { id: 'PARTNER_ADMIN', name: 'Partner Admins' }
-              ]} 
+              ]}
               onChange={(val) => { setRoleFilter(val); setPage(1); }}
               style={{ width: '200px' }}
             />
@@ -1147,13 +1149,12 @@ function MembersPage() {
                   </span>
                 </td>
                 <td>
-                  <span className={`pill ${
-                    user.is_active 
-                      ? 'pill-approved' 
-                      : user.role === 'PROSPECT' 
-                        ? 'pill-awaiting-payment' 
+                  <span className={`pill ${user.is_active
+                      ? 'pill-approved'
+                      : user.role === 'PROSPECT'
+                        ? 'pill-awaiting-payment'
                         : 'pill-rejected'
-                  }`}>
+                    }`}>
                     {user.is_active ? 'Active' : user.role === 'PROSPECT' ? 'Awaiting Payment' : 'Inactive'}
                   </span>
                 </td>
@@ -1180,11 +1181,11 @@ function MembersPage() {
       </div>
 
       {selectedUser && (
-        <UserEditModal 
-          user={selectedUser} 
-          chapters={chapters} 
-          onClose={() => setSelectedUser(null)} 
-          onUpdate={fetchMembers} 
+        <UserEditModal
+          user={selectedUser}
+          chapters={chapters}
+          onClose={() => setSelectedUser(null)}
+          onUpdate={fetchMembers}
         />
       )}
     </section>
@@ -1208,7 +1209,7 @@ function RecordPaymentModal({ onClose, onRecord, users = [] }) {
     e.preventDefault();
     if (!userId) return setError('Please select a user');
     if (!reason) return setError('Please provide a payment reason');
-    
+
     setLoading(true);
     setError('');
     try {
@@ -1234,17 +1235,19 @@ function RecordPaymentModal({ onClose, onRecord, users = [] }) {
       <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 500 }}>
         <div className="modal-header">
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Record Manual Payment</h2>
-          <button type="button" onClick={onClose}><IconX size={20} /></button>
+          <button type="button" className="modal-close-btn" onClick={onClose}>
+            <IconX size={20} />
+          </button>
         </div>
-        <form onSubmit={handleSubmit} style={{ padding: '1.5rem' }}>
+        <form onSubmit={handleSubmit} style={{ padding: '1.5rem 1.5rem 8rem' }}>
           {error && <div className="login-error" style={{ marginBottom: '1rem' }}>{error}</div>}
-          
+
           <div style={{ marginBottom: '1rem' }}>
             <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>Select User</label>
-            <CustomSelect 
-              label="Choose a member/prospect..." 
-              value={userId} 
-              options={users.map(u => ({ id: u.id, name: `${u.full_name} (${u.phone_number})` }))} 
+            <CustomSelect
+              label="Choose a member/prospect..."
+              value={userId}
+              options={users.map(u => ({ id: u.id, name: `${u.full_name} (${u.phone_number})` }))}
               onChange={setUserId}
             />
           </div>
@@ -1256,14 +1259,14 @@ function RecordPaymentModal({ onClose, onRecord, users = [] }) {
             </div>
             <div>
               <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>Type</label>
-              <CustomSelect 
-                label="Select type..." 
-                value={paymentType} 
+              <CustomSelect
+                label="Select type..."
+                value={paymentType}
                 options={[
                   { id: 'membership', name: 'Membership' },
                   { id: 'meeting_fee', name: 'Meeting Fee' },
                   { id: 'renewal', name: 'Renewal' }
-                ]} 
+                ]}
                 onChange={setPaymentType}
               />
             </div>
@@ -1271,22 +1274,22 @@ function RecordPaymentModal({ onClose, onRecord, users = [] }) {
 
           <div className="login-field" style={{ marginBottom: '1rem' }}>
             <label>Payment Reason</label>
-            <input 
-              type="text" 
-              placeholder="e.g. Annual Membership Fee 2025" 
-              value={reason} 
-              onChange={e => setReason(e.target.value)} 
+            <input
+              type="text"
+              placeholder="e.g. Annual Membership Fee 2025"
+              value={reason}
+              onChange={e => setReason(e.target.value)}
               className="filter-input"
-              required 
+              required
             />
           </div>
 
           <div className="login-field" style={{ marginBottom: '1.5rem' }}>
             <label>Admin Notes</label>
-            <textarea 
-              value={notes} 
-              onChange={e => setNotes(e.target.value)} 
-              className="action-textarea" 
+            <textarea
+              value={notes}
+              onChange={e => setNotes(e.target.value)}
+              className="action-textarea"
               placeholder="Internal notes..."
               style={{ minHeight: 80 }}
             />
@@ -1327,11 +1330,13 @@ function UpdatePaymentModal({ payment, onClose, onUpdate }) {
       <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 500 }}>
         <div className="modal-header">
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Update Payment</h2>
-          <button type="button" onClick={onClose}><IconX size={20} /></button>
+          <button type="button" className="modal-close-btn" onClick={onClose}>
+            <IconX size={20} />
+          </button>
         </div>
         <form onSubmit={handleSubmit} style={{ padding: '1.5rem' }}>
           {error && <div className="login-error" style={{ marginBottom: '1rem' }}>{error}</div>}
-          
+
           <div className="login-field" style={{ marginBottom: '1rem' }}>
             <label>Payment Reason</label>
             <input type="text" value={reason} onChange={e => setReason(e.target.value)} className="filter-input" required />
@@ -1339,15 +1344,15 @@ function UpdatePaymentModal({ payment, onClose, onUpdate }) {
 
           <div style={{ marginBottom: '1.5rem' }}>
             <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>Status</label>
-            <CustomSelect 
-              label="Select status..." 
-              value={status} 
+            <CustomSelect
+              label="Select status..."
+              value={status}
               options={[
                 { id: 'pending', name: 'Pending' },
                 { id: 'completed', name: 'Completed' },
                 { id: 'failed', name: 'Failed' },
                 { id: 'refunded', name: 'Refunded' }
-              ]} 
+              ]}
               onChange={setStatus}
             />
           </div>
@@ -1458,17 +1463,17 @@ function PaymentsPage() {
       </div>
 
       {showRecordModal && (
-        <RecordPaymentModal 
-          users={users} 
-          onClose={() => setShowRecordModal(false)} 
-          onRecord={fetchPayments} 
+        <RecordPaymentModal
+          users={users}
+          onClose={() => setShowRecordModal(false)}
+          onRecord={fetchPayments}
         />
       )}
       {editingPayment && (
-        <UpdatePaymentModal 
-          payment={editingPayment} 
-          onClose={() => setEditingPayment(null)} 
-          onUpdate={fetchPayments} 
+        <UpdatePaymentModal
+          payment={editingPayment}
+          onClose={() => setEditingPayment(null)}
+          onUpdate={fetchPayments}
         />
       )}
     </section>
@@ -1510,31 +1515,32 @@ function CreatePartnerModal({ onClose, onCreated }) {
       <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 500 }}>
         <div className="modal-header">
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Add New Partner</h2>
-          <button type="button" onClick={onClose}><IconX size={20} /></button>
+          <button type="button" className="modal-close-btn" onClick={onClose}>
+            <IconX size={20} />
+          </button>
         </div>
-        <form onSubmit={handleSubmit} style={{ padding: '1.5rem' }}>
+        <form onSubmit={handleSubmit} style={{ padding: '1.5rem 1.5rem 8rem' }}>
           {error && <div className="login-error" style={{ marginBottom: '1rem' }}>{error}</div>}
           <div className="login-field">
             <label>Business Name *</label>
-            <input 
-              type="text" 
+            <input
+              type="text"
               className="filter-input v2"
-              required 
+              required
               value={formData.name}
-              onChange={e => setFormData({...formData, name: e.target.value})}
+              onChange={e => setFormData({ ...formData, name: e.target.value })}
             />
           </div>
           <div className="login-field">
             <label>Logo URL (Image Link)</label>
-            <input 
-              type="url" 
+            <input
+              type="url"
               className="filter-input v2"
               placeholder="https://..."
-              value={formData.logo_url}
-              onChange={e => setFormData({...formData, logo_url: e.target.value})}
+              onChange={e => setFormData({ ...formData, logo_url: e.target.value })}
             />
           </div>
-          <div className="login-field">
+            <div className="login-field">
             <label>Website</label>
             <input 
               type="url" 
@@ -1566,7 +1572,8 @@ function CreateOfferModal({ partner, onClose, onCreated }) {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    offer_type: 'offline_qr',
+    offer_type: 'discount',
+    redemption_method: 'qr',
     discount_percentage: 10,
     start_date: new Date().toISOString().split('T')[0],
     end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -1598,7 +1605,9 @@ function CreateOfferModal({ partner, onClose, onCreated }) {
             <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>New Reward Offer</h2>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Adding for {partner.name}</p>
           </div>
-          <button type="button" onClick={onClose}><IconX size={20} /></button>
+          <button type="button" className="modal-close-btn" onClick={onClose}>
+            <IconX size={20} />
+          </button>
         </div>
         <form onSubmit={handleSubmit} style={{ padding: '1.5rem' }}>
           {error && <div className="login-error" style={{ marginBottom: '1rem' }}>{error}</div>}
@@ -1617,26 +1626,40 @@ function CreateOfferModal({ partner, onClose, onCreated }) {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
             <div className="login-field" style={{ marginBottom: 0 }}>
-              <label>Type</label>
+              <label>Deal Category</label>
               <select 
                 className="filter-input v2" 
                 style={{ height: 48 }}
                 value={formData.offer_type}
                 onChange={e => setFormData({...formData, offer_type: e.target.value})}
               >
-                <option value="offline_qr">In-Person (QR Scan)</option>
-                <option value="online_coupon">Online (Coupon Code)</option>
+                <option value="discount">Direct Discount</option>
+                <option value="free_item">Free Item/Gift</option>
+                <option value="service">Complimentary Service</option>
               </select>
             </div>
             <div className="login-field" style={{ marginBottom: 0 }}>
-              <label>Discount %</label>
-              <input 
-                type="number" 
-                className="filter-input v2"
-                value={formData.discount_percentage}
-                onChange={e => setFormData({...formData, discount_percentage: parseInt(e.target.value)})}
-              />
+              <label>Redemption Method</label>
+              <select 
+                className="filter-input v2" 
+                style={{ height: 48 }}
+                value={formData.redemption_method}
+                onChange={e => setFormData({...formData, redemption_method: e.target.value})}
+              >
+                <option value="qr">In-Person (QR Scan)</option>
+                <option value="coupon">Online (Coupon Code)</option>
+              </select>
             </div>
+          </div>
+
+          <div className="login-field">
+            <label>Discount % (if applicable)</label>
+            <input 
+              type="number" 
+              className="filter-input v2"
+              value={formData.discount_percentage}
+              onChange={e => setFormData({...formData, discount_percentage: parseInt(e.target.value)})}
+            />
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
@@ -1734,24 +1757,31 @@ function PartnersPage() {
             {partners.length === 0 ? (
               <div style={{ padding: '3rem', textAlign: 'center', color: '#94a3b8' }}>No partners registered yet.</div>
             ) : partners.map(partner => (
-              <div key={partner.id} className="partner-card-row" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', padding: '1.5rem', border: '1px solid #e2e8f0', borderRadius: '16px', marginBottom: '1rem', background: 'white' }}>
+              <div key={partner.id} className="partner-card-row" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', padding: '1.5rem', border: '1px solid #e2e8f0', borderRadius: '12px', marginBottom: '1rem', background: 'white' }}>
                 <div style={{ width: 64, height: 64, borderRadius: '12px', background: '#f8fafc', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e2e8f0' }}>
                   {partner.logo_url ? <img src={partner.logo_url} style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : <IconBuildingStore size={24} color="#94a3b8" />}
                 </div>
                 <div style={{ flex: 1 }}>
                   <h4 style={{ fontSize: '1.1rem', fontWeight: 700 }}>{partner.name}</h4>
                   <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>{partner.offers?.length || 0} active rewards</p>
+                  {partner.website && <a href={partner.website} target="_blank" rel="noreferrer" style={{ fontSize: '0.8rem', color: 'var(--secondary)', textDecoration: 'none', marginTop: '0.25rem', display: 'inline-block' }}>{partner.website}</a>}
                 </div>
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
-                  <button 
-                    className="view-detail-btn" 
-                    title="Add New Reward" 
+                  <button
+                    className="view-detail-btn"
+                    title="Add New Reward"
                     style={{ background: '#f0fdf4', color: '#059669', borderColor: '#bbf7d0' }}
                     onClick={() => setAddingOfferTo(partner)}
                   >
                     <IconPlus size={20} />
                   </button>
-                  <button className="view-detail-btn" title="Edit Partner"><IconSettings size={20} /></button>
+                  <button
+                    className="view-detail-btn"
+                    title="Edit Partner"
+                    onClick={() => alert(`Edit functionality for "${partner.name}" coming soon. Use the API to update partner details directly.`)}
+                  >
+                    <IconSettings size={20} />
+                  </button>
                 </div>
               </div>
             ))}
@@ -1760,21 +1790,480 @@ function PartnersPage() {
       </div>
 
       {showAddPartner && (
-        <CreatePartnerModal 
-          onClose={() => setShowAddPartner(false)} 
-          onCreated={() => { setShowAddPartner(false); fetchPartners(); }} 
+        <CreatePartnerModal
+          onClose={() => setShowAddPartner(false)}
+          onCreated={() => { setShowAddPartner(false); fetchPartners(); }}
         />
       )}
       {addingOfferTo && (
-        <CreateOfferModal 
-          partner={addingOfferTo} 
-          onClose={() => setAddingOfferTo(null)} 
-          onCreated={() => { setAddingOfferTo(null); fetchPartners(); }} 
+        <CreateOfferModal
+          partner={addingOfferTo}
+          onClose={() => setAddingOfferTo(null)}
+          onCreated={() => { setAddingOfferTo(null); fetchPartners(); }}
         />
       )}
     </section>
   );
 }
+
+
+// ── Referrals Page ────────────────────────────────────────────────────────
+function ReferralsPage() {
+  const [referrals, setReferrals] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [total, setTotal] = useState(0);
+  const [pages, setPages] = useState(0);
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+
+  const fetchReferrals = useCallback(async () => {
+    setLoading(true);
+    try {
+      const result = await api.listAllReferrals({ 
+        page, 
+        limit: 15,
+        search,
+        status: statusFilter
+      });
+      // Handle both old array response and new paginated object response
+      if (result.referrals) {
+        setReferrals(result.referrals);
+        setTotal(result.total);
+        setPages(Math.ceil(result.total / (result.page_size || 15)));
+      } else {
+        setReferrals(result || []);
+        setTotal(result?.length || 0);
+        setPages(1);
+      }
+    } catch (err) {
+      console.error('Failed to load referrals:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, search, statusFilter]);
+  
+  useEffect(() => { fetchReferrals(); }, [fetchReferrals]);
+  
+  return (
+    <section className="dashboard-body">
+      <div className="page-title-wrap">
+        <h1 className="page-title">Referral Pipeline</h1>
+        <p style={{ color: 'var(--text-secondary)', marginTop: '0.4rem', fontWeight: 500 }}>
+          Monitoring business exchanges and conversion velocity across the network.
+        </p>
+      </div>
+
+      <div className="data-section">
+        <div className="section-head" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Global Referral Stream</h3>
+            <button className="btn-primary" onClick={() => { setPage(1); fetchReferrals(); }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <IconRefresh size={18} /> Refresh
+            </button>
+          </div>
+
+          <div className="directory-filters" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+            <div style={{ flex: 1, minWidth: '300px', position: 'relative' }}>
+              <IconSearch size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+              <input
+                type="text"
+                placeholder="Search lead name, description or member..."
+                className="filter-input v2"
+                style={{ paddingLeft: '40px', width: '100%', height: '48px' }}
+                value={search}
+                onChange={e => { setSearch(e.target.value); setPage(1); }}
+              />
+            </div>
+
+            <CustomSelect
+              label="All Statuses"
+              value={statusFilter}
+              options={[
+                { id: 'submitted', name: 'Submitted' },
+                { id: 'contacted', name: 'Contacted' },
+                { id: 'negotiation', name: 'Negotiation' },
+                { id: 'in_progress', name: 'In Progress' },
+                { id: 'success', name: 'Closed Won' },
+                { id: 'closed_lost', name: 'Closed Lost' }
+              ]}
+              onChange={(val) => { setStatusFilter(val); setPage(1); }}
+              style={{ width: '220px' }}
+            />
+          </div>
+        </div>
+
+        <table className="modern-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>From</th>
+              <th>To</th>
+              <th>Lead Name</th>
+              <th>Value</th>
+              <th>Status</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr><td colSpan={7} style={{ textAlign: 'center', padding: '3rem' }}>Loading referrals...</td></tr>
+            ) : !referrals || referrals.length === 0 ? (
+              <tr><td colSpan={7} style={{ textAlign: 'center', padding: '3rem' }}>No referrals found.</td></tr>
+            ) : referrals.map((ref, idx) => (
+              <tr key={ref.id || idx}>
+                <td><span className="id-badge">REF-{String(ref.id || idx).slice(0, 4)}</span></td>
+                <td style={{ fontWeight: 600 }}>{ref.from_user?.full_name || '—'}</td>
+                <td>{ref.target_user?.full_name || '—'}</td>
+                <td style={{ fontWeight: 600 }}>{ref.lead_name || '—'}</td>
+                <td style={{ fontWeight: 700 }}>{ref.actual_value ? `LKR ${ref.actual_value.toLocaleString()}` : '—'}</td>
+                <td>
+                  <span className={`pill ${ref.status === 'success' ? 'pill-approved' : ref.status === 'closed_lost' ? 'pill-rejected' : 'pill-pending'}`}>
+                    {ref.status || 'pending'}
+                  </span>
+                </td>
+                <td style={{ color: 'var(--text-secondary)' }}>{new Date(ref.created_at).toLocaleDateString()}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {/* Pagination */}
+        <div style={{ padding: '1.25rem 2.5rem', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+            {total > 0 ? `Showing page ${page} of ${pages} · ${total} referrals` : 'No results matching criteria'}
+          </p>
+          {pages > 1 && (
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button className="pagination-btn" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
+                <IconChevronLeft size={16} /> Prev
+              </button>
+              <button className="pagination-btn" disabled={page >= pages} onClick={() => setPage(p => p + 1)}>
+                Next <IconChevronRight size={16} />
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ── Revenue Page ──────────────────────────────────────────────────────────
+function RevenuePage() {
+  const { data: overview } = useApi(api.getAdminOverview, []);
+  const { data: payments, loading: paymentsLoading } = useApi(api.listPayments, []);
+
+  return (
+    <section className="dashboard-body">
+      <div className="page-title-wrap">
+        <h1 className="page-title">Revenue & ROI Analysis</h1>
+        <p style={{ color: 'var(--text-secondary)', marginTop: '0.4rem', fontWeight: 500 }}>
+          Financial health and network growth metrics.
+        </p>
+      </div>
+
+      <div className="stat-grid" style={{ marginBottom: '2rem' }}>
+        <StatCard title="TOTAL REVENUE" value={formatCurrency(overview?.total_value)} icon={IconCoin} color="#059669" />
+        <StatCard title="PENDING PAYMENTS" value={payments?.filter(p => p.status === 'pending').length || 0} icon={IconClock} color="#f59e0b" />
+        <StatCard title="AVG CONVERSION" value={overview?.conversion_rate ? `${overview.conversion_rate}%` : '—'} icon={IconChartBar} color="#2563eb" />
+      </div>
+
+      <div className="data-section">
+        <div className="section-head">
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Recent Financial Activity</h3>
+        </div>
+        <table className="modern-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Member</th>
+              <th>Type</th>
+              <th>Amount</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {paymentsLoading ? (
+              <tr><td colSpan={5} style={{ textAlign: 'center', padding: '2rem' }}>Loading payments...</td></tr>
+            ) : (Array.isArray(payments) ? payments : payments?.data || []).slice(0, 10).map(p => (
+              <tr key={p.id}>
+                <td>{new Date(p.created_at).toLocaleDateString()}</td>
+                <td style={{ fontWeight: 600 }}>{p.user_name}</td>
+                <td>{p.payment_type}</td>
+                <td style={{ fontWeight: 700 }}>{formatCurrency(p.amount)}</td>
+                <td><span className={`pill ${p.status === 'completed' ? 'pill-approved' : 'pill-pending'}`}>{p.status}</span></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+// ── Toast System ───────────────────────────────────────────────────────────
+const useToast = () => {
+  const [toasts, setToasts] = useState([]);
+
+  const showToast = useCallback((message, type = 'success') => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 4000);
+  }, []);
+
+  return { toasts, showToast };
+};
+
+const ToastContainer = ({ toasts }) => {
+  const getColor = (type) => {
+    switch(type) {
+      case 'error': return '#ef4444';
+      case 'warning': return '#f59e0b';
+      default: return '#059669';
+    }
+  };
+
+  return (
+    <div className="toast-container">
+      {toasts.map(t => (
+        <div key={t.id} className="toast" style={{ '--toast-color': getColor(t.type) }}>
+          {t.type === 'error' ? <IconAlertCircle color={getColor(t.type)} size={20} /> : <IconCheck color={getColor(t.type)} size={20} />}
+          <span style={{ fontWeight: 600, fontSize: '0.875rem' }}>{t.message}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// ── Change Password Modal ───────────────────────────────────────────────────
+function ChangePasswordModal({ onClose, showToast }) {
+  const [formData, setFormData] = useState({ current_password: '', new_password: '', confirm_password: '' });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (formData.new_password !== formData.confirm_password) {
+      setError('Passwords do not match');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      await api.changePassword(formData);
+      showToast('Password changed successfully');
+      onClose();
+    } catch (err) {
+      setError(err.message || 'Failed to change password');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 400 }}>
+        <div className="modal-header">
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Change Password</h2>
+          <button type="button" className="modal-close-btn" onClick={onClose}>
+            <IconX size={20} />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} style={{ padding: '1.5rem' }}>
+          {error && <div className="login-error" style={{ marginBottom: '1rem' }}>{error}</div>}
+          <div className="login-field">
+            <label>Current Password</label>
+            <div className="login-input-wrap">
+               <IconLock size={18} className="login-input-icon" />
+               <input type="password" value={formData.current_password} onChange={e => setFormData({...formData, current_password: e.target.value})} required placeholder="••••••••" style={{ paddingLeft: '2.75rem' }} />
+            </div>
+          </div>
+          <div className="login-field">
+            <label>New Password</label>
+             <div className="login-input-wrap">
+               <IconLock size={18} className="login-input-icon" />
+               <input type="password" value={formData.new_password} onChange={e => setFormData({...formData, new_password: e.target.value})} required placeholder="••••••••" style={{ paddingLeft: '2.75rem' }} />
+            </div>
+          </div>
+          <div className="login-field">
+            <label>Confirm New Password</label>
+             <div className="login-input-wrap">
+               <IconLock size={18} className="login-input-icon" />
+               <input type="password" value={formData.confirm_password} onChange={e => setFormData({...formData, confirm_password: e.target.value})} required placeholder="••••••••" style={{ paddingLeft: '2.75rem' }} />
+            </div>
+          </div>
+          <button type="submit" className="login-btn" disabled={loading}>
+            {loading ? 'Changing...' : 'Update Password'}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ── Notification Panel ───────────────────────────────────────────────────────
+const getNotificationIcon = (type) => {
+  switch (type) {
+    case 'NEW_APPLICATION': return { icon: IconClipboardList, color: '#2563eb' };
+    case 'APPLICATION_APPROVED': return { icon: IconUserCheck, color: '#059669' };
+    case 'PAYMENT_RECEIVED': return { icon: IconCoin, color: '#059669' };
+    case 'MEETING_REMINDER': return { icon: IconClock, color: '#f59e0b' };
+    case 'SYSTEM_ALERT': return { icon: IconAlertCircle, color: '#ef4444' };
+    default: return { icon: IconBell, color: '#64748b' };
+  }
+};
+
+function NotificationPanel({ notifications, onDismiss, onMarkAllRead, onClose }) {
+  return (
+    <div className="notifications-panel" onClick={e => e.stopPropagation()}>
+      <div className="notifications-header">
+        <h3 style={{ fontSize: '1rem', fontWeight: 800 }}>Notifications</h3>
+        <button 
+          onClick={onMarkAllRead}
+          style={{ background: 'none', border: 'none', color: 'var(--secondary)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+        >
+          Mark all as read
+        </button>
+      </div>
+      <div className="notifications-list">
+        {notifications.length === 0 ? (
+          <div style={{ padding: '3rem', textAlign: 'center', color: '#94a3b8' }}>
+            <IconBell size={32} stroke={1.5} style={{ marginBottom: '0.75rem', opacity: 0.5 }} />
+            <p style={{ fontSize: '0.875rem', fontWeight: 600 }}>All caught up!</p>
+          </div>
+        ) : notifications.map(n => {
+          const { icon: NotifIcon, color: iconColor } = getNotificationIcon(n.notification_type);
+          return (
+            <div key={n.id} className={`notification-item ${!n.is_read ? 'unread' : ''}`} onClick={() => onDismiss(n.id)}>
+              <div className="notif-icon-wrap" style={{ background: iconColor + '15', color: iconColor }}>
+                <NotifIcon size={20} />
+              </div>
+              <div className="notif-content">
+                <div className="notif-title">{n.title}</div>
+                <div className="notif-desc">{n.body}</div>
+                <div className="notif-time">{n.sent_at ? new Date(n.sent_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── Settings Page ─────────────────────────────────────────────────────────
+function SettingsPage({ adminUser, onShowChangePassword, showToast }) {
+  const [notifPreferences, setNotifPreferences] = useState({
+    applications: true,
+    payments: true,
+    reminders: true,
+    security: false
+  });
+
+  const toggleNotif = (key) => {
+    setNotifPreferences(prev => ({ ...prev, [key]: !prev[key] }));
+    showToast(`Preference updated for ${key}`);
+  };
+
+  return (
+    <section className="dashboard-body">
+      <div className="page-title-wrap">
+        <h1 className="page-title">Global Settings</h1>
+        <p style={{ color: 'var(--text-secondary)', marginTop: '0.4rem', fontWeight: 500 }}>
+          Manage your administrative profile and platform preferences.
+        </p>
+      </div>
+
+      <div className="settings-grid">
+        <div className="settings-section" style={{ flex: 1 }}>
+          <div className="settings-header">
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <IconUser size={22} color="var(--secondary)" /> My Profile
+            </h3>
+          </div>
+          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+             <div style={{ width: 80, height: 80, borderRadius: 20, background: 'linear-gradient(135deg, var(--primary), #3b82f6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 800, fontSize: '1.5rem', margin: '0 auto 1rem', border: '4px solid white', boxShadow: 'var(--shadow)' }}>
+                {adminUser?.full_name ? adminUser.full_name.split(' ').map(n => n[0]).join('').toUpperCase() : 'AD'}
+              </div>
+              <h4 style={{ fontSize: '1.25rem', fontWeight: 800 }}>{adminUser?.full_name}</h4>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>{adminUser?.role} • {adminUser?.email}</p>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+             <button className="btn-primary" onClick={onShowChangePassword} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                <IconLock size={18} /> Change Account Password
+             </button>
+             <button className="btn-primary" style={{ background: '#f1f5f9', color: 'var(--text-primary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                <IconMail size={18} /> Update Contact Email
+             </button>
+          </div>
+        </div>
+
+        <div className="settings-section" style={{ flex: 1 }}>
+          <div className="settings-header">
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <IconBell size={22} color="var(--accent)" /> Notification Preferences
+            </h3>
+          </div>
+          <div className="settings-row">
+            <div>
+              <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>New Applications</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Notify when a potential member submits application</div>
+            </div>
+            <label className="toggle-switch">
+              <input type="checkbox" checked={notifPreferences.applications} onChange={() => toggleNotif('applications')} />
+              <span className="slider"></span>
+            </label>
+          </div>
+          <div className="settings-row">
+            <div>
+              <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>Payment Alerts</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Real-time updates on membership and renewal fees</div>
+            </div>
+            <label className="toggle-switch">
+              <input type="checkbox" checked={notifPreferences.payments} onChange={() => toggleNotif('payments')} />
+              <span className="slider"></span>
+            </label>
+          </div>
+          <div className="settings-row">
+            <div>
+              <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>Meeting Reminders</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Automated nudges for upcoming chapter fit-calls</div>
+            </div>
+            <label className="toggle-switch">
+              <input type="checkbox" checked={notifPreferences.reminders} onChange={() => toggleNotif('reminders')} />
+              <span className="slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ── Security Logs Page ────────────────────────────────────────────────────
+function SecurityLogsPage() {
+  return (
+    <section className="dashboard-body">
+      <div className="page-title-wrap">
+        <h1 className="page-title">Security & Audit Logs</h1>
+        <p style={{ color: 'var(--text-secondary)', marginTop: '0.4rem', fontWeight: 500 }}>
+          Timeline of critical administrative actions and system events.
+        </p>
+      </div>
+      <div className="data-section">
+        <div style={{ padding: '4rem', textAlign: 'center' }}>
+          <IconLock size={48} color="#cbd5e1" style={{ marginBottom: '1rem' }} />
+          <h3 style={{ color: 'var(--text-secondary)' }}>Audit Logging Module</h3>
+          <p style={{ color: '#94a3b8', marginTop: '0.5rem' }}>Real-time audit logs are currently being initialized for the network.</p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 
 
 // ── Main App ────────────────────────────────────────────────────────────────
@@ -1783,18 +2272,55 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => !!localStorage.getItem('access_token'));
   const [adminUser, setAdminUser] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const { toasts, showToast } = useToast();
+  
+  // Notification State
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const fetchNotifications = useCallback(async () => {
+    if (!isAuthenticated) return;
+    try {
+      const data = await api.listNotifications();
+      // data is { notifications: [], total_unread: number } from backend
+      setNotifications(data.notifications || []);
+      setUnreadCount(data.total_unread || 0);
+    } catch (err) {
+      console.error('Failed to fetch notifications:', err);
+    }
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    fetchNotifications();
+    // Poll for new notifications every 60 seconds
+    const interval = setInterval(fetchNotifications, 60000);
+    return () => clearInterval(interval);
+  }, [fetchNotifications]);
+
+  useEffect(() => {
+    // If we have a token but no user data, try to fetch current user
+    if (isAuthenticated && !adminUser) {
+      api.getCurrentUser().then(data => setAdminUser(data)).catch(() => handleLogout());
+    }
+  }, [isAuthenticated, adminUser]);
+
   const { data: overview, loading: overviewLoading, error: overviewError } = useApi(
     isAuthenticated ? api.getAdminOverview : () => Promise.resolve(null),
     [isAuthenticated]
   );
+  
   const { data: referrals, loading: referralsLoading } = useApi(
-    isAuthenticated ? api.listReferrals : () => Promise.resolve(null),
+    isAuthenticated ? api.listAllReferrals : () => Promise.resolve(null),
     [isAuthenticated]
   );
 
   const handleLogin = (user) => {
     setAdminUser(user);
     setIsAuthenticated(true);
+    showToast(`Welcome back, ${user.full_name || 'Admin'}!`);
   };
 
   const handleLogout = () => {
@@ -1802,38 +2328,46 @@ export default function App() {
     localStorage.removeItem('refresh_token');
     setIsAuthenticated(false);
     setAdminUser(null);
+    setShowProfileMenu(false);
+  };
+
+  const dismissNotification = async (id) => {
+    try {
+      await api.markNotificationRead(id);
+      // Optimistic update
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch (err) {
+      console.error('Failed to mark notification read:', err);
+    }
+  };
+
+  const markAllRead = async () => {
+    try {
+      await api.markAllNotificationsRead();
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      setUnreadCount(0);
+      showToast('All notifications marked as read');
+    } catch (err) {
+      console.error('Failed to mark all notifications read:', err);
+    }
   };
 
   if (!isAuthenticated) {
     return <LoginPage onLogin={handleLogin} />;
   }
 
-  if (overviewLoading && activeTab === 'overview') {
-    return (
-      <div className="loading-state" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontSize: '1.1rem', fontWeight: 600, color: '#64748b', background: '#f8fafc' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ width: 40, height: 40, border: '3px solid #e2e8f0', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 1rem' }}></div>
-          Loading dashboard...
-        </div>
-      </div>
-    );
-  }
-
-  const displayReferrals = referrals || [];
 
   const renderContent = () => {
-    if (activeTab === 'applications') {
-      return <ApplicationsPage />;
-    }
-    if (activeTab === 'members') {
-      return <MembersPage />;
-    }
-    if (activeTab === 'payments') {
-      return <PaymentsPage />;
-    }
-    if (activeTab === 'rewards') {
-      return <PartnersPage />;
-    }
+    const commonProps = { adminUser, showToast, onShowChangePassword: () => setShowChangePassword(true) };
+    if (activeTab === 'applications') return <ApplicationsPage />;
+    if (activeTab === 'members') return <MembersPage />;
+    if (activeTab === 'payments') return <PaymentsPage />;
+    if (activeTab === 'rewards') return <PartnersPage />;
+    if (activeTab === 'referrals') return <ReferralsPage />;
+    if (activeTab === 'revenue') return <RevenuePage />;
+    if (activeTab === 'settings') return <SettingsPage {...commonProps} />;
+    if (activeTab === 'notifications') return <SecurityLogsPage />;
 
     // Default: Overview dashboard
     return (
@@ -1851,8 +2385,8 @@ export default function App() {
           </div>
         ) : (
           <div className="stat-grid">
-            <StatCard title="TOTAL REVENUE (ROI)" value={formatCurrency(overview?.total_value)} icon={IconCoin} trend={12.4} color="#059669" />
-            <StatCard title="ACTIVE MEMBER BASE" value={overview?.total_members?.toLocaleString() ?? '—'} icon={IconUsers} trend={5.2} color="#2563eb" />
+            <StatCard title="TOTAL REVENUE (ROI)" value={formatCurrency(overview?.total_value)} icon={IconCoin} color="#059669" />
+            <StatCard title="ACTIVE MEMBER BASE" value={overview?.total_members?.toLocaleString() ?? '—'} icon={IconUsers} color="#2563eb" />
             <StatCard title="REFERRAL VELOCITY" value={overview?.conversion_rate != null ? `${overview.conversion_rate}%` : '—'} icon={IconHierarchy2} color="#f59e0b" />
             <StatCard title="TOTAL REFERRALS" value={overview?.total_referrals?.toLocaleString() ?? '—'} icon={IconClock} color="#7c3aed" />
           </div>
@@ -1865,11 +2399,26 @@ export default function App() {
               <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>Insights into the latest cross-chapter business exchanges.</p>
             </div>
             <div style={{ display: 'flex', gap: '1rem' }}>
-              <button className="btn-primary" style={{ background: 'white', color: 'var(--text-primary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <button 
+                className="btn-primary" 
+                style={{ background: 'white', color: 'var(--text-primary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                onClick={() => alert('Search filters are available in the dedicated Referrals and Directory pages.')}
+              >
                 <IconFilter size={18} />
                 Advanced Filtering
               </button>
-              <button className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <button 
+                className="btn-primary" 
+                style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}
+                onClick={async () => {
+                  try {
+                    await api.exportData();
+                    showToast('Data report export started');
+                  } catch (e) {
+                    showToast('Export failed: ' + e.message, 'error');
+                  }
+                }}
+              >
                 <IconFileExport size={18} />
                 Export Data Reports
               </button>
@@ -1891,14 +2440,14 @@ export default function App() {
             <tbody>
               {referralsLoading ? (
                 <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>Loading referrals...</td></tr>
-              ) : displayReferrals.length === 0 ? (
+              ) : (!referrals || (Array.isArray(referrals) ? referrals.length === 0 : !referrals.referrals || referrals.referrals.length === 0)) ? (
                 <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>No referral data available</td></tr>
-              ) : displayReferrals.map((ref, idx) => (
+              ) : (Array.isArray(referrals) ? referrals : referrals.referrals).slice(0, 8).map((ref, idx) => (
                 <tr key={ref.id || idx}>
                   <td><span className="id-badge">{ref.id ? `REF-${String(ref.id).slice(0, 4)}` : `REF-${idx}`}</span></td>
-                  <td style={{ fontWeight: 600 }}>{ref.from_member_name || '—'}</td>
-                  <td>{ref.to_member_name || '—'}</td>
-                  <td style={{ fontWeight: 700 }}>{ref.estimated_value ? formatCurrency(ref.estimated_value) : '—'}</td>
+                  <td style={{ fontWeight: 600 }}>{ref.from_user?.full_name || '—'}</td>
+                  <td>{ref.target_user?.full_name || '—'}</td>
+                  <td style={{ fontWeight: 700 }}>{ref.actual_value ? formatCurrency(ref.actual_value) : '—'}</td>
                   <td>
                     <span className={`pill ${ref.status === 'closed_won' ? 'pill-completed' : 'pill-pending'}`}>
                       {ref.status || 'Unknown'}
@@ -1910,14 +2459,17 @@ export default function App() {
               ))}
             </tbody>
           </table>
-          
+
           <div style={{ padding: '1.5rem 2.5rem', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-             <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
-               {displayReferrals.length > 0 ? `Showing ${displayReferrals.length} entries` : 'No records available'}
-             </p>
-             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', cursor: 'pointer', color: 'var(--secondary)', fontWeight: 700, fontSize: '0.875rem' }}>
-               See Full Global Timeline <IconChevronRight size={18} />
-             </div>
+            <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+              {(Array.isArray(referrals) ? referrals?.length : referrals?.referrals?.length) > 0 ? `Showing latest entries` : 'No records available'}
+            </p>
+            <button
+              onClick={() => setActiveTab('referrals')}
+              style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', cursor: 'pointer', color: 'var(--secondary)', fontWeight: 700, fontSize: '0.875rem', background: 'none', border: 'none', fontFamily: 'inherit' }}
+            >
+              See Full Global Timeline <IconChevronRight size={18} />
+            </button>
           </div>
         </div>
       </section>
@@ -1925,24 +2477,24 @@ export default function App() {
   };
 
   return (
-    <div className="app-wrapper">
+    <div className="app-wrapper" onClick={() => { setShowNotifications(false); setShowProfileMenu(false); }}>
+      <ToastContainer toasts={toasts} />
+      {showChangePassword && <ChangePasswordModal onClose={() => setShowChangePassword(false)} showToast={showToast} />}
+
       {/* Premium Sidebar */}
       <aside className="sidebar">
         <div className="logo-section">
-          <div className="logo-icon-wrap" style={{ background: 'transparent' }}>
-            <img src="/logo.png" alt="PBN Logo" style={{ width: '40px', height: '40px', objectFit: 'contain' }} />
-          </div>
           <span className="logo-text">Prime <span style={{ color: 'var(--accent)', WebkitTextFillColor: 'var(--accent)' }}>Business</span> Network</span>
         </div>
 
         <nav className="nav-container">
           {MENU_GROUPS.map((group, i) => (
             <div key={i} className="nav-group">
-              <p className="nav-label">{group.label}</p>
               <ul className="nav-list">
                 {group.links.map(link => (
-                  <li 
-                    key={link.id} 
+                  <li
+                    key={link.id}
+                    data-label={link.label}
                     className={`nav-item ${activeTab === link.id ? 'active' : ''}`}
                     onClick={() => setActiveTab(link.id)}
                   >
@@ -1955,29 +2507,27 @@ export default function App() {
           ))}
         </nav>
 
-        <div className="sidebar-footer" style={{ marginTop: 'auto', padding: '1.25rem' }}>
-          <button 
+        <div className="sidebar-footer" style={{ marginTop: 'auto', padding: '0.5rem' }}>
+          <button
             onClick={handleLogout}
-            style={{ 
-              width: '100%', 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '0.75rem', 
-              padding: '0.875rem 1rem', 
-              background: 'rgba(239, 68, 68, 0.1)', 
-              color: '#f87171', 
-              border: '1px solid rgba(239, 68, 68, 0.2)', 
-              borderRadius: '12px', 
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              padding: '0.875rem 1rem',
+              background: 'rgba(239, 68, 68, 0.1)',
+              color: '#f87171',
+              border: '1px solid rgba(239, 68, 68, 0.2)',
+              borderRadius: '12px',
               cursor: 'pointer',
               fontSize: '0.875rem',
               fontWeight: 700,
               transition: 'all 0.2s'
             }}
-            onMouseOver={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'}
-            onMouseOut={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
           >
             <IconLogout size={18} stroke={2} />
-            Sign Out
+            <span>Sign Out</span>
           </button>
         </div>
       </aside>
@@ -1991,15 +2541,58 @@ export default function App() {
           </div>
 
           <div className="header-actions">
-            <div className="action-btn"><IconBell size={20} /></div>
-            <div className="action-btn"><IconSettings size={20} /></div>
+            <div className="profile-dropdown-container">
+              <div 
+                className="action-btn" 
+                onClick={(e) => { e.stopPropagation(); setShowNotifications(!showNotifications); setShowProfileMenu(false); }}
+                style={{ position: 'relative' }}
+              >
+                <IconBell size={20} />
+                {unreadCount > 0 && <span className="notification-badge">{unreadCount}</span>}
+              </div>
+              {showNotifications && (
+                <NotificationPanel 
+                  notifications={notifications} 
+                  onDismiss={dismissNotification}
+                  onMarkAllRead={markAllRead}
+                  onClose={() => setShowNotifications(false)}
+                />
+              )}
+            </div>
+
+            <div className="action-btn" onClick={() => setActiveTab('settings')}><IconSettings size={20} /></div>
+            
             <div style={{ width: '1px', height: '24px', background: '#e2e8f0', margin: '0 0.5rem' }}></div>
-            <div className="header-profile" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
-               <div style={{ textAlign: 'right' }}>
-                 <p style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>Deepthi Perera</p>
-                 <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Account Manager</p>
-               </div>
-               <div style={{ width: 42, height: 42, borderRadius: 12, background: 'linear-gradient(135deg, var(--primary), #3b82f6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 800, fontSize: '0.9rem', border: '2px solid white', boxShadow: 'var(--shadow)' }}>DP</div>
+            
+            <div className="profile-dropdown-container">
+              <div 
+                className="header-profile" 
+                onClick={(e) => { e.stopPropagation(); setShowProfileMenu(!showProfileMenu); setShowNotifications(false); }}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}
+              >
+                <div style={{ textAlign: 'right' }}>
+                  <p style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>{adminUser?.full_name || 'Admin User'}</p>
+                  <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>{adminUser?.role || 'Administrator'}</p>
+                </div>
+                <div style={{ width: 42, height: 42, borderRadius: 12, background: 'linear-gradient(135deg, var(--primary), #3b82f6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 800, fontSize: '0.9rem', border: '2px solid white', boxShadow: 'var(--shadow)' }}>
+                  {adminUser?.full_name ? adminUser.full_name.split(' ').map(n => n[0]).join('').toUpperCase() : 'AD'}
+                </div>
+              </div>
+
+              {showProfileMenu && (
+                <div className="profile-menu" onClick={e => e.stopPropagation()}>
+                  <div className="profile-menu-item" onClick={() => { setActiveTab('settings'); setShowProfileMenu(false); }}>
+                    <IconUser size={18} /> My Profile
+                  </div>
+                  <div className="profile-menu-item" onClick={() => { setShowChangePassword(true); setShowProfileMenu(false); }}>
+                    <IconLock size={18} /> Change Password
+                  </div>
+                  <div style={{ height: '1px', background: 'var(--border)', margin: '0.5rem 0' }}></div>
+                  <div className="profile-menu-item danger" onClick={handleLogout}>
+                    <IconLogout size={18} /> Sign Out
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </header>

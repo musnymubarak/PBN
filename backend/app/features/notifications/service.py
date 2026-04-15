@@ -140,10 +140,8 @@ async def broadcast_notification(
 
             # 2. Persistence and Dispatch
             if _init_firebase():
-                tokens = [u.fcm_token for u in users]
                 try:
-                    # Create notifications in DB for everyone
-                    # (Note: For massive scale, this should be chunked/queued)
+                    # 2a. Create notifications in DB for everyone
                     for u in users:
                         notif = Notification(
                             user_id=u.id,
@@ -155,21 +153,36 @@ async def broadcast_notification(
                             is_read=False,
                         )
                         session.add(notif)
-                    
                     await session.commit()
 
-                    # FCM Multicast
-                    message = messaging.MulticastMessage(
-                        notification=messaging.Notification(title=title, body=body),
-                        data=data if data else {},
-                        tokens=tokens,
-                    )
-                    response = messaging.send_multicast(message)
-                    logger.info(f"Broadcast [DISPATCHED]: {response.success_count} success, {response.failure_count} failure")
+                    # 2b. Individual Dispatch Loop (Proven reliability over Multicast)
+                    success_count = 0
+                    failure_count = 0
+                    
+                    for u in users:
+                        # Skip mock or obviously invalid tokens
+                        token = u.fcm_token
+                        if not token or len(token) < 20 or token.startswith('mock-'):
+                            continue
+
+                        try:
+                            message = messaging.Message(
+                                notification=messaging.Notification(title=title, body=body),
+                                data=data if data else {},
+                                token=token,
+                            )
+                            messaging.send(message)
+                            success_count += 1
+                        except Exception as e:
+                            failure_count += 1
+                            logger.warning(f"Broadcast item failed for user {u.id}: {e}")
+                    
+                    logger.info(f"Broadcast [COMPLETED]: {success_count} success, {failure_count} failure")
+
                 except Exception as e:
-                    logger.error(f"Broadcast [FAILED]: {e}")
+                    logger.error(f"Broadcast [FAILED] during processing: {e}")
             else:
-                logger.info(f"Broadcast [STUB]: '{title}' to {len(users)} users.")
+                logger.info(f"Broadcast [STUB]: '{title}' to {len(users)} users (Firebase not init).")
 
         except Exception as e:
             await session.rollback()

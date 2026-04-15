@@ -7,6 +7,10 @@ from __future__ import annotations
 import enum
 import uuid
 from datetime import date, datetime
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.user import User
 
 from sqlalchemy import (
     Boolean,
@@ -69,6 +73,11 @@ class OfferType(str, enum.Enum):
     SERVICE = "service"
 
 
+class RedemptionMethod(str, enum.Enum):
+    qr = "qr"
+    coupon = "coupon"
+
+
 class TokenStatus(str, enum.Enum):
     PENDING = "pending"
     CONFIRMED = "confirmed"
@@ -92,6 +101,11 @@ class Offer(Base, TimestampMixin):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     offer_type: Mapped[OfferType] = mapped_column(
         Enum(OfferType, name="offer_type", create_type=True), nullable=False
+    )
+    redemption_method: Mapped[RedemptionMethod] = mapped_column(
+        Enum(RedemptionMethod, name="redemption_method", create_type=True), 
+        nullable=False, 
+        default=RedemptionMethod.qr
     )
     discount_percentage: Mapped[int | None] = mapped_column(nullable=True)
     start_date: Mapped[date] = mapped_column(Date, nullable=False)

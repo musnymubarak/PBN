@@ -22,4 +22,10 @@ class ChapterService {
     final list = _api.unwrap(res) as List<dynamic>;
     return list.map((j) => Member.fromJson(j)).toList();
   }
+
+  Future<List<Member>> getAllMembers() async {
+    final res = await _api.get('/chapters/members/all');
+    final list = _api.unwrap(res) as List<dynamic>;
+    return list.map((j) => Member.fromJson(j)).toList();
+  }
 }

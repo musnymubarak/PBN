@@ -26,10 +26,19 @@ async function apiFetch(path, options = {}) {
 
 export const api = {
   getAdminOverview: () => apiFetch('/admin/analytics/overview'),
+  getCurrentUser: () => apiFetch('/auth/me'),
   listUsers: (params = {}) => apiFetch(`/admin/users?${new URLSearchParams(params)}`),
   listIndustryCategories: () => apiFetch('/industry-categories'),
   listIndustries: () => apiFetch('/admin/industries'),
   listReferrals: () => apiFetch('/referrals/my/given'),
+  listAllReferrals: (params = {}) => {
+    const qs = new URLSearchParams();
+    if (params.page) qs.append('page', params.page);
+    if (params.limit) qs.append('page_size', params.limit);
+    if (params.search) qs.append('search', params.search);
+    if (params.status) qs.append('status', params.status);
+    return apiFetch(`/admin/referrals?${qs.toString()}`).catch(() => apiFetch('/referrals/my/given'));
+  },
   listPayments: (params = {}) => apiFetch(`/admin/payments?${new URLSearchParams(params)}`),
   recordPayment: (body) => apiFetch('/admin/payments', {
     method: 'POST',
@@ -79,6 +88,11 @@ export const api = {
     body: JSON.stringify(body),
   }),
 
+  changePassword: (body) => apiFetch('/auth/change-password', {
+    method: 'PUT',
+    body: JSON.stringify(body),
+  }),
+
   // Rewards & Partners
   listPartners: (activeOnly = false) => apiFetch(`/rewards/partners?active_only=${activeOnly}`),
   createPartner: (body) => apiFetch('/rewards/partners', {
@@ -89,4 +103,10 @@ export const api = {
     method: 'POST',
     body: JSON.stringify(body),
   }),
+  // Notifications
+  listNotifications: () => apiFetch('/notifications'),
+  getUnreadCount: () => apiFetch('/notifications/unread-count'),
+  markNotificationRead: (id) => apiFetch(`/notifications/${id}/read`, { method: 'PATCH' }),
+  markAllNotificationsRead: () => apiFetch('/notifications/read-all', { method: 'PATCH' }),
+  deleteNotification: (id) => apiFetch(`/notifications/${id}`, { method: 'DELETE' }),
 };

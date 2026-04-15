@@ -17,8 +17,17 @@ _SRI_LANKA_PHONE = re.compile(r"^\+94\d{9}$")
 
 def _validate_phone(v: str) -> str:
     v = v.strip()
+    
+    # Handle 07XXXXXXXX format
+    if re.match(r"^0\d{9}$", v):
+        v = "+94" + v[1:]
+    
+    # Handle 7XXXXXXXX format
+    if re.match(r"^\d{9}$", v):
+        v = "+94" + v
+        
     if not _SRI_LANKA_PHONE.match(v):
-        raise ValueError("Phone must be in Sri Lanka format: +94XXXXXXXXX")
+        raise ValueError("Phone must be in Sri Lanka format: +94XXXXXXXXX, 07XXXXXXXX or 7XXXXXXXX")
     return v
 
 
@@ -60,6 +69,20 @@ class LoginRequest(BaseModel):
     """Unified login request for all users (Admin & Members)."""
     identifier: str = Field(..., description="Email or phone number")
     password: str = Field(..., description="User password")
+
+
+class ChangePasswordRequest(BaseModel):
+    """Request for changing user password."""
+    current_password: str = Field(..., description="The current password")
+    new_password: str = Field(..., description="The new password")
+    confirm_password: str = Field(..., description="Confirmation of the new password")
+
+    @field_validator("confirm_password")
+    @classmethod
+    def validate_passwords_match(cls, v: str, info: any) -> str:
+        if "new_password" in info.data and v != info.data["new_password"]:
+            raise ValueError("Passwords do not match")
+        return v
 
 
 # ── Response Schemas ─────────────────────────────────────────────────────────

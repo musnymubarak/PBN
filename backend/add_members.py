@@ -15,7 +15,7 @@ async def main():
             # Get chapter
             chapter = (await session.execute(select(Chapter).limit(1))).scalar_one_or_none()
             if not chapter:
-                chapter = Chapter(name="Main Chapter", is_active=True)
+                chapter = Chapter(name="Flagship Mixed Chapter — 30 Founding Seats", is_active=True)
                 session.add(chapter)
                 await session.flush()
             

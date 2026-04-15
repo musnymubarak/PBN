@@ -31,6 +31,16 @@ class _MembersPageState extends State<MembersPage> {
         provider.fetchMembers(background: true);
       }
     });
+    _loadMembers();
+  }
+
+  Future<void> _loadMembers() async {
+    setState(() => _loading = true);
+    try {
+      _members = await _chapterService.getAllMembers();
+    } catch (_) {}
+    _filtered = _members;
+    if (mounted) setState(() => _loading = false);
   }
 
   void _filterMembers(List<Member> members, String query) {
