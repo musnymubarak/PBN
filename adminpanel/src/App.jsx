@@ -31,6 +31,7 @@ import {
   IconBuildingStore,
   IconGift,
   IconStackPop,
+  IconUserCheck,
 } from '@tabler/icons-react';
 import { api } from './lib/api';
 import { useApi } from './hooks/useApi';
@@ -2007,6 +2008,17 @@ function ChangePasswordModal({ onClose, showToast }) {
 }
 
 // ── Notification Panel ───────────────────────────────────────────────────────
+const getNotificationIcon = (type) => {
+  switch (type) {
+    case 'NEW_APPLICATION': return { icon: IconClipboardList, color: '#2563eb' };
+    case 'APPLICATION_APPROVED': return { icon: IconUserCheck, color: '#059669' };
+    case 'PAYMENT_RECEIVED': return { icon: IconCoin, color: '#059669' };
+    case 'MEETING_REMINDER': return { icon: IconClock, color: '#f59e0b' };
+    case 'SYSTEM_ALERT': return { icon: IconAlertCircle, color: '#ef4444' };
+    default: return { icon: IconBell, color: '#64748b' };
+  }
+};
+
 function NotificationPanel({ notifications, onDismiss, onMarkAllRead, onClose }) {
   return (
     <div className="notifications-panel" onClick={e => e.stopPropagation()}>
@@ -2025,18 +2037,21 @@ function NotificationPanel({ notifications, onDismiss, onMarkAllRead, onClose })
             <IconBell size={32} stroke={1.5} style={{ marginBottom: '0.75rem', opacity: 0.5 }} />
             <p style={{ fontSize: '0.875rem', fontWeight: 600 }}>All caught up!</p>
           </div>
-        ) : notifications.map(n => (
-          <div key={n.id} className={`notification-item ${!n.read ? 'unread' : ''}`} onClick={() => onDismiss(n.id)}>
-            <div className="notif-icon-wrap" style={{ background: n.color + '15', color: n.color }}>
-              <n.icon size={20} />
+        ) : notifications.map(n => {
+          const { icon: NotifIcon, color: iconColor } = getNotificationIcon(n.notification_type);
+          return (
+            <div key={n.id} className={`notification-item ${!n.is_read ? 'unread' : ''}`} onClick={() => onDismiss(n.id)}>
+              <div className="notif-icon-wrap" style={{ background: iconColor + '15', color: iconColor }}>
+                <NotifIcon size={20} />
+              </div>
+              <div className="notif-content">
+                <div className="notif-title">{n.title}</div>
+                <div className="notif-desc">{n.body}</div>
+                <div className="notif-time">{n.sent_at ? new Date(n.sent_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</div>
+              </div>
             </div>
-            <div className="notif-content">
-              <div className="notif-title">{n.title}</div>
-              <div className="notif-desc">{n.description}</div>
-              <div className="notif-time">{n.time}</div>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -2165,12 +2180,28 @@ export default function App() {
   const [showChangePassword, setShowChangePassword] = useState(false);
   const { toasts, showToast } = useToast();
   
-  // Real notifications state
-  const [notifications, setNotifications] = useState([
-    { id: 1, title: 'New Application', description: 'Amila Perera submitted a membership application.', time: '2 mins ago', icon: IconClipboardList, color: '#2563eb', read: false },
-    { id: 2, title: 'Meeting Reminder', description: 'Fit call with Tech Solutions scheduled for 4 PM.', time: '1 hour ago', icon: IconClock, color: '#f59e0b', read: false },
-    { id: 3, title: 'Referral Won', description: 'Ref-9821 closed successfully by Kusal M.', time: '3 hours ago', icon: IconCheck, color: '#059669', read: true }
-  ]);
+  // Notification State
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const fetchNotifications = useCallback(async () => {
+    if (!isAuthenticated) return;
+    try {
+      const data = await api.listNotifications();
+      // data is { notifications: [], total_unread: number } from backend
+      setNotifications(data.notifications || []);
+      setUnreadCount(data.total_unread || 0);
+    } catch (err) {
+      console.error('Failed to fetch notifications:', err);
+    }
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    fetchNotifications();
+    // Poll for new notifications every 60 seconds
+    const interval = setInterval(fetchNotifications, 60000);
+    return () => clearInterval(interval);
+  }, [fetchNotifications]);
 
   useEffect(() => {
     // If we have a token but no user data, try to fetch current user
@@ -2203,20 +2234,32 @@ export default function App() {
     setShowProfileMenu(false);
   };
 
-  const dismissNotification = (id) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+  const dismissNotification = async (id) => {
+    try {
+      await api.markNotificationRead(id);
+      // Optimistic update
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch (err) {
+      console.error('Failed to mark notification read:', err);
+    }
   };
 
-  const markAllRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-    showToast('All notifications marked as read');
+  const markAllRead = async () => {
+    try {
+      await api.markAllNotificationsRead();
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      setUnreadCount(0);
+      showToast('All notifications marked as read');
+    } catch (err) {
+      console.error('Failed to mark all notifications read:', err);
+    }
   };
 
   if (!isAuthenticated) {
     return <LoginPage onLogin={handleLogin} />;
   }
 
-  const unreadCount = notifications.filter(n => !n.read).length;
 
   const renderContent = () => {
     const commonProps = { adminUser, showToast, onShowChangePassword: () => setShowChangePassword(true) };

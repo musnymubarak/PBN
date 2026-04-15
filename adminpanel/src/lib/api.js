@@ -96,4 +96,10 @@ export const api = {
     method: 'POST',
     body: JSON.stringify(body),
   }),
+  // Notifications
+  listNotifications: () => apiFetch('/notifications'),
+  getUnreadCount: () => apiFetch('/notifications/unread-count'),
+  markNotificationRead: (id) => apiFetch(`/notifications/${id}/read`, { method: 'PATCH' }),
+  markAllNotificationsRead: () => apiFetch('/notifications/read-all', { method: 'PATCH' }),
+  deleteNotification: (id) => apiFetch(`/notifications/${id}`, { method: 'DELETE' }),
 };

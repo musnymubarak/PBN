@@ -103,6 +103,25 @@ async def create_application(
     )
     db.add(history)
     await db.flush()
+
+    # Notify Super Admins about the new application
+    try:
+        from app.features.notifications.service import send_push_notification
+        # Find all Super Admins
+        admin_stmt = select(User.id).where(User.role == UserRole.SUPER_ADMIN, User.is_active == True)
+        admin_ids = (await db.execute(admin_stmt)).scalars().all()
+        
+        for admin_id in admin_ids:
+            await send_push_notification(
+                user_id=admin_id,
+                title="New Membership Application",
+                body=f"{data.full_name} from {data.business_name} has applied for membership.",
+                notification_type="NEW_APPLICATION",
+                data={"application_id": str(app.id), "route": "/applications"}
+            )
+    except Exception as e:
+        logger.error(f"Failed to notify admins of new application: {e}")
+
     return app
 
 
