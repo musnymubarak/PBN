@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pbn/core/services/auth_service.dart';
 import 'package:pbn/core/services/chapter_service.dart';
 import 'package:pbn/core/services/prefs_service.dart';
 import 'package:pbn/models/member.dart';
@@ -36,14 +37,38 @@ class MemberProvider extends ChangeNotifier {
     }
 
     try {
-      final chapters = await _chapterService.listChapters();
-      List<Member> allMembers = [];
-      for (var chapter in chapters) {
-        final members = await _chapterService.getChapterMembers(chapter.id);
-        allMembers.addAll(members);
+      // 1. Get user profile to check role
+      final user = await AuthService().getProfile();
+      
+      if (user.role == 'super_admin' || user.role == 'chapter_admin') {
+        // Admins can see everyone
+        _members = await _chapterService.getAllMembers();
+      } else {
+        // 2. Regular members: Filter by their chapters
+        final myMemberships = await _chapterService.getMyMemberships();
+        final myChapterIds = myMemberships
+            .map((m) => m.chapter.id)
+            .toSet();
+
+        if (myChapterIds.isEmpty) {
+          _members = [];
+          _error = 'You are not assigned to any chapter yet. Please contact support.';
+          notifyListeners();
+          return;
+        }
+
+        final futures = myChapterIds.map((id) => _chapterService.getChapterMembers(id));
+        final nestedResults = await Future.wait(futures);
+        
+        List<Member> allMembers = [];
+        for (var list in nestedResults) {
+          allMembers.addAll(list);
+        }
+        
+        final seenIds = <String>{};
+        _members = allMembers.where((m) => seenIds.add(m.userId)).toList();
       }
       
-      _members = allMembers;
       // Save for next app session
       await PrefsService.setJson('cached_members', _members.map((m) => m.toJson()).toList());
     } catch (e) {

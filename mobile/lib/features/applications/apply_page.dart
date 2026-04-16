@@ -105,8 +105,7 @@ class _ApplyPageState extends State<ApplyPage> {
             SizedBox(
               width: double.infinity,
               child: CustomButton(text: 'DONE', onPressed: () {
-                Navigator.pop(ctx);
-                Navigator.pop(context);
+                Navigator.pushNamedAndRemoveUntil(context, '/onboarding', (route) => false);
               }, backgroundColor: AppColors.primary),
             ),
           ],
