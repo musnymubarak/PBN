@@ -17,7 +17,13 @@ from sqlalchemy import select, delete
 
 async def seed():
     async with async_session_factory() as session:
-        # 1. Setup Chapters
+        # 1. CLEANUP: Delete ALL existing Chapters and Memberships to ensure a fresh state
+        print("Cleaning up old chapters and memberships...")
+        await session.execute(delete(ChapterMembership))
+        await session.execute(delete(Chapter))
+        await session.flush()
+
+        # 2. Setup Chapters
         chapter_names = ["Colombo Chapter", "Jaffna Chapter", "Trinco Chapter"]
         chapters = []
         for name in chapter_names:
