@@ -35,6 +35,8 @@ import {
 } from '@tabler/icons-react';
 import { api } from './lib/api';
 import { useApi } from './hooks/useApi';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 
 // ── Login Page ──────────────────────────────────────────────────────────────
@@ -154,6 +156,7 @@ const MENU_GROUPS = [
     links: [
       { id: 'applications', icon: IconClipboardList, label: 'Applications' },
       { id: 'referrals', icon: IconHierarchy2, label: 'Referral Pipeline' },
+      { id: 'events', icon: IconCalendarEvent, label: 'Event Management' },
       { id: 'payments', icon: IconCoin, label: 'Payments' },
       { id: 'revenue', icon: IconChartBar, label: 'Revenue & ROI' },
     ]
@@ -231,6 +234,7 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
   const [selectedChapterId, setSelectedChapterId] = useState('');
   const [paymentStatus, setPaymentStatus] = useState('pending');
   const [errorMessage, setErrorMessage] = useState('');
+  const [fitCallDate, setFitCallDate] = useState(new Date());
 
   useEffect(() => {
     setLoading(true);
@@ -266,8 +270,13 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
       return;
     }
 
-    if (newStatus === 'approved' && !selectedChapterId && !modalStatus) {
+    if (newStatus === 'approved' && !selectedChapterId && modalStatus !== 'approved') {
       setModalStatus('approved');
+      return;
+    }
+
+    if (newStatus === 'fit_call_scheduled' && modalStatus !== 'fit_call_scheduled') {
+      setModalStatus('fit_call_scheduled');
       return;
     }
 
@@ -278,6 +287,7 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
         notes: actionNotes || undefined,
         chapter_id: selectedChapterId || undefined,
         payment_status: newStatus === 'approved' ? paymentStatus : undefined,
+        fit_call_date: newStatus === 'fit_call_scheduled' ? fitCallDate.toISOString() : undefined,
       });
       onStatusUpdated();
       onClose();
@@ -461,6 +471,44 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
                     className="login-btn"
                     style={{ flex: 1, background: '#94a3b8', padding: '0.75rem', height: '52px' }}
                     onClick={() => { setModalStatus(null); setSelectedChapterId(''); }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : modalStatus === 'fit_call_scheduled' ? (
+              <div className="approval-form" style={{ background: '#f5f3ff', padding: '1.5rem', borderRadius: '16px', border: '1px solid #ddd6fe', marginBottom: '1.5rem' }}>
+                <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#7c3aed', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <IconCalendarEvent size={18} /> Schedule Fit Call
+                </h4>
+                <p style={{ fontSize: '0.85rem', color: '#7c3aed', marginBottom: '1.25rem' }}>
+                  Select the date and time for the member's introductory interview.
+                </p>
+                <div style={{ marginBottom: '1.25rem' }}>
+                  <label style={{ color: '#7c3aed', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem', display: 'block' }}>Meeting Date & Time</label>
+                  <DatePicker
+                    selected={fitCallDate}
+                    onChange={date => setFitCallDate(date)}
+                    showTimeSelect
+                    timeFormat="HH:mm"
+                    dateFormat="MMMM d, yyyy h:mm aa"
+                    className="modern-datepicker-input"
+                    style={{ background: 'white' }}
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                  <button
+                    className="login-btn"
+                    style={{ flex: 1, background: '#8b5cf6', padding: '0.75rem', height: '52px' }}
+                    onClick={() => handleStatusUpdate('fit_call_scheduled')}
+                    disabled={updating}
+                  >
+                    Confirm & Schedule
+                  </button>
+                  <button
+                    className="login-btn"
+                    style={{ flex: 1, background: '#94a3b8', padding: '0.75rem', height: '52px' }}
+                    onClick={() => { setModalStatus(null); }}
                   >
                     Cancel
                   </button>
@@ -1032,13 +1080,11 @@ function MembersPage() {
 
   useEffect(() => {
     Promise.all([
-      api.listChapters().catch(() => ({ data: [] })),
-      api.listIndustries().catch(() => ({ data: [] }))
+      api.listChapters().catch(() => []),
+      api.listIndustries().catch(() => [])
     ]).then(([cData, iData]) => {
-      const c = cData?.data || (Array.isArray(cData) ? cData : []);
-      const i = iData?.data || (Array.isArray(iData) ? iData : []);
-      setChapters(c);
-      setIndustries(i);
+      setChapters(Array.isArray(cData) ? cData : []);
+      setIndustries(Array.isArray(iData) ? iData : []);
     });
   }, []);
 
@@ -1575,8 +1621,8 @@ function CreateOfferModal({ partner, onClose, onCreated }) {
     offer_type: 'discount',
     redemption_method: 'qr',
     discount_percentage: 10,
-    start_date: new Date().toISOString().split('T')[0],
-    end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    start_date: new Date(),
+    end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     redemption_instructions: 'Show your PBN Privilege Card at the counter.',
     is_active: true
   });
@@ -1588,7 +1634,11 @@ function CreateOfferModal({ partner, onClose, onCreated }) {
     setLoading(true);
     setError('');
     try {
-      await api.createOffer(partner.id, formData);
+      await api.createOffer(partner.id, {
+        ...formData,
+        start_date: formData.start_date.toISOString().split('T')[0],
+        end_date: formData.end_date.toISOString().split('T')[0],
+      });
       onCreated();
     } catch (err) {
       setError(err.message || 'Failed to create reward');
@@ -1665,20 +1715,21 @@ function CreateOfferModal({ partner, onClose, onCreated }) {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
              <div className="login-field" style={{ marginBottom: 0 }}>
               <label>Start Date</label>
-              <input 
-                type="date" 
-                className="filter-input v2"
-                value={formData.start_date}
-                onChange={e => setFormData({...formData, start_date: e.target.value})}
+              <DatePicker
+                selected={formData.start_date}
+                onChange={date => setFormData({ ...formData, start_date: date })}
+                dateFormat="MMMM d, yyyy"
+                className="modern-datepicker-input"
               />
             </div>
             <div className="login-field" style={{ marginBottom: 0 }}>
               <label>End Date</label>
-              <input 
-                type="date" 
-                className="filter-input v2"
-                value={formData.end_date}
-                onChange={e => setFormData({...formData, end_date: e.target.value})}
+              <DatePicker
+                selected={formData.end_date}
+                onChange={date => setFormData({ ...formData, end_date: date })}
+                dateFormat="MMMM d, yyyy"
+                className="modern-datepicker-input"
+                minDate={formData.start_date}
               />
             </div>
           </div>
@@ -2266,6 +2317,319 @@ function SecurityLogsPage() {
 
 
 
+// ── Events Management ────────────────────────────────────────────────────────
+
+function AddEventModal({ onClose, onCreated, chapters = [] }) {
+  const [formData, setFormData] = useState({
+    chapter_id: '',
+    title: '',
+    description: '',
+    event_type: 'flagship',
+    location: '',
+    meeting_link: '',
+    start_at: new Date(),
+    end_at: new Date(Date.now() + 3600000), // +1 hour
+    fee: 0,
+    max_attendees: '',
+    is_published: true
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.chapter_id) return setError('Please select a chapter');
+    if (!formData.start_at || !formData.end_at) return setError('Please set event dates');
+    
+    setLoading(true);
+    setError('');
+    try {
+      await api.createEvent({
+        ...formData,
+        fee: parseFloat(formData.fee),
+        max_attendees: formData.max_attendees ? parseInt(formData.max_attendees) : null,
+        start_at: formData.start_at.toISOString(),
+        end_at: formData.end_at.toISOString(),
+      });
+      onCreated();
+      onClose();
+    } catch (err) {
+      setError(err.message || 'Failed to create event');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 600 }}>
+        <div className="modal-header">
+          <div>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Create New Event</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Schedule a new chapter meeting or meetup</p>
+          </div>
+          <button type="button" className="modal-close-btn" onClick={onClose}>
+            <IconX size={20} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} style={{ padding: '1.5rem 1.5rem 8rem' }}>
+          {error && <div className="login-error" style={{ marginBottom: '1.25rem' }}>{error}</div>}
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
+             <div>
+              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '0.5rem', display: 'block' }}>Target Chapter *</label>
+              <CustomSelect
+                label="Choose a chapter..."
+                value={formData.chapter_id}
+                options={chapters}
+                onChange={val => setFormData({ ...formData, chapter_id: val })}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '0.5rem', display: 'block' }}>Event Type *</label>
+              <CustomSelect
+                label="Event Type..."
+                value={formData.event_type}
+                options={[
+                  { id: 'flagship', name: 'Physical (Flagship)' },
+                  { id: 'virtual', name: 'Online (Virtual)' },
+                  { id: 'micro_meetup', name: 'Micro Meetup' }
+                ]}
+                onChange={val => setFormData({ ...formData, event_type: val })}
+              />
+            </div>
+          </div>
+
+          <div className="login-field">
+            <label>Event Title *</label>
+            <input
+              type="text"
+              className="filter-input v2"
+              placeholder="e.g. Monthly Chapter Meeting"
+              required
+              value={formData.title}
+              onChange={e => setFormData({ ...formData, title: e.target.value })}
+            />
+          </div>
+
+          <div className="login-field">
+            <label>Description</label>
+            <textarea
+              className="action-textarea"
+              placeholder="What is this event about?"
+              style={{ minHeight: 80 }}
+              value={formData.description}
+              onChange={e => setFormData({ ...formData, description: e.target.value })}
+            />
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
+            <div className="login-field" style={{ marginBottom: 0 }}>
+              <label>Location (Physical)</label>
+              <input
+                type="text"
+                className="filter-input v2"
+                placeholder="Hotel, Cafe, or Hall"
+                value={formData.location}
+                onChange={e => setFormData({ ...formData, location: e.target.value })}
+              />
+            </div>
+            <div className="login-field" style={{ marginBottom: 0 }}>
+              <label>Meeting Link (Virtual)</label>
+              <input
+                type="url"
+                className="filter-input v2"
+                placeholder="Zoom/Google Meet URL"
+                value={formData.meeting_link}
+                onChange={e => setFormData({ ...formData, meeting_link: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
+            <div className="login-field" style={{ marginBottom: 0 }}>
+              <label>Start Time *</label>
+              <DatePicker
+                selected={formData.start_at}
+                onChange={date => setFormData({ ...formData, start_at: date })}
+                showTimeSelect
+                timeFormat="HH:mm"
+                dateFormat="MMMM d, yyyy h:mm aa"
+                className="modern-datepicker-input"
+                required
+              />
+            </div>
+            <div className="login-field" style={{ marginBottom: 0 }}>
+              <label>End Time *</label>
+              <DatePicker
+                selected={formData.end_at}
+                onChange={date => setFormData({ ...formData, end_at: date })}
+                showTimeSelect
+                timeFormat="HH:mm"
+                dateFormat="MMMM d, yyyy h:mm aa"
+                className="modern-datepicker-input"
+                required
+                minDate={formData.start_at}
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+            <div className="login-field" style={{ marginBottom: 0 }}>
+              <label>Event Fee (LKR)</label>
+              <input
+                type="number"
+                className="filter-input v2"
+                value={formData.fee}
+                onChange={e => setFormData({ ...formData, fee: e.target.value })}
+              />
+            </div>
+            <div className="login-field" style={{ marginBottom: 0 }}>
+              <label>Max Attendees</label>
+              <input
+                type="number"
+                className="filter-input v2"
+                placeholder="Unlimited"
+                value={formData.max_attendees}
+                onChange={e => setFormData({ ...formData, max_attendees: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+            <button type="submit" className="login-btn" disabled={loading} style={{ flex: 2 }}>
+              {loading ? 'Creating...' : 'Create & Publish Event'}
+            </button>
+            <button type="button" className="login-btn" onClick={onClose} style={{ flex: 1, background: '#94a3b8' }}>
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function EventsPage() {
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [chapters, setChapters] = useState([]);
+  const [chapterFilter, setChapterFilter] = useState('');
+
+  const fetchEvents = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = {};
+      if (chapterFilter) params.chapter_id = chapterFilter;
+      params.published_only = false;
+      const data = await api.listEvents(params);
+      setEvents(data || []);
+    } catch (err) {
+      console.error('Failed to load events:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [chapterFilter]);
+
+  useEffect(() => {
+    fetchEvents();
+    api.listChapters().then(data => setChapters(data || []));
+  }, [fetchEvents]);
+
+  return (
+    <section className="dashboard-body">
+      <div className="page-title-wrap" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h1 className="page-title">Event Management</h1>
+          <p style={{ color: 'var(--text-secondary)', marginTop: '0.4rem', fontWeight: 500 }}>
+            Schedule and manage chapter meetings, micro-meetups, and virtual sessions.
+          </p>
+        </div>
+        <button className="btn-primary" onClick={() => setShowAddModal(true)} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          <IconPlus size={20} /> Create New Event
+        </button>
+      </div>
+
+      <div className="data-section">
+        <div className="section-head">
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Event Calendar</h3>
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <CustomSelect
+              label="Filter by Chapter"
+              value={chapterFilter}
+              options={chapters}
+              onChange={setChapterFilter}
+              style={{ width: '220px' }}
+            />
+            <button className="view-detail-btn" onClick={fetchEvents}><IconRefresh size={18} /></button>
+          </div>
+        </div>
+
+        <table className="modern-table">
+          <thead>
+            <tr>
+              <th>Event Title</th>
+              <th>Type</th>
+              <th>Date & Time</th>
+              <th>Location / Link</th>
+              <th>Fee</th>
+              <th>RSVPs</th>
+              <th>Attendance</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr><td colSpan={7} style={{ textAlign: 'center', padding: '3rem' }}>Loading events...</td></tr>
+            ) : events.length === 0 ? (
+              <tr><td colSpan={7} style={{ textAlign: 'center', padding: '3rem' }}>No events scheduled.</td></tr>
+            ) : events.map(ev => (
+              <tr key={ev.id}>
+                <td>
+                  <div style={{ fontWeight: 700 }}>{ev.title}</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>ID: {ev.id.slice(0, 8)}</div>
+                </td>
+                <td>
+                  <span className={`pill ${ev.event_type === 'flagship' ? 'pill-approved' : 'pill-waitlisted'}`} style={{ textTransform: 'uppercase', fontSize: '0.7rem' }}>
+                    {ev.event_type}
+                  </span>
+                </td>
+                <td style={{ fontSize: '0.85rem' }}>
+                  <div style={{ fontWeight: 600 }}>{new Date(ev.start_at).toLocaleDateString()}</div>
+                  <div style={{ color: 'var(--text-secondary)' }}>{new Date(ev.start_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                </td>
+                <td style={{ fontSize: '0.85rem', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {ev.location || ev.meeting_link || '—'}
+                </td>
+                <td style={{ fontWeight: 700 }}>{ev.fee > 0 ? formatCurrency(ev.fee) : 'Free'}</td>
+                <td style={{ textAlign: 'center' }}>
+                  <div style={{ fontWeight: 700 }}>{ev.rsvps?.length || 0}</div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Requests</div>
+                </td>
+                <td style={{ textAlign: 'center' }}>
+                   <div style={{ fontWeight: 700 }}>{ev.attendances?.length || 0}</div>
+                   <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Checked in</div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {showAddModal && (
+        <AddEventModal
+          chapters={chapters}
+          onClose={() => setShowAddModal(false)}
+          onCreated={fetchEvents}
+        />
+      )}
+    </section>
+  );
+}
+
+
+
 // ── Main App ────────────────────────────────────────────────────────────────
 
 export default function App() {
@@ -2365,6 +2729,7 @@ export default function App() {
     if (activeTab === 'payments') return <PaymentsPage />;
     if (activeTab === 'rewards') return <PartnersPage />;
     if (activeTab === 'referrals') return <ReferralsPage />;
+    if (activeTab === 'events') return <EventsPage />;
     if (activeTab === 'revenue') return <RevenuePage />;
     if (activeTab === 'settings') return <SettingsPage {...commonProps} />;
     if (activeTab === 'notifications') return <SecurityLogsPage />;

@@ -8,6 +8,7 @@ class Event {
   final String? meetingLink;
   final String chapterId;
   final String eventType;
+  final List<dynamic> rsvps;
   final bool isPublished;
 
   Event({
@@ -20,6 +21,7 @@ class Event {
     this.meetingLink,
     required this.chapterId,
     this.eventType = 'virtual',
+    this.rsvps = const [],
     this.isPublished = true,
   });
 
@@ -33,6 +35,20 @@ class Event {
         meetingLink: json['meeting_link'],
         chapterId: json['chapter_id'] ?? '',
         eventType: json['event_type'] ?? 'virtual',
+        rsvps: json['rsvps'] ?? [],
         isPublished: json['is_published'] ?? true,
       );
+
+  String? getRsvpStatus(String userId) {
+    if (rsvps.isEmpty) return null;
+    try {
+      final rsvp = rsvps.firstWhere(
+        (r) => r['user']['id'] == userId,
+        orElse: () => null,
+      );
+      return rsvp?['status'] as String?;
+    } catch (_) {
+      return null;
+    }
+  }
 }

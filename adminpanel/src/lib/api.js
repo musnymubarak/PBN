@@ -109,4 +109,11 @@ export const api = {
   markNotificationRead: (id) => apiFetch(`/notifications/${id}/read`, { method: 'PATCH' }),
   markAllNotificationsRead: () => apiFetch('/notifications/read-all', { method: 'PATCH' }),
   deleteNotification: (id) => apiFetch(`/notifications/${id}`, { method: 'DELETE' }),
+
+  // Events
+  listEvents: (params = {}) => apiFetch(`/events?${new URLSearchParams(params)}`),
+  createEvent: (body) => apiFetch('/events', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  }),
 };

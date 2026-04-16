@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:intl/intl.dart';
 import 'package:pbn/core/constants/app_colors.dart';
+import 'package:pbn/core/services/auth_service.dart';
 import 'package:pbn/core/services/event_service.dart';
 import 'package:pbn/models/event.dart';
 
@@ -16,6 +17,7 @@ class _EventsPageState extends State<EventsPage> {
   final _service = EventService();
   List<Event> _events = [];
   bool _loading = true;
+  String? _currentUserId;
 
   @override
   void initState() {
@@ -26,6 +28,10 @@ class _EventsPageState extends State<EventsPage> {
   Future<void> _loadEvents() async {
     setState(() => _loading = true);
     try {
+      if (_currentUserId == null) {
+        final user = await AuthService().getProfile();
+        _currentUserId = user.id;
+      }
       _events = await _service.listEvents();
     } catch (_) {}
     if (mounted) setState(() => _loading = false);
@@ -34,10 +40,7 @@ class _EventsPageState extends State<EventsPage> {
   Future<void> _rsvp(String eventId, String status) async {
     try {
       await _service.updateRSVP(eventId, status);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('RSVP: $status'),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating));
+      await _loadEvents(); // Refresh to show updated states
     } catch (_) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('Failed to update RSVP'),
@@ -254,18 +257,70 @@ class _EventsPageState extends State<EventsPage> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                Row(
-                  children: [
-                    _rsvpGlassButton(event.id, 'going', 'Going', Colors.greenAccent),
-                    const SizedBox(width: 12),
-                    _rsvpGlassButton(event.id, 'not_going', 'Pass', Colors.redAccent),
-                  ],
-                ),
+                _buildActionButtons(event),
               ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildActionButtons(Event event) {
+    if (_currentUserId == null) return const SizedBox.shrink();
+    
+    final status = event.getRsvpStatus(_currentUserId!);
+    
+    if (status == 'going') {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.green.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.green.withOpacity(0.5), width: 1.5),
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(TablerIcons.check, color: Colors.green, size: 18),
+            SizedBox(width: 8),
+            Text('JOINED',
+                style: TextStyle(
+                    color: Colors.green,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1)),
+          ],
+        ),
+      );
+    }
+    
+    if (status == 'not_going') {
+       return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.grey.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.withOpacity(0.3), width: 1.5),
+        ),
+        child: const Center(
+          child: Text('PASSED',
+              style: TextStyle(
+                  color: Colors.grey,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800)),
+        ),
+      );
+    }
+
+    return Row(
+      children: [
+        _rsvpGlassButton(event.id, 'going', 'Going', Colors.greenAccent),
+        const SizedBox(width: 12),
+        _rsvpGlassButton(event.id, 'not_going', 'Pass', Colors.redAccent),
+      ],
     );
   }
 
@@ -359,25 +414,53 @@ class _EventsPageState extends State<EventsPage> {
                   ),
                 ),
               const SizedBox(width: 12),
-              Expanded(
-                flex: 2,
-                child: OutlinedButton(
-                  onPressed: () => _rsvp(event.id, 'going'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF10B981),
-                    side: const BorderSide(color: Color(0xFF10B981), width: 1.5),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                  ),
-                  child: const Text('RSVP',
-                      style: TextStyle(
-                          fontSize: 12, fontWeight: FontWeight.w800)),
-                ),
-              ),
+              _buildVirtualRSVP(event),
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildVirtualRSVP(Event event) {
+    if (_currentUserId == null) return const SizedBox.shrink();
+    final status = event.getRsvpStatus(_currentUserId!);
+
+    if (status == 'going') {
+      return Expanded(
+        flex: 2,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.green.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: Colors.green.withOpacity(0.3)),
+          ),
+          child: const Center(
+            child: Text('JOINED',
+                style: TextStyle(
+                    color: Colors.green,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900)),
+          ),
+        ),
+      );
+    }
+
+    return Expanded(
+      flex: 2,
+      child: OutlinedButton(
+        onPressed: () => _rsvp(event.id, 'going'),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: const Color(0xFF10B981),
+          side: const BorderSide(color: Color(0xFF10B981), width: 1.5),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10)),
+          padding: const EdgeInsets.symmetric(vertical: 10),
+        ),
+        child: const Text('RSVP',
+            style: TextStyle(
+                fontSize: 12, fontWeight: FontWeight.w800)),
       ),
     );
   }

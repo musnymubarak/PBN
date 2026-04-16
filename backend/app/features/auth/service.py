@@ -319,6 +319,7 @@ async def login(
     db: AsyncSession,
 ) -> dict[str, Any]:
     """Authenticate any user (Admin or Member) via identifier (email/phone) + password."""
+    print(f"\n🚀 LOGIN ATTEMPT: identifier='{identifier}'")
     logger.info("🔑 Login attempt for identifier: '%s'", identifier)
     # Lookup by phone or email
     query = select(User).where(
@@ -332,10 +333,14 @@ async def login(
     user = result.scalars().first()
 
     if not user:
-        logger.warning("❌ Login failed: User not found for '%s'", identifier)
+        print(f"❌ LOGIN FAILED: User not found for '{identifier}'")
+        logger.warning("❌ Login FAILED: User NOT FOUND for identifier: '%s'", identifier)
         raise UnauthorizedException(
             message="Invalid credentials.", code="INVALID_CREDENTIALS"
         )
+    
+    print(f"✅ USER FOUND: {user.email} (ID: {user.id})")
+    logger.info("✅ User FOUND: %s (id: %s)", user.email or user.phone_number, user.id)
 
     if not user.is_active:
         raise UnauthorizedException(
@@ -351,11 +356,13 @@ async def login(
     # Verify password
     try:
         if not pwd_context.verify(password, user.password_hash):
+            logger.warning("❌ Login FAILED: Password mismatch for user: %s", user.email or user.id)
             raise UnauthorizedException(
                 message="Invalid credentials.", code="INVALID_CREDENTIALS"
             )
+        logger.info("✅ Login SUCCESS for user: %s", user.email or user.id)
     except Exception as e:
-        logger.error(f"Password verification error: {e}")
+        logger.error(f"❌ Password verification error: {e}")
         raise UnauthorizedException(
             message="Invalid credentials.", code="INVALID_CREDENTIALS"
         )
