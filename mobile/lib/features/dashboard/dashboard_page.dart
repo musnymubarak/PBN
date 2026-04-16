@@ -425,7 +425,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 const BottomNavigationBarItem(icon: Icon(TablerIcons.smart_home), label: 'Home'),
                 const BottomNavigationBarItem(icon: Icon(TablerIcons.users), label: 'Members'),
                 const BottomNavigationBarItem(icon: Icon(TablerIcons.briefcase), label: 'Deals'),
-                const BottomNavigationBarItem(icon: Icon(TablerIcons.calendar_event), label: 'Schedule'),
+                const BottomNavigationBarItem(icon: Icon(TablerIcons.calendar_event), label: 'Meetings'),
                 const BottomNavigationBarItem(icon: Icon(TablerIcons.user_circle), label: 'Me'),
               ],
       ),

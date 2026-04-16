@@ -1,12 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:pbn/core/constants/app_colors.dart';
 
 class SupportPage extends StatelessWidget {
   const SupportPage({super.key});
 
+  Future<void> _launchUrl(String urlString) async {
+    final Uri url = Uri.parse(urlString);
+    try {
+      if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+        throw Exception('Could not launch $url');
+      }
+    } catch (e) {
+      debugPrint('Error launching URL: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    const String supportPhone = '+94777140803';
+    const String supportEmail = 'info@primebusines.network';
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -66,11 +81,18 @@ class SupportPage extends StatelessWidget {
                   padding: const EdgeInsets.all(20),
                   child: Row(
                     children: [
-                      _contactAction(TablerIcons.phone, 'Call Us', Colors.blue, () {}),
+                      _contactAction(TablerIcons.phone, 'Call Us', Colors.blue, () {
+                        _launchUrl('tel:$supportPhone');
+                      }),
                       const SizedBox(width: 12),
-                      _contactAction(TablerIcons.brand_whatsapp, 'WhatsApp', Colors.green, () {}),
+                      _contactAction(TablerIcons.brand_whatsapp, 'WhatsApp', Colors.green, () {
+                        // WhatsApp wa.me links should not include the '+' prefix
+                        _launchUrl('https://wa.me/94777140803');
+                      }),
                       const SizedBox(width: 12),
-                      _contactAction(TablerIcons.mail, 'Email', Colors.pink, () {}),
+                      _contactAction(TablerIcons.mail, 'Email', Colors.pink, () {
+                        _launchUrl('mailto:$supportEmail');
+                      }),
                     ],
                   ),
                 ),
