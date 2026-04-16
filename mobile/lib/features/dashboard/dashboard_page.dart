@@ -147,35 +147,12 @@ class _DashboardPageState extends State<DashboardPage> {
               )),
           ],
         ),
-        _buildDrawerMenu(isProspect),
         const SizedBox(width: 8),
       ],
     );
   }
 
-  Widget _buildDrawerMenu(bool isProspect) {
-    return PopupMenuButton<String>(
-      icon: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10)]), child: const Icon(TablerIcons.layout_grid, color: AppColors.primary, size: 20)),
-      offset: const Offset(0, 56),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      itemBuilder: (context) => [
-        if (!isProspect) ...[
-          _menuItem('leaderboard', TablerIcons.trophy, 'Leaderboard'),
-          _menuItem('rewards', TablerIcons.gift, 'Rewards Catalog'),
-          _menuItem('payments', TablerIcons.credit_card, 'Billing'),
-          _menuItem('chapters', TablerIcons.building_community, 'Chapters'),
-        ],
-      ],
-      onSelected: (route) => Navigator.pushNamed(context, '/$route'),
-    );
-  }
 
-  PopupMenuItem<String> _menuItem(String value, IconData icon, String label) {
-    return PopupMenuItem(value: value, child: Row(children: [
-      Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(10)), child: Icon(icon, size: 16, color: AppColors.primary)), const SizedBox(width: 12),
-      Text(label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-    ]));
-  }
 
   Widget _buildDashboardBody() {
     if (_loading) return const Center(child: CircularProgressIndicator(color: AppColors.primary));
@@ -210,10 +187,6 @@ class _DashboardPageState extends State<DashboardPage> {
           ]),
           
           const SizedBox(height: 16),
-          const Text('PERFORMANCE ENGINE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF64748B), letterSpacing: 1.5)),
-          const SizedBox(height: 12),
-          
-          const SizedBox(height: 16),
           const Text('PERFORMANCE OVERVIEW', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF64748B), letterSpacing: 1.5)),
           const SizedBox(height: 12),
           
@@ -239,7 +212,7 @@ class _DashboardPageState extends State<DashboardPage> {
           Row(children: [
             _modernActionTile(TablerIcons.stars, 'Rewards', Colors.amber, () => Navigator.pushNamed(context, '/rewards')),
             const SizedBox(width: 16),
-            _modernActionTile(TablerIcons.chart_arrows_vertical, 'Global Rank', Colors.blue, () => Navigator.pushNamed(context, '/leaderboard')),
+            _modernActionTile(TablerIcons.building_community, 'Chapters', Colors.blue, () => Navigator.pushNamed(context, '/chapters')),
             const SizedBox(width: 16),
             _modernActionTile(TablerIcons.help_circle, 'Support', Colors.pink, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SupportPage()))),
           ]),
@@ -269,12 +242,16 @@ class _DashboardPageState extends State<DashboardPage> {
           Positioned.fill(child: Container(decoration: BoxDecoration(gradient: LinearGradient(colors: [Colors.black.withOpacity(0.8), Colors.transparent], begin: Alignment.centerLeft, end: Alignment.centerRight)))),
           
           Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(16),
             child: Row(children: [
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
                 const Text('NETWORK GROWTH', style: TextStyle(color: Colors.blueAccent, fontSize: 9, fontWeight: FontWeight.w900, shadows: [Shadow(blurRadius: 4, color: Colors.black54)])),
-                const SizedBox(height: 8),
-                const Text('Expand your business reach effortlessly.', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800, height: 1.4, shadows: [Shadow(blurRadius: 10, color: Colors.black87)])),
+                const SizedBox(height: 6),
+                const FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text('Expand your business reach effortlessly.', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800, height: 1.4, shadows: [Shadow(blurRadius: 10, color: Colors.black87)])),
+                ),
                 const Spacer(),
                 ElevatedButton(
                   onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => CreateReferralPage())),
@@ -305,13 +282,17 @@ class _DashboardPageState extends State<DashboardPage> {
           Positioned.fill(child: Container(decoration: BoxDecoration(gradient: LinearGradient(colors: [const Color(0xFF6366F1).withOpacity(0.95), const Color(0xFF6366F1).withOpacity(0.4)], begin: Alignment.centerLeft, end: Alignment.centerRight)))),
           
           Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(16),
             child: Row(children: [
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
                 const Text('NEXT ONLINE SESSION', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900)),
+                const SizedBox(height: 6),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(event?.title ?? 'Strategic Sync Performance', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800, height: 1.4, shadows: [Shadow(blurRadius: 10, color: Colors.black45)])),
+                ),
                 const SizedBox(height: 8),
-                Text(event?.title ?? 'Strategic Sync Performance', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800, height: 1.4, shadows: [Shadow(blurRadius: 10, color: Colors.black45)])),
-                const SizedBox(height: 12),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(10)),
@@ -351,12 +332,16 @@ class _DashboardPageState extends State<DashboardPage> {
           Positioned.fill(child: Container(decoration: BoxDecoration(gradient: LinearGradient(colors: [const Color(0xFFF97316).withOpacity(0.95), const Color(0xFFF97316).withOpacity(0.4)], begin: Alignment.centerLeft, end: Alignment.centerRight)))),
           
           Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(16),
             child: Row(children: [
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
                 const Text('CHAPTER MEETUP', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900)),
-                const SizedBox(height: 8),
-                const Text('Galle Face In-Person Chapter Meeting', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800, height: 1.4, shadows: [Shadow(blurRadius: 10, color: Colors.black45)])),
+                const SizedBox(height: 6),
+                const FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text('Galle Face In-Person Chapter Meeting', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800, height: 1.4, shadows: [Shadow(blurRadius: 10, color: Colors.black45)])),
+                ),
                 const Spacer(),
                 ElevatedButton.icon(
                   onPressed: () {}, 
@@ -464,39 +449,6 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildEngineStat(String label, String value, IconData icon, Color color, {bool showGlow = false}) {
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                  boxShadow: showGlow ? [BoxShadow(color: color.withOpacity(0.2), blurRadius: 8, spreadRadius: 1)] : null,
-                ),
-                child: Icon(icon, color: color, size: 14),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                label.toUpperCase(),
-                style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: const Color(0xFF64748B), letterSpacing: 1),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: -0.5),
-          ),
-        ],
-      ),
-    );
-  }
 
   String _formatCurrency(double v) {
     if (v >= 1000000) return 'LKR ${(v / 1000000).toStringAsFixed(1)}M';
@@ -512,7 +464,13 @@ class _DashboardPageState extends State<DashboardPage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('TOP CONNECTORS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF64748B), letterSpacing: 1.5)),
+            Row(
+              children: [
+                const Icon(TablerIcons.trophy, color: Color(0xFFF59E0B), size: 16),
+                const SizedBox(width: 8),
+                const Text('TOP CONNECTORS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF64748B), letterSpacing: 1.5)),
+              ],
+            ),
             GestureDetector(
               onTap: () => Navigator.pushNamed(context, '/leaderboard'),
               child: const Text('VIEW ALL', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.primary, letterSpacing: 1)),
@@ -520,27 +478,30 @@ class _DashboardPageState extends State<DashboardPage> {
           ],
         ),
         const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20, offset: const Offset(0, 10)),
-            ],
-          ),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  if (_leaderboard.length >= 2) _buildMiniPodium(_leaderboard[1], 2, const Color(0xFF94A3B8)),
-                  if (_leaderboard.length >= 1) _buildMiniPodium(_leaderboard[0], 1, const Color(0xFFF59E0B)),
-                  if (_leaderboard.length >= 3) _buildMiniPodium(_leaderboard[2], 3, const Color(0xFFB45309)),
-                ],
+        GestureDetector(
+          onTap: () => Navigator.pushNamed(context, '/leaderboard'),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 24),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-            ],
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(color: const Color(0xFF0F172A).withOpacity(0.3), blurRadius: 25, offset: const Offset(0, 10)),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                if (_leaderboard.length >= 2) _buildMiniPodium(_leaderboard[1], 2, const Color(0xFF94A3B8)), // Silver
+                if (_leaderboard.length >= 1) _buildMiniPodium(_leaderboard[0], 1, const Color(0xFFF59E0B)), // Gold
+                if (_leaderboard.length >= 3) _buildMiniPodium(_leaderboard[2], 3, const Color(0xFFB45309)), // Bronze
+              ],
+            ),
           ),
         ),
       ],
@@ -552,50 +513,72 @@ class _DashboardPageState extends State<DashboardPage> {
     final count = res['sent_count'] ?? 0;
     final initials = (res['full_name'] ?? '?').toString().substring(0, 1).toUpperCase();
     
-    final double size = rank == 1 ? 60 : 48;
+    final double size = rank == 1 ? 74 : 54;
     
     String? profilePhoto = res['profile_photo'];
     String imageUrl = profilePhoto != null && profilePhoto.isNotEmpty
         ? '${ApiConfig.baseUrl.replaceAll('/api/v1', '')}$profilePhoto'
-        : 'https://picsum.photos/seed/${Uri.encodeComponent(name)}/100/100';
+        : 'https://picsum.photos/seed/${Uri.encodeComponent(name)}/150/150';
 
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        if (rank == 1) const Icon(TablerIcons.crown, color: Color(0xFFF59E0B), size: 20),
-        if (rank == 1) const SizedBox(height: 4),
+        if (rank == 1) 
+          const Padding(
+            padding: EdgeInsets.only(bottom: 6),
+            child: Icon(TablerIcons.crown, color: Color(0xFFF59E0B), size: 24),
+          ),
         Stack(
           alignment: Alignment.bottomCenter,
           clipBehavior: Clip.none,
           children: [
+            // GLOE EFFECT FOR RANK 1
+            if (rank == 1)
+              Container(
+                width: size + 16, height: size + 16,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(color: color.withOpacity(0.35), blurRadius: 20, spreadRadius: 4),
+                  ],
+                ),
+              ),
             Container(
               width: size, height: size,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: color, width: rank == 1 ? 3 : 2),
-                boxShadow: [BoxShadow(color: color.withOpacity(0.2), blurRadius: 10, spreadRadius: 1)],
-              ),
-              child: ClipOval(
-                child: Image.network(
-                  imageUrl,
+                border: Border.all(color: color.withOpacity(0.8), width: rank == 1 ? 3 : 2),
+                image: DecorationImage(
+                  image: NetworkImage(imageUrl),
                   fit: BoxFit.cover,
-                  errorBuilder: (c, e, s) => Center(child: Text(initials, style: TextStyle(fontWeight: FontWeight.w900, color: color, fontSize: rank == 1 ? 18 : 14))),
                 ),
               ),
             ),
             Positioned(
-              bottom: -6,
+              bottom: -4,
               child: Container(
                 padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(color: color, shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 2)),
+                decoration: BoxDecoration(
+                  color: color, 
+                  shape: BoxShape.circle, 
+                  border: Border.all(color: const Color(0xFF1E293B), width: 2)
+                ),
                 child: Text('$rank', style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w900)),
               ),
             ),
           ],
         ),
         const SizedBox(height: 12),
-        Text(name, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.text)),
+        Text(name, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Colors.white)),
         const SizedBox(height: 4),
-        Text('$count Sent', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: color)),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text('$count Sent', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: color)),
+        ),
       ],
     );
   }
