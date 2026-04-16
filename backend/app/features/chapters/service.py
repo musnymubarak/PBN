@@ -180,3 +180,12 @@ async def remove_member(chapter_id: UUID, user_id: UUID, actor_id: UUID, db: Asy
     db.add(audit)
     
     await db.flush()
+
+
+async def get_occupied_industry_ids(chapter_id: UUID, db: AsyncSession) -> List[UUID]:
+    stmt = select(ChapterMembership.industry_category_id).where(
+        ChapterMembership.chapter_id == chapter_id,
+        ChapterMembership.is_active.is_(True)
+    )
+    result = await db.execute(stmt)
+    return list(result.scalars().all())

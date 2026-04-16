@@ -11,6 +11,12 @@ class ApplicationService {
     return list.map((j) => IndustryCategory.fromJson(j)).toList();
   }
 
+  Future<List<String>> getOccupiedIndustries(String chapterId) async {
+    final res = await _api.get('/chapters/$chapterId/occupied-industries');
+    final list = _api.unwrap(res) as List<dynamic>;
+    return list.map((e) => e.toString()).toList();
+  }
+
   Future<void> submitApplication({
     required String fullName,
     required String businessName,
@@ -18,6 +24,7 @@ class ApplicationService {
     required String email,
     required String district,
     required String industryCategoryId,
+    required String chapterId,
   }) async {
     await _api.post('/applications', data: {
       'full_name': fullName,
@@ -26,6 +33,7 @@ class ApplicationService {
       'email': email,
       'district': district,
       'industry_category_id': industryCategoryId,
+      'chapter_id': chapterId,
     });
   }
 

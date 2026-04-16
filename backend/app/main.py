@@ -149,7 +149,7 @@ def _register_routes(app: FastAPI) -> None:
 
     app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
     app.include_router(app_router, prefix=settings.API_V1_PREFIX)
-    app.include_router(chap_router, prefix=settings.API_V1_PREFIX)
+    app.include_router(chap_router, prefix=settings.API_V1_PREFIX + "/chapters")
     app.include_router(ref_router, prefix=settings.API_V1_PREFIX)
     app.include_router(ev_router, prefix=settings.API_V1_PREFIX)
     app.include_router(rew_router, prefix=settings.API_V1_PREFIX)

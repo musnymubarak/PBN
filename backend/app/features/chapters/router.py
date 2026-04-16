@@ -21,6 +21,7 @@ from app.features.chapters.service import (
     get_my_memberships,
     list_active_chapters,
     remove_member,
+    get_occupied_industry_ids,
 )
 from app.models.user import User, UserRole
 
@@ -28,7 +29,7 @@ router = APIRouter(tags=["Chapters"])
 
 
 @router.get(
-    "/chapters/members/all",
+    "/members/all",
     summary="List all active members across all chapters",
 )
 async def list_all_members_endpoint(
@@ -45,7 +46,7 @@ async def list_all_members_endpoint(
     return success_response(data=members)
 
 
-@router.get("/chapters", summary="List active chapters", response_model=None)
+@router.get("/", summary="List active chapters", response_model=None)
 async def list_chapters_endpoint(
     db: AsyncSession = Depends(get_db),
     # Optional auth: depends on requirements, let's keep it public/accessible to all
@@ -66,7 +67,7 @@ async def list_chapters_endpoint(
 
 
 @router.get(
-    "/chapters/my-memberships",
+    "/my-memberships",
     summary="Get my memberships",
 )
 async def my_memberships_endpoint(
@@ -85,7 +86,7 @@ async def my_memberships_endpoint(
 
 
 @router.get(
-    "/chapters/{chapter_id}/members",
+    "/{chapter_id}/members",
     summary="List members of a chapter",
 )
 async def chapter_members_endpoint(
@@ -105,7 +106,7 @@ async def chapter_members_endpoint(
 
 
 @router.delete(
-    "/chapters/{chapter_id}/members/{user_id}",
+    "/{chapter_id}/members/{user_id}",
     summary="Remove member from chapter",
     dependencies=[Depends(require_role([UserRole.CHAPTER_ADMIN, UserRole.SUPER_ADMIN]))]
 )
@@ -119,3 +120,15 @@ async def remove_member_endpoint(
     return success_response(
         data={"message": "Member removed successfully"}
     )
+
+
+@router.get(
+    "/{chapter_id}/occupied-industries",
+    summary="Get list of occupied industry IDs for a chapter",
+)
+async def get_occupied_industries_endpoint(
+    chapter_id: UUID,
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    ids = await get_occupied_industry_ids(chapter_id, db)
+    return success_response(data=[str(i) for i in ids])

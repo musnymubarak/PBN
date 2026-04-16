@@ -246,6 +246,7 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
       .then(([appData, chaptersData]) => {
         setDetail(appData);
         setChapters(chaptersData || []);
+        if (appData.chapter_id) setSelectedChapterId(appData.chapter_id);
       })
       .catch(err => {
         console.error(err);
@@ -563,22 +564,53 @@ function CreateApplicationModal({ onClose, onCreated }) {
     contact_number: '',
     email: '',
     district: '',
-    industry_category_id: ''
+    industry_category_id: '',
+    chapter_id: ''
   });
   const [industries, setIndustries] = useState([]);
+  const [chapters, setChapters] = useState([]);
+  const [occupiedIndustries, setOccupiedIndustries] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [loadingIndustries, setLoadingIndustries] = useState(true);
+  const [loadingInitial, setLoadingInitial] = useState(true);
+  const [loadingOccupancy, setLoadingOccupancy] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    api.listIndustryCategories()
-      .then(data => setIndustries(data))
-      .catch(err => console.error('Failed to load industries:', err))
-      .finally(() => setLoadingIndustries(false));
+    const init = async () => {
+      try {
+        const [indData, chapData] = await Promise.all([
+          api.listIndustryCategories(),
+          api.listChapters()
+        ]);
+        setIndustries(indData);
+        setChapters(chapData);
+      } catch (err) {
+        console.error('Failed to load initial data:', err);
+      } finally {
+        setLoadingInitial(false);
+      }
+    };
+    init();
   }, []);
+
+  useEffect(() => {
+    if (formData.chapter_id) {
+      setLoadingOccupancy(true);
+      api.getOccupiedIndustries(formData.chapter_id)
+        .then(ids => setOccupiedIndustries(ids))
+        .catch(err => console.error('Failed to fetch occupancy:', err))
+        .finally(() => setLoadingOccupancy(false));
+    } else {
+      setOccupiedIndustries([]);
+    }
+  }, [formData.chapter_id]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!formData.chapter_id) {
+      setError('Please select a target chapter');
+      return;
+    }
     if (!formData.industry_category_id) {
       setError('Please select an industry category');
       return;
@@ -661,24 +693,25 @@ function CreateApplicationModal({ onClose, onCreated }) {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
-            <div className="login-field" style={{ marginBottom: 0 }}>
-              <label>District</label>
-              <input
-                type="text"
-                className="filter-input v2"
-                placeholder="e.g. Colombo"
-                value={formData.district}
-                onChange={e => setFormData({ ...formData, district: e.target.value })}
+            <div>
+              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>Target Chapter *</label>
+              <CustomSelect
+                label={loadingInitial ? "Loading..." : "Select Chapter..."}
+                value={formData.chapter_id}
+                options={chapters}
+                onChange={val => setFormData({ ...formData, chapter_id: val, industry_category_id: '' })}
               />
             </div>
             <div>
               <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>Industry *</label>
               <CustomSelect
-                label={loadingIndustries ? "Loading..." : "Select Industry..."}
+                label={loadingInitial ? "Loading..." : (loadingOccupancy ? "Checking..." : "Select Industry...")}
                 value={formData.industry_category_id}
                 options={industries}
+                disabledOptions={occupiedIndustries}
                 onChange={val => setFormData({ ...formData, industry_category_id: val })}
               />
+              {!formData.chapter_id && <p style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '0.4rem' }}>Please select a chapter first</p>}
             </div>
           </div>
 
@@ -906,7 +939,7 @@ function ApplicationsPage() {
 
 // ── Custom Select Component ──────────────────────────────────────────────────
 
-function CustomSelect({ label, value, options, onChange, style }) {
+function CustomSelect({ label, value, options, onChange, style, disabledOptions = [] }) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
 
@@ -942,15 +975,25 @@ function CustomSelect({ label, value, options, onChange, style }) {
           >
             {label}
           </div>
-          {options.map((opt) => (
-            <div
-              key={opt.id}
-              className={`custom-select-option ${String(value) === String(opt.id) ? 'selected' : ''}`}
-              onClick={() => { onChange(opt.id); setIsOpen(false); }}
-            >
-              {opt.name || opt.label}
-            </div>
-          ))}
+          {options.map((opt) => {
+            const isDisabled = disabledOptions.includes(String(opt.id));
+            return (
+              <div
+                key={opt.id}
+                className={`custom-select-option ${String(value) === String(opt.id) ? 'selected' : ''} ${isDisabled ? 'disabled' : ''}`}
+                onClick={() => { 
+                  if (!isDisabled) {
+                    onChange(opt.id); 
+                    setIsOpen(false); 
+                  }
+                }}
+                style={isDisabled ? { color: '#94a3b8', cursor: 'not-allowed', background: '#f8fafc', pointerEvents: 'none' } : {}}
+              >
+                {opt.name || opt.label}
+                {isDisabled && <span style={{ marginLeft: 'auto', fontSize: '0.65rem', fontWeight: 800, color: 'var(--text-secondary)', background: '#e2e8f0', padding: '2px 6px', borderRadius: '4px' }}>OCCUPIED</span>}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

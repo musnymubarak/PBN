@@ -45,6 +45,7 @@ class ApplicationCreate(BaseModel):
     email: Optional[str] = None
     district: Optional[str] = None
     industry_category_id: UUID
+    chapter_id: UUID
 
     @field_validator("contact_number")
     @classmethod
@@ -60,6 +61,7 @@ class ApplicationResponse(BaseModel):
     email: Optional[str] = None
     district: Optional[str] = None
     industry_category_id: UUID
+    chapter_id: UUID
     status: ApplicationStatus
     fit_call_date: Optional[datetime] = None
     notes: Optional[str] = None

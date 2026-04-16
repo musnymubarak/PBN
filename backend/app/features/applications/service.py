@@ -76,14 +76,25 @@ async def create_application(
     if result.scalar_one_or_none() is None:
         raise BadRequestException("Invalid or inactive industry category.", code="INVALID_INDUSTRY")
 
-    # Check duplicates
+    # Check duplicates for same industry in same chapter (prevent multiple pending for same spot)
     dup_stmt = select(Application).where(
         Application.contact_number == data.contact_number,
         Application.industry_category_id == data.industry_category_id,
+        Application.chapter_id == data.chapter_id,
+        Application.status.notin_([ApplicationStatus.REJECTED])
     )
     dup_result = await db.execute(dup_stmt)
     if dup_result.scalar_one_or_none() is not None:
         raise BadRequestException("Application already exists.", code="DUPLICATE_APPLICATION")
+
+    # Check if industry is already occupied by a member in this chapter
+    occ_stmt = select(ChapterMembership).where(
+        ChapterMembership.chapter_id == data.chapter_id,
+        ChapterMembership.industry_category_id == data.industry_category_id,
+        ChapterMembership.is_active.is_(True)
+    )
+    if (await db.execute(occ_stmt)).scalar_one_or_none() is not None:
+        raise BadRequestException("This industry is already occupied in the selected chapter.", code="INDUSTRY_OCCUPIED")
 
     app = Application(
         full_name=data.full_name,
@@ -92,6 +103,7 @@ async def create_application(
         email=data.email,
         district=data.district,
         industry_category_id=data.industry_category_id,
+        chapter_id=data.chapter_id,
         status=ApplicationStatus.PENDING,
     )
     db.add(app)

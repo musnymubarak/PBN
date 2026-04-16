@@ -81,6 +81,7 @@ export const api = {
 
   // Chapters
   listChapters: () => apiFetch('/chapters'),
+  getOccupiedIndustries: (chapterId) => apiFetch(`/chapters/${chapterId}/occupied-industries`),
 
   // Users
   updateUser: (id, body) => apiFetch(`/admin/users/${id}`, {

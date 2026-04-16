@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/services/application_service.dart';
+import 'package:pbn/core/services/chapter_service.dart';
 import 'package:pbn/core/widgets/custom_button.dart';
 import 'package:pbn/models/chapter.dart';
 
@@ -22,30 +23,63 @@ class _ApplyPageState extends State<ApplyPage> {
   final _emailCtrl = TextEditingController();
   final _districtCtrl = TextEditingController();
   
+  
   List<IndustryCategory> _categories = [];
+  List<Chapter> _chapters = [];
+  List<String> _occupiedIndustryIds = [];
+  
   IndustryCategory? _selectedCategory;
-  bool _loadingCategories = true;
+  Chapter? _selectedChapter;
+  
+  bool _loadingInitial = true;
+  bool _loadingOccupancy = false;
   bool _submitting = false;
 
   @override
   void initState() {
     super.initState();
-    _loadCategories();
+    _loadInitialData();
   }
 
-  Future<void> _loadCategories() async {
+  Future<void> _loadInitialData() async {
     try {
-      _categories = await _service.getIndustryCategories();
+      final results = await Future.wait<dynamic>([
+        _service.getIndustryCategories(),
+        ChapterService().listChapters(),
+      ]);
+      _categories = results[0] as List<IndustryCategory>;
+      _chapters = results[1] as List<Chapter>;
     } catch (_) {}
-    if (mounted) setState(() => _loadingCategories = false);
+    if (mounted) setState(() => _loadingInitial = false);
+  }
+
+  Future<void> _loadOccupancy(String chapterId) async {
+    setState(() => _loadingOccupancy = true);
+    try {
+      final ids = await _service.getOccupiedIndustries(chapterId);
+      if (mounted) {
+        setState(() {
+          _occupiedIndustryIds = ids;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Failed to load occupied industries: $e'),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+        ));
+      }
+    }
+    if (mounted) setState(() => _loadingOccupancy = false);
   }
 
   Future<void> _submit() async {
     if (_nameCtrl.text.isEmpty || _businessCtrl.text.isEmpty ||
         _phoneCtrl.text.isEmpty || _emailCtrl.text.isEmpty ||
-        _districtCtrl.text.isEmpty || _selectedCategory == null) {
+        _districtCtrl.text.isEmpty || _selectedCategory == null || _selectedChapter == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill all fields'),
+        const SnackBar(content: Text('Please fill all fields and select a chapter'),
           backgroundColor: Colors.redAccent, behavior: SnackBarBehavior.floating));
       return;
     }
@@ -69,6 +103,7 @@ class _ApplyPageState extends State<ApplyPage> {
         email: _emailCtrl.text.trim(),
         district: _districtCtrl.text.trim(),
         industryCategoryId: _selectedCategory!.id,
+        chapterId: _selectedChapter!.id,
       );
       if (mounted) {
         _showSuccessDialog();
@@ -130,7 +165,7 @@ class _ApplyPageState extends State<ApplyPage> {
           ],
         ),
       ),
-      body: _loadingCategories 
+      body: _loadingInitial 
         ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
         : Column(
             children: [
@@ -213,6 +248,10 @@ class _ApplyPageState extends State<ApplyPage> {
         const SizedBox(height: 20),
         _modernField(_districtCtrl, 'Working District', TablerIcons.map_pin),
         const SizedBox(height: 20),
+        const Text('TARGET CHAPTER', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1.5)),
+        const SizedBox(height: 8),
+        _chapterDropdown(),
+        const SizedBox(height: 20),
         const Text('INDUSTRY', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1.5)),
         const SizedBox(height: 8),
         _industryDropdown(),
@@ -247,7 +286,7 @@ class _ApplyPageState extends State<ApplyPage> {
               child: const Text('BACK', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: AppColors.textSecondary)),
             )),
             const SizedBox(width: 16),
-            Expanded(flex: 2, child: CustomButton(text: 'SUBMIT APPLICATION', onPressed: _submit, isLoading: _submitting, backgroundColor: AppColors.primary)),
+            Expanded(flex: 2, child: CustomButton(text: 'SUBMIT', onPressed: _submit, isLoading: _submitting, backgroundColor: AppColors.primary)),
           ],
         ),
       ],
@@ -295,6 +334,33 @@ class _ApplyPageState extends State<ApplyPage> {
     );
   }
 
+  Widget _chapterDropdown() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.grey.shade100),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<Chapter>(
+          value: _selectedChapter,
+          hint: const Text('Select your chapter...', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+          isExpanded: true,
+          icon: const Icon(TablerIcons.chevron_down, size: 18),
+          items: _chapters.map((c) => DropdownMenuItem(value: c, child: Text(c.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)))).toList(),
+          onChanged: (c) {
+            setState(() {
+              _selectedChapter = c;
+              _selectedCategory = null;
+            });
+            if (c != null) _loadOccupancy(c.id);
+          },
+        ),
+      ),
+    );
+  }
+
   Widget _industryDropdown() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -306,11 +372,31 @@ class _ApplyPageState extends State<ApplyPage> {
       child: DropdownButtonHideUnderline(
         child: DropdownButton<IndustryCategory>(
           value: _selectedCategory,
-          hint: const Text('Select your industry...', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+          hint: Text(_loadingOccupancy ? 'Checking occupancy...' : 'Select your industry...', 
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
           isExpanded: true,
           icon: const Icon(TablerIcons.chevron_down, size: 18),
-          items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)))).toList(),
-          onChanged: (c) => setState(() => _selectedCategory = c),
+          items: _categories.map((c) {
+            bool isOccupied = _occupiedIndustryIds.contains(c.id);
+            return DropdownMenuItem<IndustryCategory>(
+              value: c,
+              enabled: !isOccupied,
+              child: Row(
+                children: [
+                  Text(c.name, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: isOccupied ? Colors.grey : AppColors.text)),
+                  if (isOccupied) ...[
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(4)),
+                      child: const Text('OCCUPIED', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: Colors.grey)),
+                    ),
+                  ],
+                ],
+              ),
+            );
+          }).toList(),
+          onChanged: _selectedChapter == null ? null : (c) => setState(() => _selectedCategory = c),
         ),
       ),
     );
