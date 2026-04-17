@@ -10,6 +10,9 @@ RUN npm install
 # Copy source and build
 COPY . .
 
+# Ensure binaries have execution permissions
+RUN chmod +x node_modules/.bin/vite
+
 # Set VITE_API_URL to /api/v1 for relative proxying in production
 ARG VITE_API_URL=/api/v1
 ENV VITE_API_URL=${VITE_API_URL}
