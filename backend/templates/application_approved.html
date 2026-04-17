@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f4f7f9; }
+        .container { max-width: 600px; margin: 20px auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .header { background-color: #0f172a; color: #ffffff; padding: 40px 20px; text-align: center; }
+        .header h1 { margin: 0; font-size: 24px; letter-spacing: 1px; }
+        .content { padding: 40px; }
+        .footer { background-color: #f8fafc; color: #64748b; padding: 20px; text-align: center; font-size: 12px; }
+        .cred-box { background-color: #f0fdf4; padding: 25px; border-radius: 8px; margin: 20px 0; border: 1px solid #bbf7d0; text-align: center; }
+        .label { font-weight: bold; color: #64748b; font-size: 11px; text-transform: uppercase; margin-bottom: 4px; }
+        .value { font-size: 18px; font-weight: bold; color: #166534; font-family: monospace; }
+        .status-badge { display: inline-block; padding: 4px 12px; background-color: #dcfce7; border-radius: 20px; font-size: 11px; font-weight: 900; color: #15803d; letter-spacing: 1px; text-transform: uppercase; }
+        .button { display: inline-block; padding: 14px 30px; background-color: #0f172a; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>WELCOME TO PBN</h1>
+        </div>
+        <div class="content">
+            <div class="status-badge">Application Approved</div>
+            <h2>Congratulations!</h2>
+            <p>We are thrilled to inform you that your application for <strong>{{ business_name }}</strong> has been approved! Welcome to the Prime Business Network.</p>
+            
+            <p>You can now log in to the PBN mobile app using the credentials below. <strong>Please change your password after your first login.</strong></p>
+
+            <div class="cred-box">
+                <div style="margin-bottom: 20px;">
+                    <div class="label">Your Login Email</div>
+                    <div class="value">{{ email }}</div>
+                </div>
+                <div>
+                    <div class="label">Temporary Password</div>
+                    <div class="value">{{ password }}</div>
+                </div>
+            </div>
+
+            <p style="text-align: center;">
+                <a href="#" class="button">Download App</a>
+            </p>
+
+            <p>We look forward to seeing your business grow with us!</p>
+            <p>Best regards,<br>The PBN Team</p>
+        </div>
+        <div class="footer">
+            &copy; 2026 Prime Business Network. All rights reserved.
+        </div>
+    </div>
+</body>
+</html>

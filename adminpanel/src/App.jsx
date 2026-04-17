@@ -681,11 +681,12 @@ function CreateApplicationModal({ onClose, onCreated }) {
               />
             </div>
             <div className="login-field" style={{ marginBottom: 0 }}>
-              <label>Email Address</label>
+              <label>Email Address *</label>
               <input
                 type="email"
                 className="filter-input v2"
-                placeholder="optional@email.com"
+                placeholder="name@email.com"
+                required
                 value={formData.email}
                 onChange={e => setFormData({ ...formData, email: e.target.value })}
               />

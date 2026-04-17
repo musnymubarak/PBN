@@ -10,8 +10,9 @@ import string
 from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 import logging
-from typing import List, Tuple, TYPE_CHECKING
+from typing import List, Tuple, TYPE_CHECKING, Optional
 from uuid import UUID
+import secrets
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +40,7 @@ from app.models.user import User, UserRole
 from app.models.chapters import Chapter
 from app.models.payments import Payment, PaymentStatus, PaymentType
 from app.core.config import get_settings
+from app.core.email_service import send_email, render_template
 
 settings = get_settings()
 
@@ -52,6 +54,14 @@ VALID_TRANSITIONS = {
     ApplicationStatus.WAITLISTED: [ApplicationStatus.APPROVED],
 }
 
+
+def generate_temp_password(length=10) -> str:
+    """Generates a secure alphanumeric password."""
+    alphabet = string.ascii_letters + string.digits
+    while True:
+        pwd = ''.join(secrets.choice(alphabet) for _ in range(length))
+        if any(c.isupper() for c in pwd) and any(c.isdigit() for c in pwd):
+            return pwd
 
 # ── Industry Categories ──────────────────────────────────────────────────────
 
@@ -136,6 +146,17 @@ async def create_application(
             )
     except Exception as e:
         logger.error(f"Failed to notify admins of new application: {e}")
+
+    # Send confirmation email to applicant
+    if app.email:
+        try:
+            html = render_template("application_received.html", {
+                "full_name": app.full_name,
+                "business_name": app.business_name
+            })
+            await send_email(app.email, "Application Received - Prime Business Network", html)
+        except Exception as e:
+            logger.error(f"Failed to send confirmation email to {app.email}: {e}")
 
     return app
 
@@ -254,13 +275,17 @@ async def update_application_status(
         # Find or create user
         usr_stmt = select(User).where(User.phone_number == app.contact_number)
         user = (await db.execute(usr_stmt)).scalar_one_or_none()
+        
+        # Generate new password
+        temp_password = generate_temp_password()
+        
         if not user:
             user = User(
                 phone_number=app.contact_number,
                 full_name=app.full_name,
                 email=app.email,
                 role=UserRole.PROSPECT,
-                password_hash=hash_password("pbn123"), # Default password for initial login
+                password_hash=hash_password(temp_password),
             )
             db.add(user)
             await db.flush()
@@ -270,12 +295,24 @@ async def update_application_status(
                 user.full_name = app.full_name
                 if app.email:
                     user.email = app.email
-                if not user.password_hash:
-                    user.password_hash = hash_password("pbn123")
+                user.password_hash = hash_password(temp_password)
                 await db.flush()
 
         # Generate privilege card
         await _generate_privilege_card(user.id, db)
+
+        # Send Approval Email
+        if app.email:
+            try:
+                html = render_template("application_approved.html", {
+                    "full_name": app.full_name,
+                    "business_name": app.business_name,
+                    "email": app.email,
+                    "password": temp_password
+                })
+                await send_email(app.email, "Welcome to PBN! Your Application is Approved", html)
+            except Exception as e:
+                logger.error(f"Failed to send approval email to {app.email}: {e}")
         
         # Determine chapter: use the admin's chapter, or fallback to any chapter if super admin, or data.chapter_id
         chapter_id = data.chapter_id
@@ -356,7 +393,7 @@ async def update_application_status(
             )
             db.add(business)
 
-        # Notify User
+        # Notify User via Push
         try:
             await send_push_notification(
                 user_id=user.id,
@@ -367,6 +404,30 @@ async def update_application_status(
             )
         except Exception:
             pass
+
+    # Handle Fit Call Scheduled Email
+    if data.status == ApplicationStatus.FIT_CALL_SCHEDULED and app.email and app.fit_call_date:
+        try:
+            html = render_template("fit_call_scheduled.html", {
+                "full_name": app.full_name,
+                "business_name": app.business_name,
+                "fit_call_date": app.fit_call_date.strftime("%Y-%m-%d %I:%M %p")
+            })
+            await send_email(app.email, "Fit Call Scheduled - Prime Business Network", html)
+        except Exception as e:
+            logger.error(f"Failed to send fit call email to {app.email}: {e}")
+
+    # Handle Rejected Email
+    if data.status == ApplicationStatus.REJECTED and app.email:
+        try:
+            html = render_template("application_rejected.html", {
+                "full_name": app.full_name,
+                "business_name": app.business_name,
+                "reason": data.notes or "No specific reason provided."
+            })
+            await send_email(app.email, "Update on your PBN Application", html)
+        except Exception as e:
+            logger.error(f"Failed to send rejection email to {app.email}: {e}")
 
     await db.flush()
     return app

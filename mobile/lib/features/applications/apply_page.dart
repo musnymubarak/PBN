@@ -270,7 +270,7 @@ class _ApplyPageState extends State<ApplyPage> {
         const SizedBox(height: 32),
         _modernField(_nameCtrl, 'Full Name', TablerIcons.user),
         const SizedBox(height: 20),
-        _modernField(_emailCtrl, 'Email Address', TablerIcons.mail, keyboardType: TextInputType.emailAddress),
+        _modernField(_emailCtrl, 'Email Address *', TablerIcons.mail, keyboardType: TextInputType.emailAddress),
         const SizedBox(height: 20),
         _modernField(_phoneCtrl, 'Contact Number', TablerIcons.phone, keyboardType: TextInputType.phone),
         const SizedBox(height: 48),

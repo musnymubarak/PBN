@@ -62,8 +62,15 @@ class Settings(BaseSettings):
     WEBXPAY_CANCEL_URL: str = "http://localhost:8000/api/v1/payments/cancel"
     WEBXPAY_NOTIFY_URL: str = "http://localhost:8000/api/v1/payments/webhook"
 
-    # ── Firebase ──────────────────────────────────────────────
     FIREBASE_SERVICE_ACCOUNT_JSON: str | None = None
+
+    # ── SMTP / Email ──────────────────────────────────────────
+    SMTP_HOST: str = "mail.primebusiness.network"
+    SMTP_PORT: int = 465
+    SMTP_USER: str = "info@primebusiness.network"
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM_NAME: str = "Prime Business Network"
+    SMTP_FROM_EMAIL: str = "info@primebusiness.network"
 
     # ── CORS ─────────────────────────────────────────────────
     CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:5173"]
