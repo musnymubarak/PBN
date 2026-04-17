@@ -46,7 +46,7 @@ async def list_all_members_endpoint(
     return success_response(data=members)
 
 
-@router.get("/", summary="List active chapters", response_model=None)
+@router.get("", summary="List active chapters", response_model=None)
 async def list_chapters_endpoint(
     db: AsyncSession = Depends(get_db),
     # Optional auth: depends on requirements, let's keep it public/accessible to all
