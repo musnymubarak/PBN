@@ -205,9 +205,9 @@ class _MembersPageState extends State<MembersPage> {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(10),
                     child: CachedNetworkImage(
-                      imageUrl: member.profilePhoto != null 
+                      imageUrl: (member.profilePhoto != null && member.profilePhoto!.isNotEmpty)
                           ? '${ApiConfig.baseUrl.replaceAll('/api/v1', '')}${member.profilePhoto}'
-                          : 'https://i.pravatar.cc/150?u=${member.userId}',
+                          : '',
                       fit: BoxFit.cover,
                       placeholder: (context, url) => Container(
                         color: Colors.grey.shade100,

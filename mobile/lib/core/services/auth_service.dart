@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:dio/dio.dart';
 import 'package:pbn/core/services/api_client.dart';
 import 'package:pbn/core/services/secure_storage.dart';
 import 'package:pbn/models/user.dart';
@@ -47,11 +48,21 @@ class AuthService {
       await _api.put('/auth/change-password', data: {
         'current_password': currentPassword,
         'new_password': newPassword,
+        'confirm_password': newPassword,
       });
       return true;
+    } on DioException catch (e) {
+      debugPrint("Change password failed: \${e.response?.data}");
+      if (e.response?.data is Map && e.response?.data['detail'] != null) {
+          throw Exception(e.response?.data['detail'].toString());
+      }
+      if (e.response?.data is Map && e.response?.data['message'] != null) {
+          throw Exception(e.response?.data['message'].toString());
+      }
+      throw Exception(e.message ?? 'Unknown error occurred');
     } catch (e) {
       debugPrint("Change password failed: $e");
-      return false;
+      throw Exception(e.toString());
     }
   }
 }

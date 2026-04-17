@@ -59,11 +59,13 @@ class _ForceChangePasswordPageState extends State<ForceChangePasswordPage> {
           // Navigate to dashboard
           Navigator.pushReplacementNamed(context, '/dashboard');
         }
-      } else {
-        setState(() => _error = 'Failed to change password. Please check your current password.');
       }
     } catch (e) {
-      setState(() => _error = 'An error occurred. Please try again.');
+      String msg = e.toString();
+      if (msg.startsWith('Exception: ')) {
+        msg = msg.replaceFirst('Exception: ', '');
+      }
+      setState(() => _error = msg);
     } finally {
       if (mounted) setState(() => _loading = false);
     }

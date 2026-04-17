@@ -516,9 +516,10 @@ class _DashboardPageState extends State<DashboardPage> {
     final double size = rank == 1 ? 74 : 54;
     
     String? profilePhoto = res['profile_photo'];
-    String imageUrl = profilePhoto != null && profilePhoto.isNotEmpty
+    final bool hasPhoto = profilePhoto != null && profilePhoto.isNotEmpty;
+    String imageUrl = hasPhoto
         ? '${ApiConfig.baseUrl.replaceAll('/api/v1', '')}$profilePhoto'
-        : 'https://picsum.photos/seed/${Uri.encodeComponent(name)}/150/150';
+        : '';
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -547,11 +548,15 @@ class _DashboardPageState extends State<DashboardPage> {
               width: size, height: size,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
+                color: hasPhoto ? Colors.transparent : color.withOpacity(0.15),
                 border: Border.all(color: color.withOpacity(0.8), width: rank == 1 ? 3 : 2),
-                image: DecorationImage(
+                image: hasPhoto ? DecorationImage(
                   image: NetworkImage(imageUrl),
                   fit: BoxFit.cover,
-                ),
+                ) : null,
+              ),
+              child: hasPhoto ? null : Center(
+                child: Text(initials, style: TextStyle(color: color, fontSize: rank == 1 ? 24 : 18, fontWeight: FontWeight.w900)),
               ),
             ),
             Positioned(

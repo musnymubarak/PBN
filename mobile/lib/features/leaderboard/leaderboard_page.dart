@@ -210,9 +210,10 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
     final double avatarSize = rank == 1 ? 84 : 64;
     
     String? profilePhoto = user['profile_photo'];
-    String imageUrl = profilePhoto != null && profilePhoto.isNotEmpty
+    final bool hasPhoto = profilePhoto != null && profilePhoto.isNotEmpty;
+    String imageUrl = hasPhoto
         ? '${ApiConfig.baseUrl.replaceAll('/api/v1', '')}$profilePhoto'
-        : 'https://picsum.photos/seed/${Uri.encodeComponent(name)}/150/150';
+        : '';
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -232,25 +233,32 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
               height: avatarSize,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white,
+                color: hasPhoto ? Colors.white : color.withOpacity(0.1),
                 border: Border.all(color: color, width: rank == 1 ? 4 : 3),
                 boxShadow: [
                   BoxShadow(color: color.withOpacity(0.3), blurRadius: 15, spreadRadius: 2, offset: const Offset(0, 4)),
                 ],
               ),
               child: ClipOval(
-                child: Image.network(
-                  imageUrl,
-                  width: avatarSize,
-                  height: avatarSize,
-                  fit: BoxFit.cover,
-                  errorBuilder: (ctx, err, stack) => Center(
-                    child: Text(
-                      initials,
-                      style: TextStyle(fontWeight: FontWeight.w900, color: color, fontSize: rank == 1 ? 28 : 20),
+                child: hasPhoto 
+                  ? Image.network(
+                      imageUrl,
+                      width: avatarSize,
+                      height: avatarSize,
+                      fit: BoxFit.cover,
+                      errorBuilder: (ctx, err, stack) => Center(
+                        child: Text(
+                          initials,
+                          style: TextStyle(fontWeight: FontWeight.w900, color: color, fontSize: rank == 1 ? 28 : 20),
+                        ),
+                      ),
+                    )
+                  : Center(
+                      child: Text(
+                        initials,
+                        style: TextStyle(fontWeight: FontWeight.w900, color: color, fontSize: rank == 1 ? 28 : 20),
+                      ),
                     ),
-                  ),
-                ),
               ),
             ),
             Positioned(
@@ -306,9 +314,10 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
     final initials = _getInitials(name);
     
     String? profilePhoto = entry['profile_photo'];
-    String imageUrl = profilePhoto != null && profilePhoto.isNotEmpty
+    final bool hasPhoto = profilePhoto != null && profilePhoto.isNotEmpty;
+    String imageUrl = hasPhoto
         ? '${ApiConfig.baseUrl.replaceAll('/api/v1', '')}$profilePhoto'
-        : 'https://picsum.photos/seed/${Uri.encodeComponent(name)}/150/150';
+        : '';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -332,24 +341,29 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
           // Avatar
           Container(
             width: 40, height: 40,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
+            decoration: BoxDecoration(
+              gradient: hasPhoto ? null : const LinearGradient(
                 colors: [Color(0xFFE2E8F0), Color(0xFFCBD5E1)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
+              color: hasPhoto ? Colors.white : null,
               shape: BoxShape.circle,
             ),
             child: ClipOval(
-              child: Image.network(
-                imageUrl,
-                width: 40,
-                height: 40,
-                fit: BoxFit.cover,
-                errorBuilder: (ctx, err, stack) => Center(
-                  child: Text(initials, style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF475569), fontSize: 13))
-                ),
-              ),
+              child: hasPhoto 
+                ? Image.network(
+                    imageUrl,
+                    width: 40,
+                    height: 40,
+                    fit: BoxFit.cover,
+                    errorBuilder: (ctx, err, stack) => Center(
+                      child: Text(initials, style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF475569), fontSize: 13))
+                    ),
+                  )
+                : Center(
+                    child: Text(initials, style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF475569), fontSize: 13))
+                  ),
             ),
           ),
           const SizedBox(width: 14),

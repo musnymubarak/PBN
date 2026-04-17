@@ -206,12 +206,12 @@ class _ProfilePageState extends State<ProfilePage> {
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(22),
                                 child: user?.id != null 
-                                    ? Image.network(
-                                        user!.profilePhoto != null 
-                                            ? '${ApiConfig.baseUrl.replaceAll('/api/v1', '')}${user.profilePhoto}' 
-                                            : 'https://i.pravatar.cc/150?u=${user.id}', 
-                                        fit: BoxFit.cover, 
-                                        errorBuilder: (c, e, s) => Center(child: Text(user.initials, style: const TextStyle(color: Color(0xFF1E3A8A), fontWeight: FontWeight.w900, fontSize: 28))))
+                                    ? (user!.profilePhoto != null && user.profilePhoto!.isNotEmpty)
+                                        ? Image.network(
+                                            '${ApiConfig.baseUrl.replaceAll('/api/v1', '')}${user.profilePhoto}', 
+                                            fit: BoxFit.cover, 
+                                            errorBuilder: (c, e, s) => Center(child: Text(user.initials, style: const TextStyle(color: Color(0xFF1E3A8A), fontWeight: FontWeight.w900, fontSize: 28))))
+                                        : Center(child: Text(user.initials, style: const TextStyle(color: Color(0xFF1E3A8A), fontWeight: FontWeight.w900, fontSize: 28)))
                                     : const SizedBox(),
                               ),
                             ),
