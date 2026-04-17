@@ -58,7 +58,7 @@ class ApplicationResponse(BaseModel):
     full_name: str
     business_name: str
     contact_number: str
-    email: str
+    email: Optional[str] = None
     district: Optional[str] = None
     industry_category_id: UUID
     chapter_id: UUID
