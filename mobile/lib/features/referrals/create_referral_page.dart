@@ -94,7 +94,7 @@ class _CreateReferralPageState extends State<CreateReferralPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('New Deal', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.black)),
+        title: const Text('New Referral', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.black)),
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
@@ -121,7 +121,7 @@ class _CreateReferralPageState extends State<CreateReferralPage> {
                 _inputField(_leadEmailController, 'Email Address (Optional)', TablerIcons.mail, keyboardType: TextInputType.emailAddress),
                 
                 const SizedBox(height: 32),
-                _buildSectionLabel('Deal details'),
+                _buildSectionLabel('Referral details'),
                 _inputField(_descriptionController, 'Explain how the recipient can help this lead...', null, maxLines: 5),
                 
                 const SizedBox(height: 48),
@@ -138,7 +138,7 @@ class _CreateReferralPageState extends State<CreateReferralPage> {
                     child: Center(
                       child: _loading 
                         ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : const Text('Submit Deal', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15)),
+                        : const Text('Submit Referral', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15)),
                     ),
                   ),
                 ),

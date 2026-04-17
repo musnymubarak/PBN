@@ -32,14 +32,14 @@ class _ReferralDashboardPageState extends State<ReferralDashboardPage> {
       final received = await _service.getReceivedReferrals();
       rCount = received.length;
     } catch (e) {
-      debugPrint('Error loading received deals: $e');
+      debugPrint('Error loading received referrals: $e');
     }
 
     try {
       final sent = await _service.getGivenReferrals();
       sCount = sent.length;
     } catch (e) {
-      debugPrint('Error loading sent deals: $e');
+      debugPrint('Error loading sent referrals: $e');
     }
 
     if (mounted) {
@@ -53,7 +53,7 @@ class _ReferralDashboardPageState extends State<ReferralDashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    final totalDeals = _receivedCount + _sentCount;
+    final totalReferrals = _receivedCount + _sentCount;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -62,7 +62,7 @@ class _ReferralDashboardPageState extends State<ReferralDashboardPage> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('DEAL FLOW',
+            const Text('REFERRAL FLOW',
                 style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w900,
@@ -103,14 +103,14 @@ class _ReferralDashboardPageState extends State<ReferralDashboardPage> {
                     ),
                     child: Column(
                       children: [
-                        const Text('Total Network Deals',
+                        const Text('Total Network Referrals',
                             style: TextStyle(
                                 color: Colors.blueAccent,
                                 fontSize: 10,
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: 1.5)),
                         const SizedBox(height: 12),
-                        Text('$totalDeals',
+                        Text('$totalReferrals',
                             style: const TextStyle(
                                 fontSize: 64,
                                 fontWeight: FontWeight.w900,
@@ -133,7 +133,7 @@ class _ReferralDashboardPageState extends State<ReferralDashboardPage> {
                     children: [
                       _buildActionTile(
                         icon: TablerIcons.plus,
-                        label: 'New Deal',
+                        label: 'New Referral',
                         color: AppColors.primary,
                         onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateReferralPage())).then((_) => _loadStats()),
                       ),
@@ -141,7 +141,7 @@ class _ReferralDashboardPageState extends State<ReferralDashboardPage> {
                   ),
                   const SizedBox(height: 24),
 
-                  const Text('DEAL ACTIVITY',
+                  const Text('REFERRAL ACTIVITY',
                       style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w900,
@@ -151,7 +151,7 @@ class _ReferralDashboardPageState extends State<ReferralDashboardPage> {
 
                   // -- PERFORMANCE ROWS --
                   _buildTrackerCard(
-                    title: 'Received Deals',
+                    title: 'Received Referrals',
                     count: _receivedCount,
                     icon: TablerIcons.arrow_down_left,
                     color: Colors.green,
@@ -159,7 +159,7 @@ class _ReferralDashboardPageState extends State<ReferralDashboardPage> {
                   ),
                   const SizedBox(height: 12),
                   _buildTrackerCard(
-                    title: 'Sent Deals',
+                    title: 'Sent Referrals',
                     count: _sentCount,
                     icon: TablerIcons.arrow_up_right,
                     color: Colors.blue,
@@ -256,7 +256,7 @@ class _ReferralDashboardPageState extends State<ReferralDashboardPage> {
           ),
           const SizedBox(height: 16),
           Text(
-            'High deal flow helps you climb the leaderboard and unlock premium rewards. Always update the ROI once a deal is closed successfully.',
+            'High referral flow helps you climb the leaderboard and unlock premium rewards. Always update the ROI once a referral is closed successfully.',
             style: TextStyle(fontSize: 13, height: 1.5, color: AppColors.primary.withOpacity(0.8), fontWeight: FontWeight.w500),
           ),
         ],

@@ -111,7 +111,8 @@ class SupportPage extends StatelessWidget {
 
           _buildFaqTile('How do I update my industry code?', 'You can edit your industry details from the Member settings or by contacting your chapter administrator.'),
           _buildFaqTile('When is the next physical meetup?', 'Physical Flagship meetups occur once every month. Details are posted in the "Schedule" tab.'),
-          _buildFaqTile('How are conversion rates calculated?', 'The dashboard tracks successful referrals divided by the total deals given by your business.'),
+          _buildFaqTile('How are conversion rates calculated?', 'The dashboard tracks successful referrals divided by the total referrals given by your business.'),
+          _buildFaqTile('Can I export my networking data?', 'Currently, all data is maintained securely within the app for a unified experience.'),
           
           const SizedBox(height: 32),
           const Text('SUPPORT CATEGORIES',
