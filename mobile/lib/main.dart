@@ -20,6 +20,7 @@ import 'package:pbn/features/applications/apply_page.dart';
 import 'package:pbn/features/applications/my_applications_page.dart';
 import 'package:pbn/features/partner/partner_dashboard_page.dart';
 import 'package:pbn/features/auth/onboarding_page.dart';
+import 'package:pbn/features/auth/force_change_password_page.dart';
 import 'package:pbn/core/services/push_notification_service.dart';
 import 'package:pbn/core/services/prefs_service.dart';
 
@@ -75,6 +76,7 @@ class PBNApp extends StatelessWidget {
         '/my-referrals': (context) => const AuthGuard(child: MyReferralsPage(isReceived: true)),
         '/my-applications': (context) => const AuthGuard(child: MyApplicationsPage()),
         '/partner_dashboard': (context) => const AuthGuard(child: PartnerDashboardPage()),
+        '/force-change-password': (context) => const ForceChangePasswordPage(),
       },
     );
   }
@@ -98,6 +100,13 @@ class AuthGuard extends StatelessWidget {
     if (auth.status == AuthStatus.unauthenticated) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Navigator.pushReplacementNamed(context, '/onboarding');
+      });
+      return const Scaffold(backgroundColor: Colors.white);
+    }
+
+    if (auth.user?.mustChangePassword == true) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pushReplacementNamed(context, '/force-change-password');
       });
       return const Scaffold(backgroundColor: Colors.white);
     }

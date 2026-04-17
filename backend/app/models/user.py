@@ -56,6 +56,9 @@ class User(Base, TimestampMixin):
     profile_photo: Mapped[str | None] = mapped_column(
         String(500), nullable=True, default=None
     )
+    must_change_password: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False
+    )
 
     def __repr__(self) -> str:
         return f"<User {self.phone_number} role={self.role.value}>"

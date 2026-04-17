@@ -388,6 +388,7 @@ async def login(
             "full_name": user.full_name,
             "email": user.email,
             "role": user.role.value,
+            "must_change_password": user.must_change_password,
         },
     }
 
@@ -412,6 +413,7 @@ async def change_password(
         )
 
     user.password_hash = hash_password(new_password)
+    user.must_change_password = False
     await db.commit()
     logger.info("Password changed for user: %s", user.id)
 

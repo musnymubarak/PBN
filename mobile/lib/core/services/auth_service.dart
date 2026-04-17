@@ -39,4 +39,18 @@ class AuthService {
       'fcm_token': fcmToken,
     });
   }
+
+  /// Change current user password.
+  Future<bool> changePassword(String currentPassword, String newPassword) async {
+    try {
+      await _api.put('/auth/change-password', data: {
+        'current_password': currentPassword,
+        'new_password': newPassword,
+      });
+      return true;
+    } catch (e) {
+      debugPrint("Change password failed: $e");
+      return false;
+    }
+  }
 }

@@ -286,6 +286,7 @@ async def update_application_status(
                 email=app.email,
                 role=UserRole.PROSPECT,
                 password_hash=hash_password(temp_password),
+                must_change_password=True,
             )
             db.add(user)
             await db.flush()
@@ -296,6 +297,7 @@ async def update_application_status(
                 if app.email:
                     user.email = app.email
                 user.password_hash = hash_password(temp_password)
+                user.must_change_password = True
                 await db.flush()
 
         # Generate privilege card
