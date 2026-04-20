@@ -12,6 +12,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload, joinedload
 from sqlalchemy.exc import IntegrityError
+import logging
+
+logger = logging.getLogger(__name__)
 
 from app.core.exceptions import BadRequestException, NotFoundException, ForbiddenException
 from app.features.notifications.service import send_push_notification, notify_multiple_users
@@ -23,51 +26,57 @@ from app.models.user import User, UserRole
 
 
 async def _serialize_event(ev: Event) -> Dict[str, Any]:
-    return {
-        "id": str(ev.id),
-        "chapter_id": str(ev.chapter_id),
-        "title": ev.title,
-        "description": ev.description,
-        "event_type": ev.event_type.value,
-        "location": ev.location,
-        "meeting_link": ev.meeting_link,
-        "start_at": ev.start_at.isoformat(),
-        "end_at": ev.end_at.isoformat(),
-        "fee": float(ev.fee),
-        "max_attendees": ev.max_attendees,
-        "is_published": ev.is_published,
-        "is_active": ev.is_active,
-        "image_url": ev.image_url,
-        "created_at": ev.created_at.isoformat() if ev.created_at else None,
-        "rsvps": [
-            {
-                "user": {
-                    "id": str(r.user.id),
-                    "full_name": r.user.full_name,
-                    "phone_number": r.user.phone_number,
-                },
-                "status": r.status.value,
-                "created_at": r.created_at.isoformat() if r.created_at else None
-            }
-            for r in getattr(ev, "rsvps", [])
-        ],
-        "attendances": [
-            {
-                "user": {
-                    "id": str(a.user.id),
-                    "full_name": a.user.full_name,
-                    "phone_number": a.user.phone_number,
-                },
-                "marked_at": a.marked_at.isoformat(),
-                "marked_by_user": {
-                    "id": str(a.marked_by_user.id),
-                    "full_name": a.marked_by_user.full_name,
-                    "phone_number": a.marked_by_user.phone_number,
-                } if getattr(a, "marked_by_user", None) else None
-            }
-            for a in getattr(ev, "attendances", [])
-        ]
-    }
+    try:
+        return {
+            "id": str(ev.id),
+            "chapter_id": str(ev.chapter_id),
+            "title": ev.title,
+            "description": ev.description,
+            "event_type": ev.event_type.value if ev.event_type else None,
+            "location": ev.location,
+            "meeting_link": ev.meeting_link,
+            "start_at": ev.start_at.isoformat() if ev.start_at else None,
+            "end_at": ev.end_at.isoformat() if ev.end_at else None,
+            "fee": float(ev.fee) if ev.fee is not None else 0.0,
+            "max_attendees": ev.max_attendees,
+            "is_published": ev.is_published,
+            "is_active": ev.is_active,
+            "image_url": ev.image_url,
+            "created_at": ev.created_at.isoformat() if ev.created_at else None,
+            "rsvps": [
+                {
+                    "user": {
+                        "id": str(r.user.id),
+                        "full_name": r.user.full_name,
+                        "phone_number": r.user.phone_number,
+                    },
+                    "status": r.status.value if r.status else None,
+                    "created_at": r.created_at.isoformat() if r.created_at else None
+                }
+                for r in getattr(ev, "rsvps", [])
+                if r.user is not None # Critical safety check
+            ],
+            "attendances": [
+                {
+                    "user": {
+                        "id": str(a.user.id),
+                        "full_name": a.user.full_name,
+                        "phone_number": a.user.phone_number,
+                    },
+                    "marked_at": a.marked_at.isoformat() if a.marked_at else None,
+                    "marked_by_user": {
+                        "id": str(a.marked_by_user.id),
+                        "full_name": a.marked_by_user.full_name,
+                        "phone_number": a.marked_by_user.phone_number,
+                    } if getattr(a, "marked_by_user", None) else None
+                }
+                for a in getattr(ev, "attendances", [])
+                if a.user is not None # Critical safety check
+            ]
+        }
+    except Exception as e:
+        logger.error(f"Failed to serialize event {ev.id}: {str(e)}")
+        raise
 
 
 async def create_event(data: EventCreate, actor_id: UUID, db: AsyncSession) -> Dict[str, Any]:
@@ -177,7 +186,16 @@ async def list_events(chapter_id: UUID | None, published_only: bool, db: AsyncSe
     result = await db.execute(stmt)
     events = result.scalars().all()
     
-    return [await _serialize_event(e) for e in events]
+    serialized = []
+    for e in events:
+        try:
+            serialized.append(await _serialize_event(e))
+        except Exception:
+            # Skip corrupted event records so the whole list doesn't fail
+            logger.warning(f"Skipping corrupted event record {e.id}")
+            continue
+            
+    return serialized
 
 
 async def update_rsvp(event_id: UUID, actor_id: UUID, status: RSVPStatus, db: AsyncSession) -> Dict[str, Any]:
