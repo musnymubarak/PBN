@@ -15,15 +15,18 @@ from pathlib import Path
 from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, Query, Request, UploadFile, File
 from fastapi.responses import ORJSONResponse
+import os
+import shutil
+import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_db
 from app.core.response import success_response
 from app.features.auth.dependencies import get_current_user, require_role
 from app.features.rewards.schemas import (
-    PartnerCreate, OfferCreate, ConfirmRedemptionRequest
+    PartnerCreate, OfferCreate, ConfirmRedemptionRequest, PartnerUpdate
 )
 from app.features.rewards.service import (
     check_redemption_status,
@@ -36,6 +39,7 @@ from app.features.rewards.service import (
     initiate_redeem,
     list_partners,
     redeem_offer,
+    update_partner,
 )
 from app.models.user import User, UserRole
 
@@ -97,6 +101,64 @@ async def create_offer_endpoint(
 ) -> ORJSONResponse:
     offer = await create_offer(partner_id, data, db)
     return success_response(data=offer, message="Offer created successfully", status_code=201)
+
+
+@router.patch("/rewards/partners/{partner_id}", summary="Update a partner")
+async def update_partner_endpoint(
+    partner_id: UUID,
+    data: PartnerUpdate,
+    current_user: User = Depends(admin_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    partner = await update_partner(partner_id, data, db)
+    return success_response(data=partner, message="Partner updated successfully")
+
+
+@router.post("/rewards/partners/upload-logo", summary="Upload partner logo")
+async def upload_partner_logo_endpoint(
+    file: UploadFile = File(...),
+    current_user: User = Depends(admin_req),
+) -> ORJSONResponse:
+    """Upload a partner logo image."""
+    from app.core.exceptions import BadRequestException
+
+    # 1. Size Validation (2MB limit for logos)
+    MAX_SIZE = 2 * 1024 * 1024
+    if file.size and file.size > MAX_SIZE:
+        raise BadRequestException(
+            message=f"File too large. Maximum size allowed is 2MB.",
+            code="FILE_TOO_LARGE"
+        )
+
+    # 2. Format Validation
+    ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/svg+xml"]
+    if file.content_type not in ALLOWED_TYPES:
+        raise BadRequestException(
+            message="Invalid file format. Only JPEG, PNG, WebP, and SVG images are allowed.",
+            code="INVALID_FORMAT"
+        )
+
+    os.makedirs("uploads/partners", exist_ok=True)
+    ext = file.filename.split(".")[-1].lower() if "." in file.filename else "jpg"
+    
+    if ext not in ["jpg", "jpeg", "png", "webp", "svg"]:
+         raise BadRequestException(
+            message="Invalid file extension.",
+            code="INVALID_EXTENSION"
+        )
+
+    filename = f"partner_{uuid.uuid4().hex[:8]}.{ext}"
+    file_path = f"uploads/partners/{filename}"
+    
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+        
+    logo_url = f"/static/partners/{filename}"
+    
+    return success_response(
+        data={"logo_url": logo_url},
+        message="Logo uploaded successfully"
+    )
 
 
 # ── Legacy Direct Redeem (backward compatibility) ───────────

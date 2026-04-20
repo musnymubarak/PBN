@@ -29,6 +29,14 @@ class PartnerCreate(BaseModel):
     is_active: bool = True
 
 
+class PartnerUpdate(BaseModel):
+    name: Optional[str] = None
+    logo_url: Optional[str] = None
+    description: Optional[str] = None
+    website: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
 class OfferCreate(BaseModel):
     title: str
     description: Optional[str] = None

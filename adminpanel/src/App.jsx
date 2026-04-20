@@ -33,7 +33,7 @@ import {
   IconStackPop,
   IconUserCheck,
 } from '@tabler/icons-react';
-import { api } from './lib/api';
+import { api, STATIC_BASE_URL } from './lib/api';
 import { useApi } from './hooks/useApi';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -1584,7 +1584,24 @@ function CreatePartnerModal({ onClose, onCreated }) {
     is_active: true
   });
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploading(true);
+    setError('');
+    try {
+      const result = await api.uploadPartnerLogo(file);
+      setFormData(prev => ({ ...prev, logo_url: result.logo_url }));
+    } catch (err) {
+      setError('Logo upload failed: ' + err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -1609,8 +1626,9 @@ function CreatePartnerModal({ onClose, onCreated }) {
             <IconX size={20} />
           </button>
         </div>
-        <form onSubmit={handleSubmit} style={{ padding: '1.5rem 1.5rem 8rem' }}>
+        <form onSubmit={handleSubmit} style={{ padding: '1.5rem 1.5rem 2rem' }}>
           {error && <div className="login-error" style={{ marginBottom: '1rem' }}>{error}</div>}
+          
           <div className="login-field">
             <label>Business Name *</label>
             <input
@@ -1621,16 +1639,42 @@ function CreatePartnerModal({ onClose, onCreated }) {
               onChange={e => setFormData({ ...formData, name: e.target.value })}
             />
           </div>
+
           <div className="login-field">
-            <label>Logo URL (Image Link)</label>
-            <input
-              type="url"
-              className="filter-input v2"
-              placeholder="https://..."
-              onChange={e => setFormData({ ...formData, logo_url: e.target.value })}
-            />
+            <label>Partner Logo</label>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              <div style={{ width: 64, height: 64, borderRadius: '12px', background: '#f8fafc', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e2e8f0' }}>
+                {formData.logo_url ? <img src={formData.logo_url.startsWith('http') ? formData.logo_url : `${STATIC_BASE_URL}${formData.logo_url}`} style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : <IconBuildingStore size={24} color="#94a3b8" />}
+              </div>
+              <div style={{ flex: 1 }}>
+                <input
+                  type="file"
+                  id="partner-logo-upload"
+                  accept="image/*,image/svg+xml"
+                  style={{ display: 'none' }}
+                  onChange={handleFileUpload}
+                />
+                <label 
+                  htmlFor="partner-logo-upload" 
+                  className="btn-secondary" 
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.85rem', padding: '0.6rem 1rem' }}
+                >
+                  <IconPlus size={16} /> {uploading ? 'Uploading...' : formData.logo_url ? 'Change Logo' : 'Upload Logo'}
+                </label>
+                {formData.logo_url && (
+                  <button 
+                    type="button" 
+                    style={{ marginLeft: '0.5rem', fontSize: '0.75rem', color: '#ef4444', border: 'none', background: 'none', cursor: 'pointer', fontWeight: 600 }}
+                    onClick={() => setFormData({ ...formData, logo_url: '' })}
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
-            <div className="login-field">
+
+          <div className="login-field">
             <label>Website</label>
             <input 
               type="url" 
@@ -1649,8 +1693,147 @@ function CreatePartnerModal({ onClose, onCreated }) {
               onChange={e => setFormData({...formData, description: e.target.value})}
             />
           </div>
-          <button type="submit" className="login-btn" disabled={loading}>
+          <button type="submit" className="login-btn" disabled={loading || uploading}>
             {loading ? 'Creating...' : 'Create Partner'}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function EditPartnerModal({ partner, onClose, onUpdated }) {
+  const [formData, setFormData] = useState({
+    name: partner.name || '',
+    description: partner.description || '',
+    logo_url: partner.logo_url || '',
+    website: partner.website || '',
+    is_active: partner.is_active ?? true
+  });
+  const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploading(true);
+    setError('');
+    try {
+      const result = await api.uploadPartnerLogo(file);
+      setFormData(prev => ({ ...prev, logo_url: result.logo_url }));
+    } catch (err) {
+      setError('Logo upload failed: ' + err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    try {
+      await api.updatePartner(partner.id, formData);
+      onUpdated();
+    } catch (err) {
+      setError(err.message || 'Failed to update partner');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 500 }}>
+        <div className="modal-header">
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Edit Partner</h2>
+          <button type="button" className="modal-close-btn" onClick={onClose}>
+            <IconX size={20} />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} style={{ padding: '1.5rem 1.5rem 2rem' }}>
+          {error && <div className="login-error" style={{ marginBottom: '1rem' }}>{error}</div>}
+          
+          <div className="login-field">
+            <label>Business Name *</label>
+            <input
+              type="text"
+              className="filter-input v2"
+              required
+              value={formData.name}
+              onChange={e => setFormData({ ...formData, name: e.target.value })}
+            />
+          </div>
+
+          <div className="login-field">
+            <label>Partner Logo</label>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              <div style={{ width: 64, height: 64, borderRadius: '12px', background: '#f8fafc', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e2e8f0' }}>
+                {formData.logo_url ? <img src={formData.logo_url.startsWith('http') ? formData.logo_url : `${STATIC_BASE_URL}${formData.logo_url}`} style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : <IconBuildingStore size={24} color="#94a3b8" />}
+              </div>
+              <div style={{ flex: 1 }}>
+                <input
+                  type="file"
+                  id="partner-logo-edit-upload"
+                  accept="image/*,image/svg+xml"
+                  style={{ display: 'none' }}
+                  onChange={handleFileUpload}
+                />
+                <label 
+                  htmlFor="partner-logo-edit-upload" 
+                  className="btn-secondary" 
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.85rem', padding: '0.6rem 1rem' }}
+                >
+                  <IconPlus size={16} /> {uploading ? 'Uploading...' : formData.logo_url ? 'Change Logo' : 'Upload Logo'}
+                </label>
+                {formData.logo_url && (
+                  <button 
+                    type="button" 
+                    style={{ marginLeft: '0.5rem', fontSize: '0.75rem', color: '#ef4444', border: 'none', background: 'none', cursor: 'pointer', fontWeight: 600 }}
+                    onClick={() => setFormData({ ...formData, logo_url: '' })}
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="login-field">
+            <label>Website</label>
+            <input 
+              type="url" 
+              className="filter-input v2"
+              placeholder="https://partner-website.com"
+              value={formData.website}
+              onChange={e => setFormData({...formData, website: e.target.value})}
+            />
+          </div>
+          <div className="login-field">
+            <label>Description</label>
+            <textarea 
+              className="action-textarea"
+              style={{ minHeight: 80 }}
+              value={formData.description}
+              onChange={e => setFormData({...formData, description: e.target.value})}
+            />
+          </div>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', background: '#f8fafc', padding: '1rem', borderRadius: '12px' }}>
+            <input 
+              type="checkbox" 
+              id="partner-active" 
+              checked={formData.is_active}
+              onChange={e => setFormData({...formData, is_active: e.target.checked})}
+              style={{ width: 18, height: 18 }}
+            />
+            <label htmlFor="partner-active" style={{ fontWeight: 700, fontSize: '0.85rem' }}>Partner is active & visible in app</label>
+          </div>
+
+          <button type="submit" className="login-btn" disabled={loading || uploading}>
+            {loading ? 'Saving...' : 'Save Changes'}
           </button>
         </form>
       </div>
@@ -1806,6 +1989,7 @@ function PartnersPage() {
   const [partners, setPartners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddPartner, setShowAddPartner] = useState(false);
+  const [editingPartner, setEditingPartner] = useState(null);
   const [addingOfferTo, setAddingOfferTo] = useState(null);
 
   const fetchPartners = useCallback(async () => {
@@ -1853,8 +2037,8 @@ function PartnersPage() {
               <div style={{ padding: '3rem', textAlign: 'center', color: '#94a3b8' }}>No partners registered yet.</div>
             ) : partners.map(partner => (
               <div key={partner.id} className="partner-card-row" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', padding: '1.5rem', border: '1px solid #e2e8f0', borderRadius: '12px', marginBottom: '1rem', background: 'white' }}>
-                <div style={{ width: 64, height: 64, borderRadius: '12px', background: '#f8fafc', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e2e8f0' }}>
-                  {partner.logo_url ? <img src={partner.logo_url} style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : <IconBuildingStore size={24} color="#94a3b8" />}
+                <div style={{ width: 64, height: 64, borderRadius: '12px', background: 'white', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e2e8f0' }}>
+                  {partner.logo_url ? <img src={partner.logo_url.startsWith('http') ? partner.logo_url : `${STATIC_BASE_URL}${partner.logo_url}`} style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : <IconBuildingStore size={24} color="#94a3b8" />}
                 </div>
                 <div style={{ flex: 1 }}>
                   <h4 style={{ fontSize: '1.1rem', fontWeight: 700 }}>{partner.name}</h4>
@@ -1873,7 +2057,7 @@ function PartnersPage() {
                   <button
                     className="view-detail-btn"
                     title="Edit Partner"
-                    onClick={() => alert(`Edit functionality for "${partner.name}" coming soon. Use the API to update partner details directly.`)}
+                    onClick={() => setEditingPartner(partner)}
                   >
                     <IconSettings size={20} />
                   </button>
@@ -1888,6 +2072,13 @@ function PartnersPage() {
         <CreatePartnerModal
           onClose={() => setShowAddPartner(false)}
           onCreated={() => { setShowAddPartner(false); fetchPartners(); }}
+        />
+      )}
+      {editingPartner && (
+        <EditPartnerModal
+          partner={editingPartner}
+          onClose={() => setEditingPartner(null)}
+          onUpdated={() => { setEditingPartner(null); fetchPartners(); }}
         />
       )}
       {addingOfferTo && (

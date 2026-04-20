@@ -145,6 +145,7 @@ def _register_routes(app: FastAPI) -> None:
     import os
 
     os.makedirs("uploads/profiles", exist_ok=True)
+    os.makedirs("uploads/partners", exist_ok=True)
     app.mount("/static", StaticFiles(directory="uploads"), name="static")
 
     app.include_router(auth_router, prefix=settings.API_V1_PREFIX)

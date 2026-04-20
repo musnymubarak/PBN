@@ -5,6 +5,9 @@ import 'package:pbn/core/services/reward_service.dart';
 import 'package:pbn/features/rewards/qr_redeem_screen.dart';
 import 'package:pbn/models/reward.dart';
 import 'package:pbn/core/widgets/privilege_card_widget.dart';
+import 'package:pbn/core/constants/api_config.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class RewardsPage extends StatefulWidget {
   const RewardsPage({super.key});
@@ -251,12 +254,49 @@ class _RewardsPageState extends State<RewardsPage> {
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  width: 48,
+                  height: 48,
+                  clipBehavior: Clip.antiAlias,
                   decoration: BoxDecoration(
                     color: AppColors.primary.withOpacity(0.05),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(TablerIcons.building_store, color: AppColors.primary, size: 24),
+                  child: p.logoUrl != null && p.logoUrl!.isNotEmpty
+                      ? Builder(
+                          builder: (context) {
+                            final imageUrl = p.logoUrl!.startsWith('http')
+                                ? p.logoUrl!
+                                : '${ApiConfig.staticUrl}${p.logoUrl}';
+                            
+                            if (imageUrl.toLowerCase().endsWith('.svg')) {
+                              return SvgPicture.network(
+                                imageUrl,
+                                width: 48,
+                                height: 48,
+                                fit: BoxFit.contain,
+                                placeholderBuilder: (context) => const SizedBox(
+                                  width: 48,
+                                  height: 48,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                                ),
+                              );
+                            }
+                            
+                            return CachedNetworkImage(
+                              imageUrl: imageUrl,
+                              width: 48,
+                              height: 48,
+                              fit: BoxFit.contain,
+                              placeholder: (context, url) => const SizedBox(
+                                width: 48,
+                                height: 48,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                              ),
+                              errorWidget: (context, url, error) => const Icon(TablerIcons.building_store, color: AppColors.primary, size: 32),
+                            );
+                          },
+                        )
+                      : const Icon(TablerIcons.building_store, color: AppColors.primary, size: 24),
                 ),
                 const SizedBox(width: 16),
                 Expanded(

@@ -1,14 +1,21 @@
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+export const STATIC_BASE_URL = BASE_URL.split('/api')[0];
 
 async function apiFetch(path, options = {}) {
   const token = localStorage.getItem('access_token');
+  const headers = {
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...options.headers,
+  };
+
+  // Only set application/json if body is present and not FormData
+  if (options.body && !(options.body instanceof FormData) && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json';
+  }
+
   const res = await fetch(`${BASE_URL}${path}`, {
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    },
+    headers,
   });
   if (!res.ok) {
     if (res.status === 401) {
@@ -100,6 +107,19 @@ export const api = {
     method: 'POST',
     body: JSON.stringify(body),
   }),
+  updatePartner: (id, body) => apiFetch(`/rewards/partners/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+  }),
+  uploadPartnerLogo: (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return apiFetch('/rewards/partners/upload-logo', {
+      method: 'POST',
+      body: formData,
+      headers: {}, // Remove default JSON Content-Type
+    }, true); // Use raw body for FormData
+  },
   createOffer: (partnerId, body) => apiFetch(`/rewards/partners/${partnerId}/offers`, {
     method: 'POST',
     body: JSON.stringify(body),

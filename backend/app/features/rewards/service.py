@@ -16,7 +16,7 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import IntegrityError
 
 from app.core.exceptions import BadRequestException, NotFoundException
-from app.features.rewards.schemas import PartnerCreate, OfferCreate
+from app.features.rewards.schemas import PartnerCreate, OfferCreate, PartnerUpdate
 from app.features.notifications.service import broadcast_notification
 from app.models.privilege_cards import (
     PrivilegeCard, Partner, Offer, OfferRedemption,
@@ -103,6 +103,23 @@ async def create_partner(data: PartnerCreate, db: AsyncSession) -> Dict[str, Any
         is_active=data.is_active
     )
     db.add(partner)
+    await db.flush()
+
+    fresh_stmt = select(Partner).options(selectinload(Partner.offers).selectinload(Offer.redemptions)).where(Partner.id == partner.id)
+    fresh_partner = (await db.execute(fresh_stmt)).scalar_one()
+
+    return await _serialize_partner(fresh_partner)
+
+
+async def update_partner(partner_id: UUID, data: PartnerUpdate, db: AsyncSession) -> Dict[str, Any]:
+    partner = (await db.execute(select(Partner).where(Partner.id == partner_id))).scalar_one_or_none()
+    if not partner:
+        raise NotFoundException("Partner not found")
+
+    update_data = data.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(partner, key, value)
+
     await db.flush()
 
     fresh_stmt = select(Partner).options(selectinload(Partner.offers).selectinload(Offer.redemptions)).where(Partner.id == partner.id)
