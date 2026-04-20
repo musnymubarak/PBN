@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/services/referral_service.dart';
@@ -17,6 +18,17 @@ class _ReferralDashboardPageState extends State<ReferralDashboardPage> {
   bool _loading = true;
   int _receivedCount = 0;
   int _sentCount = 0;
+
+  static const String _invitationText = '''Hi 👋, I’d like to introduce you to Prime Business Network (PBN) — a modern, technology-driven business referral platform that helps entrepreneurs grow through structured, measurable connections. It offers industry exclusivity (one member per category) and a digital system to track referrals and real business results.
+
+Key Benefits:
+• Exclusive industry seat (only one member per category)
+• Consistent, high-quality referral opportunities
+• Digital tracking of referrals and ROI
+• Increased visibility among trusted professionals
+• Access to charter member benefits, events & training
+
+By joining, you become part of a strong ecosystem built on reliable partnerships and accountable referrals, helping your business scale with purpose. Learn more and secure your spot here: https://primebusiness.network/''';
 
   @override
   void initState() {
@@ -167,10 +179,74 @@ class _ReferralDashboardPageState extends State<ReferralDashboardPage> {
                   ),
 
                   const SizedBox(height: 32),
+                  _buildInviteCard(),
+                  const SizedBox(height: 20),
                   _buildInstructionCard(),
                 ],
               ),
             ),
+    );
+  }
+
+  Widget _buildInviteCard() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.blueAccent.withOpacity(0.1)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(color: Colors.blueAccent.withOpacity(0.1), shape: BoxShape.circle),
+                child: const Icon(TablerIcons.user_plus, color: Colors.blueAccent, size: 20),
+              ),
+              const SizedBox(width: 12),
+              const Text('GROW YOUR NETWORK', style: TextStyle(fontWeight: FontWeight.w900, color: Colors.blueAccent, fontSize: 10, letterSpacing: 1.5)),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const Text('Invite Quality Professionals', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.text)),
+          const SizedBox(height: 8),
+          Text(
+            'Copy our professional template to invite business owners in your network to join PBN.',
+            style: TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.5),
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                Clipboard.setData(const ClipboardData(text: _invitationText));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Invitation copied to clipboard!'),
+                    behavior: SnackBarBehavior.floating,
+                    backgroundColor: Colors.blueAccent,
+                  ),
+                );
+              },
+              icon: const Icon(TablerIcons.copy, size: 18),
+              label: const Text('COPY INVITATION TEXT', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.blueAccent,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: Colors.blueAccent, width: 1.5)),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

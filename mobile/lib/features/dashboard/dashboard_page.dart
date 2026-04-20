@@ -22,6 +22,7 @@ import 'package:pbn/features/referrals/referral_dashboard_page.dart';
 import 'package:pbn/features/events/events_page.dart';
 import 'package:pbn/features/profile/profile_page.dart';
 import 'package:pbn/features/support/support_page.dart';
+import 'package:pbn/features/community/community_page.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -137,6 +138,10 @@ class _DashboardPageState extends State<DashboardPage> {
         ],
       ),
       actions: [
+        IconButton(
+          icon: const Icon(TablerIcons.messages, color: AppColors.text, size: 24),
+          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CommunityPage())),
+        ),
         Stack(
           children: [
             IconButton(icon: const Icon(TablerIcons.bell, color: AppColors.text, size: 24), onPressed: () => Navigator.pushNamed(context, '/notifications')),
