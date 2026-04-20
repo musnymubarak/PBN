@@ -5,6 +5,7 @@ import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/services/referral_service.dart';
 import 'package:pbn/features/referrals/create_referral_page.dart';
 import 'package:pbn/features/referrals/my_referrals_page.dart';
+import 'package:pbn/core/widgets/pbn_app_bar_actions.dart';
 
 class ReferralDashboardPage extends StatefulWidget {
   const ReferralDashboardPage({super.key});
@@ -74,12 +75,6 @@ By joining, you become part of a strong ecosystem built on reliable partnerships
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('REFERRAL FLOW',
-                style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.textSecondary,
-                    letterSpacing: 2)),
             const Text('Referrals Center',
                 style: TextStyle(
                     fontSize: 22,
@@ -87,6 +82,9 @@ By joining, you become part of a strong ecosystem built on reliable partnerships
                     color: AppColors.text)),
           ],
         ),
+        actions: const [
+          PbnAppBarActions(),
+        ],
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: AppColors.primary))

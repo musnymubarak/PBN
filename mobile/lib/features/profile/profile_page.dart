@@ -9,6 +9,7 @@ import 'package:pbn/core/constants/api_config.dart';
 import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:pbn/core/services/api_client.dart';
+import 'package:pbn/core/widgets/pbn_app_bar_actions.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -174,7 +175,20 @@ class _ProfilePageState extends State<ProfilePage> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('Profile', style: TextStyle(fontWeight: FontWeight.w800))),
+      appBar: AppBar(
+        toolbarHeight: 80,
+        title: const Text('Profile', 
+          style: TextStyle(
+            fontSize: 22, 
+            fontWeight: FontWeight.w900, 
+            color: AppColors.text,
+            letterSpacing: -0.5
+          )
+        ),
+        actions: const [
+          PbnAppBarActions(),
+        ],
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
           : ListView(padding: const EdgeInsets.all(20), children: [

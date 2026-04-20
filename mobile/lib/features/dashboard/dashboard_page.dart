@@ -12,6 +12,7 @@ import 'package:pbn/core/services/dashboard_service.dart';
 import 'package:pbn/core/services/reward_service.dart';
 import 'package:pbn/core/widgets/stat_card.dart';
 import 'package:pbn/core/widgets/custom_button.dart';
+import 'package:pbn/core/widgets/pbn_app_bar_actions.dart';
 import 'package:pbn/models/dashboard_data.dart';
 import 'package:pbn/models/reward.dart';
 import 'package:pbn/core/widgets/privilege_card_widget.dart';
@@ -132,27 +133,12 @@ class _DashboardPageState extends State<DashboardPage> {
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('INSIGHTS HUB', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 2)),
           const SizedBox(height: 4),
           Text('Welcome, ${auth.user?.fullName.split(' ').first ?? 'Member'}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.text, letterSpacing: -0.5)),
         ],
       ),
-      actions: [
-        IconButton(
-          icon: const Icon(TablerIcons.messages, color: AppColors.text, size: 24),
-          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CommunityPage())),
-        ),
-        Stack(
-          children: [
-            IconButton(icon: const Icon(TablerIcons.bell, color: AppColors.text, size: 24), onPressed: () => Navigator.pushNamed(context, '/notifications')),
-            if (notifs.unreadCount > 0)
-              Positioned(right: 8, top: 10, child: Container(
-                padding: const EdgeInsets.all(4), decoration: const BoxDecoration(color: Colors.redAccent, shape: BoxShape.circle),
-                child: Text('${notifs.unreadCount}', style: const TextStyle(fontSize: 8, color: Colors.white, fontWeight: FontWeight.w900)),
-              )),
-          ],
-        ),
-        const SizedBox(width: 8),
+      actions: const [
+        PbnAppBarActions(),
       ],
     );
   }

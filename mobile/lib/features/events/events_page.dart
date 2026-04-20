@@ -11,6 +11,7 @@ import 'package:pbn/models/event.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'event_detail_page.dart';
 import 'package:pbn/core/constants/api_config.dart';
+import 'package:pbn/core/widgets/pbn_app_bar_actions.dart';
 
 class EventsPage extends StatefulWidget {
   const EventsPage({super.key});
@@ -72,27 +73,24 @@ class _EventsPageState extends State<EventsPage> {
     return Scaffold(
       backgroundColor: Colors.grey[50], // Facebook-like light grey background
       appBar: AppBar(
-        toolbarHeight: 90,
+        toolbarHeight: 80,
         backgroundColor: Colors.white,
         elevation: 0,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('MEETINGS',
-                style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.primary,
-                    letterSpacing: 2.5)),
-            const SizedBox(height: 2),
+            const SizedBox(height: 4),
             const Text('Meetings & Events',
                 style: TextStyle(
-                    fontSize: 24,
+                    fontSize: 22,
                     fontWeight: FontWeight.w900,
-                    color: Color(0xFF1B1B1B),
-                    letterSpacing: -0.8)),
+                    color: AppColors.text,
+                    letterSpacing: -0.5)),
           ],
         ),
+        actions: const [
+          PbnAppBarActions(),
+        ],
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: AppColors.primary))

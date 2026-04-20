@@ -7,6 +7,7 @@ import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/constants/api_config.dart';
 import 'package:pbn/core/providers/member_provider.dart';
 import 'package:pbn/models/member.dart';
+import 'package:pbn/core/widgets/pbn_app_bar_actions.dart';
 
 class MembersPage extends StatefulWidget {
   const MembersPage({super.key});
@@ -73,16 +74,15 @@ class _MembersPageState extends State<MembersPage> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'NETWORK', 
-              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 2)
-            ),
             Text(
               'Network directory', 
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.text)
             ),
           ],
         ),
+        actions: const [
+          PbnAppBarActions(),
+        ],
         bottom: const TabBar(
           tabs: [
             Tab(text: 'My Chapter'),
