@@ -189,6 +189,74 @@ async def broadcast_notification(
             logger.error(f"broadcast_notification failed: {e}")
 
 
+async def notify_multiple_users(
+    user_ids: List[UUID],
+    title: str,
+    body: str,
+    notification_type: str,
+    data: Dict[str, str] | None = None,
+) -> None:
+    """
+    Background Task: Emits structural Notifications to a specific list of users and triggers FCM.
+    """
+    if not user_ids:
+        return
+
+    async with async_session_factory() as session:
+        try:
+            now = datetime.now(timezone.utc)
+            
+            # 1. Fetch users with FCM tokens from the provided list
+            stmt = select(User).where(User.id.in_(user_ids), User.is_active == True, User.fcm_token.isnot(None))
+            users = (await session.execute(stmt)).scalars().all()
+            
+            if not users:
+                logger.info(f"NotifyMultiple [SKIPPED]: No active users with tokens found in list of {len(user_ids)}.")
+                return
+
+            # 2. Persistence and Dispatch
+            if _init_firebase():
+                try:
+                    # 2a. Create notifications in DB for everyone in the list
+                    for u in users:
+                        notif = Notification(
+                            user_id=u.id,
+                            title=title,
+                            body=body,
+                            notification_type=notification_type,
+                            data=data,
+                            sent_at=now,
+                            is_read=False,
+                        )
+                        session.add(notif)
+                    await session.commit()
+
+                    # 2b. Individual Dispatch Loop
+                    for u in users:
+                        token = u.fcm_token
+                        if not token or len(token) < 20 or token.startswith('mock-'):
+                            continue
+
+                        try:
+                            message = messaging.Message(
+                                notification=messaging.Notification(title=title, body=body),
+                                data=data if data else {},
+                                token=token,
+                            )
+                            messaging.send(message)
+                        except Exception as e:
+                            logger.warning(f"NotifyMultiple item failed for user {u.id}: {e}")
+                    
+                except Exception as e:
+                    logger.error(f"NotifyMultiple [FAILED] during processing: {e}")
+            else:
+                logger.info(f"NotifyMultiple [STUB]: '{title}' to {len(users)} users.")
+
+        except Exception as e:
+            await session.rollback()
+            logger.error(f"notify_multiple_users failed: {e}")
+
+
 def _serialize_notification(n: Notification) -> Dict[str, Any]:
     return {
         "id": str(n.id),

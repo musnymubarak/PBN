@@ -22,7 +22,7 @@ from jose import jwt
 
 from app.core.exceptions import BadRequestException, NotFoundException
 from app.features.auth.service import hash_password
-from app.features.notifications.service import send_push_notification
+from app.features.notifications.service import send_push_notification, notify_multiple_users
 from app.features.applications.schemas import (
     ApplicationCreate,
     ApplicationStatusUpdate,
@@ -404,6 +404,26 @@ async def update_application_status(
                 notification_type="APPLICATION_APPROVED",
                 data={"application_id": str(app.id), "route": "/my-applications"}
             )
+        except Exception:
+            pass
+
+        # Notify Chapter about new member
+        try:
+            # Find active members in this chapter (excluding the new one)
+            other_members_stmt = select(User.id).join(ChapterMembership).where(
+                ChapterMembership.chapter_id == chapter_id,
+                User.id != user.id,
+                User.is_active == True
+            )
+            other_member_ids = (await db.execute(other_members_stmt)).scalars().all()
+            if other_member_ids:
+                await notify_multiple_users(
+                    other_member_ids,
+                    "🤝 New Member Joined!",
+                    f"Please welcome {app.full_name} from {app.business_name} to our chapter!",
+                    "NEW_MEMBER_JOINED",
+                    {"user_id": str(user.id), "route": "/members"}
+                )
         except Exception:
             pass
 
