@@ -13,7 +13,11 @@ class PushNotificationService {
   static final _localNotifications = FlutterLocalNotificationsPlugin();
   static final _notifService = NotificationService();
   
+  static final _onMessageController = StreamController<RemoteMessage>.broadcast();
   static bool _initialized = false;
+
+  /// Get stream of incoming foreground messages
+  static Stream<RemoteMessage> get onMessageStream => _onMessageController.stream;
 
   /// Root initialization (should be called in main.dart)
   static Future<void> initialize({GlobalKey<NavigatorState>? navigatorKey}) async {
@@ -57,6 +61,7 @@ class PushNotificationService {
     
     // Foreground
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      _onMessageController.add(message);
       _showLocalNotification(message);
     });
 

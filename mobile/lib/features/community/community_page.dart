@@ -17,10 +17,12 @@ class CommunityPage extends StatefulWidget {
   State<CommunityPage> createState() => _CommunityPageState();
 }
 
-class _CommunityPageState extends State<CommunityPage> {
+class _CommunityPageState extends State<CommunityPage> with WidgetsBindingObserver {
   final _service = CommunityService();
   final _searchController = TextEditingController();
   Timer? _debounce;
+  Timer? _liveTimer;
+  StreamSubscription? _notifSubscription;
   
   List<CommunityPost> _posts = [];
   bool _loading = true;
@@ -31,14 +33,51 @@ class _CommunityPageState extends State<CommunityPage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadFeed();
+    _startLiveUpdates();
+    _listenToNotifications();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _stopLiveUpdates();
+    _notifSubscription?.cancel();
     _searchController.dispose();
     _debounce?.cancel();
     super.dispose();
+  }
+
+  void _listenToNotifications() {
+    _notifSubscription = PushNotificationService.onMessageStream.listen((message) {
+      if (message.data['type'] == 'community' || message.data['type'] == 'community_post') {
+        _loadFeed(isSilent: true);
+      }
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _startLiveUpdates();
+    } else {
+      _stopLiveUpdates();
+    }
+  }
+
+  void _startLiveUpdates() {
+    _stopLiveUpdates();
+    _liveTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      if (mounted && _searchQuery.isEmpty && _activeFilter == 'all') {
+        _loadFeed(isSilent: true);
+      }
+    });
+  }
+
+  void _stopLiveUpdates() {
+    _liveTimer?.cancel();
+    _liveTimer = null;
   }
 
   void _onSearchChanged(String query) {
@@ -51,11 +90,14 @@ class _CommunityPageState extends State<CommunityPage> {
     });
   }
 
-  Future<void> _loadFeed() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+  Future<void> _loadFeed({bool isSilent = false}) async {
+    if (!isSilent) {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+    }
+
     try {
       final posts = await _service.getFeed(
         search: _searchQuery,
@@ -68,7 +110,7 @@ class _CommunityPageState extends State<CommunityPage> {
         });
       }
     } catch (e) {
-      if (mounted) {
+      if (mounted && !isSilent) {
         setState(() {
           _error = 'Failed to load feed';
           _loading = false;

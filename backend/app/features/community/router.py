@@ -45,8 +45,7 @@ async def create_post_endpoint(
         result["chapter_id"],
         current_user.id,
         result["author_name"],
-        result["post"]["id"],
-        db
+        result["post"]["id"]
     )
 
     return success_response(
@@ -56,9 +55,11 @@ async def create_post_endpoint(
     )
 
 
-async def _notify_new_post(chapter_id: UUID, author_id: UUID, author_name: str, post_id: str, db: AsyncSession):
-    # This helper runs as a background task
-    member_ids = await get_chapter_member_ids(chapter_id, db)
+async def _notify_new_post(chapter_id: UUID, author_id: UUID, author_name: str, post_id: str):
+    # This helper runs as a background task. Use a fresh session.
+    from app.core.database import async_session_factory
+    async with async_session_factory() as db:
+        member_ids = await get_chapter_member_ids(chapter_id, db)
     target_ids = [uid for uid in member_ids if uid != author_id]
     
     if target_ids:
