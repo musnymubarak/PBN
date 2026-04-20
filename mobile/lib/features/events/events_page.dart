@@ -73,7 +73,7 @@ class _EventsPageState extends State<EventsPage> {
     return Scaffold(
       backgroundColor: Colors.grey[50], // Facebook-like light grey background
       appBar: AppBar(
-        toolbarHeight: 80,
+        toolbarHeight: 70,
         backgroundColor: Colors.white,
         elevation: 0,
         title: Column(

@@ -156,7 +156,7 @@ class _ApplyPageState extends State<ApplyPage> {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
-        toolbarHeight: 80,
+        toolbarHeight: 70,
         title: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

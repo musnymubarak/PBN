@@ -70,7 +70,7 @@ class _MembersPageState extends State<MembersPage> {
       child: Scaffold(
         backgroundColor: AppColors.background,
       appBar: AppBar(
-        toolbarHeight: 80,
+        toolbarHeight: 70,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

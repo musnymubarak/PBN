@@ -163,7 +163,7 @@ class _RewardsPageState extends State<RewardsPage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        toolbarHeight: 80,
+        toolbarHeight: 70,
         title: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

@@ -176,7 +176,7 @@ class _ProfilePageState extends State<ProfilePage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        toolbarHeight: 80,
+        toolbarHeight: 70,
         title: const Text('Profile', 
           style: TextStyle(
             fontSize: 22, 

@@ -35,7 +35,7 @@ class _MyApplicationsPageState extends State<MyApplicationsPage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        toolbarHeight: 80,
+        toolbarHeight: 70,
         title: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

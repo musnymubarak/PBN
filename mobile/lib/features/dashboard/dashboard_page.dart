@@ -129,7 +129,7 @@ class _DashboardPageState extends State<DashboardPage> {
     final auth = context.watch<AuthProvider>();
     final notifs = context.watch<NotificationProvider>();
     return AppBar(
-      toolbarHeight: 80,
+      toolbarHeight: 70,
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
