@@ -57,10 +57,10 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
         toolbarHeight: 60,
         backgroundColor: Colors.transparent,
         elevation: 0,
-        centerTitle: true,
+        centerTitle: false,
         title: const Text('Top Referrers',
             style: TextStyle(
-                fontSize: 18,
+                fontSize: 22,
                 fontWeight: FontWeight.w900,
                 color: AppColors.text,
                 letterSpacing: -0.5)),

@@ -29,12 +29,6 @@ class SupportPage extends StatelessWidget {
         title: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('HELP CENTER',
-                style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.textSecondary,
-                    letterSpacing: 2)),
             Text('Support & Feedback',
                 style: TextStyle(
                     fontSize: 22,
@@ -101,12 +95,6 @@ class SupportPage extends StatelessWidget {
           ),
           const SizedBox(height: 32),
 
-          const Text('FREQUENTLY ASKED',
-              style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.textSecondary,
-                  letterSpacing: 1.5)),
           const SizedBox(height: 16),
 
           _buildFaqTile('How do I update my industry code?', 'You can edit your industry details from the Member settings or by contacting your chapter administrator.'),
@@ -115,12 +103,6 @@ class SupportPage extends StatelessWidget {
           _buildFaqTile('Can I export my networking data?', 'Currently, all data is maintained securely within the app for a unified experience.'),
           
           const SizedBox(height: 32),
-          const Text('SUPPORT CATEGORIES',
-              style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.textSecondary,
-                  letterSpacing: 1.5)),
           const SizedBox(height: 16),
           
           _categoryTile(TablerIcons.database, 'Technical Support', 'Report bugs or app issues'),

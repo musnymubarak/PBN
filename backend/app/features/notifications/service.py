@@ -26,6 +26,17 @@ from app.models.user import User
 
 logger = logging.getLogger(__name__)
 
+# Map internal type strings to user-facing settings keys
+TYPE_TO_SETTING_MAP = {
+    "community_post": "new_posts",
+    "community_like": "post_activity",
+    "community_comment": "post_activity",
+    "RSVP_UPDATE": "meeting_updates",
+    "CHAPTER_BROADCAST": "chapter_announcements",
+    "new_reward": "new_rewards",
+    "NEW_MEMBER_JOINED": "new_members",
+}
+
 # Cache the Firebase app initialization state
 _firebase_app_initialized = False
 
@@ -61,6 +72,18 @@ async def update_fcm_token(user_id: UUID, fcm_token: str, db: AsyncSession) -> N
     await db.commit()
 
 
+async def _should_send_push(user: User, notification_type: str) -> bool:
+    """Check if the user has disabled this specific notification type."""
+    if not user.notification_settings:
+        return True # Default to ON if no settings configured
+        
+    setting_key = TYPE_TO_SETTING_MAP.get(notification_type)
+    if not setting_key:
+        return True # Unknown types default to ON (e.g., system alerts)
+        
+    return user.notification_settings.get(setting_key, True)
+
+
 async def send_push_notification(
     user_id: UUID,
     title: str,
@@ -91,10 +114,17 @@ async def send_push_notification(
             session.add(notif)
             await session.commit()
 
-            # 2. Get User FCM Token
+            # 2. Get User FCM Token & Check Preferences
             user = (await session.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
-            if not user or not user.fcm_token:
+            if not user:
+                return
+                
+            if not user.fcm_token:
                 logger.info(f"FCM [SKIPPED]: User {user_id} has no token. Notif={title}")
+                return
+
+            if not await _should_send_push(user, notification_type):
+                logger.info(f"FCM [MUTED BY USER]: {user.full_name} disabled {notification_type}")
                 return
 
             # 3. Dispatch
@@ -236,6 +266,10 @@ async def notify_multiple_users(
                         token = u.fcm_token
                         if not token or len(token) < 20 or token.startswith('mock-'):
                             continue
+                            
+                        # Check individual preferences even in mass notification
+                        if not await _should_send_push(u, notification_type):
+                            continue
 
                         try:
                             message = messaging.Message(
@@ -343,3 +377,37 @@ async def delete_notification(notification_id: UUID, user_id: UUID, db: AsyncSes
 
     await db.delete(notif)
     await db.commit()
+
+
+async def get_notification_settings(user_id: UUID, db: AsyncSession) -> Dict[str, bool]:
+    """Get a user's notification preferences with defaults merged."""
+    user = (await db.execute(select(User).where(User.id == user_id))).scalar_one()
+    
+    defaults = {
+        "new_posts": True,
+        "post_activity": True,
+        "meeting_updates": True,
+        "chapter_announcements": True,
+        "new_rewards": True,
+        "new_members": True,
+    }
+    
+    settings = user.notification_settings or {}
+    # Merge defaults for any missing keys
+    return {**defaults, **settings}
+
+
+async def update_notification_settings(user_id: UUID, data: Dict[str, Any], db: AsyncSession) -> Dict[str, bool]:
+    """Update user notification preferences."""
+    user = (await db.execute(select(User).where(User.id == user_id))).scalar_one()
+    
+    current = user.notification_settings or {}
+    # Only update keys that are provided in the payload
+    for key, val in data.items():
+        if val is not None:
+            current[key] = val
+            
+    user.notification_settings = current
+    await db.commit()
+    
+    return await get_notification_settings(user_id, db)

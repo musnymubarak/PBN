@@ -10,6 +10,7 @@ from __future__ import annotations
 import enum
 
 from sqlalchemy import Boolean, Enum, String
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base, TimestampMixin
@@ -58,6 +59,9 @@ class User(Base, TimestampMixin):
     )
     must_change_password: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False
+    )
+    notification_settings: Mapped[dict | None] = mapped_column(
+        JSONB, nullable=True, default=None
     )
 
     def __repr__(self) -> str:

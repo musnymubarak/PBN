@@ -42,3 +42,17 @@ class NotificationsListResponse(BaseModel):
 
 class UnreadCountResponse(BaseModel):
     count: int
+
+
+class NotificationSettingsUpdate(BaseModel):
+    # Optional toggles for specific notification types
+    new_posts: Optional[bool] = None
+    post_activity: Optional[bool] = None
+    meeting_updates: Optional[bool] = None
+    chapter_announcements: Optional[bool] = None
+    new_rewards: Optional[bool] = None
+    new_members: Optional[bool] = None
+
+
+class NotificationSettingsResponse(BaseModel):
+    settings: Dict[str, bool]

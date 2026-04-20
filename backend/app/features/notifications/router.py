@@ -16,7 +16,7 @@ from app.core.response import success_response
 from app.features.auth.dependencies import get_current_user, require_role
 from app.models.user import User, UserRole
 
-from app.features.notifications.schemas import FCMTokenUpdate
+from app.features.notifications.schemas import FCMTokenUpdate, NotificationSettingsUpdate, NotificationSettingsResponse
 from app.features.notifications import service
 
 router = APIRouter(tags=["Notifications"])
@@ -101,3 +101,24 @@ async def test_push_endpoint(
         data={"route": "/profile"},
     )
     return success_response(message="Background push task scheduled")
+
+
+@router.get("/notifications/settings", summary="Get My Notification Settings", response_model=NotificationSettingsResponse)
+async def get_settings_endpoint(
+    current_user: User = Depends(auth_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    settings = await service.get_notification_settings(current_user.id, db)
+    return success_response(data={"settings": settings})
+
+
+@router.patch("/notifications/settings", summary="Update My Notification Settings", response_model=NotificationSettingsResponse)
+async def update_settings_endpoint(
+    data: NotificationSettingsUpdate,
+    current_user: User = Depends(auth_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    # Convert model to dict excluding unset values
+    update_data = data.model_dump(exclude_unset=True)
+    settings = await service.update_notification_settings(current_user.id, update_data, db)
+    return success_response(data={"settings": settings}, message="Notification settings updated")

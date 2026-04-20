@@ -306,6 +306,25 @@ class _ProfilePageState extends State<ProfilePage> {
               const Text('Account', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
               const SizedBox(height: 12),
               GestureDetector(
+                onTap: () => Navigator.pushNamed(context, '/notification-settings'),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))]),
+                  child: Row(children: [
+                    Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: Colors.orange.withOpacity(0.08), borderRadius: BorderRadius.circular(12)),
+                      child: const Icon(TablerIcons.bell_cog, color: Colors.orange, size: 24)),
+                    const SizedBox(width: 16),
+                    const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text('Notification Preferences', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppColors.text, letterSpacing: -0.3)),
+                      const SizedBox(height: 4),
+                      Text('Customize your push alerts', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+                    ])),
+                    const Icon(TablerIcons.chevron_right, color: AppColors.textSecondary, size: 20),
+                  ]),
+                ),
+              ),
+              const SizedBox(height: 12),
+              GestureDetector(
                 onTap: () => Navigator.pushNamed(context, '/payments'),
                 child: Container(
                   padding: const EdgeInsets.all(16),

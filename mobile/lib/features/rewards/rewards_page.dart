@@ -167,12 +167,6 @@ class _RewardsPageState extends State<RewardsPage> {
         title: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('REWARDS CATALOG',
-                style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.textSecondary,
-                    letterSpacing: 2)),
             Text('Exclusive Offers',
                 style: TextStyle(
                     fontSize: 22,
@@ -189,23 +183,11 @@ class _RewardsPageState extends State<RewardsPage> {
                 padding: const EdgeInsets.all(20),
                 children: [
                   if (_card != null) ...[
-                    const Text('YOUR ACTIVE PASS',
-                        style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w900,
-                            color: AppColors.textSecondary,
-                            letterSpacing: 1.5)),
                     const SizedBox(height: 16),
                     PrivilegeCardWidget(card: _card!),
                     const SizedBox(height: 32),
                   ],
                   
-                  const Text('PARTNER OFFERS',
-                      style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.textSecondary,
-                          letterSpacing: 1.5)),
                   const SizedBox(height: 16),
                   
                   if (_partners.isEmpty)

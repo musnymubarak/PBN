@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/providers/auth_provider.dart';
 import 'package:pbn/core/widgets/custom_button.dart';
-import 'package:pbn/core/widgets/animated_pbn_logo.dart';
+import 'package:pbn/core/widgets/pbn_logo.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -74,8 +74,8 @@ class _LoginPageState extends State<LoginPage> {
               child: Column(
                 children: [
                   const SizedBox(height: 40),
-                  // Premium Floating Logo
-                  const AnimatedPbnLogo(size: 110),
+                  // Premium Static Logo
+                  const PbnLogo(size: 110),
                   const SizedBox(height: 24),
                   RichText(
                     text: const TextSpan(

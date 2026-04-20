@@ -1,5 +1,6 @@
 import 'package:pbn/core/services/api_client.dart';
 import 'package:pbn/models/notification_item.dart';
+import 'package:pbn/models/notification_settings.dart';
 
 class NotificationService {
   final _api = ApiClient();
@@ -32,5 +33,15 @@ class NotificationService {
 
   Future<void> deleteNotification(String id) async {
     await _api.delete('/notifications/$id');
+  }
+
+  Future<NotificationSettings> getSettings() async {
+    final res = await _api.get('/notifications/settings');
+    final data = _api.unwrap(res);
+    return NotificationSettings.fromJson(data['settings'] ?? {});
+  }
+
+  Future<void> updateSettings(NotificationSettings settings) async {
+    await _api.patch('/notifications/settings', data: settings.toJson());
   }
 }

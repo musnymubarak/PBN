@@ -39,12 +39,6 @@ class _ChaptersPageState extends State<ChaptersPage> {
         title: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('CHAPTER NETWORK',
-                style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.textSecondary,
-                    letterSpacing: 2)),
             Text('Global Presence',
                 style: TextStyle(
                     fontSize: 22,
@@ -105,12 +99,6 @@ class _ChaptersPageState extends State<ChaptersPage> {
                   ),
                   const SizedBox(height: 32),
 
-                  const Text('CHAPTER DIRECTORY',
-                      style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.textSecondary,
-                          letterSpacing: 1.5)),
                   const SizedBox(height: 16),
 
                   if (_chapters.isEmpty)
