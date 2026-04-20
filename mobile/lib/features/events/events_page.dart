@@ -8,6 +8,9 @@ import 'package:pbn/core/services/api_client.dart';
 import 'package:pbn/core/services/chapter_service.dart';
 import 'package:pbn/models/chapter.dart';
 import 'package:pbn/models/event.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'event_detail_page.dart';
+import 'package:pbn/core/constants/api_config.dart';
 
 class EventsPage extends StatefulWidget {
   const EventsPage({super.key});
@@ -53,17 +56,6 @@ class _EventsPageState extends State<EventsPage> {
     if (mounted) setState(() => _loading = false);
   }
 
-  Future<void> _rsvp(String eventId, String status) async {
-    try {
-      await _service.updateRSVP(eventId, status);
-      await _loadEvents(); // Refresh to show updated states
-    } catch (_) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Failed to update RSVP'),
-          backgroundColor: Colors.redAccent,
-          behavior: SnackBarBehavior.floating));
-    }
-  }
 
   String _getPlaceholderImage(Event event) {
     if (event.eventType == 'flagship') {
@@ -146,7 +138,14 @@ class _EventsPageState extends State<EventsPage> {
     final String day = DateFormat('dd').format(startDt);
     final String month = DateFormat('MMM').format(startDt).toUpperCase();
     final String time = DateFormat('EEEE • h:mm a').format(startDt);
-    final String imageUrl = _getPlaceholderImage(event);
+    
+    final String? fullImageUrl = event.imageUrl != null
+        ? (event.imageUrl!.startsWith('http')
+            ? event.imageUrl
+            : '${ApiConfig.staticUrl}${event.imageUrl}')
+        : null;
+
+    final String placeholderUrl = _getPlaceholderImage(event);
     
     final status = _currentUserId != null ? event.getRsvpStatus(_currentUserId!) : null;
     final bool isGoing = status == 'going';
@@ -161,192 +160,157 @@ class _EventsPageState extends State<EventsPage> {
           BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 20, offset: const Offset(0, 4)),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Cover Image with Date Badge
-          Stack(
-            children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                child: Image.network(
-                  imageUrl,
-                  height: 180,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
+      child: InkWell(
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => EventDetailPage(event: event)),
+        ),
+        borderRadius: BorderRadius.circular(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Cover Image with Date Badge
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  child: CachedNetworkImage(
+                    imageUrl: fullImageUrl ?? placeholderUrl,
                     height: 180,
                     width: double.infinity,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(
+                      height: 180,
+                      width: double.infinity,
+                      color: Colors.grey[200],
+                      child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                    ),
+                    errorWidget: (context, url, error) => Container(
+                      height: 180,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [AppColors.primary.withOpacity(0.1), AppColors.primary.withOpacity(0.05)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                      ),
+                      child: Center(
+                        child: Icon(TablerIcons.photo_off, size: 40, color: AppColors.primary.withOpacity(0.2)),
+                      ),
+                    ),
+                  ),
+                ),
+                // Date Badge
+                Positioned(
+                  top: 12,
+                  left: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [AppColors.primary.withOpacity(0.1), AppColors.primary.withOpacity(0.05)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
+                      color: Colors.white.withOpacity(0.95),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
                     ),
-                    child: Center(
-                      child: Icon(TablerIcons.photo_off, size: 40, color: AppColors.primary.withOpacity(0.2)),
+                    child: Column(
+                      children: [
+                        Text(month, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.redAccent)),
+                        Text(day, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF1B1B1B))),
+                      ],
                     ),
                   ),
                 ),
-              ),
-              // Date Badge
-              Positioned(
-                top: 12,
-                left: 12,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.95),
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
-                  ),
-                  child: Column(
-                    children: [
-                      Text(month, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.redAccent)),
-                      Text(day, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF1B1B1B))),
-                    ],
-                  ),
-                ),
-              ),
-              // Flagship / Virtual Badge
-              Positioned(
-                bottom: 12,
-                right: 12,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.6),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(event.eventType == 'flagship' ? TablerIcons.building : TablerIcons.device_laptop, color: Colors.white, size: 14),
-                      const SizedBox(width: 6),
-                      Text(event.eventType.toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(time, style: const TextStyle(color: Colors.redAccent, fontSize: 13, fontWeight: FontWeight.w800)),
-                const SizedBox(height: 6),
-                Text(event.title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF1B1B1B))),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(TablerIcons.map_pin, size: 16, color: Colors.grey[600]),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        event.location ?? (event.meetingLink != null ? 'Virtual Meeting' : 'To be announced'),
-                        style: TextStyle(color: Colors.grey[600], fontSize: 14, fontWeight: FontWeight.w500),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                // Flagship / Virtual Badge
+                Positioned(
+                  bottom: 12,
+                  right: 12,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFF59E0B), Color(0xFFD97706)], // Amber/Gold Gradient
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 4)],
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(TablerIcons.ticket, color: Colors.white, size: 14),
+                          const SizedBox(width: 6),
+                          Text(
+                            'LKR ${event.fee.toStringAsFixed(0)}', 
+                            style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 0.5)
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
-                if (event.description != null && event.description!.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    event.description!, 
-                    style: TextStyle(color: Colors.grey[600], fontSize: 14, height: 1.4),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-                const SizedBox(height: 20),
-                
-                // RSVP Summary
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        '${event.rsvps.length} members are interested', 
-                        style: TextStyle(color: Colors.grey[500], fontSize: 12, fontWeight: FontWeight.w600),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                const Divider(height: 1),
-                const SizedBox(height: 12),
-                
-                // Action Buttons
-                Row(
-                  children: [
-                    Expanded(
-                      flex: 2,
-                      child: _buildFBActionButton(
-                        icon: isGoing ? TablerIcons.check : TablerIcons.calendar_check,
-                        label: isGoing ? 'Going' : (isNotGoing ? 'Change status' : 'RSVP'),
-                        color: isGoing ? Colors.green : (isNotGoing ? Colors.grey : Colors.blueAccent),
-                        active: isGoing,
-                        onTap: () => _rsvp(event.id, 'going'),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: _buildFBActionButton(
-                        icon: isNotGoing ? TablerIcons.x : TablerIcons.calendar_off,
-                        label: isNotGoing ? 'Passed' : 'Ignore',
-                        color: isNotGoing ? Colors.redAccent : Colors.grey[400]!,
-                        active: isNotGoing,
-                        onTap: () => _rsvp(event.id, 'not_going'),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(10)),
-                      child: const Icon(TablerIcons.share, size: 20, color: Color(0xFF1B1B1B)),
-                    ),
-                  ],
                 ),
               ],
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFBActionButton({
-    required IconData icon, 
-    required String label, 
-    required Color color, 
-    bool active = false,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          color: active ? color.withOpacity(0.1) : Colors.grey[100],
-          borderRadius: BorderRadius.circular(10),
-          border: active ? Border.all(color: color.withOpacity(0.3)) : null,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 14, color: active ? color : Colors.grey[700]),
-            const SizedBox(width: 4),
-            Flexible(
-              child: Text(
-                label, 
-                style: TextStyle(color: active ? color : Colors.grey[700], fontSize: 11, fontWeight: FontWeight.w800),
-                overflow: TextOverflow.ellipsis,
+            
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(time, style: const TextStyle(color: Colors.redAccent, fontSize: 13, fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 6),
+                  Text(event.title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF1B1B1B))),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(TablerIcons.map_pin, size: 16, color: Colors.grey[600]),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          event.location ?? (event.meetingLink != null ? 'Virtual Meeting' : 'To be announced'),
+                          style: TextStyle(color: Colors.grey[600], fontSize: 14, fontWeight: FontWeight.w500),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (event.description != null && event.description!.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      event.description!, 
+                      style: TextStyle(color: Colors.grey[600], fontSize: 14, height: 1.4),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                  const SizedBox(height: 20),
+                  
+                  // RSVP Summary
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '${event.rsvps.length} members are interested', 
+                          style: TextStyle(color: Colors.grey[500], fontSize: 12, fontWeight: FontWeight.w600),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  const Divider(height: 1),
+                  const SizedBox(height: 12),
+                  
+                  // Action Buttons
+                  // Navigation Indicator
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text('View Details', style: TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.bold)),
+                      const SizedBox(width: 4),
+                      const Icon(TablerIcons.chevron_right, size: 16, color: AppColors.primary),
+                    ],
+                  ),
+                ],
               ),
             ),
           ],

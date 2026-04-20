@@ -42,6 +42,7 @@ class RSVPStatus(str, enum.Enum):
     GOING = "going"
     NOT_GOING = "not_going"
     MAYBE = "maybe"
+    REQUESTED = "requested"
 
 
 class Event(Base, TimestampMixin):
@@ -65,6 +66,7 @@ class Event(Base, TimestampMixin):
     max_attendees: Mapped[int | None] = mapped_column(Integer, nullable=True)
     is_published: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    image_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     chapter: Mapped["Chapter"] = sqlalchemy.orm.relationship("Chapter")
     rsvps: Mapped[list["EventRSVP"]] = sqlalchemy.orm.relationship("EventRSVP", back_populates="event", cascade="all, delete-orphan")

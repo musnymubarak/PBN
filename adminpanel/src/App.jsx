@@ -2566,10 +2566,27 @@ function AddEventModal({ onClose, onCreated, chapters = [] }) {
     end_at: new Date(Date.now() + 3600000), // +1 hour
     fee: 0,
     max_attendees: '',
-    is_published: true
+    is_published: true,
+    image_url: ''
   });
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploading(true);
+    setError('');
+    try {
+      const result = await api.uploadEventImage(file);
+      setFormData(prev => ({ ...prev, image_url: result.image_url }));
+    } catch (err) {
+      setError('Image upload failed: ' + err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -2646,6 +2663,44 @@ function AddEventModal({ onClose, onCreated, chapters = [] }) {
               value={formData.title}
               onChange={e => setFormData({ ...formData, title: e.target.value })}
             />
+          </div>
+
+          <div className="login-field">
+            <label>Event Cover Image</label>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <div style={{ width: 100, height: 60, borderRadius: '8px', background: '#f8fafc', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e2e8f0' }}>
+                {formData.image_url ? (
+                  <img src={formData.image_url.startsWith('http') ? formData.image_url : `${STATIC_BASE_URL}${formData.image_url}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <IconCalendarEvent size={24} color="#94a3b8" />
+                )}
+              </div>
+              <div style={{ flex: 1 }}>
+                <input
+                  type="file"
+                  id="event-image-upload"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={handleFileUpload}
+                />
+                <label 
+                  htmlFor="event-image-upload" 
+                  className="btn-secondary" 
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.85rem', padding: '0.5rem 0.75rem' }}
+                >
+                  <IconPlus size={16} /> {uploading ? 'Uploading...' : formData.image_url ? 'Change Image' : 'Upload Cover'}
+                </label>
+                {formData.image_url && (
+                  <button 
+                    type="button" 
+                    style={{ marginLeft: '0.5rem', fontSize: '0.75rem', color: '#ef4444', border: 'none', background: 'none', cursor: 'pointer', fontWeight: 600 }}
+                    onClick={() => setFormData({ ...formData, image_url: '' })}
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
 
           <div className="login-field">
@@ -2746,12 +2801,389 @@ function AddEventModal({ onClose, onCreated, chapters = [] }) {
   );
 }
 
+function EditEventModal({ event, onClose, onUpdated, chapters = [] }) {
+  const [formData, setFormData] = useState({
+    chapter_id: event.chapter_id || '',
+    title: event.title || '',
+    description: event.description || '',
+    event_type: event.event_type || 'flagship',
+    location: event.location || '',
+    meeting_link: event.meeting_link || '',
+    start_at: new Date(event.start_at),
+    end_at: new Date(event.end_at),
+    fee: event.fee || 0,
+    max_attendees: event.max_attendees || '',
+    is_published: event.is_published ?? true,
+    image_url: event.image_url || ''
+  });
+  const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploading(true);
+    setError('');
+    try {
+      const result = await api.uploadEventImage(file);
+      setFormData(prev => ({ ...prev, image_url: result.image_url }));
+    } catch (err) {
+      setError('Image upload failed: ' + err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    try {
+      await api.updateEvent(event.id, {
+        ...formData,
+        fee: parseFloat(formData.fee),
+        max_attendees: formData.max_attendees ? parseInt(formData.max_attendees) : null,
+        start_at: formData.start_at.toISOString(),
+        end_at: formData.end_at.toISOString(),
+      });
+      onUpdated();
+      onClose();
+    } catch (err) {
+      setError(err.message || 'Failed to update event');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 600 }}>
+        <div className="modal-header">
+          <div>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Edit Event</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Update details for this meeting</p>
+          </div>
+          <button type="button" className="modal-close-btn" onClick={onClose}>
+            <IconX size={20} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} style={{ padding: '1.5rem 1.5rem 8rem' }}>
+          {error && <div className="login-error" style={{ marginBottom: '1.25rem' }}>{error}</div>}
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
+             <div>
+              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '0.5rem', display: 'block' }}>Target Chapter *</label>
+              <CustomSelect
+                label="Choose a chapter..."
+                value={formData.chapter_id}
+                options={chapters}
+                onChange={val => setFormData({ ...formData, chapter_id: val })}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '0.5rem', display: 'block' }}>Event Type *</label>
+              <CustomSelect
+                label="Event Type..."
+                value={formData.event_type}
+                options={[
+                  { id: 'flagship', name: 'Physical (Flagship)' },
+                  { id: 'virtual', name: 'Online (Virtual)' },
+                  { id: 'micro_meetup', name: 'Micro Meetup' }
+                ]}
+                onChange={val => setFormData({ ...formData, event_type: val })}
+              />
+            </div>
+          </div>
+
+          <div className="login-field">
+            <label>Event Title *</label>
+            <input
+              type="text"
+              className="filter-input v2"
+              required
+              value={formData.title}
+              onChange={e => setFormData({ ...formData, title: e.target.value })}
+            />
+          </div>
+
+          <div className="login-field">
+            <label>Event Cover Image</label>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <div style={{ width: 100, height: 60, borderRadius: '8px', background: '#f8fafc', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e2e8f0' }}>
+                {formData.image_url ? (
+                  <img src={formData.image_url.startsWith('http') ? formData.image_url : `${STATIC_BASE_URL}${formData.image_url}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <IconCalendarEvent size={24} color="#94a3b8" />
+                )}
+              </div>
+              <div style={{ flex: 1 }}>
+                <input
+                  type="file"
+                  id="event-edit-image-upload"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={handleFileUpload}
+                />
+                <label 
+                  htmlFor="event-edit-image-upload" 
+                  className="btn-secondary" 
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.85rem', padding: '0.5rem 0.75rem' }}
+                >
+                  <IconPlus size={16} /> {uploading ? 'Uploading...' : formData.image_url ? 'Change Image' : 'Upload Cover'}
+                </label>
+                {formData.image_url && (
+                  <button 
+                    type="button" 
+                    style={{ marginLeft: '0.5rem', fontSize: '0.75rem', color: '#ef4444', border: 'none', background: 'none', cursor: 'pointer', fontWeight: 600 }}
+                    onClick={() => setFormData({ ...formData, image_url: '' })}
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="login-field">
+            <label>Description</label>
+            <textarea
+              className="action-textarea"
+              style={{ minHeight: 80 }}
+              value={formData.description}
+              onChange={e => setFormData({ ...formData, description: e.target.value })}
+            />
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
+            <div className="login-field" style={{ marginBottom: 0 }}>
+              <label>Location (Physical)</label>
+              <input
+                type="text"
+                className="filter-input v2"
+                value={formData.location}
+                onChange={e => setFormData({ ...formData, location: e.target.value })}
+              />
+            </div>
+            <div className="login-field" style={{ marginBottom: 0 }}>
+              <label>Meeting Link (Virtual)</label>
+              <input
+                type="url"
+                className="filter-input v2"
+                value={formData.meeting_link}
+                onChange={e => setFormData({ ...formData, meeting_link: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
+            <div className="login-field" style={{ marginBottom: 0 }}>
+              <label>Start Time *</label>
+              <DatePicker
+                selected={formData.start_at}
+                onChange={date => setFormData({ ...formData, start_at: date })}
+                showTimeSelect
+                timeFormat="HH:mm"
+                dateFormat="MMMM d, yyyy h:mm aa"
+                className="modern-datepicker-input"
+                required
+              />
+            </div>
+            <div className="login-field" style={{ marginBottom: 0 }}>
+              <label>End Time *</label>
+              <DatePicker
+                selected={formData.end_at}
+                onChange={date => setFormData({ ...formData, end_at: date })}
+                showTimeSelect
+                timeFormat="HH:mm"
+                dateFormat="MMMM d, yyyy h:mm aa"
+                className="modern-datepicker-input"
+                required
+                minDate={formData.start_at}
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+            <div className="login-field" style={{ marginBottom: 0 }}>
+              <label>Event Fee (LKR)</label>
+              <input
+                type="number"
+                className="filter-input v2"
+                value={formData.fee}
+                onChange={e => setFormData({ ...formData, fee: e.target.value })}
+              />
+            </div>
+            <div className="login-field" style={{ marginBottom: 0 }}>
+              <label>Max Attendees</label>
+              <input
+                type="number"
+                className="filter-input v2"
+                value={formData.max_attendees}
+                onChange={e => setFormData({ ...formData, max_attendees: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+            <button type="submit" className="login-btn" disabled={loading} style={{ flex: 2 }}>
+              {loading ? 'Saving...' : 'Save Changes'}
+            </button>
+            <button type="button" className="login-btn" onClick={onClose} style={{ flex: 1, background: '#94a3b8' }}>
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function ManageRsvpsModal({ event, onClose, onUpdated }) {
+  const [loading, setLoading] = useState(false);
+  const requestedRsvps = event.rsvps?.filter(r => r.status === 'requested') || [];
+  const goingRsvps = event.rsvps?.filter(r => r.status === 'going') || [];
+
+  const handleApprove = async (userId) => {
+    try {
+      setLoading(true);
+      await api.approveRsvp(event.id, { user_id: userId, status: 'going' });
+      onUpdated();
+    } catch (e) {
+      alert("Error: " + e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleReject = async (userId) => {
+    if (!window.confirm("Are you sure you want to reject this request?")) return;
+    try {
+      setLoading(true);
+      await api.approveRsvp(event.id, { user_id: userId, status: 'not_going' });
+      onUpdated();
+    } catch (e) {
+      alert("Error: " + e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getInitials = (name) => {
+    if (!name) return 'U';
+    return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+  };
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content" style={{ width: '650px', maxHeight: '90vh', overflowY: 'auto', padding: 0 }}>
+        
+        {/* Header Section */}
+        <div style={{ position: 'sticky', top: 0, padding: '1.5rem', background: 'white', borderBottom: '1px solid #e2e8f0', zIndex: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a' }}>Manage RSVPs</h2>
+            <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '0.2rem' }}>{event.title} • {event.rsvps?.length || 0} Total Responses</div>
+          </div>
+          <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', cursor: 'pointer', borderRadius: '50%', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <IconX size={20} color="#64748b" />
+          </button>
+        </div>
+        
+        <div style={{ padding: '1.5rem' }}>
+          {/* Pending Section */}
+          <div style={{ marginBottom: '2.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.2rem' }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#b45309' }}>Pending Requests</h3>
+              <span style={{ background: '#fef3c7', color: '#b45309', padding: '0.2rem 0.6rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 700 }}>{requestedRsvps.length}</span>
+            </div>
+            
+            {requestedRsvps.length === 0 ? (
+              <div style={{ background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: '12px', padding: '2rem', textAlign: 'center' }}>
+                <IconClock size={32} color="#94a3b8" style={{ marginBottom: '0.5rem' }} />
+                <div style={{ color: '#64748b', fontSize: '0.9rem', fontWeight: 500 }}>No pending requests at the moment.</div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                {requestedRsvps.map(r => (
+                  <div key={r.user.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1rem', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
+                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                       <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#fef3c7', color: '#b45309', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
+                         {getInitials(r.user.full_name)}
+                       </div>
+                       <div>
+                         <div style={{ fontWeight: 700, color: '#1e293b' }}>{r.user.full_name || 'Unknown User'}</div>
+                         <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                           <IconUser size={14} /> {r.user.phone_number}
+                         </div>
+                       </div>
+                     </div>
+                     <div style={{ display: 'flex', gap: '0.5rem' }}>
+                       <button 
+                         style={{ background: '#10b981', color: 'white', border: 'none', padding: '0.5rem 1rem', fontSize: '0.85rem', fontWeight: 600, borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }} 
+                         onClick={() => handleApprove(r.user.id)} disabled={loading}>
+                           <IconCheck size={16} /> Approve
+                       </button>
+                       <button 
+                         style={{ background: 'white', color: '#ef4444', border: '1px solid #fca5a5', padding: '0.5rem 1rem', fontSize: '0.85rem', fontWeight: 600, borderRadius: '6px', cursor: 'pointer' }} 
+                         onClick={() => handleReject(r.user.id)} disabled={loading}>
+                           Reject
+                       </button>
+                     </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          
+          {/* Confirmed Section */}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.2rem' }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#15803d' }}>Confirmed Attendees</h3>
+              <span style={{ background: '#dcfce7', color: '#15803d', padding: '0.2rem 0.6rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 700 }}>{goingRsvps.length}</span>
+            </div>
+
+            {goingRsvps.length === 0 ? (
+              <div style={{ background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: '12px', padding: '2rem', textAlign: 'center' }}>
+                <IconUserCheck size={32} color="#94a3b8" style={{ marginBottom: '0.5rem' }} />
+                <div style={{ color: '#64748b', fontSize: '0.9rem', fontWeight: 500 }}>No attendees have been confirmed yet.</div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                 {goingRsvps.map(r => (
+                   <div key={r.user.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1rem', background: '#f8fafc' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                       <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#e2e8f0', color: '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
+                         {getInitials(r.user.full_name)}
+                       </div>
+                       <div>
+                         <div style={{ fontWeight: 600, color: '#1e293b' }}>{r.user.full_name || 'Unknown User'}</div>
+                         <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                           <IconUser size={14} /> {r.user.phone_number}
+                         </div>
+                       </div>
+                     </div>
+                     <span style={{ background: '#dcfce7', color: '#15803d', padding: '0.3rem 0.8rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}><IconCheck size={14} /> Attending</span>
+                   </div>
+                 ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function EventsPage() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingEvent, setEditingEvent] = useState(null);
+  const [managingRsvpsEvent, setManagingRsvpsEvent] = useState(null);
   const [chapters, setChapters] = useState([]);
   const [chapterFilter, setChapterFilter] = useState('');
+
 
   const fetchEvents = useCallback(async () => {
     setLoading(true);
@@ -2811,7 +3243,7 @@ function EventsPage() {
               <th>Location / Link</th>
               <th>Fee</th>
               <th>RSVPs</th>
-              <th>Attendance</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -2822,8 +3254,21 @@ function EventsPage() {
             ) : events.map(ev => (
               <tr key={ev.id}>
                 <td>
-                  <div style={{ fontWeight: 700 }}>{ev.title}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>ID: {ev.id.slice(0, 8)}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ width: 44, height: 44, borderRadius: '8px', background: '#f8fafc', overflow: 'hidden', border: '1px solid #e2e8f0', flexShrink: 0 }}>
+                       {ev.image_url ? (
+                         <img src={ev.image_url.startsWith('http') ? ev.image_url : `${STATIC_BASE_URL}${ev.image_url}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                       ) : (
+                         <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <IconCalendarEvent size={18} color="#94a3b8" />
+                         </div>
+                       )}
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 700 }}>{ev.title}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>ID: {ev.id.slice(0, 8)}</div>
+                    </div>
+                  </div>
                 </td>
                 <td>
                   <span className={`pill ${ev.event_type === 'flagship' ? 'pill-approved' : 'pill-waitlisted'}`} style={{ textTransform: 'uppercase', fontSize: '0.7rem' }}>
@@ -2842,9 +3287,18 @@ function EventsPage() {
                   <div style={{ fontWeight: 700 }}>{ev.rsvps?.length || 0}</div>
                   <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Requests</div>
                 </td>
-                <td style={{ textAlign: 'center' }}>
-                   <div style={{ fontWeight: 700 }}>{ev.attendances?.length || 0}</div>
-                   <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Checked in</div>
+                <td style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button className="view-detail-btn" onClick={() => setManagingRsvpsEvent(ev)} title="Manage RSVPs">
+                    <IconUserCheck size={18} />
+                    {ev.rsvps?.some(r => r.status === 'requested') && (
+                      <span style={{ position: 'absolute', top: -5, right: -5, background: '#ef4444', color: 'white', fontSize: '0.6rem', padding: '2px 5px', borderRadius: '10px', fontWeight: 'bold' }}>
+                        {ev.rsvps.filter(r => r.status === 'requested').length}
+                      </span>
+                    )}
+                  </button>
+                  <button className="view-detail-btn" onClick={() => setEditingEvent(ev)} title="Edit Event">
+                    <IconSettings size={18} />
+                  </button>
                 </td>
               </tr>
             ))}
@@ -2852,13 +3306,23 @@ function EventsPage() {
         </table>
       </div>
 
-      {showAddModal && (
-        <AddEventModal
+      {editingEvent && (
+        <EditEventModal
+          event={editingEvent}
           chapters={chapters}
-          onClose={() => setShowAddModal(false)}
-          onCreated={fetchEvents}
+          onClose={() => setEditingEvent(null)}
+          onUpdated={fetchEvents}
         />
       )}
+
+      {managingRsvpsEvent && (
+        <ManageRsvpsModal
+          event={events.find(e => e.id === managingRsvpsEvent.id) || managingRsvpsEvent}
+          onClose={() => setManagingRsvpsEvent(null)}
+          onUpdated={fetchEvents}
+        />
+      )}
+
     </section>
   );
 }

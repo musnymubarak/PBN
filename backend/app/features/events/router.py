@@ -7,8 +7,11 @@ from __future__ import annotations
 from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, File, UploadFile
 from fastapi.responses import ORJSONResponse
+import os
+import shutil
+import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_db
@@ -17,13 +20,17 @@ from app.features.auth.dependencies import get_current_user, require_role
 from app.features.events.schemas import (
     EventCreate,
     EventRSVPRequest,
-    EventAttendanceRequest
+    EventRSVPApproval,
+    EventAttendanceRequest,
+    EventUpdate
 )
 from app.features.events.service import (
     create_event,
     list_events,
     mark_attendance,
     update_rsvp,
+    approve_rsvp,
+    update_event,
 )
 from app.models.user import User, UserRole
 
@@ -76,6 +83,20 @@ async def update_rsvp_endpoint(
     )
 
 
+@router.post("/events/{event_id}/approve", summary="Approve/Reject RSVP (Admin)", status_code=200)
+async def approve_rsvp_endpoint(
+    event_id: UUID,
+    data: EventRSVPApproval,
+    current_user: User = Depends(admin_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    updated_event = await approve_rsvp(event_id, data.user_id, data.status, db)
+    return success_response(
+        data=updated_event,
+        message=f"RSVP status updated to {data.status}"
+    )
+
+
 @router.post("/events/{event_id}/attendance", summary="Mark attendance manually (Admin)", status_code=200)
 async def mark_attendance_endpoint(
     event_id: UUID,
@@ -87,4 +108,66 @@ async def mark_attendance_endpoint(
     return success_response(
         data=updated_event,
         message="Attendance marked successfully"
+    )
+
+
+@router.patch("/events/{event_id}", summary="Update an event")
+async def update_event_endpoint(
+    event_id: UUID,
+    data: EventUpdate,
+    current_user: User = Depends(admin_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    event = await update_event(event_id, data.model_dump(exclude_unset=True), db)
+    return success_response(
+        data=event,
+        message="Event updated successfully"
+    )
+
+
+@router.post("/events/upload-image", summary="Upload event image")
+async def upload_event_image_endpoint(
+    file: UploadFile = File(...),
+    current_user: User = Depends(admin_req),
+) -> ORJSONResponse:
+    """Upload an event image."""
+    from app.core.exceptions import BadRequestException
+
+    # 1. Size Validation (5MB limit for event images)
+    MAX_SIZE = 5 * 1024 * 1024
+    if file.size and file.size > MAX_SIZE:
+        raise BadRequestException(
+            message=f"File too large. Maximum size allowed is 5MB.",
+            code="FILE_TOO_LARGE"
+        )
+
+    # 2. Format Validation
+    ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"]
+    if file.content_type not in ALLOWED_TYPES:
+        logger.error(f"Invalid content type: {file.content_type}")
+        raise BadRequestException(
+            message=f"Invalid file format: {file.content_type}. Only JPEG, PNG, and WebP images are allowed.",
+            code="INVALID_FORMAT"
+        )
+
+    os.makedirs("uploads/events", exist_ok=True)
+    ext = file.filename.split(".")[-1].lower() if "." in file.filename else "jpg"
+    
+    if ext not in ["jpg", "jpeg", "png", "webp"]:
+         raise BadRequestException(
+            message="Invalid file extension.",
+            code="INVALID_EXTENSION"
+        )
+
+    filename = f"event_{uuid.uuid4().hex[:8]}.{ext}"
+    file_path = f"uploads/events/{filename}"
+    
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+        
+    image_url = f"/static/events/{filename}"
+    
+    return success_response(
+        data={"image_url": image_url},
+        message="Image uploaded successfully"
     )

@@ -26,8 +26,19 @@ async def list_active_chapters(db: AsyncSession) -> List[Chapter]:
     return list(result.scalars().all())
 
 
-async def get_all_members(db: AsyncSession) -> List[Dict[str, Any]]:
-    """Fetch all active members across all chapters in a single optimized query."""
+async def get_all_members(db: AsyncSession, requester_id: UUID | None = None) -> List[Dict[str, Any]]:
+    """Fetch all active members across all chapters in a single optimized query with privacy filtering."""
+    # 1. If requester is provided, get their chapter memberships
+    my_chapter_ids = set()
+    if requester_id:
+        chapter_stmt = select(ChapterMembership.chapter_id).where(
+            ChapterMembership.user_id == requester_id,
+            ChapterMembership.is_active.is_(True)
+        )
+        chapter_res = await db.execute(chapter_stmt)
+        my_chapter_ids = set(chapter_res.scalars().all())
+
+    # 2. Fetch all active memberships
     stmt = (
         select(ChapterMembership, User, IndustryCategory, Business, Chapter)
         .join(User, ChapterMembership.user_id == User.id)
@@ -42,30 +53,46 @@ async def get_all_members(db: AsyncSession) -> List[Dict[str, Any]]:
 
     members = []
     for mem, user, ind, biz, chap in rows:
+        is_same_chapter = chap.id in my_chapter_ids or str(user.id) == str(requester_id)
+        
         member_data = {
             "user_id": user.id,
             "full_name": user.full_name,
-            "email": user.email,
-            "phone_number": user.phone_number,
             "profile_photo": user.profile_photo,
             "chapter_name": chap.name,
-            "company": biz.business_name if biz else "Independent",
-            "membership_type": mem.membership_type,
-            "start_date": mem.start_date,
-            "end_date": mem.end_date,
-            "industry": ind.name,  # simplified for mobile list
+            "industry": ind.name,
+            "is_same_chapter": is_same_chapter,
             "industry_category": {
                 "id": ind.id,
                 "name": ind.name,
                 "slug": ind.slug,
             },
-            "business": {
-                "id": biz.id,
-                "business_name": biz.business_name,
-                "district": biz.district,
-                "website": biz.website,
-            } if biz else None,
         }
+
+        # Privacy Filtering: Only show contact/business info if in the same chapter
+        if is_same_chapter:
+            member_data.update({
+                "email": user.email,
+                "phone_number": user.phone_number,
+                "company": biz.business_name if biz else "Independent",
+                "membership_type": mem.membership_type,
+                "start_date": mem.start_date,
+                "end_date": mem.end_date,
+                "business": {
+                    "id": biz.id,
+                    "business_name": biz.business_name,
+                    "district": biz.district,
+                    "website": biz.website,
+                } if biz else None,
+            })
+        else:
+            member_data.update({
+                "email": None,
+                "phone_number": None,
+                "company": "Private",
+                "business": None,
+            })
+
         members.append(member_data)
 
     return members

@@ -32,9 +32,15 @@ class EventCreate(BaseModel):
     fee: Decimal = Decimal(0)
     max_attendees: Optional[int] = None
     is_published: bool = True
+    image_url: Optional[str] = None
 
 
 class EventRSVPRequest(BaseModel):
+    status: RSVPStatus
+
+
+class EventRSVPApproval(BaseModel):
+    user_id: UUID
     status: RSVPStatus
 
 
@@ -68,7 +74,23 @@ class EventResponse(BaseModel):
     max_attendees: Optional[int]
     is_published: bool
     is_active: bool
+    image_url: Optional[str]
     created_at: str
     
     rsvps: Optional[List[EventRSVPResponse]] = []
     attendances: Optional[List[EventAttendanceResponse]] = []
+
+
+class EventUpdate(BaseModel):
+    chapter_id: Optional[UUID] = None
+    title: Optional[str] = None
+    description: Optional[str] = None
+    event_type: Optional[EventType] = None
+    location: Optional[str] = None
+    meeting_link: Optional[str] = None
+    start_at: Optional[datetime] = None
+    end_at: Optional[datetime] = None
+    fee: Optional[Decimal] = None
+    max_attendees: Optional[int] = None
+    is_published: Optional[bool] = None
+    image_url: Optional[str] = None

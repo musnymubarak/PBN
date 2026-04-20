@@ -37,37 +37,8 @@ class MemberProvider extends ChangeNotifier {
     }
 
     try {
-      // 1. Get user profile to check role
-      final user = await AuthService().getProfile();
-      
-      if (user.role == 'super_admin' || user.role == 'chapter_admin') {
-        // Admins can see everyone
-        _members = await _chapterService.getAllMembers();
-      } else {
-        // 2. Regular members: Filter by their chapters
-        final myMemberships = await _chapterService.getMyMemberships();
-        final myChapterIds = myMemberships
-            .map((m) => m.chapter.id)
-            .toSet();
-
-        if (myChapterIds.isEmpty) {
-          _members = [];
-          _error = 'You are not assigned to any chapter yet. Please contact support.';
-          notifyListeners();
-          return;
-        }
-
-        final futures = myChapterIds.map((id) => _chapterService.getChapterMembers(id));
-        final nestedResults = await Future.wait(futures);
-        
-        List<Member> allMembers = [];
-        for (var list in nestedResults) {
-          allMembers.addAll(list);
-        }
-        
-        final seenIds = <String>{};
-        _members = allMembers.where((m) => seenIds.add(m.userId)).toList();
-      }
+      // Fetch all members (Backend handles privacy masking based on chapter affiliation)
+      _members = await _chapterService.getAllMembers();
       
       // Save for next app session
       await PrefsService.setJson('cached_members', _members.map((m) => m.toJson()).toList());

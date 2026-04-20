@@ -17,7 +17,7 @@ from app.core.exceptions import BadRequestException, NotFoundException, Forbidde
 from app.features.events.schemas import EventCreate, EventRSVPRequest, EventAttendanceRequest
 from app.models.events import Event, EventRSVP, EventAttendance, RSVPStatus
 from app.models.chapters import Chapter
-from app.models.user import User
+from app.models.user import User, UserRole
 
 
 async def _serialize_event(ev: Event) -> Dict[str, Any]:
@@ -35,6 +35,7 @@ async def _serialize_event(ev: Event) -> Dict[str, Any]:
         "max_attendees": ev.max_attendees,
         "is_published": ev.is_published,
         "is_active": ev.is_active,
+        "image_url": ev.image_url,
         "created_at": ev.created_at.isoformat() if ev.created_at else None,
         "rsvps": [
             {
@@ -85,6 +86,7 @@ async def create_event(data: EventCreate, actor_id: UUID, db: AsyncSession) -> D
         fee=data.fee,
         max_attendees=data.max_attendees,
         is_published=data.is_published,
+        image_url=data.image_url,
     )
     db.add(event)
     await db.flush()
@@ -94,6 +96,27 @@ async def create_event(data: EventCreate, actor_id: UUID, db: AsyncSession) -> D
         selectinload(Event.attendances).joinedload(EventAttendance.user),
         selectinload(Event.attendances).joinedload(EventAttendance.marked_by_user),
     ).where(Event.id == event.id)
+    fresh_event = (await db.execute(fresh_stmt)).scalar_one()
+
+    return await _serialize_event(fresh_event)
+
+
+async def update_event(event_id: UUID, data: Dict[str, Any], db: AsyncSession) -> Dict[str, Any]:
+    event = (await db.execute(select(Event).where(Event.id == event_id))).scalar_one_or_none()
+    if not event:
+        raise NotFoundException("Event not found")
+
+    for key, value in data.items():
+        if hasattr(event, key):
+            setattr(event, key, value)
+    
+    await db.flush()
+
+    fresh_stmt = select(Event).options(
+        selectinload(Event.rsvps).joinedload(EventRSVP.user),
+        selectinload(Event.attendances).joinedload(EventAttendance.user),
+        selectinload(Event.attendances).joinedload(EventAttendance.marked_by_user),
+    ).where(Event.id == event_id)
     fresh_event = (await db.execute(fresh_stmt)).scalar_one()
 
     return await _serialize_event(fresh_event)
@@ -118,9 +141,16 @@ async def list_events(chapter_id: UUID | None, published_only: bool, db: AsyncSe
 
 
 async def update_rsvp(event_id: UUID, actor_id: UUID, status: RSVPStatus, db: AsyncSession) -> Dict[str, Any]:
+    # Fetch actor to check role
+    actor = (await db.execute(select(User).where(User.id == actor_id))).scalar_one()
+    
     event = (await db.execute(select(Event).where(Event.id == event_id))).scalar_one_or_none()
     if not event:
         raise NotFoundException("Event not found")
+        
+    # LOGIC: If a MEMBER/PROSPECT selects GOING, set to REQUESTED
+    if actor.role in [UserRole.MEMBER, UserRole.PROSPECT] and status == RSVPStatus.GOING:
+        status = RSVPStatus.REQUESTED
         
     stmt = select(EventRSVP).where(EventRSVP.event_id == event_id, EventRSVP.user_id == actor_id)
     rsvp = (await db.execute(stmt)).scalar_one_or_none()
@@ -141,6 +171,27 @@ async def update_rsvp(event_id: UUID, actor_id: UUID, status: RSVPStatus, db: As
         await db.rollback()
         raise BadRequestException("Could not record RSVP")
 
+    # Fetch fresh object with relations
+    fresh_stmt = select(Event).options(
+        selectinload(Event.rsvps).joinedload(EventRSVP.user),
+        selectinload(Event.attendances).joinedload(EventAttendance.user),
+        selectinload(Event.attendances).joinedload(EventAttendance.marked_by_user),
+    ).where(Event.id == event_id)
+    fresh_event = (await db.execute(fresh_stmt)).scalar_one()
+
+    return await _serialize_event(fresh_event)
+
+
+async def approve_rsvp(event_id: UUID, target_user_id: UUID, status: RSVPStatus, db: AsyncSession) -> Dict[str, Any]:
+    stmt = select(EventRSVP).where(EventRSVP.event_id == event_id, EventRSVP.user_id == target_user_id)
+    rsvp = (await db.execute(stmt)).scalar_one_or_none()
+    
+    if not rsvp:
+        raise NotFoundException("RSVP request not found")
+        
+    rsvp.status = status # Admin can set to GOING or NOT_GOING
+    await db.flush()
+    
     # Fetch fresh object with relations
     fresh_stmt = select(Event).options(
         selectinload(Event.rsvps).joinedload(EventRSVP.user),

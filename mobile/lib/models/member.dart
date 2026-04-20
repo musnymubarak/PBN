@@ -8,6 +8,7 @@ class Member {
   final String? chapterName;
   final String? businessName;
   final String? companyName;
+  final bool isSameChapter;
 
   Member({
     required this.userId,
@@ -19,6 +20,7 @@ class Member {
     this.chapterName,
     this.businessName,
     this.companyName,
+    this.isSameChapter = false,
   });
 
   factory Member.fromJson(Map<String, dynamic> json) => Member(
@@ -31,6 +33,7 @@ class Member {
         chapterName: json['chapter_name'],
         businessName: json['business']?['name'],
         companyName: json['business']?['name'],
+        isSameChapter: json['is_same_chapter'] ?? false,
       );
 
   Map<String, dynamic> toJson() => {
@@ -42,6 +45,7 @@ class Member {
         'industry_category': {'name': industryName},
         'chapter_name': chapterName,
         'business': {'name': businessName},
+        'is_same_chapter': isSameChapter,
       };
 
   String get displayName => fullName;

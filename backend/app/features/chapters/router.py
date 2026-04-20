@@ -36,7 +36,7 @@ async def list_all_members_endpoint(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
-    members = await get_all_members(db)
+    members = await get_all_members(db, requester_id=current_user.id)
     for m in members:
         m["user_id"] = str(m["user_id"])
         m["industry_category"]["id"] = str(m["industry_category"]["id"])

@@ -137,4 +137,21 @@ export const api = {
     method: 'POST',
     body: JSON.stringify(body),
   }),
+  updateEvent: (id, body) => apiFetch(`/events/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+  }),
+  uploadEventImage: (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return apiFetch('/events/upload-image', {
+      method: 'POST',
+      body: formData,
+      headers: {},
+    }, true);
+  },
+  approveRsvp: (eventId, body) => apiFetch(`/events/${eventId}/approve`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  }),
 };
