@@ -4,7 +4,7 @@ import uuid
 from typing import Any, Dict, List, Optional
 from datetime import datetime, timezone
 
-from sqlalchemy import desc, func, select, delete, exists
+from sqlalchemy import desc, func, select, delete, exists, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload, joinedload
 
@@ -61,14 +61,39 @@ async def create_post(user_id: uuid.UUID, content: str, image_url: Optional[str]
     }
 
 
-async def list_posts(user_id: uuid.UUID, db: AsyncSession, limit: int = 20, offset: int = 0) -> List[Dict[str, Any]]:
+async def list_posts(
+    user_id: uuid.UUID, 
+    db: AsyncSession, 
+    limit: int = 20, 
+    offset: int = 0,
+    search: Optional[str] = None,
+    filter_type: str = "all"
+) -> List[Dict[str, Any]]:
     chapter_id = await _get_user_chapter_id(user_id, db)
-    
     # Base query for posts in the chapter
     stmt = (
         select(CommunityPost)
+        .join(CommunityPost.author)
         .where(CommunityPost.chapter_id == chapter_id, CommunityPost.is_active == True)
-        .order_by(desc(CommunityPost.is_pinned), desc(CommunityPost.created_at))
+    )
+
+    # 1. Search filter (content OR user name)
+    if search:
+        pattern = f"%{search}%"
+        stmt = stmt.where(or_(
+            CommunityPost.content.ilike(pattern),
+            User.full_name.ilike(pattern)
+        ))
+
+    # 2. Category filters
+    if filter_type == "my_posts":
+        stmt = stmt.where(CommunityPost.author_id == user_id)
+    elif filter_type == "pinned":
+        stmt = stmt.where(CommunityPost.is_pinned == True)
+    
+    # Ordering and Pagination
+    stmt = (
+        stmt.order_by(desc(CommunityPost.is_pinned), desc(CommunityPost.created_at))
         .limit(limit)
         .offset(offset)
         .options(joinedload(CommunityPost.author))
@@ -225,3 +250,21 @@ async def delete_comment(user_id: uuid.UUID, comment_id: uuid.UUID, role: UserRo
         
     await db.delete(comment)
     await db.commit()
+
+
+async def toggle_pin(user_id: uuid.UUID, post_id: uuid.UUID, db: AsyncSession) -> Dict[str, Any]:
+    # Check if post exists and user is in the same chapter
+    user_chapter_id = await _get_user_chapter_id(user_id, db)
+    
+    post = (await db.execute(select(CommunityPost).where(CommunityPost.id == post_id))).scalar_one_or_none()
+    if not post:
+        raise NotFoundException("Post not found")
+        
+    if post.chapter_id != user_chapter_id:
+        raise ForbiddenException("You can only pin posts in your own chapter")
+        
+    post.is_pinned = not post.is_pinned
+    await db.commit()
+    await db.refresh(post)
+    
+    return {"id": str(post.id), "is_pinned": post.is_pinned}

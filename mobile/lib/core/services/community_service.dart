@@ -4,8 +4,12 @@ import 'package:pbn/models/community.dart';
 class CommunityService {
   final ApiClient _client = ApiClient();
 
-  Future<List<CommunityPost>> getFeed({int limit = 20, int offset = 0}) async {
-    final response = await _client.get('/community/posts?limit=$limit&offset=$offset');
+  Future<List<CommunityPost>> getFeed({int limit = 20, int offset = 0, String? search, String filter = 'all'}) async {
+    final queryParams = StringBuffer('limit=$limit&offset=$offset');
+    if (search != null && search.isNotEmpty) queryParams.write('&search=$search');
+    queryParams.write('&filter=$filter');
+
+    final response = await _client.get('/community/posts?$queryParams');
     final List data = response.data['data'];
     return data.map((json) => CommunityPost.fromJson(json)).toList();
   }
@@ -24,6 +28,11 @@ class CommunityService {
 
   Future<Map<String, dynamic>> toggleLike(String postId) async {
     final response = await _client.post('/community/posts/$postId/like');
+    return response.data['data'];
+  }
+
+  Future<Map<String, dynamic>> togglePin(String postId) async {
+    final response = await _client.post('/community/posts/$postId/pin');
     return response.data['data'];
   }
 

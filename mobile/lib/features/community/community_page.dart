@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:intl/intl.dart';
@@ -18,14 +19,36 @@ class CommunityPage extends StatefulWidget {
 
 class _CommunityPageState extends State<CommunityPage> {
   final _service = CommunityService();
+  final _searchController = TextEditingController();
+  Timer? _debounce;
+  
   List<CommunityPost> _posts = [];
   bool _loading = true;
   String? _error;
+  String _activeFilter = 'all';
+  String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
     _loadFeed();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  void _onSearchChanged(String query) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      setState(() {
+        _searchQuery = query;
+      });
+      _loadFeed();
+    });
   }
 
   Future<void> _loadFeed() async {
@@ -34,7 +57,10 @@ class _CommunityPageState extends State<CommunityPage> {
       _error = null;
     });
     try {
-      final posts = await _service.getFeed();
+      final posts = await _service.getFeed(
+        search: _searchQuery,
+        filter: _activeFilter,
+      );
       if (mounted) {
         setState(() {
           _posts = posts;
@@ -57,16 +83,10 @@ class _CommunityPageState extends State<CommunityPage> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         toolbarHeight: 70,
-        title: Column(
+        title: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('COMMUNITY HUB',
-                style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.textSecondary,
-                    letterSpacing: 2)),
-            const Text('Chapter Feed',
+            Text('Chapter Feed',
                 style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w900,
@@ -74,24 +94,31 @@ class _CommunityPageState extends State<CommunityPage> {
           ],
         ),
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-          : _error != null
-              ? _buildErrorState()
-              : RefreshIndicator(
-                  onRefresh: _loadFeed,
-                  color: AppColors.primary,
-                  child: _posts.isEmpty
-                      ? _buildEmptyState()
-                      : ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                          itemCount: _posts.length,
-                          itemBuilder: (context, i) => _PostCard(
-                            post: _posts[i],
-                            onRefresh: _loadFeed,
-                          ),
-                        ),
-                ),
+      body: Column(
+        children: [
+          _buildSearchAndFilter(),
+          Expanded(
+            child: _loading
+                ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                : _error != null
+                    ? _buildErrorState()
+                    : RefreshIndicator(
+                        onRefresh: _loadFeed,
+                        color: AppColors.primary,
+                        child: _posts.isEmpty
+                            ? _buildEmptyState()
+                            : ListView.builder(
+                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                                itemCount: _posts.length,
+                                itemBuilder: (context, i) => _PostCard(
+                                  post: _posts[i],
+                                  onRefresh: _loadFeed,
+                                ),
+                              ),
+                      ),
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.push(
@@ -107,25 +134,146 @@ class _CommunityPageState extends State<CommunityPage> {
     );
   }
 
+  Widget _buildSearchAndFilter() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+      ),
+      child: Column(
+        children: [
+          // Search Bar
+          Container(
+            decoration: BoxDecoration(
+              color: AppColors.background,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.grey.shade100),
+            ),
+            child: TextField(
+              controller: _searchController,
+              onChanged: _onSearchChanged,
+              decoration: InputDecoration(
+                hintText: 'Search posts...',
+                hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14, fontWeight: FontWeight.w600),
+                prefixIcon: const Icon(TablerIcons.search, color: AppColors.primary, size: 20),
+                suffixIcon: _searchController.text.isNotEmpty 
+                  ? IconButton(
+                      icon: const Icon(TablerIcons.x, size: 18),
+                      onPressed: () {
+                        _searchController.clear();
+                        _onSearchChanged('');
+                      },
+                    )
+                  : null,
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Filter Chips
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _buildFilterChip('All Posts', 'all', TablerIcons.layout_list),
+                const SizedBox(width: 8),
+                _buildFilterChip('My Posts', 'my_posts', TablerIcons.user),
+                const SizedBox(width: 8),
+                _buildFilterChip('Pinned', 'pinned', TablerIcons.pin),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(String label, String value, IconData icon) {
+    final isSelected = _activeFilter == value;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _activeFilter = value;
+        });
+        _loadFeed();
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primary : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: isSelected ? AppColors.primary : Colors.grey.shade200),
+          boxShadow: isSelected ? [BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4))] : [],
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 16, color: isSelected ? Colors.white : Colors.grey.shade600),
+            const SizedBox(width: 8),
+            Text(label, 
+              style: TextStyle(
+                fontSize: 12, 
+                fontWeight: FontWeight.w700, 
+                color: isSelected ? Colors.white : Colors.grey.shade600
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildEmptyState() {
+    String message = 'Be the first to post something!';
+    IconData icon = TablerIcons.messages;
+
+    if (_searchQuery.isNotEmpty) {
+      message = 'No results found for "$_searchQuery"';
+      icon = TablerIcons.search_off;
+    } else if (_activeFilter == 'pinned') {
+      message = 'No pinned posts yet';
+      icon = TablerIcons.pin;
+    } else if (_activeFilter == 'my_posts') {
+      message = 'You haven\'t posted anything yet';
+      icon = TablerIcons.user_minus;
+    }
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(TablerIcons.messages, size: 64, color: Colors.grey.shade300),
+          Icon(icon, size: 64, color: Colors.grey.shade300),
           const SizedBox(height: 16),
           Text(
-            'Be the first to post something!',
+            message,
+            textAlign: TextAlign.center,
             style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.w700, fontSize: 16),
           ),
           const SizedBox(height: 32),
-          ElevatedButton(
-            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CreatePostPage())).then((v) {
-              if (v == true) _loadFeed();
-            }),
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-            child: const Text('New Post', style: TextStyle(color: Colors.white)),
-          )
+          if (_searchQuery.isEmpty && _activeFilter == 'all')
+            ElevatedButton(
+              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CreatePostPage())).then((v) {
+                if (v == true) _loadFeed();
+              }),
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              child: const Text('New Post', style: TextStyle(color: Colors.white)),
+            )
+          else
+            TextButton.icon(
+              onPressed: () {
+                setState(() {
+                  _searchController.clear();
+                  _searchQuery = '';
+                  _activeFilter = 'all';
+                });
+                _loadFeed();
+              },
+              icon: const Icon(TablerIcons.refresh, size: 18),
+              label: const Text('Clear Filters', style: TextStyle(fontWeight: FontWeight.w800)),
+              style: TextButton.styleFrom(foregroundColor: AppColors.primary),
+            ),
         ],
       ),
     );
@@ -138,7 +286,7 @@ class _CommunityPageState extends State<CommunityPage> {
         children: [
           Icon(TablerIcons.alert_triangle, size: 48, color: Colors.amber.shade300),
           const SizedBox(height: 16),
-          Text(_error!, style: const TextStyle(fontWeight: FontWeight.w700)),
+          Text(_error ?? 'An unexpected error occurred', style: const TextStyle(fontWeight: FontWeight.w700)),
           const SizedBox(height: 24),
           ElevatedButton(
             onPressed: _loadFeed,
@@ -165,13 +313,16 @@ class _PostCardState extends State<_PostCard> {
   final _service = CommunityService();
   late bool _isLiked;
   late int _likesCount;
+  late bool _isPinned;
   bool _liking = false;
+  bool _pinning = false;
 
   @override
   void initState() {
     super.initState();
     _isLiked = widget.post.isLikedByMe;
     _likesCount = widget.post.likesCount;
+    _isPinned = widget.post.isPinned;
   }
 
   Future<void> _toggleLike() async {
@@ -208,6 +359,31 @@ class _PostCardState extends State<_PostCard> {
             _likesCount++;
             _isLiked = true;
           }
+        });
+      }
+    }
+  }
+
+  Future<void> _togglePin() async {
+    if (_pinning) return;
+    setState(() {
+      _pinning = true;
+      _isPinned = !_isPinned;
+    });
+
+    try {
+      final result = await _service.togglePin(widget.post.id);
+      if (mounted) {
+        setState(() {
+          _isPinned = result['is_pinned'];
+          _pinning = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _pinning = false;
+          _isPinned = !_isPinned; // Rollback
         });
       }
     }
@@ -255,6 +431,14 @@ class _PostCardState extends State<_PostCard> {
                       ),
                     ],
                   ),
+                ),
+                IconButton(
+                  icon: Icon(
+                    _isPinned ? TablerIcons.pinned : TablerIcons.pin, 
+                    size: 18, 
+                    color: _isPinned ? AppColors.primary : Colors.grey.shade400
+                  ),
+                  onPressed: _togglePin,
                 ),
                 if (canDelete)
                   IconButton(
@@ -311,8 +495,6 @@ class _PostCardState extends State<_PostCard> {
                   onTap: _showComments,
                 ),
                 const Spacer(),
-                if (widget.post.isPinned)
-                  Icon(TablerIcons.pin, size: 16, color: AppColors.primary.withOpacity(0.5)),
               ],
             ),
           ),

@@ -20,6 +20,7 @@ from app.features.community.service import (
     list_comments,
     delete_comment,
     get_chapter_member_ids,
+    toggle_pin,
 )
 from app.features.notifications.service import send_push_notification, notify_multiple_users
 from app.models.user import User, UserRole
@@ -29,7 +30,7 @@ router = APIRouter(tags=["Community"])
 # Community available for MEMBERS and above.
 member_req = require_role([UserRole.MEMBER, UserRole.CHAPTER_ADMIN, UserRole.SUPER_ADMIN])
 
-
+@router.post("/community/posts", summary="Create a new community post", status_code=201)
 async def create_post_endpoint(
     data: PostCreate,
     background_tasks: BackgroundTasks,
@@ -74,10 +75,12 @@ async def _notify_new_post(chapter_id: UUID, author_id: UUID, author_name: str, 
 async def list_posts_endpoint(
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
+    search: str = Query(None),
+    filter: str = Query("all"),
     current_user: User = Depends(member_req),
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
-    posts = await list_posts(current_user.id, db, limit, offset)
+    posts = await list_posts(current_user.id, db, limit, offset, search, filter)
     return success_response(data=posts)
 
 
@@ -161,3 +164,13 @@ async def delete_comment_endpoint(
 ) -> ORJSONResponse:
     await delete_comment(current_user.id, comment_id, current_user.role, db)
     return success_response(message="Comment deleted successfully")
+
+
+@router.post("/community/posts/{post_id}/pin", summary="Toggle pin on a post")
+async def toggle_pin_endpoint(
+    post_id: UUID,
+    current_user: User = Depends(member_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    result = await toggle_pin(current_user.id, post_id, db)
+    return success_response(data=result, message="Pin toggled")
