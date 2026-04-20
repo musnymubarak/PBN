@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/providers/auth_provider.dart';
 import 'package:pbn/core/services/prefs_service.dart';
+import 'package:pbn/core/widgets/animated_pbn_logo.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -62,27 +63,7 @@ class _SplashPageState extends State<SplashPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Hero(
-                  tag: 'logo',
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(24),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFFF59E0B).withOpacity(0.15),
-                          blurRadius: 40,
-                          spreadRadius: 2,
-                        ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(24),
-                      child: Image.asset('assets/logo.png', height: 180, fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) => const Icon(TablerIcons.briefcase, size: 100, color: AppColors.accent),
-                      ),
-                    ),
-                  ),
-                ),
+                const AnimatedPbnLogo(size: 240),
               ],
             ),
           ),

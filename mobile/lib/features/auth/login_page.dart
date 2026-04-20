@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/providers/auth_provider.dart';
 import 'package:pbn/core/widgets/custom_button.dart';
+import 'package:pbn/core/widgets/animated_pbn_logo.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -74,24 +75,7 @@ class _LoginPageState extends State<LoginPage> {
                 children: [
                   const SizedBox(height: 40),
                   // Premium Floating Logo
-                  Hero(
-                    tag: 'logo',
-                    child: Container(
-                      height: 110, width: 110, // Slightly more compact logo
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF0F172A),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 40, spreadRadius: 2, offset: const Offset(0, 10))
-                        ],
-                      ),
-                      child: ClipOval(
-                        child: Image.asset('assets/logo.png', fit: BoxFit.cover,
-                          errorBuilder: (c, e, s) => const Icon(TablerIcons.briefcase, size: 50, color: Colors.white24),
-                        ),
-                      ),
-                    ),
-                  ),
+                  const AnimatedPbnLogo(size: 110),
                   const SizedBox(height: 24),
                   RichText(
                     text: const TextSpan(
