@@ -451,7 +451,12 @@ class _DashboardPageState extends State<DashboardPage> {
 
 
   String _formatCurrency(double v) {
-    if (v >= 1000000) return 'LKR ${(v / 1000000).toStringAsFixed(1)}M';
+    if (v >= 1000000000) {
+      return 'LKR ${NumberFormat("#,##0.0").format(v / 1000000000)}B';
+    }
+    if (v >= 1000000) {
+      return 'LKR ${NumberFormat("#,##0.0").format(v / 1000000)}M';
+    }
     return 'LKR ${NumberFormat("#,##0").format(v)}';
   }
 
