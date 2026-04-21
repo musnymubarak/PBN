@@ -22,9 +22,9 @@ class _CreatePostPageState extends State<CreatePostPage> {
 
     setState(() => _loading = true);
     try {
-      await _service.createPost(content);
+      final newPost = await _service.createPost(content);
       if (mounted) {
-        Navigator.pop(context, true);
+        Navigator.pop(context, newPost);
       }
     } catch (_) {
       if (mounted) {

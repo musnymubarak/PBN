@@ -52,7 +52,13 @@ class _CommunityPageState extends State<CommunityPage> with WidgetsBindingObserv
 
   void _listenToNotifications() {
     _notifSubscription = PushNotificationService.onMessageStream.listen((message) {
-      if (message.data['type'] == 'community' || message.data['type'] == 'community_post') {
+      final type = message.data['type']?.toString().toLowerCase();
+      final notificationType = message.data['notification_type']?.toString().toLowerCase();
+      
+      // Matches both the 'type' field and the 'notification_type' sent by backend
+      if (type == 'community' || 
+          type == 'community_post' || 
+          notificationType?.contains('community') == true) {
         _loadFeed(isSilent: true);
       }
     });
@@ -70,7 +76,7 @@ class _CommunityPageState extends State<CommunityPage> with WidgetsBindingObserv
   void _startLiveUpdates() {
     _stopLiveUpdates();
     _liveTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
-      if (mounted && _searchQuery.isEmpty && _activeFilter == 'all') {
+      if (mounted && _searchQuery.isEmpty) {
         _loadFeed(isSilent: true);
       }
     });
@@ -92,6 +98,7 @@ class _CommunityPageState extends State<CommunityPage> with WidgetsBindingObserv
   }
 
   Future<void> _loadFeed({bool isSilent = false}) async {
+    if (isSilent) debugPrint('COMMUNITY_SYNC: Background silent refresh started at ${DateTime.now()}');
     if (!isSilent) {
       setState(() {
         _loading = true;
@@ -126,14 +133,23 @@ class _CommunityPageState extends State<CommunityPage> with WidgetsBindingObserv
       backgroundColor: AppColors.background,
       appBar: AppBar(
         toolbarHeight: 70,
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        title: Row(
           children: [
-            Text('Chapter Feed',
+            const Text('Chapter Feed',
                 style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w900,
                     color: AppColors.text)),
+            const SizedBox(width: 8),
+            Container(
+              width: 8,
+              height: 8,
+              decoration: const BoxDecoration(
+                color: Colors.green,
+                shape: BoxShape.circle,
+                boxShadow: [BoxShadow(color: Colors.greenAccent, blurRadius: 4)],
+              ),
+            ),
           ],
         ),
       ),
@@ -167,8 +183,14 @@ class _CommunityPageState extends State<CommunityPage> with WidgetsBindingObserv
           Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const CreatePostPage()),
-          ).then((value) {
-            if (value == true) _loadFeed();
+          ).then((result) {
+            if (result is CommunityPost) {
+              setState(() {
+                _posts.insert(0, result);
+              });
+            } else if (result == true) {
+              _loadFeed();
+            }
           });
         },
         backgroundColor: AppColors.primary,
@@ -357,6 +379,7 @@ class _PostCardState extends State<_PostCard> {
   late bool _isLiked;
   late int _likesCount;
   late bool _isPinned;
+  late int _commentsCount;
   bool _liking = false;
   bool _pinning = false;
 
@@ -366,6 +389,28 @@ class _PostCardState extends State<_PostCard> {
     _isLiked = widget.post.isLikedByMe;
     _likesCount = widget.post.likesCount;
     _isPinned = widget.post.isPinned;
+    _commentsCount = widget.post.commentsCount;
+  }
+
+  @override
+  void didUpdateWidget(_PostCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.post.id == oldWidget.post.id) {
+      if (!_liking) {
+        _isLiked = widget.post.isLikedByMe;
+        _likesCount = widget.post.likesCount;
+      }
+      if (!_pinning) {
+        _isPinned = widget.post.isPinned;
+      }
+      // Only sync comment count if not currently in comments sheet or if data changed
+      _commentsCount = widget.post.commentsCount;
+    } else {
+       _isLiked = widget.post.isLikedByMe;
+       _likesCount = widget.post.likesCount;
+       _isPinned = widget.post.isPinned;
+       _commentsCount = widget.post.commentsCount;
+    }
   }
 
   Future<void> _toggleLike() async {
@@ -533,7 +578,7 @@ class _PostCardState extends State<_PostCard> {
                 const SizedBox(width: 24),
                 _buildActionButton(
                   icon: TablerIcons.message_circle,
-                  label: '${widget.post.commentsCount}',
+                  label: '$_commentsCount',
                   color: Colors.grey.shade600,
                   onTap: _showComments,
                 ),
@@ -619,7 +664,13 @@ class _PostCardState extends State<_PostCard> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => _CommentSheet(post: widget.post, service: _service),
+      builder: (_) => _CommentSheet(
+        post: widget.post, 
+        service: _service,
+        onCommentAdded: () {
+          if (mounted) setState(() => _commentsCount++);
+        },
+      ),
     ).then((_) => widget.onRefresh());
   }
 }
@@ -627,7 +678,8 @@ class _PostCardState extends State<_PostCard> {
 class _CommentSheet extends StatefulWidget {
   final CommunityPost post;
   final CommunityService service;
-  const _CommentSheet({required this.post, required this.service});
+  final VoidCallback onCommentAdded;
+  const _CommentSheet({required this.post, required this.service, required this.onCommentAdded});
 
   @override
   State<_CommentSheet> createState() => _CommentSheetState();
@@ -658,13 +710,48 @@ class _CommentSheetState extends State<_CommentSheet> {
     final text = _commentController.text.trim();
     if (text.isEmpty || _submitting) return;
 
-    setState(() => _submitting = true);
+    final auth = context.read<AuthProvider>();
+    if (auth.user == null) return;
+
+    // Create Optimistic Comment
+    final tempId = DateTime.now().millisecondsSinceEpoch.toString();
+    final optimisticComment = PostComment(
+      id: tempId,
+      postId: widget.post.id,
+      content: text,
+      createdAt: DateTime.now(),
+      author: PostAuthor(
+        id: auth.user!.id.toString(),
+        fullName: auth.user!.fullName,
+        profilePhoto: auth.user!.profilePhoto,
+        role: auth.user!.role,
+      ),
+    );
+
+    setState(() {
+      _comments.insert(0, optimisticComment); // Show at top
+      _commentController.clear();
+      _submitting = true;
+    });
+
     try {
       await widget.service.addComment(widget.post.id, text);
-      _commentController.clear();
-      _loadComments();
-    } catch (_) {}
-    if (mounted) setState(() => _submitting = false);
+      widget.onCommentAdded();
+      // Wait a bit then refresh to get the real ID from server
+      await _loadComments();
+    } catch (_) {
+      // Rollback on failure
+      if (mounted) {
+        setState(() {
+          _comments.removeWhere((c) => c.id == tempId);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to post comment. Please try again.')),
+          );
+        });
+      }
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
   }
 
   @override
