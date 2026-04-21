@@ -77,9 +77,11 @@ class _DashboardPageState extends State<DashboardPage> {
   Future<void> _loadData() async {
     setState(() { _loading = true; _error = null; });
     try {
+      final auth = context.read<AuthProvider>();
       final results = await Future.wait([
         _dashboardService.getDashboard(),
         _rewardService.getMyCard(),
+        auth.refreshProfile(),
       ]);
       if (mounted) {
         setState(() {

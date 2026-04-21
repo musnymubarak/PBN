@@ -46,6 +46,19 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Refresh user profile data (e.g., if role changed)
+  Future<void> refreshProfile() async {
+    if (_status != AuthStatus.authenticated) return;
+    try {
+      final user = await _authService.getProfile();
+      _user = user;
+      notifyListeners();
+    } catch (_) {
+      // If profile fetch fails with 401, logout
+      await logout();
+    }
+  }
+
   /// Login with email/phone and password.
   Future<bool> login(String identifier, String password) async {
     _loading = true;
