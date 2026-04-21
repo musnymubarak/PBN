@@ -18,44 +18,34 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # 1. Add 'requested' value to rsvp_status enum
-    # 2. Rename old UPPERCASE values to lowercase to match Python models
-    
+    # Force rename of uppercase values to lowercase to match Python models
+    # This must be done outside of a transaction for some Postgres versions
     with op.get_context().autocommit_block():
-        # Add requested if it doesn't exist
-        op.execute("ALTER TYPE rsvp_status ADD VALUE IF NOT EXISTS 'requested'")
+        # 1. Rename existing uppercase values to lowercase
+        # These are the values defined in the initial migration b9de2f4fa83a
+        op.execute("ALTER TYPE rsvp_status RENAME VALUE 'GOING' TO 'going'")
+        op.execute("ALTER TYPE rsvp_status RENAME VALUE 'NOT_GOING' TO 'not_going'")
+        op.execute("ALTER TYPE rsvp_status RENAME VALUE 'MAYBE' TO 'maybe'")
         
-        # Rename GOING -> going
-        # Note: We use a check to see if GOING exists before renaming
-        # But for simplicity and based on original migration, we assume they are UPPERCASE
+        # 2. Add 'requested' value (lowercase)
+        # Note: If it already exists as Ginas/UpperCase 'REQUESTED' from a failed attempt, 
+        # we might need to handle it. The logs show 'REQUESTED' is present.
         try:
-            op.execute("ALTER TYPE rsvp_status RENAME VALUE 'GOING' TO 'going'")
+            op.execute("ALTER TYPE rsvp_status ADD VALUE 'requested'")
         except Exception:
+            # If 'requested' already exists lowercase, ignore. 
+            # If it exists as 'REQUESTED', we rename it below.
             pass
-            
+
         try:
-            op.execute("ALTER TYPE rsvp_status RENAME VALUE 'NOT_GOING' TO 'not_going'")
-        except Exception:
-            pass
-            
-        try:
-            op.execute("ALTER TYPE rsvp_status RENAME VALUE 'MAYBE' TO 'maybe'")
+            op.execute("ALTER TYPE rsvp_status RENAME VALUE 'REQUESTED' TO 'requested'")
         except Exception:
             pass
 
 
 def downgrade() -> None:
-    try:
+    with op.get_context().autocommit_block():
         op.execute("ALTER TYPE rsvp_status RENAME VALUE 'going' TO 'GOING'")
-    except Exception:
-        pass
-        
-    try:
         op.execute("ALTER TYPE rsvp_status RENAME VALUE 'not_going' TO 'NOT_GOING'")
-    except Exception:
-        pass
-        
-    try:
         op.execute("ALTER TYPE rsvp_status RENAME VALUE 'maybe' TO 'MAYBE'")
-    except Exception:
-        pass
+        op.execute("ALTER TYPE rsvp_status RENAME VALUE 'requested' TO 'REQUESTED'") 
