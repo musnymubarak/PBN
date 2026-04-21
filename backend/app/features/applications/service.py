@@ -45,7 +45,11 @@ from app.core.email_service import send_email, render_template
 settings = get_settings()
 
 VALID_TRANSITIONS = {
-    ApplicationStatus.PENDING: [ApplicationStatus.FIT_CALL_SCHEDULED],
+    ApplicationStatus.PENDING: [
+        ApplicationStatus.FIT_CALL_SCHEDULED,
+        ApplicationStatus.APPROVED,
+        ApplicationStatus.REJECTED
+    ],
     ApplicationStatus.FIT_CALL_SCHEDULED: [
         ApplicationStatus.APPROVED,
         ApplicationStatus.REJECTED,
@@ -453,3 +457,10 @@ async def update_application_status(
 
     await db.flush()
     return app
+
+
+async def delete_application(app_id: UUID, db: AsyncSession) -> None:
+    """Permanently delete an application and its history (via CASCADE)."""
+    app = await get_application_by_id(app_id, db)
+    await db.delete(app)
+    await db.commit()

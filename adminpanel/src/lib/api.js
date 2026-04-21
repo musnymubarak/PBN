@@ -70,6 +70,9 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(body),
     }),
+  deleteApplication: (id) => apiFetch(`/applications/${id}`, {
+    method: 'DELETE',
+  }),
 
   // Admin Auth
   adminLogin: async (username, password) => {

@@ -32,6 +32,7 @@ import {
   IconGift,
   IconStackPop,
   IconUserCheck,
+  IconTrash,
 } from '@tabler/icons-react';
 import { api, STATIC_BASE_URL } from './lib/api';
 import { useApi } from './hooks/useApi';
@@ -265,12 +266,6 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
 
   const handleStatusUpdate = async (newStatus) => {
     setErrorMessage('');
-    // Business Rule: PENDING -> Decision (Approve/Reject/Waitlist) is not allowed directly.
-    if (detail.status === 'pending' && ['approved', 'rejected', 'waitlisted'].includes(newStatus)) {
-      setErrorMessage('A Fit Call must be scheduled and completed before making a final decision on this application.');
-      return;
-    }
-
     if (newStatus === 'approved' && !selectedChapterId && modalStatus !== 'approved') {
       setModalStatus('approved');
       return;
@@ -294,6 +289,22 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
       onClose();
     } catch (err) {
       console.error('Failed to update:', err);
+      setErrorMessage(parseErrorMessage(err.message));
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm('Are you absolutely sure you want to permanently delete this application? This cannot be undone.')) return;
+    
+    setUpdating(true);
+    try {
+      await api.deleteApplication(appId);
+      onStatusUpdated();
+      onClose();
+    } catch (err) {
+      console.error('Failed to delete:', err);
       setErrorMessage(parseErrorMessage(err.message));
     } finally {
       setUpdating(false);
@@ -340,9 +351,21 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
               Review and manage this membership application
             </p>
           </div>
-          <button type="button" className="modal-close-btn" onClick={onClose}>
-            <IconX size={20} />
-          </button>
+          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+            <button 
+              type="button" 
+              className="view-detail-btn" 
+              style={{ color: '#ef4444', borderColor: 'transparent', background: '#fef2f2' }} 
+              onClick={handleDelete}
+              title="Delete Application"
+              disabled={updating}
+            >
+              <IconTrash size={20} />
+            </button>
+            <button type="button" className="modal-close-btn" onClick={onClose}>
+              <IconX size={20} />
+            </button>
+          </div>
         </div>
 
         {/* Body */}

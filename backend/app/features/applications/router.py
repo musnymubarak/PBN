@@ -27,6 +27,7 @@ from app.features.applications.service import (
     get_user_applications,
     list_applications,
     update_application_status,
+    delete_application,
 )
 from app.features.auth.dependencies import get_current_user, require_role
 from app.models.applications import ApplicationStatus
@@ -210,3 +211,16 @@ async def patch_application_status_endpoint(
             "status": app.status.value,
         }
     )
+
+
+@router.delete(
+    "/applications/{app_id}",
+    summary="Delete application",
+    dependencies=[Depends(require_role([UserRole.SUPER_ADMIN]))],
+)
+async def delete_application_endpoint(
+    app_id: UUID,
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    await delete_application(app_id, db)
+    return success_response(message="Application deleted successfully")
