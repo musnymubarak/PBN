@@ -3306,6 +3306,17 @@ function EventsPage() {
         </table>
       </div>
 
+      {showAddModal && (
+        <AddEventModal
+          chapters={chapters}
+          onClose={() => setShowAddModal(false)}
+          onCreated={() => {
+            setShowAddModal(false);
+            fetchEvents();
+          }}
+        />
+      )}
+
       {editingEvent && (
         <EditEventModal
           event={editingEvent}

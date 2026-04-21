@@ -554,7 +554,6 @@ input:checked + .slider:before {
   border-radius: 18px;
   box-shadow: var(--shadow);
   border: 1px solid var(--border);
-  overflow: hidden;
   margin-bottom: 2.5rem;
 }
 
