@@ -4,6 +4,7 @@ import logging
 import asyncio
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.utils import formatdate, make_msgid
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from app.core.config import get_settings
 
@@ -37,9 +38,16 @@ def _send_smtp(to_email: str, subject: str, html_content: str):
     msg["Subject"] = subject
     msg["From"] = f"{settings.SMTP_FROM_NAME} <{settings.SMTP_FROM_EMAIL}>"
     msg["To"] = to_email
+    msg["Date"] = formatdate(localtime=True)
+    msg["Message-ID"] = make_msgid(domain="primebusiness.network")
 
-    part = MIMEText(html_content, "html")
-    msg.attach(part)
+    # Add plain text fallback to prevent "MIME HTML Only" spam penalty
+    plain_text = "To view this message, please use an HTML compatible email client."
+    part1 = MIMEText(plain_text, "plain")
+    part2 = MIMEText(html_content, "html")
+    
+    msg.attach(part1)
+    msg.attach(part2)
 
     try:
         context = ssl.create_default_context()
