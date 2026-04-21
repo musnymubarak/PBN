@@ -1,0 +1,45 @@
+name: Build iOS IPA (Unsigned)
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: # Allows manual trigger from GitHub Actions tab
+
+jobs:
+  build:
+    name: Build Unsigned IPA
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+pub get
+        working-directory: ./mobile
+        run: flutter pub get
+
+      - name: Build iOS (Unsigned)
+        working-directory: ./mobile
+        run: flutter build ios --release --no-codesign
+
+      - name: Package IPA
+        working-directory: ./mobile
+        run: |
+          mkdir -p Payload
+          cp -r build/ios/iphoneos/Runner.app Payload/
+          zip -r pbn.ipa Payload
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pbn-ios-ipa
+          path: mobile/pbn.ipa
+          retention-days: 7
