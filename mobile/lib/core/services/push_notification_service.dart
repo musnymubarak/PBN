@@ -26,54 +26,71 @@ class PushNotificationService {
 
     // Firebase Messaging is only supported on Android/iOS/Web
     // Skipping initialization on Windows/Desktop to prevent crashes
-    if (kIsWeb || !Platform.isAndroid && !Platform.isIOS) {
+    if (kIsWeb || (!Platform.isAndroid && !Platform.isIOS)) {
       debugPrint("Push Notifications skip: Not on Mobile/Web");
       _initialized = true;
       return;
     }
 
     // 1. Initialize Firebase (Requires google-services.json / GoogleService-Info.plist)
-    await Firebase.initializeApp();
+    try {
+      await Firebase.initializeApp();
+    } catch (e) {
+      debugPrint("Firebase.initializeApp() failed: $e");
+      _initialized = true;
+      return;
+    }
 
     // 2. Request Permissions (iOS/MacOS)
-    await _messaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
+    try {
+      await _messaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+    } catch (e) {
+      debugPrint("Firebase messaging requestPermission failed: $e");
+    }
 
     // 3. Setup Local Notifications (for foreground messages)
-    const initializationSettings = InitializationSettings(
-      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
-      iOS: DarwinInitializationSettings(),
-    );
-    await _localNotifications.initialize(
-      initializationSettings,
-      onDidReceiveNotificationResponse: (details) {
-        // Handle notification tap when app is in foreground
-        if (details.payload != null) {
-          _navigateByNotificationData({'route': details.payload});
-        }
-      },
-    );
+    try {
+      const initializationSettings = InitializationSettings(
+        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+        iOS: DarwinInitializationSettings(),
+      );
+      await _localNotifications.initialize(
+        initializationSettings,
+        onDidReceiveNotificationResponse: (details) {
+          // Handle notification tap when app is in foreground
+          if (details.payload != null) {
+            _navigateByNotificationData({'route': details.payload});
+          }
+        },
+      );
+    } catch (e) {
+      debugPrint("Local notifications init failed: $e");
+    }
 
     // 4. Handle Incoming Messages
-    
-    // Foreground
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      _onMessageController.add(message);
-      _showLocalNotification(message);
-    });
+    try {
+      // Foreground
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        _onMessageController.add(message);
+        _showLocalNotification(message);
+      });
 
-    // Background Tap
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      _handleNotificationTap(message);
-    });
+      // Background Tap
+      FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+        _handleNotificationTap(message);
+      });
 
-    // Terminated Tap
-    final initialMessage = await _messaging.getInitialMessage();
-    if (initialMessage != null) {
-      _handleNotificationTap(initialMessage);
+      // Terminated Tap
+      final initialMessage = await _messaging.getInitialMessage();
+      if (initialMessage != null) {
+        _handleNotificationTap(initialMessage);
+      }
+    } catch (e) {
+      debugPrint("Firebase message listeners setup failed: $e");
     }
 
     _initialized = true;
