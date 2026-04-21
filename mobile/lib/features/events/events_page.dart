@@ -238,7 +238,7 @@ class _EventsPageState extends State<EventsPage> {
                           const Icon(TablerIcons.ticket, color: Colors.white, size: 14),
                           const SizedBox(width: 6),
                           Text(
-                            'LKR ${event.fee.toStringAsFixed(0)}', 
+                            'LKR ${NumberFormat('#,##0').format(event.fee)}', 
                             style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 0.5)
                           ),
                         ],

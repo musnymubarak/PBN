@@ -44,7 +44,7 @@ async def get_all_members(db: AsyncSession, requester_id: UUID | None = None) ->
         .join(User, ChapterMembership.user_id == User.id)
         .join(Chapter, ChapterMembership.chapter_id == Chapter.id)
         .join(IndustryCategory, ChapterMembership.industry_category_id == IndustryCategory.id)
-        .outerjoin(Business, Business.owner_user_id == User.id)
+        .outerjoin(Business, (Business.owner_user_id == User.id) & (Business.industry_category_id == ChapterMembership.industry_category_id))
         .where(ChapterMembership.is_active.is_(True))
         .order_by(User.full_name)
     )
@@ -69,28 +69,25 @@ async def get_all_members(db: AsyncSession, requester_id: UUID | None = None) ->
             },
         }
 
-        # Privacy Filtering: Only show contact/business info if in the same chapter
+        # 3. Handle Privacy Filtering
+        # Contact info (email/phone) is private, but Name/Business/Chapter is public
+        member_data.update({
+            "email": user.email if is_same_chapter else None,
+            "phone_number": user.phone_number if is_same_chapter else None,
+            "company": biz.business_name if biz else "-",
+            "business": {
+                "id": biz.id,
+                "name": biz.business_name,
+                "district": biz.district,
+                "website": biz.website,
+            } if biz else None,
+        })
+
         if is_same_chapter:
             member_data.update({
-                "email": user.email,
-                "phone_number": user.phone_number,
-                "company": biz.business_name if biz else "Independent",
                 "membership_type": mem.membership_type,
                 "start_date": mem.start_date,
                 "end_date": mem.end_date,
-                "business": {
-                    "id": biz.id,
-                    "business_name": biz.business_name,
-                    "district": biz.district,
-                    "website": biz.website,
-                } if biz else None,
-            })
-        else:
-            member_data.update({
-                "email": None,
-                "phone_number": None,
-                "company": "Private",
-                "business": None,
             })
 
         members.append(member_data)
@@ -110,7 +107,7 @@ async def get_chapter_members(chapter_id: UUID, db: AsyncSession) -> List[Dict[s
         select(ChapterMembership, User, IndustryCategory, Business)
         .join(User, ChapterMembership.user_id == User.id)
         .join(IndustryCategory, ChapterMembership.industry_category_id == IndustryCategory.id)
-        .outerjoin(Business, Business.owner_user_id == User.id)
+        .outerjoin(Business, (Business.owner_user_id == User.id) & (Business.industry_category_id == ChapterMembership.industry_category_id))
         .where(
             ChapterMembership.chapter_id == chapter_id,
             ChapterMembership.is_active.is_(True)
@@ -139,7 +136,7 @@ async def get_chapter_members(chapter_id: UUID, db: AsyncSession) -> List[Dict[s
             },
             "business": {
                 "id": biz.id,
-                "business_name": biz.business_name,
+                "name": biz.business_name,
                 "district": biz.district,
                 "website": biz.website,
             } if biz else None,

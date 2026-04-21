@@ -224,7 +224,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     const Icon(TablerIcons.ticket, color: Colors.white, size: 18),
                     const SizedBox(width: 8),
                     Text(
-                      'LKR ${_currentEvent.fee.toStringAsFixed(0)}',
+                      'LKR ${NumberFormat('#,##0').format(_currentEvent.fee)}',
                       style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900),
                     ),
                   ],
@@ -238,12 +238,6 @@ class _EventDetailPageState extends State<EventDetailPage> {
         icon: const Icon(TablerIcons.arrow_left, color: Colors.white),
         onPressed: () => Navigator.pop(context),
       ),
-      actions: [
-        IconButton(
-          icon: const Icon(TablerIcons.share, color: Colors.white),
-          onPressed: () {},
-        ),
-      ],
     );
   }
 
@@ -330,7 +324,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Color(0xFF92400E), letterSpacing: 1),
                   ),
                   Text(
-                    'LKR ${_currentEvent.fee.toStringAsFixed(0)} per attendee',
+                    'LKR ${NumberFormat('#,##0').format(_currentEvent.fee)} per attendee',
                     style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF0A2540)),
                   ),
                 ],
@@ -538,7 +532,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                           child: _isLoading 
                             ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                             : Text(
-                                'RESERVE SPOT • LKR ${_currentEvent.fee.toStringAsFixed(0)}',
+                                'RESERVE SPOT • LKR ${NumberFormat('#,##0').format(_currentEvent.fee)}',
                                 style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 1),
                               ),
                         )),

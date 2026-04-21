@@ -88,7 +88,11 @@ class _DashboardPageState extends State<DashboardPage> {
           _loading = false;
         });
         _loadLeaderboard();
-        if (mounted) context.read<NotificationProvider>().fetchUnreadCount();
+        if (mounted) {
+          final notifProvider = context.read<NotificationProvider>();
+          notifProvider.startListening();
+          notifProvider.fetchUnreadCount();
+        }
       }
     } catch (e) {
       if (mounted) setState(() { _error = 'Failed to load dashboard'; _loading = false; });

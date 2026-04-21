@@ -50,7 +50,7 @@ class Member {
 
   String get displayName => fullName;
   String get industry => industryName;
-  String get company => companyName ?? businessName ?? 'Independent';
+  String get company => businessName ?? companyName ?? '-';
 
   String get initials {
     final parts = fullName.trim().split(' ');

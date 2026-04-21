@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
+import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/services/notification_service.dart';
 import 'package:pbn/models/notification_settings.dart';
 
@@ -67,25 +68,33 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text(
           'Notification Settings',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(fontWeight: FontWeight.w900, color: AppColors.text, fontSize: 20),
         ),
         elevation: 0,
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.white,
+        centerTitle: false,
+        leading: IconButton(
+          icon: const Icon(TablerIcons.chevron_left, color: AppColors.text),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
           : ListView(
               children: [
-                const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Text(
+                Container(
+                  padding: const EdgeInsets.all(20.0),
+                  color: Colors.white,
+                  child: const Text(
                     'Customize what you receive push notifications for. You will still see all activity in your in-app notification center.',
-                    style: TextStyle(color: Colors.grey, fontSize: 13),
+                    style: TextStyle(color: AppColors.textSecondary, fontSize: 13, height: 1.5, fontWeight: FontWeight.w500),
                   ),
                 ),
+                const SizedBox(height: 8),
                 _settingSection(
                   'Community',
                   [
@@ -112,7 +121,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                     ),
                   ],
                 ),
-                const Divider(),
+                const SizedBox(height: 8),
                 _settingSection(
                   'Meetings & Events',
                   [
@@ -132,7 +141,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                     ),
                   ],
                 ),
-                const Divider(),
+                const SizedBox(height: 8),
                 _settingSection(
                   'Rewards & Offers',
                   [
@@ -145,41 +154,53 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 40),
               ],
             ),
     );
   }
 
   Widget _settingSection(String title, List<Widget> items) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Text(
-            title.toUpperCase(),
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: Colors.blueAccent,
-              letterSpacing: 1.2,
+    return Container(
+      color: Colors.white,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+            child: Text(
+              title.toUpperCase(),
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFF3B82F6),
+                letterSpacing: 1.5,
+              ),
             ),
           ),
-        ),
-        ...items,
-      ],
+          ...items,
+        ],
+      ),
     );
   }
 
   Widget _toggleItem(
       String title, String subtitle, IconData icon, bool value, Function(bool) onChanged) {
     return SwitchListTile(
-      secondary: Icon(icon, color: Colors.blue),
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-      subtitle: Text(subtitle, style: const TextStyle(fontSize: 12)),
+      secondary: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: AppColors.primary.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(icon, color: AppColors.primary, size: 20),
+      ),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: AppColors.text)),
+      subtitle: Text(subtitle, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
       value: value,
       onChanged: onChanged,
-      activeColor: Colors.blue,
+      activeColor: AppColors.primary,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
     );
   }
 }

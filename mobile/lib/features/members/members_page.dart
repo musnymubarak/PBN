@@ -265,8 +265,8 @@ class _MembersPageState extends State<MembersPage> {
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17, color: Colors.white, letterSpacing: -0.3)),
                         const SizedBox(height: 4),
-                        if (member.isSameChapter)
-                          Text(member.company,
+                        const SizedBox(height: 4),
+                        Text(member.company,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.white.withOpacity(0.7))),
@@ -548,8 +548,7 @@ class _MembersPageState extends State<MembersPage> {
                     const SizedBox(height: 24),
                     Text(member.fullName, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.text)),
                     const SizedBox(height: 4),
-                    if (member.isSameChapter)
-                      Text(member.company, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.primary)),
+                    Text(member.company, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.primary)),
                     const SizedBox(height: 24),
                     
                     Row(
