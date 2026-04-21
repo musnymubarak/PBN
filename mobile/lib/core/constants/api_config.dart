@@ -7,7 +7,7 @@ class ApiConfig {
   /// VPS Production:       http://37.59.123.98:8005/api/v1
   //static const String baseUrl = 'http://127.0.0.1:8000/api/v1';
 
-  static const String baseUrl = 'http://37.59.123.98:8005/api/v1';
+  static const String baseUrl = 'https://api.primebusiness.network/api/v1';
   static String get staticUrl => baseUrl.replaceFirst('/api/v1', '');
 
   static const Duration connectTimeout = Duration(seconds: 15);
