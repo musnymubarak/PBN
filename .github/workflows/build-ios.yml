@@ -22,7 +22,6 @@ jobs:
           cache: true
 
       - name: Install dependencies
-pub get
         working-directory: ./mobile
         run: flutter pub get
 
@@ -33,6 +32,7 @@ pub get
       - name: Package IPA
         working-directory: ./mobile
         run: |
+          rm -rf Payload pbn.ipa
           mkdir -p Payload
           cp -r build/ios/iphoneos/Runner.app Payload/
           zip -r pbn.ipa Payload
