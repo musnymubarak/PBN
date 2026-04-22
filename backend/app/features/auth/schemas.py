@@ -91,6 +91,20 @@ class ResetPasswordRequest(BaseModel):
         return v
 
 
+class ChangePasswordRequest(BaseModel):
+    """Request for changing user password."""
+    current_password: str = Field(..., description="The current password")
+    new_password: str = Field(..., description="The new password")
+    confirm_password: str = Field(..., description="Confirmation of the new password")
+
+    @field_validator("confirm_password")
+    @classmethod
+    def validate_passwords_match(cls, v: str, info: any) -> str:
+        if "new_password" in info.data and v != info.data["new_password"]:
+            raise ValueError("Passwords do not match")
+        return v
+
+
 # ── Response Schemas ─────────────────────────────────────────────────────────
 
 
