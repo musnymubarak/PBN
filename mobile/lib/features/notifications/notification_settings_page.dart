@@ -68,17 +68,17 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.secondary,
       appBar: AppBar(
         title: const Text(
           'Notification Settings',
-          style: TextStyle(fontWeight: FontWeight.w900, color: AppColors.text, fontSize: 20),
+          style: TextStyle(fontWeight: FontWeight.w900, color: Colors.white, fontSize: 18),
         ),
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.primary,
         centerTitle: false,
         leading: IconButton(
-          icon: const Icon(TablerIcons.chevron_left, color: AppColors.text),
+          icon: const Icon(TablerIcons.chevron_left, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -173,7 +173,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
               style: const TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w900,
-                color: Color(0xFF3B82F6),
+                color: AppColors.primary,
                 letterSpacing: 1.5,
               ),
             ),
@@ -190,16 +190,17 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
       secondary: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: AppColors.primary.withOpacity(0.05),
+          color: AppColors.accent.withOpacity(0.1),
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Icon(icon, color: AppColors.primary, size: 20),
+        child: Icon(icon, color: AppColors.accent, size: 20),
       ),
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: AppColors.text)),
       subtitle: Text(subtitle, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
       value: value,
       onChanged: onChanged,
-      activeColor: AppColors.primary,
+      activeColor: AppColors.accent,
+      activeTrackColor: AppColors.accent.withOpacity(0.3),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
     );
   }
