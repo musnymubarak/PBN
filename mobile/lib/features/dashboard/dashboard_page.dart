@@ -264,7 +264,7 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildEventZoomPanel() {
-    final event = _data?.events.nextEvent;
+    final event = _data?.events.nextVirtual;
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -296,12 +296,14 @@ class _DashboardPageState extends State<DashboardPage> {
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
                     const Icon(TablerIcons.calendar_event, color: Colors.white, size: 16),
                     const SizedBox(width: 8),
-                    Text(_formatDateTime(event?.startAt), style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w900)),
+                    Text(event != null ? _formatDateTime(event.startAt) : 'Wednesday | 10:00 AM', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w900)),
                   ]),
                 ),
                 const Spacer(),
                 ElevatedButton.icon(
-                  onPressed: () {}, 
+                  onPressed: () {
+                    // Logic to open meeting link
+                  }, 
                   icon: const Icon(TablerIcons.video, size: 14),
                   label: const Text('JOIN ZOOM', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900)),
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: const Color(0xFF6366F1), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8)),
@@ -315,6 +317,7 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildPhysicalMeetingPanel() {
+    final event = _data?.events.nextPhysical;
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -334,10 +337,20 @@ class _DashboardPageState extends State<DashboardPage> {
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
                 const Text('CHAPTER MEETUP', style: TextStyle(color: AppColors.accent, fontSize: 9, fontWeight: FontWeight.w900)),
                 const SizedBox(height: 6),
-                const FittedBox(
+                FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
-                  child: Text('Galle Face In-Person Chapter Meeting', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800, height: 1.4, shadows: [Shadow(blurRadius: 10, color: Colors.black45)])),
+                  child: Text(event?.title ?? 'Galle Face In-Person Chapter Meeting', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800, height: 1.4, shadows: [Shadow(blurRadius: 10, color: Colors.black45)])),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    const Icon(TablerIcons.calendar_event, color: Colors.white, size: 16),
+                    const SizedBox(width: 8),
+                    Text(event != null ? _formatDateTime(event.startAt) : 'Friday | 06:00 PM', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w900)),
+                  ]),
                 ),
                 const Spacer(),
                 ElevatedButton.icon(
@@ -367,10 +380,13 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   String _formatDateTime(String? iso) {
-    if (iso == null) return 'Wednesday | 10:00 AM';
-    final parts = iso.split('T');
-    if (parts.length < 2) return iso;
-    return '${parts[0]}  |  ${parts[1].substring(0, 5)}';
+    if (iso == null || iso.isEmpty) return 'Date TBD';
+    try {
+      final dt = DateTime.parse(iso).toLocal();
+      return DateFormat('EEEE | hh:mm a').format(dt);
+    } catch (_) {
+      return iso;
+    }
   }
 
   Widget _buildErrorState() {

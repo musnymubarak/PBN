@@ -61,13 +61,15 @@ class RoiStats {
 }
 
 class EventStats {
-  final NextEvent? nextEvent;
+  final NextEvent? nextVirtual;
+  final NextEvent? nextPhysical;
   final int attendedThisYear;
 
-  EventStats({this.nextEvent, this.attendedThisYear = 0});
+  EventStats({this.nextVirtual, this.nextPhysical, this.attendedThisYear = 0});
 
   factory EventStats.fromJson(Map<String, dynamic> json) => EventStats(
-        nextEvent: json['next_event'] != null ? NextEvent.fromJson(json['next_event']) : null,
+        nextVirtual: json['next_virtual'] != null ? NextEvent.fromJson(json['next_virtual']) : null,
+        nextPhysical: json['next_physical'] != null ? NextEvent.fromJson(json['next_physical']) : null,
         attendedThisYear: json['attended_this_year'] ?? 0,
       );
 }
@@ -76,13 +78,17 @@ class NextEvent {
   final String id;
   final String title;
   final String startAt;
+  final String? location;
+  final String? meetingLink;
 
-  NextEvent({required this.id, required this.title, required this.startAt});
+  NextEvent({required this.id, required this.title, required this.startAt, this.location, this.meetingLink});
 
   factory NextEvent.fromJson(Map<String, dynamic> json) => NextEvent(
         id: json['id'] ?? '',
         title: json['title'] ?? '',
         startAt: json['start_at'] ?? '',
+        location: json['location'],
+        meetingLink: json['meeting_link'],
       );
 }
 

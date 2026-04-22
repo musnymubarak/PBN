@@ -24,11 +24,22 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
   }
 
   Future<void> _loadData() async {
-    setState(() => _loading = true);
+    // Only show full screen loading if we don't have any data yet
+    if (_entries.isEmpty) {
+      setState(() => _loading = true);
+    }
+    
     try {
-      _entries = await _service.getLeaderboard(period: _period);
-    } catch (_) {}
-    if (mounted) setState(() => _loading = false);
+      final newEntries = await _service.getLeaderboard(period: _period);
+      if (mounted) {
+        setState(() {
+          _entries = newEntries;
+          _loading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   String _getInitials(String name) {
@@ -54,60 +65,75 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                 color: AppColors.text,
                 letterSpacing: -0.5)),
       ),
-      body: _loading
+      body: _loading && _entries.isEmpty
           ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
           : RefreshIndicator(
               onRefresh: _loadData,
               color: AppColors.primary,
-              child: CustomScrollView(
-                slivers: [
-                  SliverToBoxAdapter(
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 10),
-                        // Segmented Control
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: _buildPeriodSelector(),
+              child: Stack(
+                children: [
+                  CustomScrollView(
+                    slivers: [
+                      SliverToBoxAdapter(
+                        child: Column(
+                          children: [
+                            const SizedBox(height: 10),
+                            // Segmented Control
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 20),
+                              child: _buildPeriodSelector(),
+                            ),
+                            
+                            // Podium
+                            if (_entries.isNotEmpty) 
+                              _buildPodium(_entries),
+                              
+                            const SizedBox(height: 16),
+                          ],
                         ),
-                        
-                        // Podium
-                        if (_entries.isNotEmpty) 
-                          _buildPodium(_entries),
-                          
-                        const SizedBox(height: 16),
-                      ],
-                    ),
-                  ),
-
-                  // Remaining List
-                  if (_entries.length > 3)
-                    SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) => Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: _buildEntry(index + 4, _entries[index + 3]),
-                        ),
-                        childCount: _entries.length - 3,
                       ),
-                    )
-                  else if (_entries.isEmpty)
-                    SliverToBoxAdapter(
-                      child: Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(40),
-                          child: Column(
-                            children: [
-                              Icon(TablerIcons.mood_empty, size: 60, color: Colors.grey.shade300),
-                              const SizedBox(height: 16),
-                              Text('No referrals yet!',
-                                  style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.w800, fontSize: 16)),
-                            ],
+
+                      // Remaining List
+                      if (_entries.length > 3)
+                        SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) => Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 20),
+                              child: _buildEntry(index + 4, _entries[index + 3]),
+                            ),
+                            childCount: _entries.length - 3,
+                          ),
+                        )
+                      else if (_entries.isEmpty)
+                        SliverToBoxAdapter(
+                          child: Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(40),
+                              child: Column(
+                                children: [
+                                  Icon(TablerIcons.mood_empty, size: 60, color: Colors.grey.shade300),
+                                  const SizedBox(height: 16),
+                                  Text('No referrals yet!',
+                                      style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.w800, fontSize: 16)),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
+                      const SliverToBoxAdapter(child: SizedBox(height: 40)),
+                    ],
+                  ),
+                  if (_loading && _entries.isNotEmpty)
+                    const Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      child: LinearProgressIndicator(
+                        minHeight: 2,
+                        backgroundColor: Colors.transparent,
+                        color: AppColors.primary,
                       ),
                     ),
-                  const SliverToBoxAdapter(child: SizedBox(height: 40)),
                 ],
               ),
             ),

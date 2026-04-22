@@ -90,23 +90,50 @@ async def get_dashboard(user_id: UUID, db: AsyncSession) -> Dict[str, Any]:
 
         total_val = float(roi_stats.total_value)
         month_val = float(roi_stats.month_value)
-        avg_deal = total_val / ref_stats.received_won if ref_stats.received_won > 0 else 0.0
-
-        # ── Sequential: next_event depends on membership ─────────────────────
-
-        next_event = None
+        avg_deal = total_val / ref_stats.received_won if ref_stats.received_won > 0 else 0.0        # 5. Events
+        next_virtual = None
+        next_physical = None
         if mem:
-            next_event_obj = (await db.execute(
-                select(Event).where(Event.chapter_id == mem.chapter_id, Event.is_published == True, Event.start_at >= now)
+            from app.models.events import EventType
+            
+            # Next Virtual Event
+            v_event = (await db.execute(
+                select(Event).where(
+                    Event.chapter_id == mem.chapter_id, 
+                    Event.is_published == True, 
+                    Event.start_at >= now,
+                    Event.event_type == EventType.VIRTUAL
+                )
                 .order_by(Event.start_at.asc())
                 .limit(1)
             )).scalar_one_or_none()
             
-            if next_event_obj:
-                next_event = {
-                    "id": str(next_event_obj.id),
-                    "title": next_event_obj.title,
-                    "start_at": next_event_obj.start_at.isoformat()
+            if v_event:
+                next_virtual = {
+                    "id": str(v_event.id),
+                    "title": v_event.title,
+                    "start_at": v_event.start_at.isoformat(),
+                    "meeting_link": v_event.meeting_link
+                }
+
+            # Next Physical Event (Flagship or Micro Meetup)
+            p_event = (await db.execute(
+                select(Event).where(
+                    Event.chapter_id == mem.chapter_id, 
+                    Event.is_published == True, 
+                    Event.start_at >= now,
+                    Event.event_type.in_([EventType.FLAGSHIP, EventType.MICRO_MEETUP])
+                )
+                .order_by(Event.start_at.asc())
+                .limit(1)
+            )).scalar_one_or_none()
+            
+            if p_event:
+                next_physical = {
+                    "id": str(p_event.id),
+                    "title": p_event.title,
+                    "start_at": p_event.start_at.isoformat(),
+                    "location": p_event.location
                 }
 
         # 4. Membership Stats
@@ -139,7 +166,8 @@ async def get_dashboard(user_id: UUID, db: AsyncSession) -> Dict[str, Any]:
                 "avg_deal_value": round(avg_deal, 2)
             },
             "events": {
-                "next_event": next_event,
+                "next_virtual": next_virtual,
+                "next_physical": next_physical,
                 "attended_this_year": attended_this_year
             },
             "membership": membership_data,
