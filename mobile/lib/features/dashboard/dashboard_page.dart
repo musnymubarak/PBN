@@ -195,7 +195,7 @@ class _DashboardPageState extends State<DashboardPage> {
             ]),
             const SizedBox(height: 12),
             Row(children: [
-              Expanded(child: SizedBox(height: 95, child: StatCard(title: 'ROI', value: _formatCurrency(_data?.roi.totalValue ?? 0), icon: TablerIcons.trending_up, gradient: const [Color(0xFFF59E0B), Color(0xFF92400E)]))),
+              Expanded(child: SizedBox(height: 95, child: StatCard(title: 'ROI', value: _formatCurrency(_data?.roi.totalValue ?? 0), icon: TablerIcons.trending_up, gradient: const [AppColors.accent, Color(0xFF92400E)]))),
               const SizedBox(width: 12),
               Expanded(child: SizedBox(height: 95, child: StatCard(title: 'Incoming', value: '${_data?.referrals.receivedTotal ?? 0}', icon: TablerIcons.arrow_down_left, gradient: const [Color(0xFF8B5CF6), Color(0xFF5B21B6)]))),
             ]),
@@ -207,7 +207,7 @@ class _DashboardPageState extends State<DashboardPage> {
           const Text('EXPLORE NETWORK', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1.5)),
           const SizedBox(height: 20),
           Row(children: [
-            _modernActionTile(TablerIcons.stars, 'Rewards', Colors.amber, () => Navigator.pushNamed(context, '/rewards')),
+            _modernActionTile(TablerIcons.stars, 'Rewards', AppColors.accent, () => Navigator.pushNamed(context, '/rewards')),
             const SizedBox(width: 16),
             _modernActionTile(TablerIcons.building_community, 'Chapters', Colors.blue, () => Navigator.pushNamed(context, '/chapters')),
             const SizedBox(width: 16),
@@ -252,7 +252,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 const Spacer(),
                 ElevatedButton(
                   onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => CreateReferralPage())),
-                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8)),
+                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.accent, foregroundColor: Colors.black, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8)),
                   child: const Text('SUBMIT REFERRAL', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900)),
                 ),
               ])),
@@ -318,21 +318,21 @@ class _DashboardPageState extends State<DashboardPage> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: const Color(0xFFF97316),
+        color: AppColors.secondary,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: [BoxShadow(color: const Color(0xFFF97316).withOpacity(0.2), blurRadius: 20, offset: const Offset(0, 10))],
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 20, offset: const Offset(0, 10))],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(14),
         child: Stack(children: [
-          Positioned.fill(child: _smartImage('https://picsum.photos/id/445/600/300', const [Color(0xFFF97316), Color(0xFFEA580C)])),
-          Positioned.fill(child: Container(decoration: BoxDecoration(gradient: LinearGradient(colors: [const Color(0xFFF97316).withOpacity(0.95), const Color(0xFFF97316).withOpacity(0.4)], begin: Alignment.centerLeft, end: Alignment.centerRight)))),
+          Positioned.fill(child: _smartImage('https://picsum.photos/id/445/600/300', const [AppColors.secondary, Color(0xFFEA580C)])),
+          Positioned.fill(child: Container(decoration: BoxDecoration(gradient: LinearGradient(colors: [AppColors.secondary.withOpacity(0.95), AppColors.secondary.withOpacity(0.4)], begin: Alignment.centerLeft, end: Alignment.centerRight)))),
           
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(children: [
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-                const Text('CHAPTER MEETUP', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900)),
+                const Text('CHAPTER MEETUP', style: TextStyle(color: AppColors.accent, fontSize: 9, fontWeight: FontWeight.w900)),
                 const SizedBox(height: 6),
                 const FittedBox(
                   fit: BoxFit.scaleDown,
@@ -344,7 +344,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   onPressed: () {}, 
                   icon: const Icon(TablerIcons.map_pin, size: 14),
                   label: const Text('VIEW LOCATION', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900)),
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: const Color(0xFFF97316), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8)),
+                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.accent, foregroundColor: Colors.black, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8)),
                 ),
               ])),
             ]),
@@ -468,14 +468,14 @@ class _DashboardPageState extends State<DashboardPage> {
           children: [
             Row(
               children: [
-                const Icon(TablerIcons.trophy, color: Color(0xFFF59E0B), size: 16),
+                const Icon(TablerIcons.trophy, color: AppColors.accent, size: 16),
                 const SizedBox(width: 8),
                 const Text('TOP CONNECTORS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF64748B), letterSpacing: 1.5)),
               ],
             ),
             GestureDetector(
               onTap: () => Navigator.pushNamed(context, '/leaderboard'),
-              child: const Text('VIEW ALL', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.primary, letterSpacing: 1)),
+              child: const Text('VIEW ALL', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.accent, letterSpacing: 1)),
             ),
           ],
         ),
@@ -486,7 +486,7 @@ class _DashboardPageState extends State<DashboardPage> {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 24),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+                colors: [AppColors.primary, Color(0xFF1E3A8A)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -500,7 +500,7 @@ class _DashboardPageState extends State<DashboardPage> {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 if (_leaderboard.length >= 2) _buildMiniPodium(_leaderboard[1], 2, const Color(0xFF94A3B8)), // Silver
-                if (_leaderboard.length >= 1) _buildMiniPodium(_leaderboard[0], 1, const Color(0xFFF59E0B)), // Gold
+                if (_leaderboard.length >= 1) _buildMiniPodium(_leaderboard[0], 1, AppColors.accent), // Gold
                 if (_leaderboard.length >= 3) _buildMiniPodium(_leaderboard[2], 3, const Color(0xFFB45309)), // Bronze
               ],
             ),
@@ -529,7 +529,7 @@ class _DashboardPageState extends State<DashboardPage> {
         if (rank == 1) 
           const Padding(
             padding: EdgeInsets.only(bottom: 6),
-            child: Icon(TablerIcons.crown, color: Color(0xFFF59E0B), size: 24),
+            child: Icon(TablerIcons.crown, color: AppColors.accent, size: 24),
           ),
         Stack(
           alignment: Alignment.bottomCenter,
@@ -568,7 +568,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 decoration: BoxDecoration(
                   color: color, 
                   shape: BoxShape.circle, 
-                  border: Border.all(color: const Color(0xFF1E293B), width: 2)
+                  border: Border.all(color: const Color(0xFF1E3A8A), width: 2)
                 ),
                 child: Text('$rank', style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w900)),
               ),

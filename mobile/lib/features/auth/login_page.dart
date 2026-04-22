@@ -62,7 +62,7 @@ class _LoginPageState extends State<LoginPage> {
               width: 250, height: 250,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.blue.withOpacity(0.03),
+                color: AppColors.primary.withOpacity(0.03),
               ),
             ),
           ),
@@ -81,9 +81,9 @@ class _LoginPageState extends State<LoginPage> {
                     text: const TextSpan(
                       style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, letterSpacing: 5),
                       children: [
-                        TextSpan(text: 'PRIME ', style: TextStyle(color: Color(0xFF0F172A))),
-                        TextSpan(text: 'BUSINESS ', style: TextStyle(color: AppColors.accent)),
-                        TextSpan(text: 'NETWORK', style: TextStyle(color: Color(0xFF0F172A))),
+                        const TextSpan(text: 'PRIME ', style: TextStyle(color: AppColors.primary)),
+                        const TextSpan(text: 'BUSINESS ', style: TextStyle(color: AppColors.accent)),
+                        const TextSpan(text: 'NETWORK', style: TextStyle(color: AppColors.primary)),
                       ],
                     ),
                   ),
@@ -97,7 +97,7 @@ class _LoginPageState extends State<LoginPage> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.surface,
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 30, offset: const Offset(0, 15)),
@@ -147,7 +147,8 @@ class _LoginPageState extends State<LoginPage> {
                             text: 'LOG IN TO DASHBOARD',
                             onPressed: _handleLogin,
                             isLoading: auth.loading,
-                            backgroundColor: const Color(0xFF0F172A),
+                            backgroundColor: AppColors.accent,
+                            textColor: Colors.black,
                           ),
                         ),
                         const SizedBox(height: 24),
@@ -215,7 +216,7 @@ class _LoginPageState extends State<LoginPage> {
           contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
           enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFF0F172A), width: 1.5)),
+          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
         ),
       ),
     );

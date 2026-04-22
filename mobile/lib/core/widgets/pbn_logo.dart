@@ -20,7 +20,7 @@ class PbnLogo extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: const Color(0xFF0F172A),
+        color: AppColors.secondary,
         borderRadius: BorderRadius.circular(size * 0.15),
         boxShadow: [
           BoxShadow(

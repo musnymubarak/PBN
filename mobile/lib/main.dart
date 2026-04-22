@@ -67,7 +67,7 @@ class PBNApp extends StatelessWidget {
       navigatorKey: navigatorKey,
       title: 'Prime Business Network',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
+      theme: AppTheme.theme,
       initialRoute: '/splash',
       routes: {
         '/splash': (context) => const SplashPage(),
@@ -104,21 +104,21 @@ class AuthGuard extends StatelessWidget {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Navigator.pushReplacementNamed(context, '/splash');
       });
-      return Scaffold(backgroundColor: const Color(0xFF030D16), body: Center(child: CircularProgressIndicator(color: AppColors.primary)));
+      return const Scaffold(backgroundColor: AppColors.background, body: Center(child: CircularProgressIndicator(color: AppColors.accent)));
     }
     
     if (auth.status == AuthStatus.unauthenticated) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Navigator.pushReplacementNamed(context, '/onboarding');
       });
-      return const Scaffold(backgroundColor: Colors.white);
+      return const Scaffold(backgroundColor: AppColors.background);
     }
 
     if (auth.user?.mustChangePassword == true) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Navigator.pushReplacementNamed(context, '/force-change-password');
       });
-      return const Scaffold(backgroundColor: Colors.white);
+      return const Scaffold(backgroundColor: AppColors.background);
     }
 
     return child;

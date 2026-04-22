@@ -13,8 +13,8 @@ class CustomButton extends StatelessWidget {
     super.key,
     required this.text,
     required this.onPressed,
-    this.backgroundColor = AppColors.primary,
-    this.textColor = Colors.white,
+    this.backgroundColor = AppColors.accent,
+    this.textColor = Colors.black,
     this.isLoading = false,
     this.icon,
   });
@@ -33,10 +33,10 @@ class CustomButton extends StatelessWidget {
         ),
       ),
       child: isLoading
-          ? const SizedBox(
+          ? SizedBox(
               height: 24,
               width: 24,
-              child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+              child: CircularProgressIndicator(strokeWidth: 2.5, color: textColor),
             )
           : Row(
               mainAxisAlignment: MainAxisAlignment.center,
