@@ -48,6 +48,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
       chapterAnnouncements: key == 'chapter_announcements' ? val : null,
       newRewards: key == 'new_rewards' ? val : null,
       newMembers: key == 'new_members' ? val : null,
+      referralActivity: key == 'referral_activity' ? val : null,
     );
 
     setState(() => _settings = updated);
@@ -151,6 +152,19 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                       TablerIcons.gift,
                       _settings!.newRewards,
                       (v) => _toggle('new_rewards', v),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                _settingSection(
+                  'Referrals & Leads',
+                  [
+                    _toggleItem(
+                      'Referral Activity',
+                      'New leads received and status changes on your referrals',
+                      TablerIcons.transfer_in,
+                      _settings!.referralActivity,
+                      (v) => _toggle('referral_activity', v),
                     ),
                   ],
                 ),

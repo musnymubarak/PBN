@@ -5,6 +5,7 @@ class NotificationSettings {
   final bool chapterAnnouncements;
   final bool newRewards;
   final bool newMembers;
+  final bool referralActivity;
 
   NotificationSettings({
     required this.newPosts,
@@ -13,6 +14,7 @@ class NotificationSettings {
     required this.chapterAnnouncements,
     required this.newRewards,
     required this.newMembers,
+    required this.referralActivity,
   });
 
   factory NotificationSettings.fromJson(Map<String, dynamic> json) {
@@ -23,6 +25,7 @@ class NotificationSettings {
       chapterAnnouncements: json['chapter_announcements'] ?? true,
       newRewards: json['new_rewards'] ?? true,
       newMembers: json['new_members'] ?? true,
+      referralActivity: json['referral_activity'] ?? true,
     );
   }
 
@@ -34,6 +37,7 @@ class NotificationSettings {
       'chapter_announcements': chapterAnnouncements,
       'new_rewards': newRewards,
       'new_members': newMembers,
+      'referral_activity': referralActivity,
     };
   }
 
@@ -44,6 +48,7 @@ class NotificationSettings {
     bool? chapterAnnouncements,
     bool? newRewards,
     bool? newMembers,
+    bool? referralActivity,
   }) {
     return NotificationSettings(
       newPosts: newPosts ?? this.newPosts,
@@ -52,6 +57,7 @@ class NotificationSettings {
       chapterAnnouncements: chapterAnnouncements ?? this.chapterAnnouncements,
       newRewards: newRewards ?? this.newRewards,
       newMembers: newMembers ?? this.newMembers,
+      referralActivity: referralActivity ?? this.referralActivity,
     );
   }
 }
