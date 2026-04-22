@@ -401,13 +401,29 @@ async def update_notification_settings(user_id: UUID, data: Dict[str, Any], db: 
     """Update user notification preferences."""
     user = (await db.execute(select(User).where(User.id == user_id))).scalar_one()
     
-    current = user.notification_settings or {}
+    # Create a fresh dict to ensure SQLAlchemy detects the change
+    current = dict(user.notification_settings or {})
+    
     # Only update keys that are provided in the payload
     for key, val in data.items():
         if val is not None:
             current[key] = val
             
-    user.notification_settings = current
+    # Use an explicit update statement for JSONB fields to ensure persistence
+    await db.execute(
+        update(User)
+        .where(User.id == user_id)
+        .values(notification_settings=current)
+    )
     await db.commit()
     
-    return await get_notification_settings(user_id, db)
+    # Merge with defaults before returning to ensure consistency
+    defaults = {
+        "new_posts": True,
+        "post_activity": True,
+        "meeting_updates": True,
+        "chapter_announcements": True,
+        "new_rewards": True,
+        "new_members": True,
+    }
+    return {**defaults, **current}
