@@ -5,6 +5,8 @@ import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/services/referral_service.dart';
 import 'package:pbn/models/referral.dart';
 
+import 'package:pbn/core/widgets/pbn_app_bar_actions.dart';
+
 class MyReferralsPage extends StatefulWidget {
   final bool isReceived; 
   const MyReferralsPage({super.key, required this.isReceived});
@@ -57,9 +59,13 @@ class _MyReferralsPageState extends State<MyReferralsPage> {
                 style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w900,
-                    color: AppColors.text)),
+                    color: AppColors.text,
+                    letterSpacing: -0.5)),
           ],
         ),
+        actions: [
+          PbnAppBarActions(),
+        ],
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: AppColors.primary))

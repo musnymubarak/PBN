@@ -4,6 +4,8 @@ import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/services/chapter_service.dart';
 import 'package:pbn/models/chapter.dart';
 
+import 'package:pbn/core/widgets/pbn_app_bar_actions.dart';
+
 class ChaptersPage extends StatefulWidget {
   const ChaptersPage({super.key});
 
@@ -39,13 +41,18 @@ class _ChaptersPageState extends State<ChaptersPage> {
         title: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            SizedBox(height: 4),
             Text('Global Presence',
                 style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w900,
-                    color: AppColors.text)),
+                    color: AppColors.text,
+                    letterSpacing: -0.5)),
           ],
         ),
+        actions: [
+          PbnAppBarActions(),
+        ],
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: AppColors.primary))

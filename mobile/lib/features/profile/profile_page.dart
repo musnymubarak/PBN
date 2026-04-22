@@ -177,13 +177,19 @@ class _ProfilePageState extends State<ProfilePage> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         toolbarHeight: 70,
-        title: const Text('Profile', 
-          style: TextStyle(
-            fontSize: 22, 
-            fontWeight: FontWeight.w900, 
-            color: AppColors.text,
-            letterSpacing: -0.5
-          )
+        title: const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(height: 4),
+            Text('Profile', 
+              style: TextStyle(
+                fontSize: 22, 
+                fontWeight: FontWeight.w900, 
+                color: AppColors.text,
+                letterSpacing: -0.5
+              )
+            ),
+          ],
         ),
         actions: const [
           PbnAppBarActions(),

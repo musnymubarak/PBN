@@ -5,6 +5,8 @@ import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/services/payment_service.dart';
 import 'package:pbn/models/payment.dart';
 
+import 'package:pbn/core/widgets/pbn_app_bar_actions.dart';
+
 class PaymentsPage extends StatefulWidget {
   const PaymentsPage({super.key});
 
@@ -55,9 +57,13 @@ class _PaymentsPageState extends State<PaymentsPage> {
                 style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w900,
-                    color: AppColors.text)),
+                    color: AppColors.text,
+                    letterSpacing: -0.5)),
           ],
         ),
+        actions: [
+          PbnAppBarActions(),
+        ],
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: AppColors.primary))

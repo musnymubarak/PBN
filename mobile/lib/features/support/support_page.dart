@@ -3,6 +3,8 @@ import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:pbn/core/constants/app_colors.dart';
 
+import 'package:pbn/core/widgets/pbn_app_bar_actions.dart';
+
 class SupportPage extends StatelessWidget {
   const SupportPage({super.key});
 
@@ -29,13 +31,18 @@ class SupportPage extends StatelessWidget {
         title: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            SizedBox(height: 4),
             Text('Support & Feedback',
                 style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w900,
-                    color: AppColors.text)),
+                    color: AppColors.text,
+                    letterSpacing: -0.5)),
           ],
         ),
+        actions: [
+          PbnAppBarActions(),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),

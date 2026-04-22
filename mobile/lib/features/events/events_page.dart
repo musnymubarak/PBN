@@ -79,7 +79,7 @@ class _EventsPageState extends State<EventsPage> {
       child: Scaffold(
         backgroundColor: Colors.grey[50],
         appBar: AppBar(
-          toolbarHeight: 120, // Increased height for TabBar
+          toolbarHeight: 70, // Align with other pages
           backgroundColor: Colors.white,
           elevation: 0,
           title: const Column(
@@ -94,7 +94,7 @@ class _EventsPageState extends State<EventsPage> {
                       letterSpacing: -0.5)),
             ],
           ),
-          actions: const [
+          actions: [
             PbnAppBarActions(),
           ],
           bottom: TabBar(

@@ -57,9 +57,28 @@ class _NotificationsPageState extends State<NotificationsPage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Notifications', style: TextStyle(fontWeight: FontWeight.w800)),
+        toolbarHeight: 70,
+        title: const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(height: 4),
+            Text('Notifications', 
+              style: TextStyle(
+                fontSize: 22, 
+                fontWeight: FontWeight.w900, 
+                color: AppColors.text,
+                letterSpacing: -0.5
+              )
+            ),
+          ],
+        ),
         actions: [
-          if (unread > 0) TextButton(onPressed: _markAllRead, child: const Text('Mark All Read', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12))),
+          if (unread > 0) 
+            TextButton(
+              onPressed: _markAllRead, 
+              child: const Text('Mark All Read', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: AppColors.primary))
+            ),
+          const SizedBox(width: 8),
         ],
       ),
       body: _loading

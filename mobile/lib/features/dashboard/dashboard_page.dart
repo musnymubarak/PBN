@@ -497,7 +497,18 @@ class _DashboardPageState extends State<DashboardPage> {
         onTap: onTap,
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 20),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), boxShadow: [BoxShadow(color: color.withOpacity(0.04), blurRadius: 15, offset: const Offset(0, 6))]),
+          decoration: BoxDecoration(
+            color: Colors.white, 
+            borderRadius: BorderRadius.circular(16), 
+            border: Border.all(color: color.withOpacity(0.15), width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: color.withOpacity(0.1), 
+                blurRadius: 15, 
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
           child: Column(children: [
             Icon(icon, color: color, size: 24),
             const SizedBox(height: 8),

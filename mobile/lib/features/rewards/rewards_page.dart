@@ -9,6 +9,8 @@ import 'package:pbn/core/constants/api_config.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import 'package:pbn/core/widgets/pbn_app_bar_actions.dart';
+
 class RewardsPage extends StatefulWidget {
   const RewardsPage({super.key});
 
@@ -167,13 +169,18 @@ class _RewardsPageState extends State<RewardsPage> {
         title: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            SizedBox(height: 4),
             Text('Exclusive Offers',
                 style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w900,
-                    color: AppColors.text)),
+                    color: AppColors.text,
+                    letterSpacing: -0.5)),
           ],
         ),
+        actions: [
+          PbnAppBarActions(),
+        ],
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: AppColors.primary))

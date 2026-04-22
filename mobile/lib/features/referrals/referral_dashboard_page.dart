@@ -72,14 +72,16 @@ By joining, you become part of a strong ecosystem built on reliable partnerships
       backgroundColor: AppColors.background,
       appBar: AppBar(
         toolbarHeight: 70,
-        title: Column(
+        title: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Referrals Center',
+            SizedBox(height: 4),
+            Text('Referrals Center',
                 style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w900,
-                    color: AppColors.text)),
+                    color: AppColors.text,
+                    letterSpacing: -0.5)),
           ],
         ),
         actions: const [

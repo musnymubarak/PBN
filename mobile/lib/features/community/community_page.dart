@@ -11,6 +11,8 @@ import 'package:pbn/models/community.dart';
 import 'package:pbn/features/community/create_post_page.dart';
 import 'package:pbn/core/services/push_notification_service.dart';
 
+import 'package:pbn/core/widgets/pbn_app_bar_actions.dart';
+
 class CommunityPage extends StatefulWidget {
   const CommunityPage({super.key});
 
@@ -133,25 +135,36 @@ class _CommunityPageState extends State<CommunityPage> with WidgetsBindingObserv
       backgroundColor: AppColors.background,
       appBar: AppBar(
         toolbarHeight: 70,
-        title: Row(
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Chapter Feed',
-                style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.text)),
-            const SizedBox(width: 8),
-            Container(
-              width: 8,
-              height: 8,
-              decoration: const BoxDecoration(
-                color: Colors.green,
-                shape: BoxShape.circle,
-                boxShadow: [BoxShadow(color: Colors.greenAccent, blurRadius: 4)],
-              ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                const Text('Chapter Feed',
+                    style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.text,
+                        letterSpacing: -0.5)),
+                const SizedBox(width: 8),
+                Container(
+                  width: 8,
+                  height: 8,
+                  margin: const EdgeInsets.only(top: 4),
+                  decoration: const BoxDecoration(
+                    color: Colors.green,
+                    shape: BoxShape.circle,
+                    boxShadow: [BoxShadow(color: Colors.greenAccent, blurRadius: 4)],
+                  ),
+                ),
+              ],
             ),
           ],
         ),
+        actions: [
+          PbnAppBarActions(),
+        ],
       ),
       body: Column(
         children: [
