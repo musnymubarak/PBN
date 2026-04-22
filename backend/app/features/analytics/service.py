@@ -113,7 +113,8 @@ async def get_dashboard(user_id: UUID, db: AsyncSession) -> Dict[str, Any]:
                     "id": str(v_event.id),
                     "title": v_event.title,
                     "start_at": v_event.start_at.isoformat(),
-                    "meeting_link": v_event.meeting_link
+                    "meeting_link": v_event.meeting_link,
+                    "image_url": v_event.image_url
                 }
 
             # Next Physical Event (Flagship or Micro Meetup)
@@ -133,7 +134,8 @@ async def get_dashboard(user_id: UUID, db: AsyncSession) -> Dict[str, Any]:
                     "id": str(p_event.id),
                     "title": p_event.title,
                     "start_at": p_event.start_at.isoformat(),
-                    "location": p_event.location
+                    "location": p_event.location,
+                    "image_url": p_event.image_url
                 }
 
         # 4. Membership Stats

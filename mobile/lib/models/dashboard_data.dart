@@ -80,8 +80,9 @@ class NextEvent {
   final String startAt;
   final String? location;
   final String? meetingLink;
+  final String? imageUrl;
 
-  NextEvent({required this.id, required this.title, required this.startAt, this.location, this.meetingLink});
+  NextEvent({required this.id, required this.title, required this.startAt, this.location, this.meetingLink, this.imageUrl});
 
   factory NextEvent.fromJson(Map<String, dynamic> json) => NextEvent(
         id: json['id'] ?? '',
@@ -89,6 +90,7 @@ class NextEvent {
         startAt: json['start_at'] ?? '',
         location: json['location'],
         meetingLink: json['meeting_link'],
+        imageUrl: json['image_url'],
       );
 }
 

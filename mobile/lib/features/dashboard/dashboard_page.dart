@@ -275,8 +275,28 @@ class _DashboardPageState extends State<DashboardPage> {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(14),
         child: Stack(children: [
-          Positioned.fill(child: _smartImage('https://images.unsplash.com/photo-1588196749597-9ff075ee6b5b?auto=format&fit=crop&q=80&w=600', const [Color(0xFF6366F1), Color(0xFF4F46E5)])),
-          Positioned.fill(child: Container(decoration: BoxDecoration(gradient: LinearGradient(colors: [const Color(0xFF6366F1).withOpacity(0.95), const Color(0xFF6366F1).withOpacity(0.4)], begin: Alignment.centerLeft, end: Alignment.centerRight)))),
+          Positioned.fill(
+            child: _smartImage(
+              event?.imageUrl != null 
+                ? '${ApiConfig.baseUrl.replaceAll('/api/v1', '')}${event!.imageUrl}'
+                : 'https://images.unsplash.com/photo-1588196749597-9ff075ee6b5b?auto=format&fit=crop&q=80&w=600', 
+              const [Color(0xFF6366F1), Color(0xFF4F46E5)]
+            )
+          ),
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.black.withOpacity(0.85), 
+                    Colors.black.withOpacity(0.3)
+                  ], 
+                  begin: Alignment.centerLeft, 
+                  end: Alignment.centerRight
+                )
+              )
+            )
+          ),
           
           Padding(
             padding: const EdgeInsets.all(16),
@@ -287,27 +307,30 @@ class _DashboardPageState extends State<DashboardPage> {
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
-                  child: Text(event?.title ?? 'Strategic Sync Performance', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800, height: 1.4, shadows: [Shadow(blurRadius: 10, color: Colors.black45)])),
+                  child: Text(event?.title ?? 'Stay tuned for further updates', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800, height: 1.4, shadows: [Shadow(blurRadius: 10, color: Colors.black45)])),
                 ),
                 const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(10)),
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    const Icon(TablerIcons.calendar_event, color: Colors.white, size: 16),
-                    const SizedBox(width: 8),
-                    Text(event != null ? _formatDateTime(event.startAt) : 'Wednesday | 10:00 AM', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w900)),
-                  ]),
-                ),
-                const Spacer(),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    // Logic to open meeting link
-                  }, 
-                  icon: const Icon(TablerIcons.video, size: 14),
-                  label: const Text('JOIN ZOOM', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900)),
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: const Color(0xFF6366F1), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8)),
-                ),
+                if (event != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(10)),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      const Icon(TablerIcons.calendar_event, color: Colors.white, size: 16),
+                      const SizedBox(width: 8),
+                      Text(_formatDateTime(event.startAt), style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w900)),
+                    ]),
+                  ),
+                if (event != null)
+                  const Spacer(),
+                if (event != null)
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      // Logic to open meeting link
+                    }, 
+                    icon: const Icon(TablerIcons.video, size: 14),
+                    label: const Text('JOIN ZOOM', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900)),
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: const Color(0xFF6366F1), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8)),
+                  ),
               ])),
             ]),
           ),
@@ -328,8 +351,28 @@ class _DashboardPageState extends State<DashboardPage> {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(14),
         child: Stack(children: [
-          Positioned.fill(child: _smartImage('https://picsum.photos/id/445/600/300', const [AppColors.secondary, Color(0xFFEA580C)])),
-          Positioned.fill(child: Container(decoration: BoxDecoration(gradient: LinearGradient(colors: [AppColors.secondary.withOpacity(0.95), AppColors.secondary.withOpacity(0.4)], begin: Alignment.centerLeft, end: Alignment.centerRight)))),
+          Positioned.fill(
+            child: _smartImage(
+              event?.imageUrl != null 
+                ? '${ApiConfig.baseUrl.replaceAll('/api/v1', '')}${event!.imageUrl}'
+                : 'https://picsum.photos/id/445/600/300', 
+              const [AppColors.secondary, Color(0xFFEA580C)]
+            )
+          ),
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.black.withOpacity(0.85), 
+                    Colors.black.withOpacity(0.3)
+                  ], 
+                  begin: Alignment.centerLeft, 
+                  end: Alignment.centerRight
+                )
+              )
+            )
+          ),
           
           Padding(
             padding: const EdgeInsets.all(16),
@@ -340,25 +383,28 @@ class _DashboardPageState extends State<DashboardPage> {
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
-                  child: Text(event?.title ?? 'Galle Face In-Person Chapter Meeting', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800, height: 1.4, shadows: [Shadow(blurRadius: 10, color: Colors.black45)])),
+                  child: Text(event?.title ?? 'Stay tuned for further updates', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800, height: 1.4, shadows: [Shadow(blurRadius: 10, color: Colors.black45)])),
                 ),
                 const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    const Icon(TablerIcons.calendar_event, color: Colors.white, size: 16),
-                    const SizedBox(width: 8),
-                    Text(event != null ? _formatDateTime(event.startAt) : 'Friday | 06:00 PM', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w900)),
-                  ]),
-                ),
-                const Spacer(),
-                ElevatedButton.icon(
-                  onPressed: () {}, 
-                  icon: const Icon(TablerIcons.map_pin, size: 14),
-                  label: const Text('VIEW LOCATION', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900)),
-                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.accent, foregroundColor: Colors.black, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8)),
-                ),
+                if (event != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      const Icon(TablerIcons.calendar_event, color: Colors.white, size: 16),
+                      const SizedBox(width: 8),
+                      Text(_formatDateTime(event.startAt), style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w900)),
+                    ]),
+                  ),
+                if (event != null)
+                  const Spacer(),
+                if (event != null)
+                  ElevatedButton.icon(
+                    onPressed: () {}, 
+                    icon: const Icon(TablerIcons.map_pin, size: 14),
+                    label: const Text('VIEW LOCATION', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900)),
+                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.accent, foregroundColor: Colors.black, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8)),
+                  ),
               ])),
             ]),
           ),

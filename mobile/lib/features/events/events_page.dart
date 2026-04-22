@@ -70,48 +70,83 @@ class _EventsPageState extends State<EventsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[50], // Facebook-like light grey background
-      appBar: AppBar(
-        toolbarHeight: 70,
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 4),
-            const Text('Meetings & Events',
-                style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.text,
-                    letterSpacing: -0.5)),
+    final now = DateTime.now();
+    final upcomingEvents = _events.where((e) => DateTime.parse(e.startAt).isAfter(now)).toList();
+    final finishedEvents = _events.where((e) => DateTime.parse(e.startAt).isBefore(now)).toList();
+
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        backgroundColor: Colors.grey[50],
+        appBar: AppBar(
+          toolbarHeight: 120, // Increased height for TabBar
+          backgroundColor: Colors.white,
+          elevation: 0,
+          title: const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(height: 4),
+              Text('Meetings & Events',
+                  style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.text,
+                      letterSpacing: -0.5)),
+            ],
+          ),
+          actions: const [
+            PbnAppBarActions(),
           ],
+          bottom: TabBar(
+            labelColor: AppColors.primary,
+            unselectedLabelColor: Colors.grey[500],
+            indicatorColor: AppColors.primary,
+            indicatorWeight: 3,
+            labelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.5),
+            unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+            tabs: const [
+              Tab(text: 'UPCOMING'),
+              Tab(text: 'FINISHED'),
+            ],
+          ),
         ),
-        actions: const [
-          PbnAppBarActions(),
-        ],
+        body: _loading
+            ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+            : TabBarView(
+                children: [
+                  // Upcoming Tab
+                  RefreshIndicator(
+                    onRefresh: _loadEvents,
+                    child: upcomingEvents.isEmpty
+                        ? _buildEmptyState('No upcoming meetings')
+                        : ListView.builder(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                            itemCount: upcomingEvents.length,
+                            itemBuilder: (context, index) => _buildFacebookStyleEventCard(upcomingEvents[index]),
+                          ),
+                  ),
+                  // Finished Tab
+                  RefreshIndicator(
+                    onRefresh: _loadEvents,
+                    child: finishedEvents.isEmpty
+                        ? _buildEmptyState('No past meetings')
+                        : ListView.builder(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                            itemCount: finishedEvents.length,
+                            itemBuilder: (context, index) => _buildFacebookStyleEventCard(finishedEvents[index]),
+                          ),
+                  ),
+                ],
+              ),
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-          : RefreshIndicator(
-              onRefresh: _loadEvents,
-              child: _events.isEmpty
-                  ? _buildEmptyState()
-                  : ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-                      itemCount: _events.length,
-                      itemBuilder: (context, index) => _buildFacebookStyleEventCard(_events[index]),
-                    ),
-            ),
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(String message) {
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       child: Container(
-        height: MediaQuery.of(context).size.height * 0.7,
+        height: MediaQuery.of(context).size.height * 0.5,
         alignment: Alignment.center,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -122,9 +157,9 @@ class _EventsPageState extends State<EventsPage> {
               child: Icon(TablerIcons.calendar_event, size: 64, color: Colors.grey[400]),
             ),
             const SizedBox(height: 24),
-            Text('No Upcoming Meetings', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.grey[800])),
+            Text(message, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.grey[800])),
             const SizedBox(height: 8),
-            Text('Check back later for new events.', style: TextStyle(color: Colors.grey[500], fontWeight: FontWeight.w500)),
+            Text('Check back later for updates.', style: TextStyle(color: Colors.grey[500], fontWeight: FontWeight.w500)),
           ],
         ),
       ),
@@ -218,6 +253,34 @@ class _EventsPageState extends State<EventsPage> {
                     ),
                   ),
                 ),
+                // Meeting Type Badge
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: event.eventType == 'virtual' ? const Color(0xFF3B82F6) : const Color(0xFF10B981),
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 8)],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          event.eventType == 'virtual' ? TablerIcons.video : TablerIcons.map_pin, 
+                          color: Colors.white, 
+                          size: 12
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          event.eventType == 'virtual' ? 'ONLINE' : 'IN-PERSON',
+                          style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
                 // Flagship / Virtual Badge
                 Positioned(
                   bottom: 12,
@@ -259,11 +322,17 @@ class _EventsPageState extends State<EventsPage> {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      Icon(TablerIcons.map_pin, size: 16, color: Colors.grey[600]),
+                      Icon(
+                        event.eventType == 'virtual' ? TablerIcons.link : TablerIcons.map_pin, 
+                        size: 16, 
+                        color: Colors.grey[600]
+                      ),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          event.location ?? (event.meetingLink != null ? 'Virtual Meeting' : 'To be announced'),
+                          event.eventType == 'virtual' 
+                            ? (event.meetingLink ?? 'Virtual Meeting')
+                            : (event.location ?? 'To be announced'),
                           style: TextStyle(color: Colors.grey[600], fontSize: 14, fontWeight: FontWeight.w500),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
