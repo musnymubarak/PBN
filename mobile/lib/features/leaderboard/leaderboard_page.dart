@@ -27,17 +27,6 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
     setState(() => _loading = true);
     try {
       _entries = await _service.getLeaderboard(period: _period);
-      // Dummy data for visualizing the leaderboard style
-      if (_entries.length < 5) {
-        _entries.addAll([
-          {'user_id': 'mock-3', 'full_name': 'Michael Chen', 'sent_count': 5},
-          {'user_id': 'mock-4', 'full_name': 'Emily Watson', 'sent_count': 3},
-          {'user_id': 'mock-5', 'full_name': 'David Kim', 'sent_count': 2},
-        ]);
-        _entries.sort((a, b) => (b['sent_count'] ?? 0).compareTo(a['sent_count'] ?? 0));
-        // Keep top few so it doesn't duplicate if called multiple times, though setState re-builds
-        _entries = _entries.take(5).toList();
-      }
     } catch (_) {}
     if (mounted) setState(() => _loading = false);
   }

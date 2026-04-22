@@ -103,7 +103,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Future<void> _loadLeaderboard() async {
     try {
-      final entries = await _dashboardService.getLeaderboard(period: 'all_time');
+      final entries = await _dashboardService.getLeaderboard(period: 'this_month');
       if (mounted) {
         setState(() {
           _leaderboard = entries.take(3).toList();
@@ -513,15 +513,23 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget _buildMiniPodium(dynamic res, int rank, Color color) {
     final name = (res['full_name'] ?? 'Member').toString().split(' ').first;
     final count = res['sent_count'] ?? 0;
-    final initials = (res['full_name'] ?? '?').toString().substring(0, 1).toUpperCase();
-    
     final double size = rank == 1 ? 74 : 54;
-    
-    String? profilePhoto = res['profile_photo'];
+    final String? profilePhoto = res['profile_photo'];
     final bool hasPhoto = profilePhoto != null && profilePhoto.isNotEmpty;
-    String imageUrl = hasPhoto
+    
+    final String imageUrl = hasPhoto
         ? '${ApiConfig.baseUrl.replaceAll('/api/v1', '')}$profilePhoto'
         : '';
+        
+    String initials = '?';
+    if (res['full_name'] != null) {
+      final parts = res['full_name'].toString().trim().split(' ').where((e) => e.isNotEmpty).toList();
+      if (parts.length == 1) {
+        initials = parts[0][0].toUpperCase();
+      } else if (parts.length >= 2) {
+        initials = (parts[0][0] + parts[1][0]).toUpperCase();
+      }
+    }
 
     return Column(
       mainAxisSize: MainAxisSize.min,

@@ -198,7 +198,7 @@ async def get_leaderboard(chapter_id: UUID | None, period: str, db: AsyncSession
         ).label("rank_pos")
     ).subquery()
 
-    # Join with User and Business
+    # Join with User
     final_stmt = select(
         rank_subq.c.uid,
         rank_subq.c.won_cnt,
@@ -206,10 +206,8 @@ async def get_leaderboard(chapter_id: UUID | None, period: str, db: AsyncSession
         rank_subq.c.val,
         rank_subq.c.rank_pos,
         User.full_name,
-        User.profile_photo,
-        Business.business_name
+        User.profile_photo
     ).join(User, User.id == rank_subq.c.uid)\
-     .outerjoin(Business, Business.owner_user_id == User.id)\
      .order_by(rank_subq.c.rank_pos.asc())\
      .limit(10)
 
@@ -221,7 +219,7 @@ async def get_leaderboard(chapter_id: UUID | None, period: str, db: AsyncSession
         entries.append({
             "user_id": str(r.uid),
             "full_name": r.full_name,
-            "business_name": r.business_name,
+            "business_name": None,
             "profile_photo": r.profile_photo,
             "converted_count": r.won_cnt,
             "sent_count": r.sent_cnt,
