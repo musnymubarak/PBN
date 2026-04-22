@@ -417,3 +417,96 @@ async def change_password(
     await db.commit()
     logger.info("Password changed for user: %s", user.id)
 
+
+async def forgot_password(
+    identifier: str,
+    redis: Redis,
+    db: AsyncSession,
+) -> None:
+    """Initiate password reset by sending OTP to registered email/phone."""
+    from app.core.email_service import send_email, render_template
+    
+    # 1. Find user
+    query = select(User).where(
+        or_(
+            User.phone_number == identifier,
+            User.email == identifier,
+        )
+    )
+    result = await db.execute(query)
+    user = result.scalars().first()
+
+    if not user:
+        # Silently fail to avoid user enumeration
+        logger.warning(f"Forgot password requested for unknown user: {identifier}")
+        return
+
+    if not user.email:
+        logger.warning(f"User {user.id} requested password reset but has no email.")
+        # If no email, we could potentially use SMS here if configured
+        return
+
+    # 2. Rate limit check (using the same key as phone OTP for consistency)
+    rate_key = OTP_RATE_KEY.format(phone=identifier)
+    await _check_rate_limit(
+        redis, rate_key, OTP_RATE_LIMIT, OTP_RATE_WINDOW,
+        "Too many password reset requests. Try again in 10 minutes.",
+    )
+
+    # 3. Generate and store OTP
+    otp = _generate_otp()
+    hashed = _hash_otp(otp)
+
+    otp_key = OTP_KEY.format(phone=identifier)
+    await redis.set(otp_key, hashed, ex=OTP_TTL_SECONDS)
+
+    # 4. Send Email
+    try:
+        html = render_template("otp_email.html", {"otp": otp})
+        await send_email(user.email, "PBN Password Recovery", html)
+        logger.info(f"Password reset OTP sent to {user.email}")
+    except Exception as e:
+        logger.error(f"Failed to send password reset email to {user.email}: {e}")
+        raise BadRequestException(message="Failed to send reset email. Please try again later.")
+
+
+async def reset_password(
+    identifier: str,
+    otp: str,
+    new_password: str,
+    redis: Redis,
+    db: AsyncSession,
+) -> None:
+    """Verify OTP and update user password."""
+    # 1. Verify OTP (identical to verify_otp logic)
+    otp_key = OTP_KEY.format(phone=identifier)
+    stored_hash = await redis.get(otp_key)
+
+    if stored_hash is None:
+        raise BadRequestException(message="OTP expired or not requested.", code="OTP_EXPIRED")
+
+    if _hash_otp(otp) != stored_hash:
+        raise BadRequestException(message="Invalid OTP.", code="INVALID_OTP")
+
+    # 2. OTP valid – delete it
+    await redis.delete(otp_key)
+
+    # 3. Find user
+    query = select(User).where(
+        or_(
+            User.phone_number == identifier,
+            User.email == identifier,
+        )
+    )
+    result = await db.execute(query)
+    user = result.scalars().first()
+
+    if not user:
+        raise BadRequestException(message="User no longer exists.", code="USER_NOT_FOUND")
+
+    # 4. Update Password
+    user.password_hash = hash_password(new_password)
+    user.must_change_password = False
+    await db.commit()
+    logger.info(f"Password reset SUCCESS for user: {user.id}")
+

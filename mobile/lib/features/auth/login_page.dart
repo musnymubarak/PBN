@@ -134,7 +134,7 @@ class _LoginPageState extends State<LoginPage> {
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
-                            onPressed: () {},
+                            onPressed: () => Navigator.pushNamed(context, '/forgot-password'),
                             style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 30), tapTargetSize: MaterialTapTargetSize.shrinkWrap),
                             child: Text('Forgot Password?', style: TextStyle(color: Colors.grey.shade400, fontSize: 11, fontWeight: FontWeight.w700)),
                           ),

@@ -71,9 +71,15 @@ class LoginRequest(BaseModel):
     password: str = Field(..., description="User password")
 
 
-class ChangePasswordRequest(BaseModel):
-    """Request for changing user password."""
-    current_password: str = Field(..., description="The current password")
+class ForgotPasswordRequest(BaseModel):
+    """Request to initiate password reset."""
+    identifier: str = Field(..., description="Email or phone number")
+
+
+class ResetPasswordRequest(BaseModel):
+    """Request to complete password reset."""
+    identifier: str = Field(..., description="Email or phone number")
+    otp: str = Field(..., description="6-digit OTP code")
     new_password: str = Field(..., description="The new password")
     confirm_password: str = Field(..., description="Confirmation of the new password")
 

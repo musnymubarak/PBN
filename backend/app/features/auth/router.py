@@ -27,6 +27,8 @@ from app.features.auth.schemas import (
     SendOTPRequest,
     VerifyOTPRequest,
     ChangePasswordRequest,
+    ForgotPasswordRequest,
+    ResetPasswordRequest,
 )
 from pydantic import BaseModel
 
@@ -40,6 +42,8 @@ from app.features.auth.service import (
     send_otp,
     verify_otp,
     change_password,
+    forgot_password,
+    reset_password,
 )
 from app.models.user import User
 
@@ -244,8 +248,31 @@ async def change_password_endpoint(
     db: AsyncSession = Depends(get_db)
 ) -> ORJSONResponse:
     """Verify current password and update to new password for the logged in user."""
+    from app.features.auth.service import change_password
     await change_password(current_user, body.current_password, body.new_password, db)
     return success_response(
         data={"message": "Password changed successfully"},
         status_code=200
     )
+
+
+@router.post("/forgot-password", summary="Initiate password reset via email OTP")
+async def forgot_password_endpoint(
+    body: ForgotPasswordRequest,
+    redis: Redis = Depends(get_redis),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    """Send an OTP to the user's registered email if found."""
+    await forgot_password(body.identifier, redis, db)
+    return success_response(message="If an account exists with this identifier, an OTP has been sent to the registered email.")
+
+
+@router.post("/reset-password", summary="Complete password reset using OTP")
+async def reset_password_endpoint(
+    body: ResetPasswordRequest,
+    redis: Redis = Depends(get_redis),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    """Verify OTP and update password."""
+    await reset_password(body.identifier, body.otp, body.new_password, redis, db)
+    return success_response(message="Password reset successfully. You can now login with your new password.")
