@@ -156,12 +156,16 @@ class _ApplyPageState extends State<ApplyPage> {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
-        toolbarHeight: 70,
+        toolbarHeight: 80,
+        leading: IconButton(
+          icon: const Icon(TablerIcons.chevron_left, color: AppColors.primary),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('BECOME A MEMBER', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 2)),
-            Text('PBN Application', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.text, letterSpacing: -0.5)),
+            Text('BECOME A MEMBER', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.accent, letterSpacing: 2)),
+            Text('PBN Application', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.primary, letterSpacing: -0.5)),
           ],
         ),
       ),
@@ -177,10 +181,10 @@ class _ApplyPageState extends State<ApplyPage> {
                     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.03),
+                          color: Colors.black.withOpacity(0.04),
                           blurRadius: 30,
                           offset: const Offset(0, 10),
                         ),
@@ -200,7 +204,7 @@ class _ApplyPageState extends State<ApplyPage> {
 
   Widget _buildProgressIndicator() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 10),
       child: Row(
         children: [
           _stepDot(0, 'Business'),
@@ -218,21 +222,21 @@ class _ApplyPageState extends State<ApplyPage> {
       children: [
         AnimatedContainer(
           duration: const Duration(milliseconds: 300),
-          width: 38, height: 38,
+          width: 40, height: 40,
           decoration: BoxDecoration(
             color: active || completed ? AppColors.primary : Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: active || completed ? AppColors.primary : Colors.grey.shade200, width: 1.5),
-            boxShadow: active ? [BoxShadow(color: AppColors.primary.withOpacity(0.25), blurRadius: 15, offset: const Offset(0, 8))] : null,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: active || completed ? AppColors.primary : Colors.grey.shade200, width: 2),
+            boxShadow: active ? [BoxShadow(color: AppColors.primary.withOpacity(0.2), blurRadius: 10, offset: const Offset(0, 4))] : null,
           ),
           child: Center(
             child: completed 
-              ? const Icon(TablerIcons.check, size: 18, color: Colors.white)
-              : Text('${index + 1}', style: TextStyle(color: active ? Colors.white : Colors.grey.shade400, fontWeight: FontWeight.w900, fontSize: 13)),
+              ? const Icon(TablerIcons.check, size: 20, color: Colors.white)
+              : Text('${index + 1}', style: TextStyle(color: active ? Colors.white : Colors.grey.shade400, fontWeight: FontWeight.w900, fontSize: 14)),
           ),
         ),
         const SizedBox(height: 10),
-        Text(label.toUpperCase(), style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w900, color: active ? AppColors.primary : Colors.grey.shade400, letterSpacing: 1.2)),
+        Text(label.toUpperCase(), style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: active ? AppColors.primary : Colors.grey.shade400, letterSpacing: 1.2)),
       ],
     );
   }
@@ -248,15 +252,20 @@ class _ApplyPageState extends State<ApplyPage> {
         const SizedBox(height: 20),
         _modernField(_districtCtrl, 'Working District', TablerIcons.map_pin),
         const SizedBox(height: 20),
-        const Text('TARGET CHAPTER', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1.5)),
+        const Text('TARGET CHAPTER', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: AppColors.accent, letterSpacing: 1.5)),
         const SizedBox(height: 8),
         _chapterDropdown(),
         const SizedBox(height: 20),
-        const Text('INDUSTRY', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1.5)),
+        const Text('INDUSTRY', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: AppColors.accent, letterSpacing: 1.5)),
         const SizedBox(height: 8),
         _industryDropdown(),
         const SizedBox(height: 48),
-        CustomButton(text: 'CONTINUE', onPressed: () => setState(() => _currentStep = 1), backgroundColor: AppColors.primary),
+        CustomButton(
+          text: 'CONTINUE', 
+          onPressed: () => setState(() => _currentStep = 1), 
+          backgroundColor: AppColors.accent,
+          textColor: Colors.black,
+        ),
       ],
     );
   }
@@ -286,7 +295,16 @@ class _ApplyPageState extends State<ApplyPage> {
               child: const Text('BACK', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: AppColors.textSecondary)),
             )),
             const SizedBox(width: 16),
-            Expanded(flex: 2, child: CustomButton(text: 'SUBMIT', onPressed: _submit, isLoading: _submitting, backgroundColor: AppColors.primary)),
+            Expanded(
+              flex: 2, 
+              child: CustomButton(
+                text: 'SUBMIT', 
+                onPressed: _submit, 
+                isLoading: _submitting, 
+                backgroundColor: AppColors.accent,
+                textColor: Colors.black,
+              ),
+            ),
           ],
         ),
       ],

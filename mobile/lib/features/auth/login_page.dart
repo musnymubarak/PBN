@@ -144,7 +144,7 @@ class _LoginPageState extends State<LoginPage> {
                         SizedBox(
                           width: double.infinity,
                           child: CustomButton(
-                            text: 'LOG IN TO DASHBOARD',
+                            text: 'LOGIN',
                             onPressed: _handleLogin,
                             isLoading: auth.loading,
                             backgroundColor: AppColors.accent,
