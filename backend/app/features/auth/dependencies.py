@@ -48,7 +48,8 @@ async def get_current_user(
         )
     if not user.is_active:
         raise UnauthorizedException(
-            message="Account is deactivated.", code="ACCOUNT_INACTIVE"
+            message="Your membership is inactive. Please renew your membership by contacting an admin.",
+            code="ACCOUNT_INACTIVE"
         )
 
     return user

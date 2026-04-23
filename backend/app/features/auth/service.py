@@ -138,6 +138,12 @@ async def verify_otp(
     # Find or create user
     user = await _get_or_create_user(phone_number, db)
 
+    if not user.is_active:
+        raise UnauthorizedException(
+            message="Your membership is inactive. Please renew your membership by contacting an admin.",
+            code="ACCOUNT_INACTIVE"
+        )
+
     # Generate tokens
     access_token = await create_access_token_with_claims(user, db)
     refresh_token = _create_refresh_token(user)
@@ -344,7 +350,8 @@ async def login(
 
     if not user.is_active:
         raise UnauthorizedException(
-            message="Account is deactivated.", code="ACCOUNT_INACTIVE"
+            message="Your membership is inactive. Please renew your membership by contacting an admin.",
+            code="ACCOUNT_INACTIVE"
         )
 
     if not user.password_hash:
