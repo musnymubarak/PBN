@@ -48,7 +48,6 @@ async def list_all_members_endpoint(
 
 @router.get("", summary="List active chapters", response_model=None)
 async def list_chapters_endpoint(
-    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
     chapters = await list_active_chapters(db)
@@ -128,7 +127,6 @@ async def remove_member_endpoint(
 )
 async def get_occupied_industries_endpoint(
     chapter_id: UUID,
-    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
     ids = await get_occupied_industry_ids(chapter_id, db)
