@@ -74,11 +74,12 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _error = 'Invalid credentials. Please check your email/phone and password.';
+      _error = e.toString().replaceFirst('Exception: ', '');
       _loading = false;
       notifyListeners();
       return false;
     }
+
   }
 
   /// Logout and clear state.

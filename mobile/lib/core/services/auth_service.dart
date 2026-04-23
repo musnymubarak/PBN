@@ -10,14 +10,24 @@ class AuthService {
 
   /// Login with email/phone and password.
   Future<void> login(String identifier, String password) async {
-    final res = await _api.post('/auth/login', data: {
-      'identifier': identifier,
-      'password': password,
-    });
-    final data = _api.unwrap(res);
-    await SecureStorage.setAccessToken(data['access_token']);
-    await SecureStorage.setRefreshToken(data['refresh_token']);
+    try {
+      final res = await _api.post('/auth/login', data: {
+        'identifier': identifier,
+        'password': password,
+      });
+      final data = _api.unwrap(res);
+      await SecureStorage.setAccessToken(data['access_token']);
+      await SecureStorage.setRefreshToken(data['refresh_token']);
+    } on DioException catch (e) {
+      if (e.response?.data is Map && e.response?.data['message'] != null) {
+        throw Exception(e.response?.data['message'].toString());
+      }
+      throw Exception('Login failed. Please check your credentials.');
+    } catch (e) {
+      throw Exception('An unexpected error occurred during login.');
+    }
   }
+
 
   /// Get current user profile.
   Future<User> getProfile() async {

@@ -162,12 +162,12 @@ async def broadcast_notification(
         try:
             now = datetime.now(timezone.utc)
             
-            # 1. Fetch all active users with FCM tokens
-            stmt = select(User).where(User.is_active == True, User.fcm_token.isnot(None))
+            # 1. Fetch all active users
+            stmt = select(User).where(User.is_active == True)
             users = (await session.execute(stmt)).scalars().all()
             
             if not users:
-                logger.info("Broadcast [SKIPPED]: No active users with tokens found.")
+                logger.info("Broadcast [SKIPPED]: No active users found.")
                 return
 
             # 2. Persistence and Dispatch
@@ -192,7 +192,7 @@ async def broadcast_notification(
                     failure_count = 0
                     
                     for u in users:
-                        # Skip mock or obviously invalid tokens
+                        # Only dispatch push if they have a valid token
                         token = u.fcm_token
                         if not token or len(token) < 20 or token.startswith('mock-'):
                             continue
@@ -238,12 +238,12 @@ async def notify_multiple_users(
         try:
             now = datetime.now(timezone.utc)
             
-            # 1. Fetch users with FCM tokens from the provided list
-            stmt = select(User).where(User.id.in_(user_ids), User.is_active == True, User.fcm_token.isnot(None))
+            # 1. Fetch all active users from the provided list
+            stmt = select(User).where(User.id.in_(user_ids), User.is_active == True)
             users = (await session.execute(stmt)).scalars().all()
             
             if not users:
-                logger.info(f"NotifyMultiple [SKIPPED]: No active users with tokens found in list of {len(user_ids)}.")
+                logger.info(f"NotifyMultiple [SKIPPED]: No active users found in list of {len(user_ids)}.")
                 return
 
             # 2. Persistence and Dispatch
