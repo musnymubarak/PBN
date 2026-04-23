@@ -94,19 +94,26 @@ class _CreateReferralPageState extends State<CreateReferralPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('New Referral', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.black)),
         backgroundColor: Colors.white,
         elevation: 0,
-        centerTitle: true,
-        iconTheme: const IconThemeData(color: Colors.black),
+        toolbarHeight: 60,
+        leading: IconButton(
+          icon: const Icon(TablerIcons.chevron_left, color: AppColors.text),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'New Referral', 
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: -0.5)
+        ),
+        centerTitle: false,
       ),
       body: _loadingMembers 
-        ? const Center(child: CircularProgressIndicator(color: Colors.black))
+        ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
         : SingleChildScrollView(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                const Text('Generate high-quality business opportunities for your fellow members.', style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500, height: 1.5)),
+                Text('Generate high-quality business opportunities for your fellow members.', style: TextStyle(color: Colors.grey.shade500, fontSize: 13, fontWeight: FontWeight.w500, height: 1.5)),
                 const SizedBox(height: 32),
                 
                 _buildSectionLabel('Target recipient'),
@@ -131,14 +138,14 @@ class _CreateReferralPageState extends State<CreateReferralPage> {
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 20),
                     decoration: BoxDecoration(
-                      color: Colors.black,
+                      color: AppColors.primary,
                       borderRadius: BorderRadius.circular(30),
-                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 15, offset: const Offset(0, 8))],
+                      boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.25), blurRadius: 15, offset: const Offset(0, 8))],
                     ),
                     child: Center(
                       child: _loading 
                         ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : const Text('Submit Referral', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15)),
+                        : const Text('SUBMIT REFERRAL', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: 1)),
                     ),
                   ),
                 ),
@@ -184,17 +191,17 @@ class _CreateReferralPageState extends State<CreateReferralPage> {
       controller: controller,
       keyboardType: keyboardType,
       maxLines: maxLines,
-      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.black),
+      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.text),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: Colors.grey, fontSize: 14, fontWeight: FontWeight.w600),
-        prefixIcon: icon != null ? Icon(icon, size: 20, color: Colors.grey) : null,
+        hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14, fontWeight: FontWeight.w600),
+        prefixIcon: icon != null ? Icon(icon, size: 20, color: AppColors.primary) : null,
         filled: true,
         fillColor: const Color(0xFFF9FAFB),
         contentPadding: const EdgeInsets.all(20),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Colors.black, width: 2)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppColors.primary, width: 2)),
       ),
     );
   }

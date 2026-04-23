@@ -45,25 +45,18 @@ class _MyReferralsPageState extends State<MyReferralsPage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        toolbarHeight: 70,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(widget.isReceived ? 'INCOMING TRACKER' : 'OUTGOING TRACKER',
-                style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.textSecondary,
-                    letterSpacing: 2)),
-            Text(title,
-                style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.text,
-                    letterSpacing: -0.5)),
-          ],
+        backgroundColor: Colors.white,
+        elevation: 0,
+        toolbarHeight: 60,
+        leading: IconButton(
+          icon: const Icon(TablerIcons.chevron_left, color: AppColors.text),
+          onPressed: () => Navigator.pop(context),
         ),
-        actions: [
+        title: Text(
+          title, 
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: -0.5)
+        ),
+        actions: const [
           PbnAppBarActions(),
         ],
       ),
@@ -96,57 +89,74 @@ class _MyReferralsPageState extends State<MyReferralsPage> {
   }
 
   Widget _buildModernCard(Referral ref) {
-    final color = _statusColor(ref.status);
+    final statusData = _getStatusTheme(ref.status);
+    final color = statusData['color'] as Color;
+    final bgColor = statusData['bgColor'] as Color;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
-        border: Border.all(color: Colors.grey.shade100),
       ),
       child: InkWell(
         onTap: () => _showDetails(ref),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24),
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(16),
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: color.withOpacity(0.08), borderRadius: BorderRadius.circular(12)),
-                child: Icon(TablerIcons.briefcase, color: color, size: 24),
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(TablerIcons.briefcase, color: color, size: 28),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(ref.leadName, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppColors.text, letterSpacing: -0.3)),
+                    Text(ref.leadName, 
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: Color(0xFF0F172A), letterSpacing: -0.5)),
                     const SizedBox(height: 4),
                     Text(
                       widget.isReceived ? 'From: ${ref.fromUser.fullName}' : 'To: ${ref.targetUser.fullName}',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.grey.shade500),
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: bgColor,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(ref.statusLabel.toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: color, letterSpacing: 0.5)),
                     ),
                   ],
                 ),
               ),
+              const SizedBox(width: 8),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-                    child: Text(ref.statusLabel.toUpperCase(), style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: color, letterSpacing: 0.5)),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(_formatDate(ref.createdAt), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: Colors.grey.shade400)),
+                  const Icon(TablerIcons.chevron_right, color: Color(0xFF94A3B8), size: 20),
+                  const SizedBox(height: 20),
+                  Text(_formatDate(ref.createdAt), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.grey.shade400)),
                 ],
               ),
             ],
@@ -154,6 +164,25 @@ class _MyReferralsPageState extends State<MyReferralsPage> {
         ),
       ),
     );
+  }
+
+  Map<String, dynamic> _getStatusTheme(String status) {
+    switch (status) {
+      case 'submitted': 
+        return {'color': const Color(0xFF0369A1), 'bgColor': const Color(0xFFE0F2FE)};
+      case 'contacted': 
+        return {'color': const Color(0xFFB45309), 'bgColor': const Color(0xFFFEF3C7)};
+      case 'negotiation': 
+        return {'color': const Color(0xFF7E22CE), 'bgColor': const Color(0xFFF3E8FF)};
+      case 'in_progress': 
+        return {'color': const Color(0xFF475569), 'bgColor': const Color(0xFFF1F5F9)};
+      case 'success': 
+        return {'color': const Color(0xFF15803D), 'bgColor': const Color(0xFFDCFCE7)};
+      case 'closed_lost': 
+        return {'color': const Color(0xFFB91C1C), 'bgColor': const Color(0xFFFEE2E2)};
+      default: 
+        return {'color': const Color(0xFF64748B), 'bgColor': const Color(0xFFF8FAFC)};
+    }
   }
 
   String _formatDate(String iso) {
@@ -172,18 +201,6 @@ class _MyReferralsPageState extends State<MyReferralsPage> {
       backgroundColor: Colors.white,
       builder: (context) => _ReferralDetailsSheet(referral: ref, isReceived: widget.isReceived, onUpdate: _loadData),
     );
-  }
-
-  Color _statusColor(String status) {
-    switch (status) {
-      case 'submitted': return Colors.blue;
-      case 'contacted': return Colors.orange;
-      case 'negotiation': return const Color(0xFF8B5CF6);
-      case 'in_progress': return Colors.black;
-      case 'success': return Colors.green;
-      case 'closed_lost': return Colors.red;
-      default: return Colors.grey;
-    }
   }
 }
 

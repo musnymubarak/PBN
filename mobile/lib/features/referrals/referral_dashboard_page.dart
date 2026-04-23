@@ -71,18 +71,12 @@ By joining, you become part of a strong ecosystem built on reliable partnerships
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        toolbarHeight: 70,
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(height: 4),
-            Text('Referrals Center',
-                style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.text,
-                    letterSpacing: -0.5)),
-          ],
+        backgroundColor: Colors.white,
+        elevation: 0,
+        toolbarHeight: 60,
+        title: const Text(
+          'Referrals Center', 
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: -0.5)
         ),
         actions: const [
           PbnAppBarActions(),
@@ -166,7 +160,7 @@ By joining, you become part of a strong ecosystem built on reliable partnerships
                     title: 'Received Referrals',
                     count: _receivedCount,
                     icon: TablerIcons.arrow_down_left,
-                    color: Colors.green,
+                    color: const Color(0xFF15803D),
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyReferralsPage(isReceived: true))).then((_) => _loadStats()),
                   ),
                   const SizedBox(height: 12),
@@ -174,7 +168,7 @@ By joining, you become part of a strong ecosystem built on reliable partnerships
                     title: 'Sent Referrals',
                     count: _sentCount,
                     icon: TablerIcons.arrow_up_right,
-                    color: Colors.blue,
+                    color: const Color(0xFF0369A1),
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyReferralsPage(isReceived: false))).then((_) => _loadStats()),
                   ),
 

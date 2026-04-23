@@ -70,31 +70,37 @@ class _MembersPageState extends State<MembersPage> {
       child: Scaffold(
         backgroundColor: AppColors.background,
       appBar: AppBar(
-        toolbarHeight: 70,
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(height: 4),
-            Text(
-              'Network directory', 
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.text, letterSpacing: -0.5)
-            ),
-          ],
+        backgroundColor: Colors.white,
+        elevation: 0,
+        toolbarHeight: 60,
+        title: const Text(
+          'Network Directory', 
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: -0.5)
         ),
         actions: const [
           PbnAppBarActions(),
         ],
-        bottom: const TabBar(
-          tabs: [
-            Tab(text: 'My Chapter'),
-            Tab(text: 'Global'),
-          ],
-          labelStyle: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.5),
-          unselectedLabelStyle: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-          indicatorColor: AppColors.primary,
-          labelColor: AppColors.primary,
-          unselectedLabelColor: AppColors.textSecondary,
-          indicatorWeight: 3,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(48),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border(bottom: BorderSide(color: Colors.grey.shade100, width: 1)),
+            ),
+            child: const TabBar(
+              tabs: [
+                Tab(text: 'My Chapter'),
+                Tab(text: 'Global'),
+              ],
+              labelStyle: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: 0.2),
+              unselectedLabelStyle: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+              indicatorColor: Color(0xFF1E3A8A),
+              labelColor: Color(0xFF1E3A8A),
+              unselectedLabelColor: Color(0xFF94A3B8),
+              indicatorWeight: 3,
+              indicatorSize: TabBarIndicatorSize.tab,
+            ),
+          ),
         ),
       ),
       body: Column(
@@ -196,118 +202,105 @@ class _MembersPageState extends State<MembersPage> {
       onTap: () => _showMemberDetailBottomSheet(member),
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 12,
-              offset: const Offset(0, 6),
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
             ),
           ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // TOP HEADER: Dark Gradient
+            // Avatar
             Container(
-              padding: const EdgeInsets.all(16),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF0A2540), Color(0xFF1E3A8A)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(16), topRight: Radius.circular(16)),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // Avatar
-                  Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: CachedNetworkImage(
-                        imageUrl: (member.profilePhoto != null && member.profilePhoto!.isNotEmpty)
-                            ? '${ApiConfig.baseUrl.replaceAll('/api/v1', '')}${member.profilePhoto}'
-                            : '',
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => Container(
-                          color: Colors.grey.shade100,
-                          child: const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
-                        ),
-                        errorWidget: (context, url, error) => Container(
-                          color: const Color(0xFF1E3A8A),
-                          child: Center(
-                            child: Text(member.initials,
-                                style: const TextStyle(fontWeight: FontWeight.w800, color: Colors.white, fontSize: 16)),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  // Title
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(member.fullName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17, color: Colors.white, letterSpacing: -0.3)),
-                        const SizedBox(height: 4),
-                        const SizedBox(height: 4),
-                        Text(member.company,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.white.withOpacity(0.7))),
-                      ],
-                    ),
-                  ),
+              width: 70,
+              height: 70,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.grey.shade100, width: 2),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
                 ],
               ),
-            ),
-            // BOTTOM CONTENT: White Background
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(member.industry.toUpperCase(),
-                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.primary, letterSpacing: 0.5)),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(35),
+                child: CachedNetworkImage(
+                  imageUrl: (member.profilePhoto != null && member.profilePhoto!.isNotEmpty)
+                      ? '${ApiConfig.baseUrl.replaceAll('/api/v1', '')}${member.profilePhoto}'
+                      : '',
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => Container(
+                    color: Colors.grey.shade50,
+                    child: const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
                   ),
-                  if (member.chapterName != null && member.chapterName!.isNotEmpty)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.orange.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(member.chapterName!.toUpperCase(),
-                          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.orange, letterSpacing: 0.5)),
+                  errorWidget: (context, url, error) => Container(
+                    color: const Color(0xFF1E3A8A).withOpacity(0.1),
+                    child: Center(
+                      child: Text(member.initials,
+                          style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF1E3A8A), fontSize: 20)),
                     ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 18),
+            // Info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(member.fullName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Color(0xFF0F172A), letterSpacing: -0.5)),
+                  const SizedBox(height: 4),
+                  Text(member.company,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.grey.shade500)),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _buildChip(
+                        member.industry, 
+                        const Color(0xFFE0F2FE), 
+                        const Color(0xFF0369A1)
+                      ),
+                      if (member.chapterName != null && member.chapterName!.isNotEmpty)
+                        _buildChip(
+                          member.chapterName!.toUpperCase(), 
+                          const Color(0xFFFEF9C3), 
+                          const Color(0xFF854D0E)
+                        ),
+                    ],
+                  ),
                 ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildChip(String label, Color bgColor, Color textColor) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: textColor, letterSpacing: 0.3),
       ),
     );
   }

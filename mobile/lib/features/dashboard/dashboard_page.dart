@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/constants/api_config.dart';
 import 'package:pbn/core/providers/auth_provider.dart';
@@ -333,8 +334,33 @@ class _DashboardPageState extends State<DashboardPage> {
                   const Spacer(),
                 if (event != null)
                   ElevatedButton.icon(
-                    onPressed: () {
-                      // Logic to open meeting link
+                    onPressed: () async {
+                      if (event.meetingLink != null && event.meetingLink!.isNotEmpty) {
+                        final url = Uri.parse(event.meetingLink!);
+                        try {
+                          if (await canLaunchUrl(url)) {
+                            await launchUrl(url, mode: LaunchMode.externalApplication);
+                          } else {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Could not open meeting link')),
+                              );
+                            }
+                          }
+                        } catch (e) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Invalid meeting link')),
+                            );
+                          }
+                        }
+                      } else {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Meeting link not available')),
+                          );
+                        }
+                      }
                     }, 
                     icon: const Icon(TablerIcons.video, size: 14),
                     label: const Text('JOIN ZOOM', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900)),
@@ -409,7 +435,35 @@ class _DashboardPageState extends State<DashboardPage> {
                   const Spacer(),
                 if (event != null)
                   ElevatedButton.icon(
-                    onPressed: () {}, 
+                    onPressed: () async {
+                      if (event.location != null && event.location!.isNotEmpty) {
+                        final encodedLocation = Uri.encodeComponent(event.location!);
+                        final url = Uri.parse('https://www.google.com/maps/search/?api=1&query=$encodedLocation');
+                        try {
+                          if (await canLaunchUrl(url)) {
+                            await launchUrl(url, mode: LaunchMode.externalApplication);
+                          } else {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Could not open maps')),
+                              );
+                            }
+                          }
+                        } catch (e) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Error opening maps')),
+                            );
+                          }
+                        }
+                      } else {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Location not available')),
+                          );
+                        }
+                      }
+                    }, 
                     icon: const Icon(TablerIcons.map_pin, size: 14),
                     label: const Text('VIEW LOCATION', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900)),
                     style: ElevatedButton.styleFrom(backgroundColor: AppColors.accent, foregroundColor: Colors.black, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8)),
