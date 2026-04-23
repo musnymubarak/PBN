@@ -3,6 +3,9 @@ import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:provider/provider.dart';
 import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/providers/auth_provider.dart';
+import 'package:pbn/core/providers/member_provider.dart';
+import 'package:pbn/core/providers/notification_provider.dart';
+import 'package:pbn/core/providers/sync_provider.dart';
 import 'package:pbn/core/services/chapter_service.dart';
 import 'package:pbn/models/chapter.dart';
 import 'package:pbn/core/constants/api_config.dart';
@@ -355,6 +358,10 @@ class _ProfilePageState extends State<ProfilePage> {
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: () async {
+                    // Stop background sync before logout
+                    context.read<SyncProvider>().stopSync();
+                    context.read<MemberProvider>().clearCache();
+                    context.read<NotificationProvider>().stopListening();
                     await auth.logout();
                     if (mounted) Navigator.pushNamedAndRemoveUntil(context, '/login', (r) => false);
                   },
