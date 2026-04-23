@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:pbn/core/constants/api_config.dart';
 import 'package:pbn/core/services/secure_storage.dart';
@@ -6,6 +7,9 @@ import 'package:pbn/core/services/secure_storage.dart';
 class ApiClient {
   static final ApiClient _instance = ApiClient._internal();
   factory ApiClient() => _instance;
+
+  /// Global stream to notify when the session is dead (refresh failed).
+  static final StreamController<void> onSessionExpired = StreamController<void>.broadcast();
 
   late final Dio dio;
 
@@ -84,6 +88,7 @@ class ApiClient {
     } catch (_) {
       // Refresh failed — user needs to re-login
       await SecureStorage.clearAll();
+      onSessionExpired.add(null);
       return false;
     }
   }

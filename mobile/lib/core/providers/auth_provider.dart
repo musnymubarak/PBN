@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:pbn/core/services/api_client.dart';
 import 'package:pbn/core/services/auth_service.dart';
 import 'package:pbn/core/services/notification_service.dart';
 import 'package:pbn/core/services/push_notification_service.dart';
@@ -11,6 +13,15 @@ enum AuthStatus { unknown, authenticated, unauthenticated }
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
   final NotificationService _notificationService = NotificationService();
+  StreamSubscription? _sessionSubscription;
+
+  AuthProvider() {
+    // Listen for global session expiration (401 + failed refresh)
+    _sessionSubscription = ApiClient.onSessionExpired.stream.listen((_) {
+      debugPrint("AuthProvider: Detected expired session. Logging out.");
+      logout();
+    });
+  }
 
   AuthStatus _status = AuthStatus.unknown;
   User? _user;
@@ -102,5 +113,11 @@ class AuthProvider extends ChangeNotifier {
     } catch (e) {
       debugPrint("Failed to register FCM token: $e");
     }
+  }
+
+  @override
+  void dispose() {
+    _sessionSubscription?.cancel();
+    super.dispose();
   }
 }
