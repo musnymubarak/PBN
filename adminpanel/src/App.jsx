@@ -266,7 +266,7 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
 
   const handleStatusUpdate = async (newStatus) => {
     setErrorMessage('');
-    if (newStatus === 'approved' && !selectedChapterId && modalStatus !== 'approved') {
+    if (newStatus === 'approved' && modalStatus !== 'approved') {
       setModalStatus('approved');
       return;
     }
@@ -460,13 +460,9 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
                   <div>
                     <label style={{ color: '#166534', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem', display: 'block' }}>Target Chapter</label>
-                    <CustomSelect
-                      label="Select a chapter..."
-                      value={selectedChapterId}
-                      options={chapters}
-                      onChange={setSelectedChapterId}
-                      style={{ background: 'white' }}
-                    />
+                    <div style={{ background: 'white', padding: '0.75rem 1rem', borderRadius: '12px', border: '1px solid #bbf7d0', fontSize: '0.9375rem', fontWeight: 600, color: '#166534', height: '52px', display: 'flex', alignItems: 'center' }}>
+                      {detail.chapter_name || 'Not assigned'}
+                    </div>
                   </div>
                   <div>
                     <label style={{ color: '#166534', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem', display: 'block' }}>Payment status</label>
@@ -494,7 +490,7 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
                   <button
                     className="login-btn"
                     style={{ flex: 1, background: '#94a3b8', padding: '0.75rem', height: '52px' }}
-                    onClick={() => { setModalStatus(null); setSelectedChapterId(''); }}
+                    onClick={() => { setModalStatus(null); }}
                   >
                     Cancel
                   </button>
