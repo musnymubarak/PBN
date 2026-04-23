@@ -222,6 +222,42 @@ async def update_user(
     return _serialize_user(user)
 
 
+async def remove_user_from_chapter(user_id: UUID, actor_id: UUID, db: AsyncSession) -> Dict[str, Any]:
+    """Remove a user from their assigned chapter by deleting their membership."""
+    # Find the membership
+    stmt = select(ChapterMembership).where(ChapterMembership.user_id == user_id)
+    membership = (await db.execute(stmt)).scalar_one_or_none()
+    
+    if not membership:
+        raise NotFoundException("Chapter membership not found for this user")
+    
+    # Audit log before deletion
+    audit = AuditLog(
+        actor_id=actor_id,
+        entity_type="membership",
+        entity_id=membership.id,
+        action="remove_from_chapter",
+        old_value={"user_id": str(user_id), "chapter_id": str(membership.chapter_id)},
+        new_value=None,
+    )
+    db.add(audit)
+    
+    # Delete membership
+    await db.delete(membership)
+    
+    # Also downgrade user to PROSPECT if they were a MEMBER
+    user = (await db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
+    if user and user.role == UserRole.MEMBER:
+        user.role = UserRole.PROSPECT
+    
+    await db.commit()
+    
+    if user:
+        return _serialize_user(user)
+    return {"message": "User removed from chapter"}
+
+
+
 async def list_audit_logs(
     entity_type: str | None,
     action: str | None,

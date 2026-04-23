@@ -1042,6 +1042,20 @@ function UserEditModal({ user, onClose, onUpdate, chapters = [] }) {
     }
   };
 
+  const handleRemoveFromChapter = async () => {
+    if (!window.confirm(`Are you sure you want to remove ${user.full_name} from ${user.chapter_name}? This will also downgrade them to PROSPECT.`)) return;
+    setLoading(true);
+    try {
+      await api.removeUserFromChapter(user.id);
+      onUpdate();
+      onClose();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 450 }}>
@@ -1060,6 +1074,11 @@ function UserEditModal({ user, onClose, onUpdate, chapters = [] }) {
             </div>
             <h3 style={{ fontWeight: 800 }}>{user.full_name}</h3>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>{user.phone_number}</p>
+            {user.chapter_name && (
+              <div style={{ marginTop: '0.5rem' }}>
+                <span className="id-badge" style={{ background: '#e0f2fe', color: '#0369a1' }}>{user.chapter_name}</span>
+              </div>
+            )}
           </div>
 
           <div style={{ marginBottom: '1rem' }}>
@@ -1079,7 +1098,7 @@ function UserEditModal({ user, onClose, onUpdate, chapters = [] }) {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', padding: '1rem', background: '#f8fafc', borderRadius: '12px' }}>
             <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>Membership Active</div>
+              <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>Account & Membership Active</div>
               <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Toggle access to network features</div>
             </div>
             <input
@@ -1090,14 +1109,28 @@ function UserEditModal({ user, onClose, onUpdate, chapters = [] }) {
             />
           </div>
 
-          <button type="submit" className="login-btn" disabled={loading}>
-            {loading ? 'Saving...' : 'Update Member Status'}
-          </button>
+          <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <button type="submit" className="login-btn" disabled={loading} style={{ flex: 2 }}>
+              {loading ? 'Saving...' : 'Update Status'}
+            </button>
+            {user.chapter_name && (
+              <button 
+                type="button" 
+                className="login-btn" 
+                onClick={handleRemoveFromChapter} 
+                disabled={loading}
+                style={{ flex: 1, background: '#fee2e2', color: '#dc2626', border: '1px solid #fecaca' }}
+              >
+                <IconTrash size={18} />
+              </button>
+            )}
+          </div>
         </form>
       </div>
     </div>
   );
 }
+
 
 
 // ── Members Directory Page ──────────────────────────────────────────────────

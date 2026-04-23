@@ -98,6 +98,10 @@ export const api = {
     method: 'PATCH',
     body: JSON.stringify(body),
   }),
+  removeUserFromChapter: (id) => apiFetch(`/admin/users/${id}/chapter`, {
+    method: 'DELETE',
+  }),
+
 
   changePassword: (body) => apiFetch('/auth/change-password', {
     method: 'PUT',
