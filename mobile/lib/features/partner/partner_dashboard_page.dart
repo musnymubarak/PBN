@@ -3,7 +3,6 @@ import 'package:pbn/core/theme/app_theme.dart';
 import 'package:pbn/core/constants/app_colors.dart';
 import 'package:provider/provider.dart';
 import 'package:pbn/core/providers/auth_provider.dart';
-import 'package:pbn/core/providers/sync_provider.dart';
 import 'package:pbn/features/partner/services/partner_service.dart';
 import 'package:pbn/features/partner/models/partner_stats.dart';
 import 'package:pbn/features/partner/partner_scan_page.dart';
@@ -86,7 +85,6 @@ class _PartnerDashboardPageState extends State<PartnerDashboardPage> {
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () {
-              context.read<SyncProvider>().stopSync();
               context.read<AuthProvider>().logout();
               Navigator.pushReplacementNamed(context, '/login');
             },

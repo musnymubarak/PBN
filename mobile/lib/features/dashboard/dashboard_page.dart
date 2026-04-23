@@ -10,7 +10,6 @@ import 'package:pbn/core/constants/api_config.dart';
 import 'package:pbn/core/providers/auth_provider.dart';
 import 'package:pbn/core/providers/notification_provider.dart';
 import 'package:pbn/core/providers/member_provider.dart';
-import 'package:pbn/core/providers/sync_provider.dart';
 import 'package:pbn/core/services/dashboard_service.dart';
 import 'package:pbn/core/services/reward_service.dart';
 import 'package:pbn/core/widgets/stat_card.dart';
@@ -97,15 +96,6 @@ class _DashboardPageState extends State<DashboardPage> {
           final notifProvider = context.read<NotificationProvider>();
           notifProvider.startListening();
           notifProvider.fetchUnreadCount();
-
-          // Start background sync for real-time data freshness
-          final syncProvider = context.read<SyncProvider>();
-          syncProvider.attach(
-            auth: context.read<AuthProvider>(),
-            members: context.read<MemberProvider>(),
-            notifications: notifProvider,
-          );
-          syncProvider.startSync();
         }
       }
     } catch (e) {

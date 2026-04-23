@@ -5,7 +5,6 @@ import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/providers/auth_provider.dart';
 import 'package:pbn/core/providers/notification_provider.dart';
 import 'package:pbn/core/providers/member_provider.dart';
-import 'package:pbn/core/providers/sync_provider.dart';
 import 'package:pbn/features/auth/login_page.dart';
 import 'package:pbn/features/auth/splash_page.dart';
 import 'package:pbn/features/dashboard/dashboard_page.dart';
@@ -52,7 +51,6 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
         ChangeNotifierProvider(create: (_) => MemberProvider()),
-        ChangeNotifierProvider(create: (_) => SyncProvider()),
       ],
       child: const PBNApp(),
     ),
