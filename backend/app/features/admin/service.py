@@ -146,6 +146,13 @@ async def deactivate_user(user_id: UUID, actor_id: UUID, db: AsyncSession) -> Di
 
     old_active = user.is_active
     user.is_active = False
+    
+    # Also toggle chapter membership if it exists
+    await db.execute(
+        update(ChapterMembership)
+        .where(ChapterMembership.user_id == user_id)
+        .values(is_active=False)
+    )
 
     # Audit
     audit = AuditLog(
@@ -169,6 +176,13 @@ async def reactivate_user(user_id: UUID, actor_id: UUID, db: AsyncSession) -> Di
         raise NotFoundException("User not found")
 
     user.is_active = True
+
+    # Also toggle chapter membership if it exists
+    await db.execute(
+        update(ChapterMembership)
+        .where(ChapterMembership.user_id == user_id)
+        .values(is_active=True)
+    )
 
     audit = AuditLog(
         actor_id=actor_id,

@@ -44,6 +44,7 @@ class MemberProvider extends ChangeNotifier {
       await PrefsService.setJson('cached_members', _members.map((m) => m.toJson()).toList());
     } catch (e) {
       _error = e.toString();
+      _members = []; // Clear data on error (e.g. if deactivated)
     } finally {
       _loading = false;
       notifyListeners();

@@ -45,7 +45,10 @@ async def get_all_members(db: AsyncSession, requester_id: UUID | None = None) ->
         .join(Chapter, ChapterMembership.chapter_id == Chapter.id)
         .join(IndustryCategory, ChapterMembership.industry_category_id == IndustryCategory.id)
         .outerjoin(Business, (Business.owner_user_id == User.id) & (Business.industry_category_id == ChapterMembership.industry_category_id))
-        .where(ChapterMembership.is_active.is_(True))
+        .where(
+            ChapterMembership.is_active.is_(True),
+            User.is_active.is_(True)
+        )
         .order_by(User.full_name)
     )
     result = await db.execute(stmt)
@@ -110,7 +113,8 @@ async def get_chapter_members(chapter_id: UUID, db: AsyncSession) -> List[Dict[s
         .outerjoin(Business, (Business.owner_user_id == User.id) & (Business.industry_category_id == ChapterMembership.industry_category_id))
         .where(
             ChapterMembership.chapter_id == chapter_id,
-            ChapterMembership.is_active.is_(True)
+            ChapterMembership.is_active.is_(True),
+            User.is_active.is_(True)
         )
         .order_by(User.full_name)
     )
