@@ -124,18 +124,20 @@ async def list_applications_endpoint(
     
     data = [
         {
-            "id": str(app.id),
-            "full_name": app.full_name,
-            "business_name": app.business_name,
-            "contact_number": app.contact_number,
-            "email": app.email,
-            "district": app.district,
-            "industry_category_id": str(app.industry_category_id),
-            "status": app.status.value,
-            "fit_call_date": app.fit_call_date.isoformat() if app.fit_call_date else None,
-            "notes": app.notes,
-            "created_at": app.created_at.isoformat(),
-            "updated_at": app.updated_at.isoformat(),
+            "id": str(app["id"]),
+            "full_name": app["full_name"],
+            "business_name": app["business_name"],
+            "contact_number": app["contact_number"],
+            "email": app["email"],
+            "district": app["district"],
+            "industry_category_id": str(app["industry_category_id"]),
+            "chapter_id": str(app["chapter_id"]),
+            "chapter_name": app["chapter_name"],
+            "status": app["status"].value,
+            "fit_call_date": app["fit_call_date"].isoformat() if app["fit_call_date"] else None,
+            "notes": app["notes"],
+            "created_at": app["created_at"].isoformat(),
+            "updated_at": app["updated_at"].isoformat(),
         }
         for app in apps
     ]
@@ -162,8 +164,15 @@ async def get_application_detail_endpoint(
     app_id: UUID,
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
+    from app.models.chapters import Chapter
+    from sqlalchemy import select
+    
     app = await get_application_by_id(app_id, db)
     history = await get_application_history(app.id, db)
+    
+    # Get chapter name
+    chap_stmt = select(Chapter.name).where(Chapter.id == app.chapter_id)
+    chapter_name = (await db.execute(chap_stmt)).scalar() or "Unknown"
     
     return success_response(
         data={
@@ -174,6 +183,8 @@ async def get_application_detail_endpoint(
             "email": app.email,
             "district": app.district,
             "industry_category_id": str(app.industry_category_id),
+            "chapter_id": str(app.chapter_id),
+            "chapter_name": chapter_name,
             "status": app.status.value,
             "fit_call_date": app.fit_call_date.isoformat() if app.fit_call_date else None,
             "notes": app.notes,

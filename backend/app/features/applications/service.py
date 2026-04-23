@@ -192,8 +192,11 @@ async def list_applications(
     page: int,
     limit: int,
     db: AsyncSession,
-) -> Tuple[List[Application], int]:
-    stmt = select(Application)
+) -> Tuple[List[dict], int]:
+    stmt = select(
+        Application,
+        Chapter.name.label("chapter_name")
+    ).join(Chapter, Application.chapter_id == Chapter.id)
     
     if status:
         stmt = stmt.where(Application.status == status)
@@ -204,9 +207,32 @@ async def list_applications(
     total = (await db.execute(count_stmt)).scalar() or 0
     
     stmt = stmt.order_by(desc(Application.created_at)).offset((page - 1) * limit).limit(limit)
-    items = (await db.execute(stmt)).scalars().all()
+    result = await db.execute(stmt)
     
-    return list(items), total
+    data = []
+    for row in result.all():
+        app = row[0]
+        chapter_name = row[1]
+        app_dict = {
+            "id": app.id,
+            "full_name": app.full_name,
+            "business_name": app.business_name,
+            "contact_number": app.contact_number,
+            "email": app.email,
+            "district": app.district,
+            "industry_category_id": app.industry_category_id,
+            "chapter_id": app.chapter_id,
+            "chapter_name": chapter_name,
+            "status": app.status,
+            "fit_call_date": app.fit_call_date,
+            "notes": app.notes,
+            "created_at": app.created_at,
+            "updated_at": app.updated_at,
+        }
+        data.append(app_dict)
+    
+    return data, total
+
 
 
 async def _generate_privilege_card(user_id: UUID, db: AsyncSession) -> PrivilegeCard | None:

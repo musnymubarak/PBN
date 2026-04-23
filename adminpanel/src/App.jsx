@@ -407,8 +407,8 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
               <p>{detail.email || '—'}</p>
             </div>
             <div className="detail-item">
-              <label>District</label>
-              <p>{detail.district || '—'}</p>
+              <label>Targetted Chapter</label>
+              <p>{detail.chapter_name || '—'}</p>
             </div>
             <div className="detail-item">
               <label>Fit Call Date</label>
@@ -867,7 +867,7 @@ function ApplicationsPage() {
               <th>Applicant</th>
               <th>Business</th>
               <th>Contact</th>
-              <th>District</th>
+              <th>Targetted Chapter</th>
               <th>Status</th>
               <th>Applied On</th>
               <th>Actions</th>
@@ -899,7 +899,7 @@ function ApplicationsPage() {
                 </td>
                 <td style={{ fontWeight: 500 }}>{app.business_name}</td>
                 <td style={{ color: 'var(--text-secondary)' }}>{app.contact_number}</td>
-                <td style={{ color: 'var(--text-secondary)' }}>{app.district || '—'}</td>
+                <td style={{ color: 'var(--text-secondary)' }}>{app.chapter_name || '—'}</td>
                 <td><StatusPill status={app.status} /></td>
                 <td style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
                   {new Date(app.created_at).toLocaleDateString()}
