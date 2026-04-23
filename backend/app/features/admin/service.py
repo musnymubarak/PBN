@@ -45,17 +45,19 @@ def _mask_email(email: str | None) -> str | None:
 
 
 def _serialize_user(u: User, mask: bool = False, chapter_name: str | None = None, industry_name: str | None = None) -> Dict[str, Any]:
+    role_val = u.role.value if hasattr(u.role, 'value') else u.role
     return {
         "id": str(u.id),
         "phone_number": _mask_phone(u.phone_number) if mask else u.phone_number,
         "email": _mask_email(u.email) if mask else u.email,
         "full_name": u.full_name,
-        "role": u.role.value,
+        "role": str(role_val),
         "is_active": u.is_active,
         "chapter_name": chapter_name,
         "industry_name": industry_name,
         "created_at": u.created_at.isoformat() if u.created_at else None,
     }
+
 
 
 def _serialize_audit(a: AuditLog) -> Dict[str, Any]:
