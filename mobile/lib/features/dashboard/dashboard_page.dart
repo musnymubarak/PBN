@@ -119,14 +119,23 @@ class _DashboardPageState extends State<DashboardPage> {
 
     final pages = isProspect
         ? [ _buildProspectDashboard(), const ProfilePage() ]
-        : [ _buildDashboardBody(), const MembersPage(), const ReferralDashboardPage(), const EventsPage(), const ProfilePage() ];
+        : [
+            _buildDashboardBody(),
+            const MembersPage(),
+            const ReferralDashboardPage(),
+            const EventsPage(),
+            const ProfilePage(),
+          ];
 
     if (_currentIndex >= pages.length) _currentIndex = 0;
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: _currentIndex == 0 ? _buildAppBar(isProspect) : null,
-      body: pages[_currentIndex],
+      body: IndexedStack(
+        index: _currentIndex,
+        children: pages,
+      ),
       bottomNavigationBar: _buildBottomNav(isProspect),
     );
   }
