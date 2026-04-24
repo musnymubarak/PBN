@@ -3,6 +3,8 @@ import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/constants/api_config.dart';
 import 'package:pbn/core/services/dashboard_service.dart';
+import 'package:provider/provider.dart';
+import 'package:pbn/core/providers/auth_provider.dart';
 
 import 'package:pbn/core/widgets/pbn_app_bar_actions.dart';
 
@@ -32,7 +34,11 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
     }
     
     try {
-      final newEntries = await _service.getLeaderboard(period: _period);
+      final auth = context.read<AuthProvider>();
+      final newEntries = await _service.getLeaderboard(
+        chapterId: auth.user?.chapterId,
+        period: _period,
+      );
       if (mounted) {
         setState(() {
           _entries = newEntries;

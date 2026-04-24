@@ -9,6 +9,7 @@ class User {
   final String createdAt;
   final String updatedAt;
   final bool mustChangePassword;
+  final String? chapterId;
 
   User({
     required this.id,
@@ -21,6 +22,7 @@ class User {
     required this.createdAt,
     required this.updatedAt,
     required this.mustChangePassword,
+    this.chapterId,
   });
 
   factory User.fromJson(Map<String, dynamic> json) => User(
@@ -34,6 +36,7 @@ class User {
         createdAt: json['created_at'] ?? '',
         updatedAt: json['updated_at'] ?? '',
         mustChangePassword: json['must_change_password'] ?? false,
+        chapterId: json['chapter_id'],
       );
 
   String get initials {

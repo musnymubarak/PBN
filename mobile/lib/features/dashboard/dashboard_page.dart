@@ -105,7 +105,11 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Future<void> _loadLeaderboard() async {
     try {
-      final entries = await _dashboardService.getLeaderboard(period: 'this_month');
+      final auth = context.read<AuthProvider>();
+      final entries = await _dashboardService.getLeaderboard(
+        chapterId: auth.user?.chapterId,
+        period: 'this_month',
+      );
       if (mounted) {
         setState(() {
           _leaderboard = entries.take(3).toList();
