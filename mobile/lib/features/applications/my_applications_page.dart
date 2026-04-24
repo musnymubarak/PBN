@@ -67,46 +67,49 @@ class _MyApplicationsPageState extends State<MyApplicationsPage> {
                 padding: const EdgeInsets.all(20),
                 children: [
                    // ── Journey Overview Split Card ──────────────────
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(32),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(24),
-                      boxShadow: [
-                        BoxShadow(
-                            color: const Color(0xFF0F172A).withOpacity(0.3),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10))
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        const Text('Active Submissions',
-                            style: TextStyle(
-                                color: Colors.blueAccent,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 1.5)),
-                        const SizedBox(height: 12),
-                        Text('${_apps.length}',
-                            style: const TextStyle(
-                                fontSize: 48,
-                                fontWeight: FontWeight.w900,
-                                color: Colors.white,
-                                letterSpacing: -1)),
-                        const SizedBox(height: 12),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-                          child: const Text('Review Process: 3-5 Days', 
-                            style: TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w700)),
+                  AspectRatio(
+                    aspectRatio: 1.586,
+                    child: Container(
+                      padding: const EdgeInsets.all(32),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
-                      ],
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: [
+                          BoxShadow(
+                              color: const Color(0xFF0F172A).withOpacity(0.3),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10))
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text('Active Submissions',
+                              style: TextStyle(
+                                  color: Colors.blueAccent,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1.5)),
+                          const SizedBox(height: 12),
+                          Text('${_apps.length}',
+                              style: const TextStyle(
+                                  fontSize: 48,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white,
+                                  letterSpacing: -1)),
+                          const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                            child: const Text('Review Process: 3-5 Days', 
+                              style: TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w700)),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   const SizedBox(height: 32),

@@ -8,10 +8,10 @@ class PrivilegeCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      height: 190,
-      decoration: BoxDecoration(
+    return AspectRatio(
+      aspectRatio: 1.586,
+      child: Container(
+        decoration: BoxDecoration(
         color: const Color(0xFF0F172A),
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
@@ -145,6 +145,7 @@ class PrivilegeCardWidget extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }

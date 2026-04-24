@@ -176,8 +176,8 @@ class _DashboardPageState extends State<DashboardPage> {
           const SizedBox(height: 16),
           
           // -- TRANSITIONING AD PANEL (SLIDER) --
-          SizedBox(
-            height: 170,
+          AspectRatio(
+            aspectRatio: 1.586,
             child: PageView(
               controller: _adController,
               onPageChanged: (i) => setState(() => _adIndex = i),
@@ -200,15 +200,15 @@ class _DashboardPageState extends State<DashboardPage> {
           
           Column(children: [
             Row(children: [
-              Expanded(child: SizedBox(height: 95, child: StatCard(title: 'Sent', value: '${_data?.referrals.sentTotal ?? 0}', icon: TablerIcons.arrow_up_right, gradient: const [Color(0xFF3B82F6), Color(0xFF1D4ED8)]))),
+              Expanded(child: AspectRatio(aspectRatio: 1.586, child: StatCard(title: 'Sent', value: '${_data?.referrals.sentTotal ?? 0}', icon: TablerIcons.arrow_up_right, gradient: const [Color(0xFF3B82F6), Color(0xFF1D4ED8)]))),
               const SizedBox(width: 12),
-              Expanded(child: SizedBox(height: 95, child: StatCard(title: 'Ratio', value: '${(_data?.referrals.conversionRate ?? 0).toStringAsFixed(0)}%', icon: TablerIcons.chart_pie, gradient: const [Color(0xFF10B981), Color(0xFF064E3B)]))),
+              Expanded(child: AspectRatio(aspectRatio: 1.586, child: StatCard(title: 'Ratio', value: '${(_data?.referrals.conversionRate ?? 0).toStringAsFixed(0)}%', icon: TablerIcons.chart_pie, gradient: const [Color(0xFF10B981), Color(0xFF064E3B)]))),
             ]),
             const SizedBox(height: 12),
             Row(children: [
-              Expanded(child: SizedBox(height: 95, child: StatCard(title: 'ROI', value: _formatCurrency(_data?.roi.totalValue ?? 0), icon: TablerIcons.trending_up, gradient: const [AppColors.accent, Color(0xFF92400E)]))),
+              Expanded(child: AspectRatio(aspectRatio: 1.586, child: StatCard(title: 'ROI', value: _formatCurrency(_data?.roi.totalValue ?? 0), icon: TablerIcons.trending_up, gradient: const [AppColors.accent, Color(0xFF92400E)]))),
               const SizedBox(width: 12),
-              Expanded(child: SizedBox(height: 95, child: StatCard(title: 'Incoming', value: '${_data?.referrals.receivedTotal ?? 0}', icon: TablerIcons.arrow_down_left, gradient: const [Color(0xFF8B5CF6), Color(0xFF5B21B6)]))),
+              Expanded(child: AspectRatio(aspectRatio: 1.586, child: StatCard(title: 'Incoming', value: '${_data?.referrals.receivedTotal ?? 0}', icon: TablerIcons.arrow_down_left, gradient: const [Color(0xFF8B5CF6), Color(0xFF5B21B6)]))),
             ]),
           ]),
           const SizedBox(height: 32),
