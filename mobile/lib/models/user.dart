@@ -44,4 +44,32 @@ class User {
     if (parts.length >= 2) return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
     return fullName.isNotEmpty ? fullName[0].toUpperCase() : '?';
   }
+
+  User copyWith({
+    String? id,
+    String? phoneNumber,
+    String? email,
+    String? profilePhoto,
+    String? fullName,
+    String? role,
+    bool? isActive,
+    String? createdAt,
+    String? updatedAt,
+    bool? mustChangePassword,
+    String? chapterId,
+  }) {
+    return User(
+      id: id ?? this.id,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
+      email: email ?? this.email,
+      profilePhoto: profilePhoto ?? this.profilePhoto,
+      fullName: fullName ?? this.fullName,
+      role: role ?? this.role,
+      isActive: isActive ?? this.isActive,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      mustChangePassword: mustChangePassword ?? this.mustChangePassword,
+      chapterId: chapterId ?? this.chapterId,
+    );
+  }
 }

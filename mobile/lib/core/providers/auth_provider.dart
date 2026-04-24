@@ -5,6 +5,7 @@ import 'package:pbn/core/services/auth_service.dart';
 import 'package:pbn/core/services/notification_service.dart';
 import 'package:pbn/core/services/push_notification_service.dart';
 import 'package:pbn/core/services/secure_storage.dart';
+import 'package:pbn/core/services/chapter_service.dart';
 import 'package:pbn/models/user.dart';
 
 enum AuthStatus { unknown, authenticated, unauthenticated }
@@ -13,6 +14,7 @@ enum AuthStatus { unknown, authenticated, unauthenticated }
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
   final NotificationService _notificationService = NotificationService();
+  final ChapterService _chapterService = ChapterService();
   StreamSubscription? _sessionSubscription;
 
   AuthProvider() {
@@ -43,6 +45,17 @@ class AuthProvider extends ChangeNotifier {
       final hasTokens = await SecureStorage.hasTokens();
       if (hasTokens) {
         _user = await _authService.getProfile();
+        
+        // Fetch Chapter ID if not in profile
+        if (_user?.chapterId == null) {
+          try {
+            final memberships = await _chapterService.getMyMemberships();
+            if (memberships.isNotEmpty) {
+              _user = _user?.copyWith(chapterId: memberships.first.chapter.id);
+            }
+          } catch (_) {}
+        }
+
         _status = AuthStatus.authenticated;
         _registerFcmToken();
       } else {
@@ -63,6 +76,17 @@ class AuthProvider extends ChangeNotifier {
     try {
       final user = await _authService.getProfile();
       _user = user;
+
+      // Fetch Chapter ID if not in profile
+      if (_user?.chapterId == null) {
+        try {
+          final memberships = await _chapterService.getMyMemberships();
+          if (memberships.isNotEmpty) {
+            _user = _user?.copyWith(chapterId: memberships.first.chapter.id);
+          }
+        } catch (_) {}
+      }
+
       notifyListeners();
     } catch (_) {
       // If profile fetch fails with 401, logout
@@ -79,6 +103,17 @@ class AuthProvider extends ChangeNotifier {
     try {
       await _authService.login(identifier, password);
       _user = await _authService.getProfile();
+
+      // Fetch Chapter ID if not in profile
+      if (_user?.chapterId == null) {
+        try {
+          final memberships = await _chapterService.getMyMemberships();
+          if (memberships.isNotEmpty) {
+            _user = _user?.copyWith(chapterId: memberships.first.chapter.id);
+          }
+        } catch (_) {}
+      }
+
       _status = AuthStatus.authenticated;
       _registerFcmToken();
       _loading = false;
