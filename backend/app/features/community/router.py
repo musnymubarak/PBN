@@ -21,6 +21,8 @@ from app.features.community.service import (
     delete_comment,
     get_chapter_member_ids,
     toggle_pin,
+    update_lead_status,
+    record_tyfb,
 )
 from app.features.notifications.service import send_push_notification, notify_multiple_users
 from app.models.user import User, UserRole
@@ -37,7 +39,18 @@ async def create_post_endpoint(
     current_user: User = Depends(member_req),
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
-    result = await create_post(current_user.id, data.content, data.image_url, db)
+    result = await create_post(
+        current_user.id, 
+        data.content, 
+        data.image_url, 
+        db,
+        post_type=data.post_type,
+        visibility=data.visibility,
+        budget_range=data.budget_range,
+        deadline=data.deadline,
+        target_club_id=data.target_club_id,
+        target_industry_id=data.target_industry_id
+    )
     
     # Notify chapter members
     background_tasks.add_task(
@@ -78,10 +91,11 @@ async def list_posts_endpoint(
     offset: int = Query(0, ge=0),
     search: str = Query(None),
     filter: str = Query("all"),
+    network_wide: bool = Query(False),
     current_user: User = Depends(member_req),
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
-    posts = await list_posts(current_user.id, db, limit, offset, search, filter)
+    posts = await list_posts(current_user.id, db, limit, offset, search, filter, network_wide)
     return success_response(data=posts)
 
 
@@ -175,3 +189,31 @@ async def toggle_pin_endpoint(
 ) -> ORJSONResponse:
     result = await toggle_pin(current_user.id, post_id, db)
     return success_response(data=result, message="Pin toggled")
+
+
+@router.patch("/community/posts/{post_id}/status", summary="Update lead/RFP status")
+async def update_lead_status_endpoint(
+    post_id: UUID,
+    payload: Dict[str, Any],
+    current_user: User = Depends(member_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    status = payload.get("status")
+    if not status:
+        return error_response(message="Status is required")
+    await update_lead_status(current_user.id, post_id, status, db)
+    return success_response(message=f"Lead status updated to {status}")
+
+
+@router.patch("/community/posts/{post_id}/tyfb", summary="Record TYFB (Thank You For Business) value")
+async def record_tyfb_endpoint(
+    post_id: UUID,
+    payload: Dict[str, Any],
+    current_user: User = Depends(member_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    business_value = payload.get("business_value")
+    if business_value is None:
+        return error_response(message="Business value is required")
+    await record_tyfb(current_user.id, post_id, float(business_value), db)
+    return success_response(message="TYFB value recorded and lead closed successfully")

@@ -7,13 +7,34 @@ Handles Chapter-scoped social feed including posts, likes, and comments.
 from __future__ import annotations
 
 import uuid
+from datetime import datetime
 from typing import List
 
-from sqlalchemy import Boolean, ForeignKey, String, Text, UniqueConstraint
+import enum
+from sqlalchemy import Boolean, ForeignKey, String, Text, UniqueConstraint, Enum, Numeric, DateTime
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin
+
+
+class PostType(str, enum.Enum):
+    GENERAL = "general"
+    LEAD = "lead"
+    RFP = "rfp"
+
+
+class PostVisibility(str, enum.Enum):
+    CHAPTER = "chapter"
+    NETWORK = "network"
+    CLUB = "club"
+
+
+class LeadStatus(str, enum.Enum):
+    OPEN = "open"
+    IN_PROGRESS = "in_progress"
+    CLOSED_WON = "closed_won"
+    CLOSED_LOST = "closed_lost"
 
 
 class CommunityPost(Base, TimestampMixin):
@@ -30,8 +51,34 @@ class CommunityPost(Base, TimestampMixin):
     is_pinned: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
+    # Economic Engine Fields
+    post_type: Mapped[PostType] = mapped_column(
+        Enum(PostType), default=PostType.GENERAL, nullable=False, index=True
+    )
+    visibility: Mapped[PostVisibility] = mapped_column(
+        Enum(PostVisibility), default=PostVisibility.CHAPTER, nullable=False, index=True
+    )
+    lead_status: Mapped[LeadStatus | None] = mapped_column(
+        Enum(LeadStatus), nullable=True, index=True
+    )
+    
+    target_club_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("horizontal_clubs.id", ondelete="SET NULL"), nullable=True
+    )
+    target_industry_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("industry_categories.id", ondelete="SET NULL"), nullable=True
+    )
+    
+    budget_range: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    deadline: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    
+    # Thank You For Business (TYFB) Value
+    business_value: Mapped[float | None] = mapped_column(Numeric(15, 2), nullable=True)
+
     # Relationships
     author = relationship("User", lazy="joined")
+    target_club = relationship("HorizontalClub", lazy="joined")
+    target_industry = relationship("IndustryCategory", lazy="joined")
     likes = relationship("PostLike", back_populates="post", cascade="all, delete-orphan")
     comments = relationship("PostComment", back_populates="post", cascade="all, delete-orphan", order_by="PostComment.created_at")
 

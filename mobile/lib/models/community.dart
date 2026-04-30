@@ -12,6 +12,18 @@ class CommunityPost {
   final int commentsCount;
   final bool isLikedByMe;
 
+  // Phase 2 Economic Engine fields
+  final String postType; // general, lead, rfp
+  final String visibility; // chapter, network, club
+  final String? leadStatus; // open, in_progress, closed_won, closed_lost
+  final String? budgetRange;
+  final DateTime? deadline;
+  final String? targetClubId;
+  final String? targetClubName;
+  final String? targetIndustryId;
+  final String? targetIndustryName;
+  final double? businessValue;
+
   CommunityPost({
     required this.id,
     required this.chapterId,
@@ -23,6 +35,16 @@ class CommunityPost {
     required this.likesCount,
     required this.commentsCount,
     required this.isLikedByMe,
+    this.postType = 'general',
+    this.visibility = 'chapter',
+    this.leadStatus,
+    this.budgetRange,
+    this.deadline,
+    this.targetClubId,
+    this.targetClubName,
+    this.targetIndustryId,
+    this.targetIndustryName,
+    this.businessValue,
   });
 
   factory CommunityPost.fromJson(Map<String, dynamic> json) {
@@ -37,6 +59,16 @@ class CommunityPost {
       likesCount: json['likes_count'],
       commentsCount: json['comments_count'],
       isLikedByMe: json['is_liked_by_me'],
+      postType: json['post_type'] ?? 'general',
+      visibility: json['visibility'] ?? 'chapter',
+      leadStatus: json['lead_status'],
+      budgetRange: json['budget_range'],
+      deadline: json['deadline'] != null ? DateTime.parse(json['deadline']) : null,
+      targetClubId: json['target_club_id'],
+      targetClubName: json['target_club_name'],
+      targetIndustryId: json['target_industry_id'],
+      targetIndustryName: json['target_industry_name'],
+      businessValue: json['business_value'] != null ? (json['business_value'] as num).toDouble() : null,
     );
   }
 }

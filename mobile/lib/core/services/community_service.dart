@@ -4,20 +4,36 @@ import 'package:pbn/models/community.dart';
 class CommunityService {
   final ApiClient _client = ApiClient();
 
-  Future<List<CommunityPost>> getFeed({int limit = 20, int offset = 0, String? search, String filter = 'all'}) async {
+  Future<List<CommunityPost>> getFeed({int limit = 20, int offset = 0, String? search, String filter = 'all', bool networkWide = false}) async {
     final queryParams = StringBuffer('limit=$limit&offset=$offset');
     if (search != null && search.isNotEmpty) queryParams.write('&search=$search');
     queryParams.write('&filter=$filter');
+    queryParams.write('&network_wide=$networkWide');
 
     final response = await _client.get('/community/posts?$queryParams');
     final List data = response.data['data'];
     return data.map((json) => CommunityPost.fromJson(json)).toList();
   }
 
-  Future<CommunityPost> createPost(String content, {String? imageUrl}) async {
+  Future<CommunityPost> createPost(
+    String content, {
+    String? imageUrl,
+    String postType = 'general',
+    String visibility = 'chapter',
+    String? budgetRange,
+    DateTime? deadline,
+    String? targetClubId,
+    String? targetIndustryId,
+  }) async {
     final response = await _client.post('/community/posts', data: {
       'content': content,
       'image_url': imageUrl,
+      'post_type': postType,
+      'visibility': visibility,
+      'budget_range': budgetRange,
+      'deadline': deadline?.toIso8601String(),
+      'target_club_id': targetClubId,
+      'target_industry_id': targetIndustryId,
     });
     return CommunityPost.fromJson(response.data['data']);
   }
@@ -47,6 +63,18 @@ class CommunityService {
       'content': content,
     });
     return PostComment.fromJson(response.data['data']);
+  }
+
+  Future<void> updateLeadStatus(String postId, String status) async {
+    await _client.patch('/community/posts/$postId/status', data: {
+      'status': status,
+    });
+  }
+
+  Future<void> recordTYFB(String postId, double value) async {
+    await _client.patch('/community/posts/$postId/tyfb', data: {
+      'business_value': value,
+    });
   }
 
   Future<void> deleteComment(String commentId) async {

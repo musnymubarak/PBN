@@ -975,7 +975,7 @@ function CustomSelect({ label, value, options, onChange, style, disabledOptions 
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const selectedOption = options.find(opt => String(opt.id) === String(value)) || { name: label };
+  const selectedOption = (options || []).find(opt => String(opt.id) === String(value)) || { name: label };
 
   return (
     <div className="custom-select-container" ref={containerRef} style={style}>
@@ -1364,16 +1364,45 @@ function MembersPage() {
 
 function RecordPaymentModal({ onClose, onRecord, users = [] }) {
   const [userId, setUserId] = useState('');
-  const [amount, setAmount] = useState('15000');
-  const [paymentType, setPaymentType] = useState('membership');
+  const [amount, setAmount] = useState('0');
+  const [paymentType, setPaymentType] = useState('');
   const [reason, setReason] = useState('');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [fees, setFees] = useState([]);
+
+  // Fetch current master fees to enable auto-calculation
+  useEffect(() => {
+    api.listFees().then(data => setFees(data || [])).catch(console.error);
+  }, []);
+
+  // Auto-calculate amount when user or type changes
+  useEffect(() => {
+    if (!userId || !paymentType || fees.length === 0) return;
+    
+    const selectedUser = users.find(u => u.id === userId);
+    if (!selectedUser) return;
+
+    // Default to 'standard' if not specified
+    const mType = selectedUser.membership_type || 'standard';
+    const schedule = fees.find(f => f.membership_type === mType);
+    
+    if (schedule) {
+      if (paymentType === 'membership' || paymentType === 'renewal') {
+        setAmount(String(schedule.annual_fee));
+        if (!reason) setReason(`Annual Membership Fee - ${mType.toUpperCase()}`);
+      } else if (paymentType === 'meeting_fee') {
+        setAmount(String(schedule.per_forum_fee));
+        if (!reason) setReason(`Forum Meeting Fee - ${new Date().toLocaleString('default', { month: 'long' })}`);
+      }
+    }
+  }, [userId, paymentType, fees, users]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!userId) return setError('Please select a user');
+    if (!paymentType) return setError('Please select a payment type');
     if (!reason) return setError('Please provide a payment reason');
 
     setLoading(true);
@@ -1419,22 +1448,22 @@ function RecordPaymentModal({ onClose, onRecord, users = [] }) {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-            <div className="login-field">
-              <label>Amount (LKR)</label>
-              <input type="number" value={amount} onChange={e => setAmount(e.target.value)} required className="filter-input" style={{ height: '52px' }} />
-            </div>
-            <div>
+             <div>
               <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>Type</label>
               <CustomSelect
                 label="Select type..."
                 value={paymentType}
                 options={[
-                  { id: 'membership', name: 'Membership' },
+                  { id: 'membership', name: 'Annual Membership' },
                   { id: 'meeting_fee', name: 'Meeting Fee' },
                   { id: 'renewal', name: 'Renewal' }
                 ]}
                 onChange={setPaymentType}
               />
+            </div>
+            <div className="login-field">
+              <label>Amount (LKR)</label>
+              <input type="number" value={amount} onChange={e => setAmount(e.target.value)} required className="filter-input" style={{ height: '52px' }} />
             </div>
           </div>
 
@@ -2829,7 +2858,7 @@ function AddEventModal({ onClose, onCreated, chapters = [] }) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 600 }}>
+      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 600, maxHeight: '90vh', overflowY: 'auto' }}>
         <div className="modal-header">
           <div>
             <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Create New Event</h2>
@@ -3073,7 +3102,7 @@ function EditEventModal({ event, onClose, onUpdated, chapters = [] }) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 600 }}>
+      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 600, maxHeight: '90vh', overflowY: 'auto' }}>
         <div className="modal-header">
           <div>
             <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Edit Event</h2>
@@ -3398,6 +3427,7 @@ function EventsPage() {
   const [managingRsvpsEvent, setManagingRsvpsEvent] = useState(null);
   const [chapters, setChapters] = useState([]);
   const [chapterFilter, setChapterFilter] = useState('');
+  const [timeFilter, setTimeFilter] = useState('upcoming');
 
 
   const fetchEvents = useCallback(async () => {
@@ -3445,6 +3475,17 @@ function EventsPage() {
               onChange={setChapterFilter}
               style={{ width: '220px' }}
             />
+            <CustomSelect
+              label="All Events"
+              value={timeFilter}
+              options={[
+                { id: 'all', name: 'All Events' },
+                { id: 'upcoming', name: 'Upcoming Only' },
+                { id: 'finished', name: 'Finished / Past' }
+              ]}
+              onChange={setTimeFilter}
+              style={{ width: '180px' }}
+            />
             <button className="view-detail-btn" onClick={fetchEvents}><IconRefresh size={18} /></button>
           </div>
         </div>
@@ -3464,59 +3505,76 @@ function EventsPage() {
           <tbody>
             {loading ? (
               <tr><td colSpan={7} style={{ textAlign: 'center', padding: '3rem' }}>Loading events...</td></tr>
-            ) : events.length === 0 ? (
-              <tr><td colSpan={7} style={{ textAlign: 'center', padding: '3rem' }}>No events scheduled.</td></tr>
-            ) : events.map(ev => (
-              <tr key={ev.id}>
-                <td>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <div style={{ width: 44, height: 44, borderRadius: '8px', background: '#f8fafc', overflow: 'hidden', border: '1px solid #e2e8f0', flexShrink: 0 }}>
-                       {ev.image_url ? (
-                         <img src={ev.image_url.startsWith('http') ? ev.image_url : `${STATIC_BASE_URL}${ev.image_url}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                       ) : (
-                         <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <IconCalendarEvent size={18} color="#94a3b8" />
-                         </div>
-                       )}
-                    </div>
-                    <div>
-                      <div style={{ fontWeight: 700 }}>{ev.title}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>ID: {ev.id.slice(0, 8)}</div>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <span className={`pill ${ev.event_type === 'flagship' ? 'pill-approved' : 'pill-waitlisted'}`} style={{ textTransform: 'uppercase', fontSize: '0.7rem' }}>
-                    {ev.event_type}
-                  </span>
-                </td>
-                <td style={{ fontSize: '0.85rem' }}>
-                  <div style={{ fontWeight: 600 }}>{new Date(ev.start_at).toLocaleDateString()}</div>
-                  <div style={{ color: 'var(--text-secondary)' }}>{new Date(ev.start_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-                </td>
-                <td style={{ fontSize: '0.85rem', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {ev.location || ev.meeting_link || '—'}
-                </td>
-                <td style={{ fontWeight: 700 }}>{ev.fee > 0 ? formatCurrency(ev.fee) : 'Free'}</td>
-                <td style={{ textAlign: 'center' }}>
-                  <div style={{ fontWeight: 700 }}>{ev.rsvps?.length || 0}</div>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Requests</div>
-                </td>
-                <td style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button className="view-detail-btn" onClick={() => setManagingRsvpsEvent(ev)} title="Manage RSVPs">
-                    <IconUserCheck size={18} />
-                    {ev.rsvps?.some(r => r.status === 'requested') && (
-                      <span style={{ position: 'absolute', top: -5, right: -5, background: '#ef4444', color: 'white', fontSize: '0.6rem', padding: '2px 5px', borderRadius: '10px', fontWeight: 'bold' }}>
-                        {ev.rsvps.filter(r => r.status === 'requested').length}
+            ) : (() => {
+              const filtered = events.filter(ev => {
+                const isPast = new Date(ev.end_at) < new Date();
+                if (timeFilter === 'upcoming') return !isPast;
+                if (timeFilter === 'finished') return isPast;
+                return true;
+              });
+              
+              if (filtered.length === 0) {
+                return <tr><td colSpan={7} style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>No {timeFilter !== 'all' ? timeFilter : ''} events found.</td></tr>;
+              }
+
+              return filtered.map(ev => {
+                const isPast = new Date(ev.end_at) < new Date();
+                return (
+                  <tr key={ev.id} style={{ background: isPast ? '#f8fafc' : 'white', opacity: isPast ? 0.8 : 1 }}>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <div style={{ width: 44, height: 44, borderRadius: '8px', background: '#f8fafc', overflow: 'hidden', border: '1px solid #e2e8f0', flexShrink: 0, position: 'relative' }}>
+                           {ev.image_url ? (
+                             <img src={ev.image_url.startsWith('http') ? ev.image_url : `${STATIC_BASE_URL}${ev.image_url}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                           ) : (
+                             <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <IconCalendarEvent size={18} color="#94a3b8" />
+                             </div>
+                           )}
+                           {isPast && <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.5rem', fontWeight: 900, color: '#475569' }}>PAST</div>}
+                        </div>
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <div style={{ fontWeight: 700 }}>{ev.title}</div>
+                            {isPast ? (
+                              <span style={{ fontSize: '0.6rem', background: '#e2e8f0', color: '#64748b', padding: '2px 4px', borderRadius: '3px', fontWeight: 800 }}>PAST</span>
+                            ) : (
+                              <span style={{ fontSize: '0.6rem', background: '#dcfce7', color: '#15803d', padding: '2px 4px', borderRadius: '3px', fontWeight: 800 }}>LIVE</span>
+                            )}
+                          </div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>ID: {ev.id.slice(0, 8)}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <span className={`pill ${ev.event_type === 'flagship' ? 'pill-approved' : 'pill-waitlisted'}`} style={{ textTransform: 'uppercase', fontSize: '0.7rem' }}>
+                        {ev.event_type}
                       </span>
-                    )}
-                  </button>
-                  <button className="view-detail-btn" onClick={() => setEditingEvent(ev)} title="Edit Event">
-                    <IconSettings size={18} />
-                  </button>
-                </td>
-              </tr>
-            ))}
+                    </td>
+                    <td style={{ fontSize: '0.85rem' }}>
+                      <div style={{ fontWeight: 600 }}>{new Date(ev.start_at).toLocaleDateString()}</div>
+                      <div style={{ color: 'var(--text-secondary)' }}>{new Date(ev.start_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                    </td>
+                    <td style={{ fontSize: '0.85rem', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {ev.location || ev.meeting_link || '—'}
+                    </td>
+                    <td style={{ fontWeight: 700 }}>{ev.fee > 0 ? formatCurrency(ev.fee) : 'Free'}</td>
+                    <td style={{ textAlign: 'center' }}>
+                      <div style={{ fontWeight: 700 }}>{ev.rsvps?.filter(r => r.status === 'going').length || 0}</div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Going</div>
+                    </td>
+                    <td style={{ display: 'flex', gap: '0.5rem' }}>
+                      <button className="view-detail-btn" onClick={() => setManagingRsvpsEvent(ev)} title="Manage RSVPs">
+                        <IconUserCheck size={18} />
+                      </button>
+                      <button className="view-detail-btn" onClick={() => setEditingEvent(ev)} title="Edit Event">
+                        <IconSettings size={18} />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })
+            })()}
           </tbody>
         </table>
       </div>
@@ -3961,11 +4019,17 @@ export default function App() {
             Failed to load analytics. Check backend connection.
           </div>
         ) : (
-          <div className="stat-grid">
-            <StatCard title="TOTAL REVENUE (ROI)" value={formatCurrency(overview?.total_value)} icon={IconCoin} color="#059669" />
+          <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+            <StatCard 
+              title="TOTAL REVENUE (ROI)" 
+              value={formatCurrency(overview?.total_value)} 
+              icon={IconCoin} 
+              color="#059669" 
+              trend={null}
+            />
             <StatCard title="ACTIVE MEMBER BASE" value={overview?.total_members?.toLocaleString() ?? '—'} icon={IconUsers} color="#2563eb" />
-            <StatCard title="REFERRAL VELOCITY" value={overview?.conversion_rate != null ? `${overview.conversion_rate}%` : '—'} icon={IconHierarchy2} color="#f59e0b" />
-            <StatCard title="TOTAL REFERRALS" value={overview?.total_referrals?.toLocaleString() ?? '—'} icon={IconClock} color="#7c3aed" />
+            <StatCard title="TOTAL LEADS (ECONOMY)" value={overview?.total_leads?.toLocaleString() ?? '—'} icon={IconStackPop} color="#f59e0b" />
+            <StatCard title="TOTAL RFPs" value={overview?.total_rfps?.toLocaleString() ?? '—'} icon={IconClipboardList} color="#7c3aed" />
           </div>
         )}
 

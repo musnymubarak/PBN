@@ -32,6 +32,7 @@ class _CommunityPageState extends State<CommunityPage> with WidgetsBindingObserv
   String? _error;
   String _activeFilter = 'all';
   String _searchQuery = '';
+  bool _networkWide = false;
 
   @override
   void initState() {
@@ -112,6 +113,7 @@ class _CommunityPageState extends State<CommunityPage> with WidgetsBindingObserv
       final posts = await _service.getFeed(
         search: _searchQuery,
         filter: _activeFilter,
+        networkWide: _networkWide,
       );
       if (mounted) {
         setState(() {
@@ -134,7 +136,7 @@ class _CommunityPageState extends State<CommunityPage> with WidgetsBindingObserv
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        toolbarHeight: 70,
+        toolbarHeight: 120,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -160,10 +162,29 @@ class _CommunityPageState extends State<CommunityPage> with WidgetsBindingObserv
                 ),
               ],
             ),
+            const SizedBox(height: 16),
+            // Scope Toggle
+            Container(
+              height: 40,
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  _buildScopeTab('My Chapter', false),
+                  _buildScopeTab('Network', true),
+                ],
+              ),
+            ),
           ],
         ),
         actions: [
-          PbnAppBarActions(),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 50),
+            child: PbnAppBarActions(),
+          ),
         ],
       ),
       body: Column(
@@ -257,13 +278,47 @@ class _CommunityPageState extends State<CommunityPage> with WidgetsBindingObserv
               children: [
                 _buildFilterChip('All Posts', 'all', TablerIcons.layout_list),
                 const SizedBox(width: 8),
-                _buildFilterChip('My Posts', 'my_posts', TablerIcons.user),
+                _buildFilterChip('Leads', 'lead', TablerIcons.flame),
                 const SizedBox(width: 8),
-                _buildFilterChip('Pinned', 'pinned', TablerIcons.pin),
+                _buildFilterChip('RFPs', 'rfp', TablerIcons.clipboard_list),
+                const SizedBox(width: 8),
+                _buildFilterChip('My Posts', 'my_posts', TablerIcons.user),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildScopeTab(String label, bool isNetwork) {
+    final isSelected = _networkWide == isNetwork;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _networkWide = isNetwork;
+            _activeFilter = 'all'; // Reset filter when switching scope
+          });
+          _loadFeed();
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: isSelected ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4)] : [],
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+              color: isSelected ? AppColors.primary : Colors.grey.shade600,
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -497,11 +552,18 @@ class _PostCardState extends State<_PostCard> {
                       auth.user?.role == 'SUPER_ADMIN' || 
                       auth.user?.role == 'CHAPTER_ADMIN';
 
+    final isLead = widget.post.postType == 'lead';
+    final isRFP = widget.post.postType == 'rfp';
+    final hasBusinessDetails = isLead || isRFP;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
+        border: hasBusinessDetails 
+          ? Border(left: BorderSide(color: isLead ? Colors.amber.shade600 : Colors.blue.shade600, width: 4))
+          : null,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -524,8 +586,16 @@ class _PostCardState extends State<_PostCard> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(widget.post.author.fullName,
-                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppColors.text)),
+                      Row(
+                        children: [
+                          Text(widget.post.author.fullName,
+                              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppColors.text)),
+                          if (widget.post.visibility == 'network') ...[
+                            const SizedBox(width: 6),
+                            const Icon(TablerIcons.world, size: 14, color: Colors.blue),
+                          ],
+                        ],
+                      ),
                       Text(
                         '${widget.post.author.role.toUpperCase()} • ${_formatTime(widget.post.createdAt)}',
                         style: TextStyle(fontSize: 10, color: Colors.grey.shade500, fontWeight: FontWeight.w700),
@@ -533,6 +603,18 @@ class _PostCardState extends State<_PostCard> {
                     ],
                   ),
                 ),
+                if (hasBusinessDetails)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: (isLead ? Colors.amber : Colors.blue).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      widget.post.postType.toUpperCase(),
+                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: isLead ? Colors.amber.shade800 : Colors.blue.shade800),
+                    ),
+                  ),
                 IconButton(
                   icon: Icon(
                     _isPinned ? TablerIcons.pinned : TablerIcons.pin, 
@@ -550,9 +632,33 @@ class _PostCardState extends State<_PostCard> {
             ),
           ),
 
+          // Business Details Section (If Lead/RFP)
+          if (hasBusinessDetails)
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                children: [
+                  if (widget.post.budgetRange != null && widget.post.budgetRange!.isNotEmpty)
+                    _buildDetailRow(TablerIcons.coin, 'Budget', widget.post.budgetRange!),
+                  if (widget.post.deadline != null)
+                    _buildDetailRow(TablerIcons.calendar_event, 'Deadline', DateFormat('MMM dd, yyyy').format(widget.post.deadline!)),
+                  if (widget.post.targetIndustryName != null)
+                    _buildDetailRow(TablerIcons.briefcase, 'Industry', widget.post.targetIndustryName!),
+                  if (widget.post.targetClubName != null)
+                    _buildDetailRow(TablerIcons.users_group, 'Club', widget.post.targetClubName!),
+                  _buildDetailRow(TablerIcons.target, 'Status', (widget.post.leadStatus ?? 'OPEN').replaceAll('_', ' ').toUpperCase()),
+                ],
+              ),
+            ),
+
           // Content
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Text(
               widget.post.content,
               style: const TextStyle(fontSize: 14, color: AppColors.text, height: 1.5, fontWeight: FontWeight.w500),
@@ -595,9 +701,107 @@ class _PostCardState extends State<_PostCard> {
                   color: Colors.grey.shade600,
                   onTap: _showComments,
                 ),
+                if ((widget.post.postType == 'lead' || widget.post.postType == 'rfp') && 
+                    context.read<AuthProvider>().user?.id == widget.post.author.id) ...[
+                  const SizedBox(width: 24),
+                  _buildActionButton(
+                    icon: TablerIcons.adjustments,
+                    label: 'MANAGE',
+                    color: AppColors.primary,
+                    onTap: _showLeadManagementSheet,
+                  ),
+                ],
                 const Spacer(),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showLeadManagementSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Manage Opportunity', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+            const SizedBox(height: 24),
+            _buildStatusItem('Open', 'open', TablerIcons.circle),
+            _buildStatusItem('In Progress', 'in_progress', TablerIcons.player_play),
+            _buildStatusItem('Closed Won (TYFB)', 'closed_won', TablerIcons.trophy),
+            _buildStatusItem('Closed Lost', 'closed_lost', TablerIcons.x),
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusItem(String label, String status, IconData icon) {
+    final isCurrent = widget.post.leadStatus == status;
+    return ListTile(
+      leading: Icon(icon, color: isCurrent ? AppColors.primary : Colors.grey),
+      title: Text(label, style: TextStyle(fontWeight: isCurrent ? FontWeight.w800 : FontWeight.w600, color: isCurrent ? AppColors.primary : AppColors.text)),
+      trailing: isCurrent ? const Icon(TablerIcons.check, color: AppColors.primary) : null,
+      onTap: () async {
+        Navigator.pop(context);
+        if (status == 'closed_won') {
+          _showTYFBDialog();
+        } else {
+          try {
+            await _service.updateLeadStatus(widget.post.id, status);
+            widget.onRefresh();
+          } catch (_) {}
+        }
+      },
+    );
+  }
+
+  void _showTYFBDialog() {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Record Business Success'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Congratulations! How much business was closed? (LKR)'),
+            const SizedBox(height: 16),
+            TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(hintText: 'Enter amount', prefixText: 'LKR '),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCEL')),
+          ElevatedButton(
+            onPressed: () async {
+              final val = double.tryParse(controller.text) ?? 0;
+              if (val > 0) {
+                Navigator.pop(context);
+                try {
+                  await _service.recordTYFB(widget.post.id, val);
+                  widget.onRefresh();
+                  // Show celebration
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('🎉 Thank You For Business recorded! Network ROI updated.')),
+                    );
+                  }
+                } catch (_) {}
+              }
+            },
+            child: const Text('RECORD & CLOSE'),
           ),
         ],
       ),
@@ -620,6 +824,21 @@ class _PostCardState extends State<_PostCard> {
       child: hasPhoto ? null : Center(
         child: Text(author.fullName.substring(0, 1).toUpperCase(), 
           style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w900)),
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(icon, size: 14, color: Colors.grey.shade400),
+          const SizedBox(width: 8),
+          Text('$label:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.grey.shade600)),
+          const SizedBox(width: 4),
+          Expanded(child: Text(value, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.text))),
+        ],
       ),
     );
   }

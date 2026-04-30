@@ -36,15 +36,39 @@ async def get_chapter_member_ids(chapter_id: uuid.UUID, db: AsyncSession) -> Lis
     return list(result.scalars().all())
 
 
-async def create_post(user_id: uuid.UUID, content: str, image_url: Optional[str], db: AsyncSession) -> Dict[str, Any]:
+async def create_post(
+    user_id: uuid.UUID, 
+    content: str, 
+    image_url: Optional[str], 
+    db: AsyncSession,
+    post_type: str = "general",
+    visibility: str = "chapter",
+    budget_range: Optional[str] = None,
+    deadline: Optional[datetime] = None,
+    target_club_id: Optional[uuid.UUID] = None,
+    target_industry_id: Optional[uuid.UUID] = None
+) -> Dict[str, Any]:
     chapter_id = await _get_user_chapter_id(user_id, db)
+    
+    from app.models.community import PostType, PostVisibility, LeadStatus
     
     post = CommunityPost(
         chapter_id=chapter_id,
         author_id=user_id,
         content=content,
-        image_url=image_url
+        image_url=image_url,
+        post_type=PostType(post_type),
+        visibility=PostVisibility(visibility),
+        budget_range=budget_range,
+        deadline=deadline,
+        target_club_id=target_club_id,
+        target_industry_id=target_industry_id
     )
+    
+    # Auto-set status for business opportunities
+    if post.post_type != PostType.GENERAL:
+        post.lead_status = LeadStatus.OPEN
+        
     db.add(post)
     await db.commit()
     await db.refresh(post)
@@ -67,15 +91,28 @@ async def list_posts(
     limit: int = 20, 
     offset: int = 0,
     search: Optional[str] = None,
-    filter_type: str = "all"
+    filter_type: str = "all",
+    network_wide: bool = False
 ) -> List[Dict[str, Any]]:
     chapter_id = await _get_user_chapter_id(user_id, db)
-    # Base query for posts in the chapter
-    stmt = (
-        select(CommunityPost)
-        .join(CommunityPost.author)
-        .where(CommunityPost.chapter_id == chapter_id, CommunityPost.is_active == True)
-    )
+    
+    from app.models.community import PostType, PostVisibility
+    
+    # Base query
+    if network_wide:
+        # Global feed: Only show posts with NETWORK visibility
+        stmt = (
+            select(CommunityPost)
+            .join(CommunityPost.author)
+            .where(CommunityPost.visibility == PostVisibility.NETWORK, CommunityPost.is_active == True)
+        )
+    else:
+        # Chapter feed: Show posts in the chapter
+        stmt = (
+            select(CommunityPost)
+            .join(CommunityPost.author)
+            .where(CommunityPost.chapter_id == chapter_id, CommunityPost.is_active == True)
+        )
 
     # 1. Search filter (content OR user name)
     if search:
@@ -88,13 +125,22 @@ async def list_posts(
     # 2. Category filters
     if filter_type == "my_posts":
         stmt = stmt.where(CommunityPost.author_id == user_id)
-    elif filter_type == "pinned":
+    elif filter_type == "pinned" and not network_wide:
         stmt = stmt.where(CommunityPost.is_pinned == True)
+    elif filter_type == "lead":
+        stmt = stmt.where(CommunityPost.post_type == PostType.LEAD)
+    elif filter_type == "rfp":
+        stmt = stmt.where(CommunityPost.post_type == PostType.RFP)
     
     # Ordering and Pagination
+    # For network feed, we don't prioritize pins from other chapters
+    if network_wide:
+        stmt = stmt.order_by(desc(CommunityPost.created_at))
+    else:
+        stmt = stmt.order_by(desc(CommunityPost.is_pinned), desc(CommunityPost.created_at))
+        
     stmt = (
-        stmt.order_by(desc(CommunityPost.is_pinned), desc(CommunityPost.created_at))
-        .limit(limit)
+        stmt.limit(limit)
         .offset(offset)
         .options(joinedload(CommunityPost.author))
     )
@@ -133,7 +179,17 @@ async def _serialize_post(post: CommunityPost, viewer_id: uuid.UUID, db: AsyncSe
         },
         "likes_count": likes_count,
         "comments_count": comments_count,
-        "is_liked_by_me": is_liked
+        "is_liked_by_me": is_liked,
+        "post_type": post.post_type.value,
+        "visibility": post.visibility.value,
+        "lead_status": post.lead_status.value if post.lead_status else None,
+        "budget_range": post.budget_range,
+        "deadline": post.deadline.isoformat() if post.deadline else None,
+        "target_club_id": str(post.target_club_id) if post.target_club_id else None,
+        "target_club_name": post.target_club.name if post.target_club else None,
+        "target_industry_id": str(post.target_industry_id) if post.target_industry_id else None,
+        "target_industry_name": post.target_industry.name if post.target_industry else None,
+        "business_value": float(post.business_value) if post.business_value else None
     }
 
 
@@ -268,3 +324,30 @@ async def toggle_pin(user_id: uuid.UUID, post_id: uuid.UUID, db: AsyncSession) -
     await db.refresh(post)
     
     return {"id": str(post.id), "is_pinned": post.is_pinned}
+
+
+async def update_lead_status(user_id: uuid.UUID, post_id: uuid.UUID, status: str, db: AsyncSession) -> None:
+    post = (await db.execute(select(CommunityPost).where(CommunityPost.id == post_id))).scalar_one_or_none()
+    if not post:
+        raise NotFoundException("Post not found")
+        
+    if post.author_id != user_id:
+        raise ForbiddenException("Only the author can update lead status")
+        
+    from app.models.community import LeadStatus
+    post.lead_status = LeadStatus(status)
+    await db.commit()
+
+
+async def record_tyfb(user_id: uuid.UUID, post_id: uuid.UUID, business_value: float, db: AsyncSession) -> None:
+    post = (await db.execute(select(CommunityPost).where(CommunityPost.id == post_id))).scalar_one_or_none()
+    if not post:
+        raise NotFoundException("Post not found")
+        
+    if post.author_id != user_id:
+        raise ForbiddenException("Only the author can record business value")
+        
+    post.business_value = business_value
+    from app.models.community import LeadStatus
+    post.lead_status = LeadStatus.CLOSED_WON
+    await db.commit()

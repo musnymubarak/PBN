@@ -153,6 +153,15 @@ async def get_dashboard(user_id: UUID, db: AsyncSession) -> Dict[str, Any]:
                 "days_until_expiry": (mem.end_date - now.date()).days if mem.end_date else None
             }
 
+        # 6. Economic Engine (Leads & RFPs)
+        from app.models.community import CommunityPost, PostType
+        econ_stmt = select(
+            func.count(1).filter(CommunityPost.author_id == user_id, CommunityPost.post_type == PostType.LEAD).label("leads_sent"),
+            func.count(1).filter(CommunityPost.author_id == user_id, CommunityPost.post_type == PostType.RFP).label("rfps_sent"),
+            func.coalesce(func.sum(CommunityPost.business_value).filter(CommunityPost.author_id == user_id), 0).label("tyfb_value")
+        )
+        econ_stats = (await db.execute(econ_stmt)).one()
+
         payload = {
             "referrals": {
                 "sent_total": ref_stats.sent_total,
@@ -163,9 +172,15 @@ async def get_dashboard(user_id: UUID, db: AsyncSession) -> Dict[str, Any]:
                 "conversion_rate": round(conversion_rate, 2)
             },
             "roi": {
-                "total_value_generated": total_val,
+                "total_value_generated": total_val + float(econ_stats.tyfb_value),
                 "this_month_value": month_val,
-                "avg_deal_value": round(avg_deal, 2)
+                "avg_deal_value": round(avg_deal, 2),
+                "referral_value": total_val,
+                "lead_value": float(econ_stats.tyfb_value)
+            },
+            "economic_activity": {
+                "leads_shared": econ_stats.leads_sent,
+                "rfps_shared": econ_stats.rfps_sent
             },
             "events": {
                 "next_virtual": next_virtual,
@@ -336,10 +351,23 @@ async def get_admin_overview(db: AsyncSession) -> Dict[str, Any]:
      
     members_by_chapter = [{"chapter": r.name, "count": r.members} for r in (await db.execute(chap_stmt)).all()]
 
+    # Economic Engine Admin Stats
+    from app.models.community import CommunityPost, PostType
+    econ_stmt = select(
+        func.count(case((CommunityPost.post_type == PostType.LEAD, 1))).label("total_leads"),
+        func.count(case((CommunityPost.post_type == PostType.RFP, 1))).label("total_rfps"),
+        func.coalesce(func.sum(CommunityPost.business_value), 0).label("tot_econ_val")
+    )
+    econ_stats = (await db.execute(econ_stmt)).one()
+
     return {
         "total_members": total_members,
         "total_referrals": ref_stats.total_ref,
-        "total_value": float(ref_stats.tot_val),
+        "total_value": float(ref_stats.tot_val) + float(econ_stats.tot_econ_val),
+        "referral_value": float(ref_stats.tot_val),
+        "lead_value": float(econ_stats.tot_econ_val),
+        "total_leads": econ_stats.total_leads,
+        "total_rfps": econ_stats.total_rfps,
         "conversion_rate": round(conversion_rate, 2),
         "members_by_chapter": members_by_chapter,
         "referrals_by_month": [],  # Stub
