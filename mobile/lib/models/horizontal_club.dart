@@ -2,8 +2,7 @@ class HorizontalClub {
   final String id;
   final String name;
   final String? description;
-  final String targetVertical;
-  final String? coordinatorUserId;
+  final List<String> industries;
   final bool isActive;
   final int minMembers;
   final bool isMember;
@@ -13,8 +12,7 @@ class HorizontalClub {
     required this.id,
     required this.name,
     this.description,
-    required this.targetVertical,
-    this.coordinatorUserId,
+    required this.industries,
     this.isActive = true,
     this.minMembers = 10,
     this.isMember = false,
@@ -25,8 +23,7 @@ class HorizontalClub {
         id: json['id'] ?? '',
         name: json['name'] ?? '',
         description: json['description'],
-        targetVertical: json['target_vertical'] ?? '',
-        coordinatorUserId: json['coordinator_user_id'],
+        industries: List<String>.from(json['industries'] ?? []),
         isActive: json['is_active'] ?? true,
         minMembers: json['min_members'] ?? 10,
         isMember: json['is_member'] ?? false,
@@ -37,8 +34,7 @@ class HorizontalClub {
         'id': id,
         'name': name,
         'description': description,
-        'target_vertical': targetVertical,
-        'coordinator_user_id': coordinatorUserId,
+        'industries': industries,
         'is_active': isActive,
         'min_members': minMembers,
         'is_member': isMember,

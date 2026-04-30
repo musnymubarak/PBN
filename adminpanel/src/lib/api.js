@@ -161,4 +161,18 @@ export const api = {
     method: 'POST',
     body: JSON.stringify(body),
   }),
+
+  // Horizontal Clubs
+  listClubs: () => apiFetch('/horizontal-clubs'),
+  createClub: (body) => apiFetch('/admin/clubs', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  }),
+  updateClub: (id, body) => apiFetch(`/admin/clubs/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+  }),
+  deleteClub: (id) => apiFetch(`/admin/clubs/${id}`, {
+    method: 'DELETE',
+  }),
 };

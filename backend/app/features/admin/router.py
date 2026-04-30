@@ -18,11 +18,19 @@ from app.core.dependencies import get_db
 from app.core.response import success_response
 from app.features.auth.dependencies import require_role
 from app.features.admin import service
+from app.features.horizontal_clubs.schemas import HorizontalClubResponse
+from pydantic import BaseModel
 from app.models.user import User, UserRole
 
 router = APIRouter(tags=["Admin"])
 
 admin_req = require_role([UserRole.SUPER_ADMIN])
+
+class AdminClubCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    industry_ids: list[UUID]
+    min_members: int = 10
 
 
 @router.get("/admin/users", summary="List all users (paginated)")
@@ -143,3 +151,89 @@ async def list_all_referrals_endpoint(
 ) -> ORJSONResponse:
     result = await service.list_all_referrals(search, status, page, page_size, db)
     return success_response(data=result)
+
+
+class AdminClubUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    industry_ids: Optional[list[UUID]] = None
+    min_members: Optional[int] = None
+    is_active: Optional[bool] = None
+
+
+@router.post("/admin/clubs", summary="Create a new horizontal club")
+async def create_club_endpoint(
+    data: AdminClubCreate,
+    current_user: User = Depends(admin_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    from app.models.horizontal_clubs import HorizontalClub, HorizontalClubIndustry
+    club = HorizontalClub(
+        name=data.name,
+        description=data.description,
+        min_members=data.min_members,
+        is_active=True
+    )
+    db.add(club)
+    await db.flush()
+    
+    for ind_id in data.industry_ids:
+        db.add(HorizontalClubIndustry(club_id=club.id, industry_id=ind_id))
+    
+    await db.commit()
+    await db.refresh(club)
+    
+    return success_response(
+        data={"id": str(club.id), "name": club.name},
+        message="Horizontal Club created successfully"
+    )
+
+@router.patch("/admin/clubs/{club_id}", summary="Update an existing horizontal club")
+async def update_club_endpoint(
+    club_id: UUID,
+    data: AdminClubUpdate,
+    current_user: User = Depends(admin_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    from app.models.horizontal_clubs import HorizontalClub, HorizontalClubIndustry
+    from sqlalchemy.orm import selectinload
+    
+    stmt = select(HorizontalClub).where(HorizontalClub.id == club_id).options(selectinload(HorizontalClub.industries))
+    club = (await db.execute(stmt)).scalar_one_or_none()
+    
+    if not club:
+        return success_response(message="Club not found", status_code=404)
+        
+    if data.name is not None: club.name = data.name
+    if data.description is not None: club.description = data.description
+    if data.min_members is not None: club.min_members = data.min_members
+    if data.is_active is not None: club.is_active = data.is_active
+    
+    if data.industry_ids is not None:
+        # Clear existing and re-add
+        from sqlalchemy import delete
+        await db.execute(delete(HorizontalClubIndustry).where(HorizontalClubIndustry.club_id == club_id))
+        for ind_id in data.industry_ids:
+            db.add(HorizontalClubIndustry(club_id=club_id, industry_id=ind_id))
+            
+    await db.commit()
+    await db.refresh(club)
+    
+    return success_response(data={"id": str(club.id), "name": club.name}, message="Club updated successfully")
+
+
+@router.delete("/admin/clubs/{club_id}", summary="Delete a horizontal club")
+async def delete_club_endpoint(
+    club_id: UUID,
+    current_user: User = Depends(admin_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    from app.models.horizontal_clubs import HorizontalClub
+    stmt = select(HorizontalClub).where(HorizontalClub.id == club_id)
+    club = (await db.execute(stmt)).scalar_one_or_none()
+    
+    if club:
+        await db.delete(club)
+        await db.commit()
+        
+    return success_response(message="Club deleted successfully")

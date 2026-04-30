@@ -20,16 +20,16 @@ class HorizontalClub(Base, TimestampMixin):
 
     name: Mapped[str] = mapped_column(String(150), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    target_vertical: Mapped[str] = mapped_column(String(100), nullable=False) # e.g. "real_estate"
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    min_members: Mapped[int] = mapped_column(default=5, nullable=False) # Article 6.7
     coordinator_user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-    min_members: Mapped[int] = mapped_column(default=5, nullable=False) # Article 6.7
 
     # Relationships
     coordinator = relationship("User")
     memberships = relationship("HorizontalClubMembership", back_populates="club", cascade="all, delete-orphan")
+    industries = relationship("IndustryCategory", secondary="horizontal_club_industries")
 
     def __repr__(self) -> str:
         return f"<HorizontalClub {self.name}>"
@@ -56,3 +56,13 @@ class HorizontalClubMembership(Base, TimestampMixin):
 
     def __repr__(self) -> str:
         return f"<HorizontalClubMembership user={self.user_id} club={self.club_id}>"
+
+class HorizontalClubIndustry(Base):
+    __tablename__ = "horizontal_club_industries"
+
+    club_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("horizontal_clubs.id", ondelete="CASCADE"), primary_key=True
+    )
+    industry_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("industry_categories.id", ondelete="CASCADE"), primary_key=True
+    )

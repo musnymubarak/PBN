@@ -2,22 +2,21 @@ from uuid import UUID
 from typing import List, Dict, Any
 from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.horizontal_clubs import HorizontalClub, HorizontalClubMembership
 from app.models.memberships import ChapterMembership
-from app.models.industry_categories import IndustryCategory
 from app.core.exceptions import BadRequestException
+from sqlalchemy.orm import selectinload
+from app.models.horizontal_clubs import HorizontalClub, HorizontalClubMembership, HorizontalClubIndustry
 
 async def list_clubs(user_id: UUID, db: AsyncSession) -> List[Dict[str, Any]]:
-    # Get user's industries
+    # Get user's industry IDs from their chapter memberships
     industry_stmt = (
-        select(IndustryCategory.name)
-        .join(ChapterMembership, ChapterMembership.industry_category_id == IndustryCategory.id)
+        select(ChapterMembership.industry_category_id)
         .where(ChapterMembership.user_id == user_id, ChapterMembership.is_active == True)
     )
-    user_industries = (await db.execute(industry_stmt)).scalars().all()
+    user_industry_ids = (await db.execute(industry_stmt)).scalars().all()
 
-    # Get all active clubs
-    stmt = select(HorizontalClub).where(HorizontalClub.is_active == True)
+    # Get all active clubs with their allowed industries
+    stmt = select(HorizontalClub).where(HorizontalClub.is_active == True).options(selectinload(HorizontalClub.industries))
     result = await db.execute(stmt)
     clubs = result.scalars().all()
     
@@ -28,12 +27,15 @@ async def list_clubs(user_id: UUID, db: AsyncSession) -> List[Dict[str, Any]]:
     
     output = []
     for club in clubs:
-        is_eligible = any(club.target_vertical.lower() in ind.lower() or ind.lower() in club.target_vertical.lower() for ind in user_industries)
+        allowed_industry_ids = [i.id for i in club.industries]
+        is_eligible = any(uid in allowed_industry_ids for uid in user_industry_ids)
+        
         output.append({
             "id": str(club.id),
             "name": club.name,
             "description": club.description,
-            "target_vertical": club.target_vertical,
+            "industries": [i.name for i in club.industries],
+            "industry_ids": [str(i.id) for i in club.industries],
             "min_members": club.min_members,
             "is_active": club.is_active,
             "is_member": club.id in my_club_ids,
@@ -43,7 +45,7 @@ async def list_clubs(user_id: UUID, db: AsyncSession) -> List[Dict[str, Any]]:
 
 async def join_club(user_id: UUID, club_id: UUID, db: AsyncSession):
     # 1. Fetch Club Info
-    club_stmt = select(HorizontalClub).where(HorizontalClub.id == club_id)
+    club_stmt = select(HorizontalClub).where(HorizontalClub.id == club_id).options(selectinload(HorizontalClub.industries))
     club = (await db.execute(club_stmt)).scalar_one_or_none()
     if not club:
         raise BadRequestException("Club not found")
@@ -57,21 +59,18 @@ async def join_club(user_id: UUID, club_id: UUID, db: AsyncSession):
         return
 
     # 3. Validate Industry Vertical (Bylaws Art. 6.1)
-    # Get user's industries from their chapter memberships
     industry_stmt = (
-        select(IndustryCategory.name)
-        .join(ChapterMembership, ChapterMembership.industry_category_id == IndustryCategory.id)
+        select(ChapterMembership.industry_category_id)
         .where(ChapterMembership.user_id == user_id, ChapterMembership.is_active == True)
     )
-    user_industries = (await db.execute(industry_stmt)).scalars().all()
+    user_industry_ids = (await db.execute(industry_stmt)).scalars().all()
     
-    # We check if the club's target_vertical matches any of the user's industries
-    # Note: Using case-insensitive partial match or exact match depending on data cleanliness
-    match_found = any(club.target_vertical.lower() in ind.lower() or ind.lower() in club.target_vertical.lower() for ind in user_industries)
+    allowed_industry_ids = [i.id for i in club.industries]
+    match_found = any(uid in allowed_industry_ids for uid in user_industry_ids)
     
     if not match_found:
         raise BadRequestException(
-            f"You cannot join this club. Your industry ({', '.join(user_industries)}) does not match the club vertical ({club.target_vertical})."
+            f"You cannot join this club. Your business category does not match any of the allowed industries for this club."
         )
         
     membership = HorizontalClubMembership(user_id=user_id, club_id=club_id)

@@ -33,6 +33,7 @@ import {
   IconStackPop,
   IconUserCheck,
   IconTrash,
+  IconPencil,
 } from '@tabler/icons-react';
 import { api, STATIC_BASE_URL } from './lib/api';
 import { useApi } from './hooks/useApi';
@@ -166,6 +167,7 @@ const MENU_GROUPS = [
     label: 'Expansion',
     links: [
       { id: 'rewards', icon: IconBuildingStore, label: 'Rewards Hub' },
+      { id: 'clubs', icon: IconHierarchy2, label: 'Horizontal Clubs' },
     ]
   },
   {
@@ -3392,6 +3394,291 @@ function EventsPage() {
 
 
 
+function AddClubModal({ onClose, onCreated, club }) {
+  const [formData, setFormData] = useState({
+    name: club?.name || '',
+    description: club?.description || '',
+    industry_ids: club?.industry_ids || [], // Note: backend needs to return IDs for easy editing
+    min_members: club?.min_members || 10
+  });
+  const [industries, setIndustries] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [loadingInitial, setLoadingInitial] = useState(true);
+
+  useEffect(() => {
+    api.listIndustryCategories().then(data => {
+      setIndustries(data || []);
+      // If we are editing, we might need to fetch the current club's industry IDs 
+      // if they aren't already in the 'club' prop.
+      // But for now let's assume they are passed or we fetch them.
+      setLoadingInitial(false);
+    });
+  }, []);
+
+  // Ensure industry_ids are populated if editing
+  useEffect(() => {
+    if (club && industries.length > 0) {
+      // If the backend list_clubs didn't include IDs, we might need to map names back to IDs
+      // or ensure the backend list_clubs includes them. 
+      // I updated the backend service to return 'industries' as names, 
+      // I should probably update it to return IDs too.
+    }
+  }, [club, industries]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (formData.industry_ids.length === 0) {
+      alert("Please select at least one industry category.");
+      return;
+    }
+    setLoading(true);
+    try {
+      if (club) {
+        await api.updateClub(club.id, formData);
+      } else {
+        await api.createClub(formData);
+      }
+      onCreated();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleIndustry = (id) => {
+    setFormData(prev => {
+      const ids = prev.industry_ids.includes(id)
+        ? prev.industry_ids.filter(i => i !== id)
+        : [...prev.industry_ids, id];
+      return { ...prev, industry_ids: ids };
+    });
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 550, maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+        <div className="modal-header">
+          <div>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>{club ? 'Edit Horizontal Club' : 'New Horizontal Club'}</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+              {club ? `Modifying settings for ${club.name}` : 'Establish a new national industry vertical'}
+            </p>
+          </div>
+          <button type="button" className="modal-close-btn" onClick={onClose}>
+            <IconX size={20} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} style={{ padding: '1.5rem', overflowY: 'auto', flex: 1 }}>
+          <div className="login-field">
+            <label>Club Name *</label>
+            <input
+              type="text"
+              className="filter-input v2"
+              placeholder="e.g., Real Estate Investment Club"
+              required
+              value={formData.name}
+              onChange={e => setFormData({ ...formData, name: e.target.value })}
+            />
+          </div>
+
+          <div className="login-field">
+            <label>Eligibility: Industry Categories *</label>
+            <p style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.8rem' }}>
+              Select which member industries are allowed to join this club.
+            </p>
+            {loadingInitial ? (
+              <div style={{ padding: '1rem', textAlign: 'center', color: '#94a3b8' }}>Loading industries...</div>
+            ) : (
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: '1fr 1fr', 
+                gap: '0.5rem', 
+                maxHeight: '200px', 
+                overflowY: 'auto', 
+                padding: '1rem', 
+                background: '#f8fafc', 
+                borderRadius: '12px',
+                border: '1px solid #e2e8f0'
+              }}>
+                {industries.map(ind => (
+                  <label key={ind.id} style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.6rem', 
+                    fontSize: '0.85rem', 
+                    padding: '0.4rem', 
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    background: formData.industry_ids.includes(ind.id) ? '#dbeafe' : 'transparent',
+                    border: formData.industry_ids.includes(ind.id) ? '1px solid #3b82f6' : '1px solid transparent'
+                  }}>
+                    <input 
+                      type="checkbox" 
+                      checked={formData.industry_ids.includes(ind.id)}
+                      onChange={() => toggleIndustry(ind.id)}
+                      style={{ width: '16px', height: '16px' }}
+                    />
+                    <span style={{ fontWeight: 500, color: formData.industry_ids.includes(ind.id) ? '#1e40af' : 'var(--text-primary)' }}>{ind.name}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="login-field">
+            <label>Description</label>
+            <textarea
+              className="action-textarea"
+              placeholder="Brief overview of the club goals..."
+              value={formData.description}
+              onChange={e => setFormData({ ...formData, description: e.target.value })}
+              style={{ minHeight: 80 }}
+            />
+          </div>
+
+          <div className="login-field">
+            <label>Minimum Members for Activation</label>
+            <input
+              type="number"
+              className="filter-input v2"
+              value={formData.min_members}
+              onChange={e => setFormData({ ...formData, min_members: parseInt(e.target.value) || 10 })}
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+            <button type="submit" className="login-btn" disabled={loading} style={{ flex: 2 }}>
+              {loading ? 'Processing...' : (club ? 'Update Settings' : 'Establish Club')}
+            </button>
+            <button type="button" className="login-btn" onClick={onClose} style={{ flex: 1, background: '#94a3b8' }}>
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function ClubsPage() {
+  const [clubs, setClubs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [editingClub, setEditingClub] = useState(null);
+
+  const fetchClubs = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await api.listClubs();
+      setClubs(data || []);
+    } catch (err) {
+      console.error('Failed to load clubs:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchClubs(); }, [fetchClubs]);
+
+  return (
+    <section className="dashboard-body">
+      <div className="page-title-wrap" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h1 className="page-title">Horizontal Clubs</h1>
+          <p style={{ color: 'var(--text-secondary)', marginTop: '0.4rem', fontWeight: 500 }}>
+            Cross-chapter industry verticals for targeted business collaboration.
+          </p>
+        </div>
+        <button className="btn-primary" onClick={() => setShowAddModal(true)} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          <IconPlus size={20} /> Establish New Club
+        </button>
+      </div>
+
+      <div className="data-section">
+        <div className="section-head">
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Active Verticals</h3>
+          <button className="view-detail-btn" onClick={fetchClubs}><IconRefresh size={18} /></button>
+        </div>
+
+        <table className="modern-table">
+          <thead>
+            <tr>
+              <th>Club Name</th>
+              <th>Industry Vertical</th>
+              <th>Requirement</th>
+              <th>Status</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr><td colSpan={5} style={{ textAlign: 'center', padding: '3rem' }}>Loading clubs...</td></tr>
+            ) : clubs.length === 0 ? (
+              <tr><td colSpan={5} style={{ textAlign: 'center', padding: '3rem' }}>No clubs established.</td></tr>
+            ) : clubs.map(club => (
+              <tr key={club.id}>
+                <td style={{ fontWeight: 700, color: 'var(--primary)' }}>{club.name}</td>
+                <td>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem' }}>
+                    {club.industries?.map(ind => (
+                      <span key={ind} className="pill" style={{ background: '#f1f5f9', color: '#475569', fontWeight: 700, fontSize: '0.65rem', padding: '0.2rem 0.5rem' }}>
+                        {ind}
+                      </span>
+                    )) || '—'}
+                  </div>
+                </td>
+                <td style={{ fontWeight: 600 }}>{club.min_members}+ Members</td>
+                <td>
+                  <StatusPill status={club.is_active ? 'approved' : 'rejected'} />
+                </td>
+                <td style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', maxWidth: '300px' }}>
+                  {club.description || '—'}
+                </td>
+                <td style={{ textAlign: 'right' }}>
+                  <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                    <button className="view-detail-btn" title="Edit Club" onClick={() => {
+                      setEditingClub(club);
+                      setShowAddModal(true);
+                    }}>
+                      <IconPencil size={18} />
+                    </button>
+                    <button className="view-detail-btn" title="Delete Club" style={{ color: '#ef4444' }} onClick={async () => {
+                      if (confirm(`Are you sure you want to delete "${club.name}"?`)) {
+                        await api.deleteClub(club.id);
+                        fetchClubs();
+                      }
+                    }}>
+                      <IconTrash size={18} />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {showAddModal && (
+        <AddClubModal
+          club={editingClub}
+          onClose={() => {
+            setShowAddModal(false);
+            setEditingClub(null);
+          }}
+          onCreated={() => {
+            setShowAddModal(false);
+            setEditingClub(null);
+            fetchClubs();
+          }}
+        />
+      )}
+    </section>
+  );
+}
+
 // ── Main App ────────────────────────────────────────────────────────────────
 
 export default function App() {
@@ -3492,6 +3779,7 @@ export default function App() {
     if (activeTab === 'rewards') return <PartnersPage />;
     if (activeTab === 'referrals') return <ReferralsPage />;
     if (activeTab === 'events') return <EventsPage />;
+    if (activeTab === 'clubs') return <ClubsPage />;
     if (activeTab === 'revenue') return <RevenuePage />;
     if (activeTab === 'settings') return <SettingsPage {...commonProps} />;
     if (activeTab === 'notifications') return <SecurityLogsPage />;

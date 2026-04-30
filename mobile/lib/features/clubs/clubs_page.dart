@@ -157,7 +157,7 @@ class _ClubsPageState extends State<ClubsPage> {
                   children: [
                     Text(club.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppColors.text, letterSpacing: -0.3)),
                     const SizedBox(height: 4),
-                    Text(club.targetVertical, 
+                    Text(club.industries.join(', '), 
                       style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.primary, letterSpacing: 0.5)),
                   ],
                 ),
