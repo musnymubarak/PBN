@@ -175,4 +175,9 @@ export const api = {
   deleteClub: (id) => apiFetch(`/admin/clubs/${id}`, {
     method: 'DELETE',
   }),
+  listFees: () => apiFetch('/admin/fees'),
+  updateFee: (mType, body) => apiFetch(`/admin/fees/${mType}`, {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+  }),
 };

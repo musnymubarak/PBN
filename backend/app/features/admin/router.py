@@ -237,3 +237,42 @@ async def delete_club_endpoint(
         await db.commit()
         
     return success_response(message="Club deleted successfully")
+
+
+@router.get("/admin/fees", summary="List all active fee schedules")
+async def list_fees_endpoint(
+    current_user: User = Depends(admin_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    from app.models.memberships import FeeSchedule
+    stmt = select(FeeSchedule).where(FeeSchedule.is_active == True).order_by(FeeSchedule.membership_type)
+    results = (await db.execute(stmt)).scalars().all()
+    return success_response(data=[
+        {
+            "membership_type": f.membership_type.value,
+            "annual_fee": float(f.annual_fee),
+            "per_forum_fee": float(f.per_forum_fee),
+            "currency": f.currency
+        } for f in results
+    ])
+
+
+@router.patch("/admin/fees/{m_type}", summary="Update a fee schedule")
+async def update_fee_endpoint(
+    m_type: str,
+    payload: dict,
+    current_user: User = Depends(admin_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    from app.models.memberships import FeeSchedule
+    stmt = select(FeeSchedule).where(FeeSchedule.membership_type == m_type)
+    fee = (await db.execute(stmt)).scalar_one_or_none()
+    
+    if not fee:
+        return success_response(message="Fee schedule not found", status_code=404)
+        
+    if "annual_fee" in payload: fee.annual_fee = payload["annual_fee"]
+    if "per_forum_fee" in payload: fee.per_forum_fee = payload["per_forum_fee"]
+    
+    await db.commit()
+    return success_response(message=f"Fee for {m_type} updated successfully")

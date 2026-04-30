@@ -1027,6 +1027,7 @@ function CustomSelect({ label, value, options, onChange, style, disabledOptions 
 function UserEditModal({ user, onClose, onUpdate, chapters = [] }) {
   const [role, setRole] = useState(user.role);
   const [isActive, setIsActive] = useState(user.is_active);
+  const [membershipType, setMembershipType] = useState(user.membership_type || 'standard');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -1034,7 +1035,7 @@ function UserEditModal({ user, onClose, onUpdate, chapters = [] }) {
     e.preventDefault();
     setLoading(true);
     try {
-      await api.updateUser(user.id, { role, is_active: isActive });
+      await api.updateUser(user.id, { role, is_active: isActive, membership_type: membershipType });
       onUpdate();
       onClose();
     } catch (err) {
@@ -1095,6 +1096,22 @@ function UserEditModal({ user, onClose, onUpdate, chapters = [] }) {
                 { id: 'SUPER_ADMIN', name: 'Super Admin' }
               ]}
               onChange={setRole}
+            />
+          </div>
+
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>Membership Tier</label>
+            <CustomSelect
+              label="Select category..."
+              value={membershipType}
+              options={[
+                { id: 'founders_club', name: 'Founders Club Member' },
+                { id: 'standard', name: 'Standard Member' },
+                { id: 'associate', name: 'Associate Member' },
+                { id: 'corporate', name: 'Corporate Member' },
+                { id: 'charter', name: 'Charter Member' }
+              ]}
+              onChange={setMembershipType}
             />
           </div>
 
@@ -1290,6 +1307,11 @@ function MembersPage() {
                 <td>
                   <span style={{ fontSize: '0.85rem', fontWeight: 600, color: user.role === 'PROSPECT' ? '#f59e0b' : '#64748b' }}>
                     {user.role}
+                    {user.membership_type && user.membership_type !== 'standard' && (
+                      <span style={{ marginLeft: '6px', fontSize: '0.7rem', background: '#fef3c7', color: '#92400e', padding: '2px 6px', borderRadius: '4px' }}>
+                        {user.membership_type.replace('_', ' ').toUpperCase()}
+                      </span>
+                    )}
                   </span>
                 </td>
                 <td>
@@ -2289,8 +2311,56 @@ function ReferralsPage() {
   );
 }
 
+function EditFeeModal({ fee, onClose, onUpdate }) {
+  const [annual, setAnnual] = useState(fee.annual_fee);
+  const [forum, setForum] = useState(fee.per_forum_fee);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await api.updateFee(fee.membership_type, { annual_fee: annual, per_forum_fee: forum });
+      onUpdate();
+      onClose();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 400 }}>
+        <div className="modal-header">
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Edit {fee.membership_type.replace('_', ' ').toUpperCase()} Rate</h2>
+          <button type="button" className="modal-close-btn" onClick={onClose}>
+            <IconX size={20} />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} style={{ padding: '1.5rem' }}>
+          {error && <div className="login-error" style={{ marginBottom: '1rem' }}>{error}</div>}
+          <div className="login-field">
+            <label>Annual Fee (LKR)</label>
+            <input type="number" value={annual} onChange={e => setAnnual(e.target.value)} className="filter-input v2" required />
+          </div>
+          <div className="login-field">
+            <label>Per Forum Fee (LKR)</label>
+            <input type="number" value={forum} onChange={e => setForum(e.target.value)} className="filter-input v2" required />
+          </div>
+          <button type="submit" className="login-btn" disabled={loading}>
+            {loading ? 'Saving...' : 'Update Master Rate'}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 // ── Revenue Page ──────────────────────────────────────────────────────────
-function RevenuePage() {
+function RevenuePage({ onNavigateToGovernance }) {
   const { data: overview } = useApi(api.getAdminOverview, []);
   const { data: payments, loading: paymentsLoading } = useApi(api.listPayments, []);
 
@@ -2301,6 +2371,16 @@ function RevenuePage() {
         <p style={{ color: 'var(--text-secondary)', marginTop: '0.4rem', fontWeight: 500 }}>
           Financial health and network growth metrics.
         </p>
+      </div>
+
+      <div style={{ marginBottom: '2rem', padding: '1.5rem', background: '#f8fafc', borderRadius: '16px', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h3 style={{ fontWeight: 800, fontSize: '1rem' }}>Network Governance & Fees</h3>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '0.2rem' }}>Configure master rates for all membership tiers.</p>
+        </div>
+        <button className="btn-primary" onClick={onNavigateToGovernance} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.25rem', fontSize: '0.875rem' }}>
+          <IconSettings size={18} /> Manage Fee Schedules
+        </button>
       </div>
 
       <div className="stat-grid" style={{ marginBottom: '2rem' }}>
@@ -2338,6 +2418,87 @@ function RevenuePage() {
           </tbody>
         </table>
       </div>
+    </section>
+  );
+}
+
+function GovernancePage({ onBack }) {
+  const [fees, setFees] = useState([]);
+  const [editingFee, setEditingFee] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchFees = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await api.listFees();
+      setFees(data || []);
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { fetchFees(); }, [fetchFees]);
+
+  return (
+    <section className="dashboard-body">
+      <div className="page-title-wrap" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <button 
+            onClick={onBack}
+            style={{ border: 'none', background: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontWeight: 700, marginBottom: '0.75rem', cursor: 'pointer', padding: 0 }}
+          >
+            <IconChevronLeft size={18} /> Back to Revenue
+          </button>
+          <h1 className="page-title">Fee Governance</h1>
+          <p style={{ color: 'var(--text-secondary)', marginTop: '0.4rem', fontWeight: 500 }}>
+            Official master rates as per Bylaws Article 8.
+          </p>
+        </div>
+      </div>
+
+      <div className="data-section">
+        <div className="section-head">
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Master Rate Schedules</h3>
+        </div>
+        
+        {loading ? (
+          <div style={{ padding: '4rem', textAlign: 'center' }}>Loading governance data...</div>
+        ) : (
+          <div style={{ padding: '0 1.5rem 1.5rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
+              {fees.map(f => (
+                <div key={f.membership_type} className="fee-card" style={{ padding: '1.5rem', border: '1px solid #e2e8f0', borderRadius: '20px', background: 'white', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+                    <span className="id-badge" style={{ background: 'var(--primary)', color: 'white', fontWeight: 800, fontSize: '0.75rem', padding: '4px 10px' }}>
+                      {f.membership_type.toUpperCase()}
+                    </span>
+                    <button onClick={() => setEditingFee(f)} className="view-detail-btn" style={{ borderRadius: '50%', width: 36, height: 36, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <IconPencil size={18} />
+                    </button>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                    <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '12px' }}>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Annual Membership</span>
+                      <span style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--primary)', display: 'block', marginTop: '0.25rem' }}>{formatCurrency(f.annual_fee)}</span>
+                    </div>
+                    <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '12px' }}>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Per Forum Meeting</span>
+                      <span style={{ fontSize: '1.25rem', fontWeight: 800, display: 'block', marginTop: '0.25rem' }}>{formatCurrency(f.per_forum_fee)}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {editingFee && (
+        <EditFeeModal 
+          fee={editingFee} 
+          onClose={() => setEditingFee(null)} 
+          onUpdate={fetchFees} 
+        />
+      )}
     </section>
   );
 }
@@ -3780,7 +3941,8 @@ export default function App() {
     if (activeTab === 'referrals') return <ReferralsPage />;
     if (activeTab === 'events') return <EventsPage />;
     if (activeTab === 'clubs') return <ClubsPage />;
-    if (activeTab === 'revenue') return <RevenuePage />;
+    if (activeTab === 'revenue') return <RevenuePage onNavigateToGovernance={() => setActiveTab('governance')} />;
+    if (activeTab === 'governance') return <GovernancePage onBack={() => setActiveTab('revenue')} />;
     if (activeTab === 'settings') return <SettingsPage {...commonProps} />;
     if (activeTab === 'notifications') return <SecurityLogsPage />;
 

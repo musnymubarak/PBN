@@ -55,6 +55,7 @@ def _serialize_user(u: User, mask: bool = False, chapter_name: str | None = None
         "is_active": u.is_active,
         "chapter_name": chapter_name,
         "industry_name": industry_name,
+        "membership_type": u.membership_type if hasattr(u, 'membership_type') else None,
         "created_at": u.created_at.isoformat() if u.created_at else None,
     }
 
@@ -87,7 +88,12 @@ async def list_users(
     """List all users with optional filtering, search, and pagination."""
     # Use outer joins to include chapter and industry info if available
     stmt = (
-        select(User, Chapter.name.label("chapter_name"), IndustryCategory.name.label("industry_name"))
+        select(
+            User, 
+            Chapter.name.label("chapter_name"), 
+            IndustryCategory.name.label("industry_name"),
+            ChapterMembership.membership_type.label("membership_type")
+        )
         .outerjoin(ChapterMembership, (User.id == ChapterMembership.user_id) & (ChapterMembership.is_active == True))
         .outerjoin(Chapter, ChapterMembership.chapter_id == Chapter.id)
         .outerjoin(IndustryCategory, ChapterMembership.industry_category_id == IndustryCategory.id)
@@ -126,6 +132,10 @@ async def list_users(
         u = row[0]
         c_name = row[1]
         i_name = row[2]
+        m_type = row[3]
+        
+        # Attach membership_type to the user object temporarily for serialization
+        u.membership_type = m_type
         user_list.append(_serialize_user(u, chapter_name=c_name, industry_name=i_name))
 
     return {
@@ -220,6 +230,13 @@ async def update_user(
             update(ChapterMembership)
             .where(ChapterMembership.user_id == user_id)
             .values(is_active=data["is_active"])
+        )
+    
+    if "membership_type" in data:
+        await db.execute(
+            update(ChapterMembership)
+            .where(ChapterMembership.user_id == user_id)
+            .values(membership_type=data["membership_type"])
         )
 
     # Audit
