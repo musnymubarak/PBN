@@ -7,6 +7,7 @@ class HorizontalClub {
   final bool isActive;
   final int minMembers;
   final bool isMember;
+  final bool isEligible;
 
   HorizontalClub({
     required this.id,
@@ -17,6 +18,7 @@ class HorizontalClub {
     this.isActive = true,
     this.minMembers = 10,
     this.isMember = false,
+    this.isEligible = true,
   });
 
   factory HorizontalClub.fromJson(Map<String, dynamic> json) => HorizontalClub(
@@ -28,6 +30,7 @@ class HorizontalClub {
         isActive: json['is_active'] ?? true,
         minMembers: json['min_members'] ?? 10,
         isMember: json['is_member'] ?? false,
+        isEligible: json['is_eligible'] ?? true,
       );
 
   Map<String, dynamic> toJson() => {

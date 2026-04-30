@@ -59,9 +59,10 @@ async def get_all_members(db: AsyncSession, requester_id: UUID | None = None) ->
         is_same_chapter = chap.id in my_chapter_ids or str(user.id) == str(requester_id)
         
         member_data = {
-            "user_id": user.id,
+            "user_id": str(user.id),
             "full_name": user.full_name,
             "profile_photo": user.profile_photo,
+            "verification_level": user.verification_level.value if user.verification_level else None,
             "chapter_name": chap.name,
             "industry": ind.name,
             "is_same_chapter": is_same_chapter,
@@ -124,11 +125,12 @@ async def get_chapter_members(chapter_id: UUID, db: AsyncSession) -> List[Dict[s
     members = []
     for mem, user, ind, biz in rows:
         member_data = {
-            "user_id": user.id,
+            "user_id": str(user.id),
             "full_name": user.full_name,
             "email": user.email,
             "phone_number": user.phone_number,
             "profile_photo": user.profile_photo,
+            "verification_level": user.verification_level.value if user.verification_level else None,
             "chapter_name": chap.name,
             "membership_type": mem.membership_type,
             "start_date": mem.start_date,

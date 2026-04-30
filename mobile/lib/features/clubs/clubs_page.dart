@@ -121,7 +121,7 @@ class _ClubsPageState extends State<ClubsPage> {
           children: [
             Icon(TablerIcons.layers_off, size: 48, color: Colors.grey.shade300),
             const SizedBox(height: 12),
-            const Text('No clubs available yet', 
+            Text('No clubs available yet', 
               style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.w700)),
           ],
         ),
@@ -183,15 +183,15 @@ class _ClubsPageState extends State<ClubsPage> {
               Text('${club.minMembers}+ members required', 
                 style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.grey.shade400)),
               ElevatedButton(
-                onPressed: () => provider.toggleMembership(club),
+                onPressed: (club.isMember || club.isEligible) ? () => provider.toggleMembership(club) : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: club.isMember ? Colors.grey.shade100 : AppColors.primary,
-                  foregroundColor: club.isMember ? AppColors.text : Colors.white,
+                  backgroundColor: club.isMember ? Colors.grey.shade100 : (club.isEligible ? AppColors.primary : Colors.grey.shade200),
+                  foregroundColor: club.isMember ? AppColors.text : (club.isEligible ? Colors.white : Colors.grey.shade400),
                   elevation: 0,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 ),
-                child: Text(club.isMember ? 'Leave' : 'Join Club', 
+                child: Text(club.isMember ? 'Leave' : (club.isEligible ? 'Join Club' : 'Ineligible'), 
                   style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
               ),
             ],

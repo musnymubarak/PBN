@@ -739,6 +739,8 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
       ],
     );
+  }
+
   Widget _buildClubsQuickLink() {
     return GestureDetector(
       onTap: () => Navigator.pushNamed(context, '/clubs'),

@@ -142,6 +142,7 @@ def _register_routes(app: FastAPI) -> None:
     from app.features.notifications.router import router as notif_router
     from app.features.admin.router import router as admin_router
     from app.features.community.router import router as comm_router
+    from app.features.horizontal_clubs.router import router as club_router
     from fastapi.staticfiles import StaticFiles
     import os
 
@@ -161,6 +162,7 @@ def _register_routes(app: FastAPI) -> None:
     app.include_router(notif_router, prefix=settings.API_V1_PREFIX)
     app.include_router(admin_router, prefix=settings.API_V1_PREFIX)
     app.include_router(comm_router, prefix=settings.API_V1_PREFIX)
+    app.include_router(club_router, prefix=settings.API_V1_PREFIX)
 
     # ── Infrastructure Endpoints ─────────────────────────────────────────
     @app.get("/health", tags=["Infrastructure"])
