@@ -12,6 +12,7 @@ from fastapi.responses import ORJSONResponse
 import os
 import shutil
 import uuid
+import logging
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_db
@@ -33,6 +34,8 @@ from app.features.events.service import (
     update_event,
 )
 from app.models.user import User, UserRole
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["Events"])
 
