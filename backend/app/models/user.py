@@ -1,15 +1,17 @@
 """
 Prime Business Network – User Model.
 
-The User is the core identity entity. Authentication is phone+OTP only,
-no passwords. Roles control access across the platform.
+The User is the core identity entity. Roles control access across the platform.
+Verification levels reflect value generated through the ecosystem (Bylaws Article 9).
 """
 
 from __future__ import annotations
 
 import enum
+from datetime import datetime
+from decimal import Decimal
 
-from sqlalchemy import Boolean, Enum, String
+from sqlalchemy import Boolean, DateTime, Enum, String, Numeric
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -24,6 +26,20 @@ class UserRole(str, enum.Enum):
     PARTNER_ADMIN = "PARTNER_ADMIN"
     CHAPTER_ADMIN = "CHAPTER_ADMIN"
     SUPER_ADMIN = "SUPER_ADMIN"
+
+
+class VerificationLevel(str, enum.Enum):
+    """
+    Value-Based Membership Verification (Bylaws Article 9.2).
+
+    Tiers based on cumulative verified business value generated
+    through the PBN ecosystem within a membership year.
+    """
+    NONE = "none"
+    VERIFIED = "verified"       # LKR 25,000+  — membership investment returned
+    SILVER = "silver"           # LKR 1,000,000+
+    GOLD = "gold"               # LKR 2,500,000+
+    PLATINUM = "platinum"       # LKR 5,000,000+
 
 
 class User(Base, TimestampMixin):
@@ -64,5 +80,18 @@ class User(Base, TimestampMixin):
         JSONB, nullable=True, default=None
     )
 
+    # ── Value-Based Verification (Bylaws Article 9.2) ────────────────────
+    verification_level: Mapped[VerificationLevel] = mapped_column(
+        Enum(VerificationLevel, name="verification_level", create_type=True),
+        nullable=False,
+        default=VerificationLevel.NONE,
+    )
+    verification_updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, default=None
+    )
+    cumulative_value_generated: Mapped[Decimal] = mapped_column(
+        Numeric(precision=16, scale=2), nullable=False, default=Decimal("0.00")
+    )
+
     def __repr__(self) -> str:
-        return f"<User {self.phone_number} role={self.role.value}>"
+        return f"<User {self.phone_number} role={self.role.value} tier={self.verification_level.value}>"

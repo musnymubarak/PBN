@@ -254,10 +254,28 @@ class _ProfilePageState extends State<ProfilePage> {
                         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                           Text(user?.fullName ?? '', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
                           const SizedBox(height: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(8)),
-                            child: Text(user?.role.toUpperCase() ?? '', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1)),
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(8)),
+                                child: Text(user?.role.toUpperCase() ?? '', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1)),
+                              ),
+                              const SizedBox(width: 8),
+                              if (user?.verificationLevel != 'none')
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(color: _getVerificationColor(user?.verificationLevel).withOpacity(0.2), borderRadius: BorderRadius.circular(8), border: Border.all(color: _getVerificationColor(user?.verificationLevel).withOpacity(0.5))),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(TablerIcons.discount_check_filled, color: _getVerificationColor(user?.verificationLevel), size: 12),
+                                      const SizedBox(width: 4),
+                                      Text(user?.verificationLevel.toUpperCase() ?? '', style: TextStyle(color: _getVerificationColor(user?.verificationLevel), fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                                    ],
+                                  ),
+                                ),
+                            ],
                           ),
                         ])),
                         IconButton(
@@ -300,6 +318,8 @@ class _ProfilePageState extends State<ProfilePage> {
                       Text(m.chapter.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppColors.text, letterSpacing: -0.3)),
                       const SizedBox(height: 4),
                       Text(m.industryCategory.name, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+                      const SizedBox(height: 4),
+                      Text(m.membershipType.replaceAll('_', ' ').toUpperCase(), style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: AppColors.primary, letterSpacing: 0.5)),
                     ])),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -393,5 +413,15 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
       ],
     );
+  }
+
+  Color _getVerificationColor(String? level) {
+    switch (level?.toLowerCase()) {
+      case 'platinum': return const Color(0xFFE5E7EB);
+      case 'gold': return const Color(0xFFFACC15);
+      case 'silver': return const Color(0xFF94A3B8);
+      case 'verified': return const Color(0xFF3B82F6);
+      default: return Colors.transparent;
+    }
   }
 }

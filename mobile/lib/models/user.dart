@@ -10,6 +10,7 @@ class User {
   final String updatedAt;
   final bool mustChangePassword;
   final String? chapterId;
+  final String verificationLevel;
 
   User({
     required this.id,
@@ -23,6 +24,7 @@ class User {
     required this.updatedAt,
     required this.mustChangePassword,
     this.chapterId,
+    this.verificationLevel = 'none',
   });
 
   factory User.fromJson(Map<String, dynamic> json) => User(
@@ -37,6 +39,7 @@ class User {
         updatedAt: json['updated_at'] ?? '',
         mustChangePassword: json['must_change_password'] ?? false,
         chapterId: json['chapter_id'],
+        verificationLevel: json['verification_level'] ?? 'none',
       );
 
   String get initials {
@@ -57,6 +60,7 @@ class User {
     String? updatedAt,
     bool? mustChangePassword,
     String? chapterId,
+    String? verificationLevel,
   }) {
     return User(
       id: id ?? this.id,
@@ -70,6 +74,7 @@ class User {
       updatedAt: updatedAt ?? this.updatedAt,
       mustChangePassword: mustChangePassword ?? this.mustChangePassword,
       chapterId: chapterId ?? this.chapterId,
+      verificationLevel: verificationLevel ?? this.verificationLevel,
     );
   }
 }

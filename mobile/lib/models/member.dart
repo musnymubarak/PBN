@@ -8,33 +8,36 @@ class Member {
   final String? chapterName;
   final String? businessName;
   final String? companyName;
-  final bool isSameChapter;
-
-  Member({
-    required this.userId,
-    required this.fullName,
-    this.email,
-    this.phoneNumber,
-    this.profilePhoto,
-    required this.industryName,
-    this.chapterName,
-    this.businessName,
-    this.companyName,
-    this.isSameChapter = false,
-  });
-
-  factory Member.fromJson(Map<String, dynamic> json) => Member(
-        userId: json['user_id'] ?? '',
-        fullName: json['full_name'] ?? '',
-        email: json['email'],
-        phoneNumber: json['phone_number'],
-        profilePhoto: json['profile_photo'],
-        industryName: json['industry_category']?['name'] ?? 'Unknown',
-        chapterName: json['chapter_name'],
-        businessName: json['business']?['name'],
-        companyName: json['business']?['name'],
-        isSameChapter: json['is_same_chapter'] ?? false,
-      );
+   final bool isSameChapter;
+   final String verificationLevel;
+ 
+   Member({
+     required this.userId,
+     required this.fullName,
+     this.email,
+     this.phoneNumber,
+     this.profilePhoto,
+     required this.industryName,
+     this.chapterName,
+     this.businessName,
+     this.companyName,
+     this.isSameChapter = false,
+     this.verificationLevel = 'none',
+   });
+ 
+   factory Member.fromJson(Map<String, dynamic> json) => Member(
+         userId: json['user_id'] ?? '',
+         fullName: json['full_name'] ?? '',
+         email: json['email'],
+         phoneNumber: json['phone_number'],
+         profilePhoto: json['profile_photo'],
+         industryName: json['industry_category']?['name'] ?? 'Unknown',
+         chapterName: json['chapter_name'],
+         businessName: json['business']?['name'],
+         companyName: json['business']?['name'],
+         isSameChapter: json['is_same_chapter'] ?? false,
+         verificationLevel: json['verification_level'] ?? 'none',
+       );
 
   Map<String, dynamic> toJson() => {
         'user_id': userId,

@@ -69,7 +69,7 @@ class _CreateReferralPageState extends State<CreateReferralPage> {
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Referral submitted successfully!'), 
+          content: Text('Business opportunity submitted!'), 
           backgroundColor: Colors.green, 
           behavior: SnackBarBehavior.floating
         ));
@@ -102,7 +102,7 @@ class _CreateReferralPageState extends State<CreateReferralPage> {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'New Referral', 
+          'New Business Opportunity', 
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: -0.5)
         ),
         centerTitle: false,
@@ -128,7 +128,7 @@ class _CreateReferralPageState extends State<CreateReferralPage> {
                 _inputField(_leadEmailController, 'Email Address (Optional)', TablerIcons.mail, keyboardType: TextInputType.emailAddress),
                 
                 const SizedBox(height: 32),
-                _buildSectionLabel('Referral details'),
+                _buildSectionLabel('Opportunity details'),
                 _inputField(_descriptionController, 'Explain how the recipient can help this lead...', null, maxLines: 5),
                 
                 const SizedBox(height: 48),
@@ -145,7 +145,7 @@ class _CreateReferralPageState extends State<CreateReferralPage> {
                     child: Center(
                       child: _loading 
                         ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : const Text('SUBMIT REFERRAL', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: 1)),
+                        : const Text('SUBMIT OPPORTUNITY', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: 1)),
                     ),
                   ),
                 ),

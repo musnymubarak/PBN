@@ -15,7 +15,9 @@ from app.core.exceptions import BadRequestException, NotFoundException, Forbidde
 from app.features.notifications.service import send_push_notification
 from app.features.referrals.schemas import ReferralCreate, ReferralStatusUpdate
 from app.models.referrals import Referral, ReferralStatus, ReferralStatusHistory
-from app.models.user import User
+from app.models.user import User, VerificationLevel
+from decimal import Decimal
+from datetime import datetime
 
 
 async def _serialize_referral(ref: Referral) -> Dict[str, Any]:
@@ -174,8 +176,9 @@ async def update_referral_status(ref_id: UUID, data: ReferralStatusUpdate, actor
     if ref.status != data.status:
         ref.status = data.status
         
+    old_actual_value = ref.actual_value or Decimal("0.00")
     if data.actual_value is not None:
-        ref.actual_value = data.actual_value
+        ref.actual_value = Decimal(str(data.actual_value))
         
     history_msg = []
     if old_status != ref.status.value:
@@ -219,4 +222,52 @@ async def update_referral_status(ref_id: UUID, data: ReferralStatusUpdate, actor
         except Exception:
             pass
 
+    # ── Value-Based Verification Logic ──────────────────
+    delta = Decimal("0.00")
+    if ref.status == ReferralStatus.SUCCESS and old_status != ReferralStatus.SUCCESS.value:
+        # Transition TO Success: Add current actual value
+        delta = ref.actual_value or Decimal("0.00")
+    elif ref.status != ReferralStatus.SUCCESS and old_status == ReferralStatus.SUCCESS.value:
+        # Transition FROM Success (Reversal): Subtract old value
+        delta = -old_actual_value
+    elif ref.status == ReferralStatus.SUCCESS and old_status == ReferralStatus.SUCCESS.value:
+        # Value update within Success: Add the difference
+        delta = (ref.actual_value or Decimal("0.00")) - old_actual_value
+            
+    if delta != Decimal("0.00"):
+        await _update_member_verification(ref.from_member, delta, db)
+
     return await _serialize_referral(ref)
+
+
+async def _update_member_verification(user: User, delta_value: Decimal, db: AsyncSession):
+    """Update user's cumulative value and potentially promote to next verification tier."""
+    user.cumulative_value_generated += delta_value
+    
+    val = user.cumulative_value_generated
+    new_level = VerificationLevel.NONE
+    
+    if val >= 5000000:
+        new_level = VerificationLevel.PLATINUM
+    elif val >= 2500000:
+        new_level = VerificationLevel.GOLD
+    elif val >= 1000000:
+        new_level = VerificationLevel.SILVER
+    elif val >= 25000:
+        new_level = VerificationLevel.VERIFIED
+        
+    if new_level != user.verification_level:
+        user.verification_level = new_level
+        user.verification_updated_at = datetime.now()
+        
+        # Send Celebration Notification
+        try:
+            await send_push_notification(
+                user_id=user.id,
+                title="Level Up! 🏆",
+                body=f"Congratulations! You've reached {new_level.value.upper()} verification level for your contributions to the network.",
+                notification_type="VERIFICATION_UPGRADE",
+                data={"level": new_level.value, "route": "/profile"}
+            )
+        except Exception:
+            pass

@@ -5,6 +5,7 @@ import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/providers/auth_provider.dart';
 import 'package:pbn/core/providers/notification_provider.dart';
 import 'package:pbn/core/providers/member_provider.dart';
+import 'package:pbn/core/providers/club_provider.dart';
 import 'package:pbn/features/auth/login_page.dart';
 import 'package:pbn/features/auth/splash_page.dart';
 import 'package:pbn/features/dashboard/dashboard_page.dart';
@@ -23,6 +24,7 @@ import 'package:pbn/features/auth/onboarding_page.dart';
 import 'package:pbn/features/auth/force_change_password_page.dart';
 import 'package:pbn/features/auth/forgot_password_page.dart';
 import 'package:pbn/features/notifications/notification_settings_page.dart';
+import 'package:pbn/features/clubs/clubs_page.dart';
 import 'package:pbn/core/services/push_notification_service.dart';
 import 'package:pbn/core/services/prefs_service.dart';
 
@@ -51,6 +53,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
         ChangeNotifierProvider(create: (_) => MemberProvider()),
+        ChangeNotifierProvider(create: (_) => ClubProvider()),
       ],
       child: const PBNApp(),
     ),
@@ -89,6 +92,7 @@ class PBNApp extends StatelessWidget {
         '/force-change-password': (context) => const ForceChangePasswordPage(),
         '/notification-settings': (context) => const AuthGuard(child: NotificationSettingsPage()),
         '/forgot-password': (context) => const ForgotPasswordPage(),
+        '/clubs': (context) => const AuthGuard(child: ClubsPage()),
       },
     );
   }

@@ -20,16 +20,16 @@ class _ReferralDashboardPageState extends State<ReferralDashboardPage> {
   int _receivedCount = 0;
   int _sentCount = 0;
 
-  static const String _invitationText = '''Hi 👋, I’d like to introduce you to Prime Business Network (PBN) — a modern, technology-driven business referral platform that helps entrepreneurs grow through structured, measurable connections. It offers industry exclusivity (one member per category) and a digital system to track referrals and real business results.
+  static const String _invitationText = '''Hi 👋, I’d like to introduce you to Prime Business Network (PBN) — a modern, technology-driven business growth ecosystem that helps entrepreneurs grow through structured, measurable results. It offers industry exclusivity (one member per category) and a digital system to track business opportunities and real business results.
 
 Key Benefits:
 • Exclusive industry seat (only one member per category)
-• Consistent, high-quality referral opportunities
-• Digital tracking of referrals and ROI
+• Consistent, high-quality business creation flow
+• Digital tracking of business opportunities and ROI
 • Increased visibility among trusted professionals
 • Access to charter member benefits, events & training
 
-By joining, you become part of a strong ecosystem built on reliable partnerships and accountable referrals, helping your business scale with purpose. Learn more and secure your spot here: https://primebusiness.network/''';
+By joining, you become part of a strong ecosystem built on reliable partnerships and accountable business creation, helping your business scale with purpose. Learn more and secure your spot here: https://primebusiness.network/''';
 
   @override
   void initState() {
@@ -75,7 +75,7 @@ By joining, you become part of a strong ecosystem built on reliable partnerships
         elevation: 0,
         toolbarHeight: 60,
         title: const Text(
-          'Referrals Center', 
+          'Business Creation', 
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: -0.5)
         ),
         actions: const [
@@ -109,7 +109,7 @@ By joining, you become part of a strong ecosystem built on reliable partnerships
                     ),
                     child: Column(
                       children: [
-                        const Text('Total Network Referrals',
+                        const Text('Total Business Opportunities',
                             style: TextStyle(
                                 color: Colors.blueAccent,
                                 fontSize: 10,
@@ -139,7 +139,7 @@ By joining, you become part of a strong ecosystem built on reliable partnerships
                     children: [
                       _buildActionTile(
                         icon: TablerIcons.plus,
-                        label: 'New Referral',
+                        label: 'New Opportunity',
                         color: AppColors.primary,
                         onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateReferralPage())).then((_) => _loadStats()),
                       ),
@@ -147,7 +147,7 @@ By joining, you become part of a strong ecosystem built on reliable partnerships
                   ),
                   const SizedBox(height: 24),
 
-                  const Text('REFERRAL ACTIVITY',
+                  const Text('BUSINESS ACTIVITY',
                       style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w900,
@@ -157,7 +157,7 @@ By joining, you become part of a strong ecosystem built on reliable partnerships
 
                   // -- PERFORMANCE ROWS --
                   _buildTrackerCard(
-                    title: 'Received Referrals',
+                    title: 'Received Opportunities',
                     count: _receivedCount,
                     icon: TablerIcons.arrow_down_left,
                     color: const Color(0xFF15803D),
@@ -165,7 +165,7 @@ By joining, you become part of a strong ecosystem built on reliable partnerships
                   ),
                   const SizedBox(height: 12),
                   _buildTrackerCard(
-                    title: 'Sent Referrals',
+                    title: 'Given Opportunities',
                     count: _sentCount,
                     icon: TablerIcons.arrow_up_right,
                     color: const Color(0xFF0369A1),
@@ -293,7 +293,7 @@ By joining, you become part of a strong ecosystem built on reliable partnerships
                 children: [
                   Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppColors.text)),
                   const SizedBox(height: 4),
-                  Text('Track status and updates', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.textSecondary)),
+                  Text('Track business growth', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.textSecondary)),
                 ],
               ),
             ),
@@ -326,7 +326,7 @@ By joining, you become part of a strong ecosystem built on reliable partnerships
           ),
           const SizedBox(height: 16),
           Text(
-            'High referral flow helps you climb the leaderboard and unlock premium rewards. Always update the ROI once a referral is closed successfully.',
+            'High business creation flow helps you climb the leaderboard and unlock premium rewards. Always update the ROI once an opportunity is closed successfully.',
             style: TextStyle(fontSize: 13, height: 1.5, color: AppColors.primary.withOpacity(0.8), fontWeight: FontWeight.w500),
           ),
         ],

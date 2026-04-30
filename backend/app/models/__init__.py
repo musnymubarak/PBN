@@ -7,7 +7,9 @@ from app.models.chapters import Chapter  # noqa: F401
 from app.models.industry_categories import IndustryCategory  # noqa: F401
 from app.models.businesses import Business  # noqa: F401
 from app.models.applications import Application, ApplicationStatusHistory  # noqa: F401
-from app.models.memberships import ChapterMembership  # noqa: F401
+from app.models.memberships import ChapterMembership, FeeSchedule  # noqa: F401
+from app.models.horizontal_clubs import HorizontalClub, HorizontalClubMembership  # noqa: F401
+from app.models.designations import UserDesignation  # noqa: F401
 from app.models.referrals import Referral, ReferralStatusHistory  # noqa: F401
 from app.models.events import Event, EventRSVP, EventAttendance  # noqa: F401
 from app.models.privilege_cards import PrivilegeCard, Partner, Offer, OfferRedemption, RedemptionToken, CouponCode  # noqa: F401
@@ -23,7 +25,9 @@ __all__ = [
     "IndustryCategory",
     "Business",
     "Application", "ApplicationStatusHistory",
-    "ChapterMembership",
+    "ChapterMembership", "FeeSchedule",
+    "HorizontalClub", "HorizontalClubMembership",
+    "UserDesignation",
     "Referral", "ReferralStatusHistory",
     "Event", "EventRSVP", "EventAttendance",
     "PrivilegeCard", "Partner", "Offer", "OfferRedemption", "RedemptionToken", "CouponCode",

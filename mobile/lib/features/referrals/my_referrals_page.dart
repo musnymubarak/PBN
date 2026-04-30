@@ -40,7 +40,7 @@ class _MyReferralsPageState extends State<MyReferralsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final title = widget.isReceived ? 'Received Referrals' : 'Sent Referrals';
+    final title = widget.isReceived ? 'Received Opportunities' : 'Given Opportunities';
     
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -81,7 +81,7 @@ class _MyReferralsPageState extends State<MyReferralsPage> {
         Icon(TablerIcons.folder_off, size: 64, color: Colors.grey.shade300),
         const SizedBox(height: 16),
         Text(
-          widget.isReceived ? 'No referrals received yet' : 'No referrals sent yet',
+          widget.isReceived ? 'No business opportunities yet' : 'No opportunities given yet',
           style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.w700, fontSize: 15),
         ),
       ]),
@@ -319,7 +319,7 @@ class _ReferralDetailsSheetState extends State<_ReferralDetailsSheet> {
                        width: double.infinity,
                        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.grey.shade100)),
                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                         const Text('BUSINESS DESCRIPTION', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1.0)),
+                         const Text('OPPORTUNITY DESCRIPTION', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1.0)),
                          const SizedBox(height: 12),
                          Text(widget.referral.description!, style: const TextStyle(fontSize: 14, color: AppColors.text, height: 1.5, fontWeight: FontWeight.w500)),
                        ]),
@@ -328,11 +328,11 @@ class _ReferralDetailsSheetState extends State<_ReferralDetailsSheet> {
                   
                   if (widget.isReceived) ...[
                     const SizedBox(height: 32),
-                    const Text('UPDATE REFERRAL STATUS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1.5)),
+                    const Text('UPDATE BUSINESS STATUS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1.5)),
                     const SizedBox(height: 16),
                     _buildStatusGrid(),
                     const SizedBox(height: 24),
-                    _buildInputField('Enter ROI / Referral Value (Optional)', _roiController, TablerIcons.cash, keyboardType: TextInputType.number),
+                    _buildInputField('Enter ROI / Business Value (Optional)', _roiController, TablerIcons.cash, keyboardType: TextInputType.number),
                     const SizedBox(height: 12),
                     _buildInputField('Internal update notes...', _descriptionController, TablerIcons.edit, maxLines: 2),
                     const SizedBox(height: 32),

@@ -177,6 +177,8 @@ class _DashboardPageState extends State<DashboardPage> {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         children: [
           PrivilegeCardWidget(card: _card!),
+          const SizedBox(height: 12),
+          _buildClubsQuickLink(),
           const SizedBox(height: 16),
           
           // -- TRANSITIONING AD PANEL (SLIDER) --
@@ -204,7 +206,7 @@ class _DashboardPageState extends State<DashboardPage> {
           
           Column(children: [
             Row(children: [
-              Expanded(child: AspectRatio(aspectRatio: 1.586, child: StatCard(title: 'Sent', value: '${_data?.referrals.sentTotal ?? 0}', icon: TablerIcons.arrow_up_right, gradient: const [Color(0xFF3B82F6), Color(0xFF1D4ED8)]))),
+              Expanded(child: AspectRatio(aspectRatio: 1.586, child: StatCard(title: 'Business Sent', value: '${_data?.referrals.sentTotal ?? 0}', icon: TablerIcons.arrow_up_right, gradient: const [Color(0xFF3B82F6), Color(0xFF1D4ED8)]))),
               const SizedBox(width: 12),
               Expanded(child: AspectRatio(aspectRatio: 1.586, child: StatCard(title: 'Ratio', value: '${(_data?.referrals.conversionRate ?? 0).toStringAsFixed(0)}%', icon: TablerIcons.chart_pie, gradient: const [Color(0xFF10B981), Color(0xFF064E3B)]))),
             ]),
@@ -268,7 +270,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 ElevatedButton(
                   onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => CreateReferralPage())),
                   style: ElevatedButton.styleFrom(backgroundColor: AppColors.accent, foregroundColor: Colors.black, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8)),
-                  child: const Text('SUBMIT REFERRAL', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900)),
+                  child: const Text('SUBMIT OPPORTUNITY', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900)),
                 ),
               ])),
             ]),
@@ -551,7 +553,7 @@ class _DashboardPageState extends State<DashboardPage> {
             : [
                 const BottomNavigationBarItem(icon: Icon(TablerIcons.smart_home), label: 'Home'),
                 const BottomNavigationBarItem(icon: Icon(TablerIcons.users), label: 'Members'),
-                const BottomNavigationBarItem(icon: Icon(TablerIcons.briefcase), label: 'Referrals'),
+                const BottomNavigationBarItem(icon: Icon(TablerIcons.briefcase), label: 'Opportunities'),
                 const BottomNavigationBarItem(icon: Icon(TablerIcons.calendar_event), label: 'Meetings'),
                 const BottomNavigationBarItem(icon: Icon(TablerIcons.user_circle), label: 'Me'),
               ],
@@ -611,7 +613,7 @@ class _DashboardPageState extends State<DashboardPage> {
               children: [
                 const Icon(TablerIcons.trophy, color: AppColors.accent, size: 16),
                 const SizedBox(width: 8),
-                const Text('TOP CONNECTORS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF64748B), letterSpacing: 1.5)),
+                const Text('TOP OPPORTUNITY GENERATORS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF64748B), letterSpacing: 1.5)),
               ],
             ),
             GestureDetector(
@@ -736,6 +738,40 @@ class _DashboardPageState extends State<DashboardPage> {
           child: Text('$count Sent', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: color)),
         ),
       ],
+    );
+  Widget _buildClubsQuickLink() {
+    return GestureDetector(
+      onTap: () => Navigator.pushNamed(context, '/clubs'),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))],
+          border: Border.all(color: Colors.blue.withOpacity(0.1)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(color: Colors.blue.withOpacity(0.08), borderRadius: BorderRadius.circular(12)),
+              child: const Icon(TablerIcons.layers_linked, color: Colors.blue, size: 22),
+            ),
+            const SizedBox(width: 16),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Horizontal Clubs', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppColors.text, letterSpacing: -0.3)),
+                  SizedBox(height: 2),
+                  Text('Connect by industry across chapters', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+                ],
+              ),
+            ),
+            const Icon(TablerIcons.chevron_right, color: Colors.blue, size: 18),
+          ],
+        ),
+      ),
     );
   }
 }

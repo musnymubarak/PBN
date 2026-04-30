@@ -255,10 +255,23 @@ class _MembersPageState extends State<MembersPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(member.fullName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Color(0xFF0F172A), letterSpacing: -0.5)),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(member.fullName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Color(0xFF0F172A), letterSpacing: -0.5)),
+                      ),
+                      if (member.verificationLevel != 'none')
+                        Container(
+                          margin: const EdgeInsets.only(left: 8),
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(color: _getVerificationColor(member.verificationLevel).withOpacity(0.1), shape: BoxShape.circle),
+                          child: Icon(TablerIcons.discount_check_filled, color: _getVerificationColor(member.verificationLevel), size: 16),
+                        ),
+                    ],
+                  ),
                   const SizedBox(height: 4),
                   Text(member.company,
                       maxLines: 1,
@@ -540,7 +553,16 @@ class _MembersPageState extends State<MembersPage> {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    Text(member.fullName, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.text)),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(member.fullName, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.text)),
+                        if (member.verificationLevel != 'none') ...[
+                          const SizedBox(width: 8),
+                          Icon(TablerIcons.discount_check_filled, color: _getVerificationColor(member.verificationLevel), size: 20),
+                        ],
+                      ],
+                    ),
                     const SizedBox(height: 4),
                     Text(member.company, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.primary)),
                     const SizedBox(height: 24),
@@ -670,5 +692,14 @@ class _MembersPageState extends State<MembersPage> {
         elevation: 0,
       ),
     );
+  }
+  Color _getVerificationColor(String? level) {
+    switch (level?.toLowerCase()) {
+      case 'platinum': return const Color(0xFF94A3B8); // Platinum look
+      case 'gold': return const Color(0xFFFACC15);
+      case 'silver': return const Color(0xFF94A3B8);
+      case 'verified': return const Color(0xFF3B82F6);
+      default: return Colors.transparent;
+    }
   }
 }
