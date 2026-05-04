@@ -158,6 +158,12 @@ async def list_all_referrals_endpoint(
     return success_response(data=result)
 
 
+class AdminClubCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    industry_ids: list[UUID]
+    min_members: int = 10
+
 class AdminClubUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
@@ -317,10 +323,19 @@ async def admin_list_listings_endpoint(
             {
                 "id": str(l.id),
                 "title": l.title,
-                "seller_name": l.seller.full_name,
+                "description": l.description,
+                "price": float(l.price),
+                "member_price": float(l.member_price) if l.member_price else None,
+                "currency": l.currency,
+                "image_urls": l.image_urls,
+                "seller": {
+                    "full_name": l.seller.full_name,
+                    "business_name": getattr(l.seller, 'business_name', '—') # Assuming seller has business_name
+                },
                 "category": l.category.value,
                 "status": l.status.value,
                 "is_approved": l.is_approved,
+                "rejection_reason": l.rejection_reason,
                 "created_at": l.created_at.isoformat()
             } for l in results
         ],

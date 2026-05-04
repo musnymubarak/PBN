@@ -4065,8 +4065,8 @@ function MarketplacePage() {
                 <td>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     <div style={{ width: 48, height: 48, borderRadius: '8px', background: '#f8fafc', overflow: 'hidden', border: '1px solid #e2e8f0', flexShrink: 0 }}>
-                      {l.images && l.images.length > 0 ? (
-                        <img src={l.images[0].startsWith('http') ? l.images[0] : `${STATIC_BASE_URL}${l.images[0]}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      {l.image_urls && l.image_urls.length > 0 ? (
+                        <img src={l.image_urls[0].startsWith('http') ? l.image_urls[0] : `${STATIC_BASE_URL}${l.image_urls[0]}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       ) : (
                         <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
                           <IconBuildingStore size={20} />
@@ -4080,8 +4080,8 @@ function MarketplacePage() {
                   </div>
                 </td>
                 <td>
-                  <div style={{ fontWeight: 600 }}>{l.user?.full_name || 'Unknown'}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{l.user?.business_name || '—'}</div>
+                  <div style={{ fontWeight: 600 }}>{l.seller?.full_name || 'Unknown'}</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{l.seller?.business_name || '—'}</div>
                 </td>
                 <td>
                   <span className="pill" style={{ background: '#f1f5f9', color: '#475569', fontSize: '0.7rem' }}>
@@ -4105,6 +4105,9 @@ function MarketplacePage() {
                 <td style={{ textAlign: 'right' }}>
                   <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                     <button className="view-detail-btn" title="View Interests" onClick={() => viewInterests(l)}>
+                      <IconClipboardList size={18} />
+                    </button>
+                    <button className="view-detail-btn" title="View Full Details" onClick={() => setSelectedListing(l)}>
                       <IconEye size={18} />
                     </button>
                     {!l.is_approved ? (
@@ -4133,6 +4136,93 @@ function MarketplacePage() {
           </tbody>
         </table>
       </div>
+
+      {selectedListing && !showInterestsModal && !showRejectModal && (
+        <div className="modal-overlay" onClick={() => setSelectedListing(null)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 750 }}>
+            <div className="modal-header">
+              <div>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Listing Preview</h2>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Review all details before approval</p>
+              </div>
+              <button type="button" className="modal-close-btn" onClick={() => setSelectedListing(null)}>
+                <IconX size={20} />
+              </button>
+            </div>
+            
+            <div style={{ padding: '2rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+              {/* Left: Images */}
+              <div>
+                <div style={{ width: '100%', aspectRatio: '1/1', borderRadius: '12px', overflow: 'hidden', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                  {selectedListing.image_urls && selectedListing.image_urls.length > 0 ? (
+                    <img 
+                      src={selectedListing.image_urls[0].startsWith('http') ? selectedListing.image_urls[0] : `${STATIC_BASE_URL}${selectedListing.image_urls[0]}`} 
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                    />
+                  ) : (
+                    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#cbd5e1' }}>
+                      <IconBuildingStore size={48} />
+                    </div>
+                  )}
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem', overflowX: 'auto' }}>
+                  {selectedListing.image_urls?.map((url, i) => (
+                    <div key={i} style={{ width: 60, height: 60, borderRadius: '8px', overflow: 'hidden', border: '1px solid #e2e8f0', flexShrink: 0 }}>
+                      <img src={url.startsWith('http') ? url : `${STATIC_BASE_URL}${url}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right: Info */}
+              <div>
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <span className="pill" style={{ marginBottom: '0.5rem', background: '#f1f5f9' }}>{selectedListing.category}</span>
+                  <h3 style={{ fontSize: '1.5rem', fontWeight: 800 }}>{selectedListing.title}</h3>
+                  <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: '0.5rem', lineHeight: 1.6 }}>{selectedListing.description}</p>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+                  <div style={{ padding: '1rem', background: '#f8fafc', borderRadius: '12px' }}>
+                    <p style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Regular Price</p>
+                    <p style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)' }}>{formatCurrency(selectedListing.price)}</p>
+                  </div>
+                  <div style={{ padding: '1rem', background: '#ecfdf5', borderRadius: '12px' }}>
+                    <p style={{ fontSize: '0.75rem', color: '#059669', fontWeight: 700, textTransform: 'uppercase' }}>Member Price</p>
+                    <p style={{ fontSize: '1.25rem', fontWeight: 800, color: '#059669' }}>{selectedListing.member_price ? formatCurrency(selectedListing.member_price) : 'N/A'}</p>
+                  </div>
+                </div>
+
+                <div style={{ padding: '1rem', background: '#f1f5f9', borderRadius: '12px', marginBottom: '2rem' }}>
+                  <p style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem' }}>Seller Information</p>
+                  <p style={{ fontWeight: 700 }}>{selectedListing.seller?.full_name}</p>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{selectedListing.seller?.business_name}</p>
+                </div>
+
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  {!selectedListing.is_approved ? (
+                    <button 
+                      className="btn-primary" 
+                      style={{ flex: 1, background: '#059669' }} 
+                      onClick={() => { handleApprove(selectedListing.id); setSelectedListing(null); }}
+                    >
+                      <IconCheck size={18} /> Approve Listing
+                    </button>
+                  ) : (
+                    <button 
+                      className="btn-primary" 
+                      style={{ flex: 1, background: '#ef4444' }} 
+                      onClick={() => { setShowRejectModal(true); }}
+                    >
+                      <IconX size={18} /> Reject Listing
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showInterestsModal && (
         <div className="modal-overlay" onClick={() => setShowInterestsModal(false)}>
