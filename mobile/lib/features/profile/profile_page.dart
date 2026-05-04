@@ -179,20 +179,12 @@ class _ProfilePageState extends State<ProfilePage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        toolbarHeight: 70,
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(height: 4),
-            Text('Profile', 
-              style: TextStyle(
-                fontSize: 22, 
-                fontWeight: FontWeight.w900, 
-                color: AppColors.text,
-                letterSpacing: -0.5
-              )
-            ),
-          ],
+        backgroundColor: Colors.white,
+        elevation: 0,
+        toolbarHeight: 60,
+        title: const Text(
+          'Profile', 
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: -0.5)
         ),
         actions: const [
           PbnAppBarActions(),

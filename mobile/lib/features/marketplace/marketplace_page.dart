@@ -93,19 +93,12 @@ class _MarketplacePageState extends State<MarketplacePage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        toolbarHeight: 80,
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Marketplace',
-                style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.text,
-                    letterSpacing: -0.5)),
-            Text('Exclusive Member Deals',
-                style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w600)),
-          ],
+        backgroundColor: Colors.white,
+        elevation: 0,
+        toolbarHeight: 60,
+        title: const Text(
+          'Marketplace',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: -0.5)
         ),
         actions: [
           IconButton(

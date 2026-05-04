@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:pbn/core/constants/app_colors.dart';
+import 'package:pbn/core/widgets/pbn_app_bar_actions.dart';
 import 'package:pbn/features/matchmaking/ai_matches_view.dart';
 import 'package:pbn/features/referrals/referral_dashboard_page.dart';
 
@@ -31,7 +32,16 @@ class _MatchmakingDashboardPageState extends State<MatchmakingDashboardPage> wit
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('OPPORTUNITIES', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        toolbarHeight: 60,
+        title: const Text(
+          'Opportunities', 
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: -0.5)
+        ),
+        actions: const [
+          PbnAppBarActions(),
+        ],
         bottom: TabBar(
           controller: _tabController,
           labelColor: AppColors.primary,

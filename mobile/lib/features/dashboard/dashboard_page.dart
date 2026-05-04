@@ -152,13 +152,12 @@ class _DashboardPageState extends State<DashboardPage> {
     final auth = context.watch<AuthProvider>();
     final notifs = context.watch<NotificationProvider>();
     return AppBar(
-      toolbarHeight: 70,
-      title: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 4),
-          Text('Welcome, ${auth.user?.fullName.split(' ').first ?? 'Member'}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.text, letterSpacing: -0.5)),
-        ],
+      backgroundColor: Colors.white,
+      elevation: 0,
+      toolbarHeight: 60,
+      title: Text(
+        'Welcome, ${auth.user?.fullName.split(' ').first ?? 'Member'}', 
+        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: -0.5)
       ),
       actions: const [
         PbnAppBarActions(),
