@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:pbn/core/widgets/cached_avatar.dart';
 import 'package:provider/provider.dart';
 import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/constants/api_config.dart';
@@ -218,36 +219,10 @@ class _MembersPageState extends State<MembersPage> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             // Avatar
-            Container(
-              width: 70,
-              height: 70,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.grey.shade100, width: 2),
-                boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(35),
-                child: CachedNetworkImage(
-                  imageUrl: (member.profilePhoto != null && member.profilePhoto!.isNotEmpty)
-                      ? '${ApiConfig.baseUrl.replaceAll('/api/v1', '')}${member.profilePhoto}'
-                      : '',
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(
-                    color: Colors.grey.shade50,
-                    child: const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
-                  ),
-                  errorWidget: (context, url, error) => Container(
-                    color: const Color(0xFF1E3A8A).withOpacity(0.1),
-                    child: Center(
-                      child: Text(member.initials,
-                          style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF1E3A8A), fontSize: 20)),
-                    ),
-                  ),
-                ),
-              ),
+            CachedAvatar(
+              imageUrl: member.profilePhoto,
+              initials: member.initials,
+              size: 70,
             ),
             const SizedBox(width: 18),
             // Info
@@ -532,25 +507,11 @@ class _MembersPageState extends State<MembersPage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     // Profile Photo
-                    Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.primary, width: 3),
-                        boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.2), blurRadius: 20)],
-                      ),
-                      child: ClipOval(
-                        child: CachedNetworkImage(
-                          imageUrl: (member.profilePhoto != null && member.profilePhoto!.isNotEmpty)
-                              ? '${ApiConfig.baseUrl.replaceAll('/api/v1', '')}${member.profilePhoto}'
-                              : '',
-                          fit: BoxFit.cover,
-                          errorWidget: (context, url, error) => Center(
-                            child: Text(member.initials, style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: AppColors.primary)),
-                          ),
-                        ),
-                      ),
+                    CachedAvatar(
+                      imageUrl: member.profilePhoto,
+                      initials: member.initials,
+                      size: 120,
+                      fontSize: 40,
                     ),
                     const SizedBox(height: 24),
                     Row(

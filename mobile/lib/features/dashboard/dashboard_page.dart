@@ -18,6 +18,7 @@ import 'package:pbn/core/widgets/pbn_app_bar_actions.dart';
 import 'package:pbn/models/dashboard_data.dart';
 import 'package:pbn/models/reward.dart';
 import 'package:pbn/core/widgets/privilege_card_widget.dart';
+import 'package:pbn/core/widgets/cached_avatar.dart';
 import 'package:pbn/features/members/members_page.dart';
 import 'package:pbn/features/referrals/my_referrals_page.dart';
 import 'package:pbn/features/referrals/create_referral_page.dart';
@@ -698,20 +699,13 @@ class _DashboardPageState extends State<DashboardPage> {
                   ],
                 ),
               ),
-            Container(
-              width: size, height: size,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: hasPhoto ? Colors.transparent : color.withOpacity(0.15),
-                border: Border.all(color: color.withOpacity(0.8), width: rank == 1 ? 3 : 2),
-                image: hasPhoto ? DecorationImage(
-                  image: NetworkImage(imageUrl),
-                  fit: BoxFit.cover,
-                ) : null,
-              ),
-              child: hasPhoto ? null : Center(
-                child: Text(initials, style: TextStyle(color: color, fontSize: rank == 1 ? 24 : 18, fontWeight: FontWeight.w900)),
-              ),
+            CachedAvatar(
+              imageUrl: profilePhoto,
+              initials: initials,
+              size: size,
+              backgroundColor: color.withOpacity(0.15),
+              textColor: color,
+              fontSize: rank == 1 ? 24 : 18,
             ),
             Positioned(
               bottom: -4,

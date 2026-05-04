@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/constants/api_config.dart';
+import 'package:pbn/core/widgets/cached_avatar.dart';
 import 'package:pbn/core/providers/auth_provider.dart';
 import 'package:pbn/core/services/community_service.dart';
 import 'package:pbn/models/community.dart';
@@ -818,22 +819,10 @@ class _PostCardState extends State<_PostCard> {
   }
 
   Widget _buildAvatar(PostAuthor author) {
-    final hasPhoto = author.profilePhoto != null && author.profilePhoto!.isNotEmpty;
-    final imageUrl = hasPhoto ? '${ApiConfig.baseUrl.replaceAll('/api/v1', '')}${author.profilePhoto}' : '';
-    
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: AppColors.primary.withOpacity(0.1),
-        border: Border.all(color: AppColors.primary.withOpacity(0.2), width: 1.5),
-        image: hasPhoto ? DecorationImage(image: NetworkImage(imageUrl), fit: BoxFit.cover) : null,
-      ),
-      child: hasPhoto ? null : Center(
-        child: Text(author.fullName.substring(0, 1).toUpperCase(), 
-          style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w900)),
-      ),
+    return CachedAvatar(
+      imageUrl: author.profilePhoto,
+      initials: author.fullName.substring(0, 1).toUpperCase(),
+      size: 40,
     );
   }
 
@@ -1103,12 +1092,11 @@ class _CommentSheetState extends State<_CommentSheet> {
   }
 
   Widget _buildTinyAvatar(PostAuthor author) {
-    final hasPhoto = author.profilePhoto != null && author.profilePhoto!.isNotEmpty;
-    final imageUrl = hasPhoto ? '${ApiConfig.baseUrl.replaceAll('/api/v1', '')}${author.profilePhoto}' : '';
-    return Container(
-      width: 32, height: 32,
-      decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.primary.withOpacity(0.05), image: hasPhoto ? DecorationImage(image: NetworkImage(imageUrl), fit: BoxFit.cover) : null),
-      child: hasPhoto ? null : Center(child: Text(author.fullName.substring(0, 1).toUpperCase(), style: const TextStyle(color: AppColors.primary, fontSize: 10, fontWeight: FontWeight.w900))),
+    return CachedAvatar(
+      imageUrl: author.profilePhoto,
+      initials: author.fullName.substring(0, 1).toUpperCase(),
+      size: 32,
+      fontSize: 10,
     );
   }
 

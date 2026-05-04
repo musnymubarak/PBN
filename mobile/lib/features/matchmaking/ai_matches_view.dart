@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/constants/api_config.dart';
+import 'package:pbn/core/widgets/cached_avatar.dart';
 import 'package:pbn/core/services/matchmaking_service.dart';
 import 'package:pbn/models/matchmaking.dart';
 
@@ -133,8 +134,6 @@ class _AiMatchesViewState extends State<AiMatchesView> {
   }
 
   Widget _buildMatchCard(MatchSuggestion match) {
-    final hasPhoto = match.matchedUserPhoto != null && match.matchedUserPhoto!.isNotEmpty;
-    final imageUrl = hasPhoto ? '${ApiConfig.baseUrl.replaceAll('/api/v1', '')}${match.matchedUserPhoto}' : '';
     final percentage = (match.score * 100).toInt();
 
     return Container(
@@ -151,7 +150,11 @@ class _AiMatchesViewState extends State<AiMatchesView> {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                _buildAvatar(match.matchedUserName ?? '?', imageUrl, hasPhoto),
+                CachedAvatar(
+                  imageUrl: match.matchedUserPhoto,
+                  initials: (match.matchedUserName ?? '?')[0].toUpperCase(),
+                  size: 50,
+                ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
@@ -204,17 +207,7 @@ class _AiMatchesViewState extends State<AiMatchesView> {
     );
   }
 
-  Widget _buildAvatar(String name, String url, bool hasPhoto) {
-    return Container(
-      width: 50, height: 50,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: AppColors.primary.withOpacity(0.1),
-        image: hasPhoto ? DecorationImage(image: NetworkImage(url), fit: BoxFit.cover) : null,
-      ),
-      child: hasPhoto ? null : Center(child: Text(name[0].toUpperCase(), style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w900, fontSize: 18))),
-    );
-  }
+
 
   void _showMatchDetails(MatchSuggestion match) {
     showModalBottomSheet(

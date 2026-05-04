@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/services/matchmaking_service.dart';
+import 'package:pbn/core/services/application_service.dart';
 import 'package:pbn/models/matchmaking.dart';
+import 'package:pbn/models/chapter.dart';
 
 class BusinessMatchingProfilePage extends StatefulWidget {
   const BusinessMatchingProfilePage({super.key});
@@ -13,10 +15,14 @@ class BusinessMatchingProfilePage extends StatefulWidget {
 
 class _BusinessMatchingProfilePageState extends State<BusinessMatchingProfilePage> {
   final _service = MatchmakingService();
+  final _appService = ApplicationService();
+  
   final _descriptionCtrl = TextEditingController();
   final _servicesCtrl = TextEditingController();
   final _lookingForCtrl = TextEditingController();
-  final _sectorsCtrl = TextEditingController();
+  
+  List<IndustryCategory> _allIndustries = [];
+  List<String> _selectedIndustries = [];
   
   bool _loading = true;
   bool _saving = false;
@@ -24,18 +30,26 @@ class _BusinessMatchingProfilePageState extends State<BusinessMatchingProfilePag
   @override
   void initState() {
     super.initState();
-    _loadProfile();
+    _loadData();
   }
 
-  Future<void> _loadProfile() async {
+  Future<void> _loadData() async {
     try {
-      final profile = await _service.getProfile();
+      final results = await Future.wait([
+        _service.getProfile(),
+        _appService.getIndustryCategories(),
+      ]);
+      
+      final profile = results[0] as MatchingProfile;
+      final industries = results[1] as List<IndustryCategory>;
+      
       if (mounted) {
         setState(() {
           _descriptionCtrl.text = profile.businessDescription ?? '';
           _servicesCtrl.text = profile.servicesOffered.join(', ');
           _lookingForCtrl.text = profile.lookingFor.join(', ');
-          _sectorsCtrl.text = profile.targetSectors.join(', ');
+          _selectedIndustries = List<String>.from(profile.targetSectors);
+          _allIndustries = industries;
           _loading = false;
         });
       }
@@ -51,7 +65,7 @@ class _BusinessMatchingProfilePageState extends State<BusinessMatchingProfilePag
         'business_description': _descriptionCtrl.text.trim(),
         'services_offered': _servicesCtrl.text.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList(),
         'looking_for': _lookingForCtrl.text.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList(),
-        'target_sectors': _sectorsCtrl.text.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList(),
+        'target_sectors': _selectedIndustries,
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Matching profile updated!')));
@@ -107,11 +121,7 @@ class _BusinessMatchingProfilePageState extends State<BusinessMatchingProfilePag
                 controller: _lookingForCtrl,
               ),
               const SizedBox(height: 24),
-              _buildField(
-                label: 'TARGET SECTORS',
-                hint: 'e.g. Real Estate, Healthcare (comma separated)',
-                controller: _sectorsCtrl,
-              ),
+              _buildIndustrySelector(),
               const SizedBox(height: 40),
               const Text(
                 'Tip: The more specific you are, the better our AI can find compatible partners for you.',
@@ -157,6 +167,48 @@ class _BusinessMatchingProfilePageState extends State<BusinessMatchingProfilePag
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
             contentPadding: const EdgeInsets.all(20),
           ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildIndustrySelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('TARGET INDUSTRIES', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1)),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: _allIndustries.map((industry) {
+            final isSelected = _selectedIndustries.contains(industry.name);
+            return FilterChip(
+              label: Text(industry.name),
+              selected: isSelected,
+              onSelected: (selected) {
+                setState(() {
+                  if (selected) {
+                    _selectedIndustries.add(industry.name);
+                  } else {
+                    _selectedIndustries.remove(industry.name);
+                  }
+                });
+              },
+              backgroundColor: Colors.white,
+              selectedColor: AppColors.primary.withOpacity(0.2),
+              checkmarkColor: AppColors.primary,
+              labelStyle: TextStyle(
+                color: isSelected ? AppColors.primary : AppColors.text,
+                fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
+                fontSize: 12,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(color: isSelected ? AppColors.primary : Colors.grey.shade200),
+              ),
+            );
+          }).toList(),
         ),
       ],
     );
