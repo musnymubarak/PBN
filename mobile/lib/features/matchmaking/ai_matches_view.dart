@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/constants/api_config.dart';
+import 'package:provider/provider.dart';
+import 'package:pbn/core/providers/member_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:pbn/core/widgets/cached_avatar.dart';
 import 'package:pbn/core/services/matchmaking_service.dart';
 import 'package:pbn/models/matchmaking.dart';
@@ -194,7 +197,7 @@ class _AiMatchesViewState extends State<AiMatchesView> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () {}, // TODO: Connect logic
+                    onPressed: () => _handleConnect(match),
                     style: ElevatedButton.styleFrom(elevation: 0, padding: const EdgeInsets.symmetric(vertical: 10)),
                     child: const Text('CONNECT', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12)),
                   ),
@@ -215,6 +218,75 @@ class _AiMatchesViewState extends State<AiMatchesView> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => _MatchDetailSheet(match: match, service: _service),
+    );
+  }
+
+  void _handleConnect(MatchSuggestion match) {
+    final memberProvider = Provider.of<MemberProvider>(context, listen: false);
+    final member = memberProvider.members.where((m) => m.userId == match.matchedUserId).firstOrNull;
+
+    if (member == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Member details not found in directory.')),
+      );
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
+      builder: (context) => SingleChildScrollView(
+        child: Container(
+          padding: EdgeInsets.fromLTRB(30, 30, 30, 30 + MediaQuery.of(context).padding.bottom),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CachedAvatar(imageUrl: member.profilePhoto, initials: member.initials, size: 80),
+              const SizedBox(height: 16),
+              Text(member.fullName, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+              Text(member.company, style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 30),
+              Row(
+                children: [
+                  _contactCircle(TablerIcons.phone, "Call", Colors.blue, () {
+                    if (member.phoneNumber != null) launchUrl(Uri.parse('tel:${member.phoneNumber}'));
+                  }),
+                  _contactCircle(TablerIcons.brand_whatsapp, "WhatsApp", Colors.green, () {
+                    if (member.phoneNumber != null) {
+                      final phone = member.phoneNumber!.replaceAll(RegExp(r'\D'), '');
+                      launchUrl(Uri.parse('https://wa.me/$phone'), mode: LaunchMode.externalApplication);
+                    }
+                  }),
+                  _contactCircle(TablerIcons.mail, "Email", Colors.red, () {
+                    if (member.email != null) launchUrl(Uri.parse('mailto:${member.email}'));
+                  }),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _contactCircle(IconData icon, String label, Color color, VoidCallback onTap) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
+              child: Icon(icon, color: color, size: 28),
+            ),
+            const SizedBox(height: 8),
+            Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+          ],
+        ),
+      ),
     );
   }
 }
