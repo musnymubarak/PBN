@@ -56,6 +56,8 @@ class MarketplaceListing(Base, TimestampMixin):
     # Media & Display
     image_urls: Mapped[List[str]] = mapped_column(JSONB, default=list, nullable=False)
     is_featured: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    is_approved: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    rejection_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[ListingStatus] = mapped_column(
         Enum(ListingStatus), default=ListingStatus.ACTIVE, nullable=False, index=True
     )

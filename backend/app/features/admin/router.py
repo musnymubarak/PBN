@@ -9,28 +9,33 @@ from __future__ import annotations
 from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, BackgroundTasks
 from fastapi.responses import ORJSONResponse
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_db
 from app.core.response import success_response
 from app.features.auth.dependencies import require_role
 from app.features.admin import service
-from app.features.horizontal_clubs.schemas import HorizontalClubResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from app.models.user import User, UserRole
+from app.models.marketplace import MarketplaceListing, ListingStatus
+from app.features.matchmaking.tasks import process_new_marketplace_listing
 
 router = APIRouter(tags=["Admin"])
 
 admin_req = require_role([UserRole.SUPER_ADMIN])
 
-class AdminClubCreate(BaseModel):
-    name: str
+class AdminClubUpdate(BaseModel):
+    name: Optional[str] = None
     description: Optional[str] = None
-    industry_ids: list[UUID]
-    min_members: int = 10
+    industry_ids: Optional[list[UUID]] = None
+    min_members: Optional[int] = None
+    is_active: Optional[bool] = None
+
+class MarketplaceRejectRequest(BaseModel):
+    reason: str = Field(..., min_length=5)
 
 
 @router.get("/admin/users", summary="List all users (paginated)")
@@ -276,3 +281,92 @@ async def update_fee_endpoint(
     
     await db.commit()
     return success_response(message=f"Fee for {m_type} updated successfully")
+
+
+@router.get("/admin/marketplace/listings", summary="List all marketplace listings for moderation")
+async def admin_list_listings_endpoint(
+    status: Optional[str] = Query(None),
+    is_approved: Optional[bool] = Query(None),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    current_user: User = Depends(admin_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    from sqlalchemy import desc
+    from sqlalchemy.orm import joinedload
+    stmt = select(MarketplaceListing).options(
+        joinedload(MarketplaceListing.seller),
+        joinedload(MarketplaceListing.industry)
+    ).order_by(desc(MarketplaceListing.created_at))
+
+    if status:
+        stmt = stmt.where(MarketplaceListing.status == status)
+    if is_approved is not None:
+        stmt = stmt.where(MarketplaceListing.is_approved == is_approved)
+
+    # Count
+    count_stmt = select(func.count(1)).select_from(stmt.subquery())
+    total = (await db.execute(count_stmt)).scalar_one()
+
+    # Paginate
+    stmt = stmt.offset((page - 1) * page_size).limit(page_size)
+    results = (await db.execute(stmt)).scalars().all()
+
+    return success_response(data={
+        "listings": [
+            {
+                "id": str(l.id),
+                "title": l.title,
+                "seller_name": l.seller.full_name,
+                "category": l.category.value,
+                "status": l.status.value,
+                "is_approved": l.is_approved,
+                "created_at": l.created_at.isoformat()
+            } for l in results
+        ],
+        "total": total,
+        "page": page,
+        "page_size": page_size
+    })
+
+
+@router.patch("/admin/marketplace/listings/{listing_id}/approve", summary="Approve a listing")
+async def approve_listing_endpoint(
+    listing_id: UUID,
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(admin_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    stmt = select(MarketplaceListing).where(MarketplaceListing.id == listing_id)
+    listing = (await db.execute(stmt)).scalar_one_or_none()
+
+    if not listing:
+        return success_response(message="Listing not found", status_code=404)
+
+    if not listing.is_approved:
+        listing.is_approved = True
+        listing.rejection_reason = None # Clear previous reason
+        await db.commit()
+        # Trigger AI Matchmaking only AFTER approval
+        background_tasks.add_task(process_new_marketplace_listing, listing.id)
+
+    return success_response(message="Listing approved successfully")
+
+
+@router.patch("/admin/marketplace/listings/{listing_id}/reject", summary="Reject/Unapprove a listing")
+async def reject_listing_endpoint(
+    listing_id: UUID,
+    data: MarketplaceRejectRequest,
+    current_user: User = Depends(admin_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    stmt = select(MarketplaceListing).where(MarketplaceListing.id == listing_id)
+    listing = (await db.execute(stmt)).scalar_one_or_none()
+
+    if not listing:
+        return success_response(message="Listing not found", status_code=404)
+
+    listing.is_approved = False
+    listing.rejection_reason = data.reason
+    await db.commit()
+    return success_response(message="Listing rejected/unapproved with reason")

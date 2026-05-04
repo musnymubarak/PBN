@@ -183,6 +183,12 @@ export const api = {
 
   // Marketplace
   listMarketplaceListings: (params = {}) => apiFetch(`/marketplace?${new URLSearchParams(params)}`),
+  adminListMarketplaceListings: (params = {}) => apiFetch(`/admin/marketplace/listings?${new URLSearchParams(params)}`),
+  approveMarketplaceListing: (id) => apiFetch(`/admin/marketplace/listings/${id}/approve`, { method: 'PATCH' }),
+  rejectMarketplaceListing: (id, reason) => apiFetch(`/admin/marketplace/listings/${id}/reject`, {
+    method: 'PATCH',
+    body: JSON.stringify({ reason }),
+  }),
   updateMarketplaceListing: (id, body) => apiFetch(`/marketplace/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(body),

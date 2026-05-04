@@ -100,18 +100,65 @@ class _MyMarketplacePageState extends State<MyMarketplacePage> with SingleTicker
                 : Container(width: 50, height: 50, color: Colors.grey.shade100, child: const Icon(TablerIcons.photo)),
             ),
             title: Text(l.title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
-            subtitle: Row(
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: l.status == ListingStatus.active ? Colors.green.shade50 : Colors.orange.shade50,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(l.status.name.toUpperCase(), style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: l.status == ListingStatus.active ? Colors.green.shade700 : Colors.orange.shade700)),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: l.isApproved ? Colors.blue.shade50 : (l.rejectionReason != null ? Colors.red.shade50 : Colors.orange.shade50),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        l.isApproved ? 'APPROVED' : (l.rejectionReason != null ? 'REJECTED' : 'PENDING APPROVAL'), 
+                        style: TextStyle(
+                          fontSize: 8, 
+                          fontWeight: FontWeight.w900, 
+                          color: l.isApproved ? Colors.blue.shade700 : (l.rejectionReason != null ? Colors.red.shade700 : Colors.orange.shade700)
+                        )
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: l.status == ListingStatus.active ? Colors.green.shade50 : Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(l.status.name.toUpperCase(), style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: l.status == ListingStatus.active ? Colors.green.shade700 : Colors.grey.shade700)),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                Text('${l.interestCount} interests', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+                if (!l.isApproved && l.rejectionReason != null) ...[
+                  const SizedBox(height: 6),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.red.shade100),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(TablerIcons.alert_circle, size: 14, color: Colors.red.shade700),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Reason: ${l.rejectionReason}',
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.red.shade900),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 4),
+                Text('${l.interestCount} interests • ${l.viewCount} views', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: Colors.grey)),
               ],
             ),
             trailing: IconButton(

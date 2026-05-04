@@ -58,6 +58,8 @@ class MarketplaceListingRead(MarketplaceListingBase):
     seller_id: uuid.UUID
     status: ListingStatus
     is_featured: bool
+    is_approved: bool
+    rejection_reason: Optional[str] = None
     view_count: int
     interest_count: int
     created_at: datetime

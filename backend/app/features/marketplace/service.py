@@ -34,7 +34,8 @@ async def create_listing(user_id: uuid.UUID, data: MarketplaceListingCreate, db:
         whatsapp_number=data.whatsapp_number,
         contact_email=data.contact_email,
         contact_phone=data.contact_phone,
-        status=ListingStatus.ACTIVE
+        status=ListingStatus.ACTIVE,
+        is_approved=False
     )
     db.add(listing)
     await db.commit()
@@ -50,12 +51,16 @@ async def list_listings(
     featured_only: bool = False,
     seller_id: Optional[uuid.UUID] = None,
     limit: int = 20,
-    offset: int = 0
+    offset: int = 0,
+    approved_only: bool = True
 ) -> List[MarketplaceListing]:
     stmt = select(MarketplaceListing).options(
         joinedload(MarketplaceListing.seller),
         joinedload(MarketplaceListing.industry)
     ).where(MarketplaceListing.status == ListingStatus.ACTIVE)
+    
+    if approved_only:
+        stmt = stmt.where(MarketplaceListing.is_approved == True)
     
     if category:
         stmt = stmt.where(MarketplaceListing.category == category)

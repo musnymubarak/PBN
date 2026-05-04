@@ -3911,20 +3911,26 @@ function MarketplacePage() {
   const [showInterestsModal, setShowInterestsModal] = useState(false);
   const [interests, setInterests] = useState([]);
   const [loadingInterests, setLoadingInterests] = useState(false);
+  const [approvalFilter, setApprovalFilter] = useState('pending');
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState('');
 
   const fetchListings = useCallback(async () => {
     setLoading(true);
     try {
       const params = {};
       if (statusFilter) params.status = statusFilter;
-      const data = await api.listMarketplaceListings(params);
-      setListings(data || []);
+      if (approvalFilter === 'pending') params.is_approved = false;
+      else if (approvalFilter === 'approved') params.is_approved = true;
+      
+      const data = await api.adminListMarketplaceListings(params);
+      setListings(data.listings || []);
     } catch (err) {
       console.error('Failed to load listings:', err);
     } finally {
       setLoading(false);
     }
-  }, [statusFilter]);
+  }, [statusFilter, approvalFilter]);
 
   useEffect(() => { fetchListings(); }, [fetchListings]);
 
@@ -3970,6 +3976,27 @@ function MarketplacePage() {
     }
   };
 
+  const handleApprove = async (id) => {
+    try {
+      await api.approveMarketplaceListing(id);
+      setListings(prev => prev.map(l => l.id === id ? { ...l, is_approved: true, rejection_reason: null } : l));
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleReject = async () => {
+    if (!rejectionReason || rejectionReason.length < 5) return alert('Please provide a valid reason');
+    try {
+      await api.rejectMarketplaceListing(selectedListing.id, rejectionReason);
+      setListings(prev => prev.map(l => l.id === selectedListing.id ? { ...l, is_approved: false, rejection_reason: rejectionReason } : l));
+      setShowRejectModal(false);
+      setRejectionReason('');
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
   return (
     <section className="dashboard-body">
       <div className="page-title-wrap">
@@ -3994,6 +4021,16 @@ function MarketplacePage() {
               <option value="paused">Paused</option>
               <option value="sold">Sold</option>
             </select>
+            <select 
+              className="filter-input v2" 
+              value={approvalFilter} 
+              onChange={e => setApprovalFilter(e.target.value)}
+              style={{ width: '180px', padding: '0.5rem' }}
+            >
+              <option value="">All Approval Status</option>
+              <option value="pending">Pending Approval</option>
+              <option value="approved">Approved Only</option>
+            </select>
           </div>
           <button className="view-detail-btn" onClick={fetchListings}><IconRefresh size={18} /></button>
         </div>
@@ -4005,7 +4042,7 @@ function MarketplacePage() {
               <th>Listing Detail</th>
               <th>Seller (Member)</th>
               <th>Category</th>
-              <th>Price</th>
+              <th>Approval</th>
               <th>Status</th>
               <th style={{ textAlign: 'right' }}>Actions</th>
             </tr>
@@ -4052,8 +4089,13 @@ function MarketplacePage() {
                   </span>
                 </td>
                 <td>
+                  <span className={`pill ${l.is_approved ? 'pill-completed' : 'pill-pending'}`} style={{ fontSize: '0.7rem' }}>
+                    {l.is_approved ? 'Verified' : 'Pending'}
+                  </span>
+                  {l.rejection_reason && <div style={{ fontSize: '0.65rem', color: '#ef4444', marginTop: '4px', maxWidth: '120px' }}>Reason: {l.rejection_reason}</div>}
+                </td>
+                <td>
                   <div style={{ fontWeight: 700 }}>{formatCurrency(l.price)}</div>
-                  {l.member_price && <div style={{ fontSize: '0.7rem', color: '#059669', fontWeight: 600 }}>Member: {formatCurrency(l.member_price)}</div>}
                 </td>
                 <td>
                   <span className={`pill ${l.status === 'active' ? 'pill-approved' : l.status === 'paused' ? 'pill-pending' : 'pill-rejected'}`}>
@@ -4065,6 +4107,15 @@ function MarketplacePage() {
                     <button className="view-detail-btn" title="View Interests" onClick={() => viewInterests(l)}>
                       <IconEye size={18} />
                     </button>
+                    {!l.is_approved ? (
+                      <button className="view-detail-btn" title="Approve" style={{ color: '#059669' }} onClick={() => handleApprove(l.id)}>
+                        <IconCheck size={18} />
+                      </button>
+                    ) : (
+                      <button className="view-detail-btn" title="Reject" style={{ color: '#ef4444' }} onClick={() => { setSelectedListing(l); setShowRejectModal(true); }}>
+                        <IconX size={18} />
+                      </button>
+                    )}
                     <button 
                       className="view-detail-btn" 
                       title={l.status === 'active' ? 'Pause Listing' : 'Activate Listing'}
@@ -4122,6 +4173,33 @@ function MarketplacePage() {
                   </tbody>
                 </table>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showRejectModal && (
+        <div className="modal-overlay" onClick={() => setShowRejectModal(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 450 }}>
+            <div className="modal-header">
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Reject Marketplace Listing</h2>
+              <button type="button" className="modal-close-btn" onClick={() => setShowRejectModal(false)}>
+                <IconX size={20} />
+              </button>
+            </div>
+            <div style={{ padding: '1.5rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.75rem', fontWeight: 600 }}>Reason for Rejection</label>
+              <textarea 
+                className="filter-input v2"
+                style={{ width: '100%', height: '120px', padding: '1rem', resize: 'none' }}
+                placeholder="e.g. Image is not clear, title is too short..."
+                value={rejectionReason}
+                onChange={e => setRejectionReason(e.target.value)}
+              />
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
+                <button className="btn-primary" style={{ flex: 1, background: '#f1f5f9', color: '#475569' }} onClick={() => setShowRejectModal(false)}>Cancel</button>
+                <button className="btn-primary" style={{ flex: 1, background: '#ef4444' }} onClick={handleReject}>Confirm Reject</button>
+              </div>
             </div>
           </div>
         </div>

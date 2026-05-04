@@ -36,10 +36,6 @@ async def create_listing_endpoint(
 ):
     listing = await service.create_listing(current_user.id, data, db)
     
-    # Auto-surface new marketplace listing to perfectly matching members via AI engine
-    from app.features.matchmaking.tasks import process_new_marketplace_listing
-    background_tasks.add_task(process_new_marketplace_listing, listing.id)
-    
     # Map additional fields for response
     listing.seller_name = current_user.full_name
     return listing
@@ -101,7 +97,7 @@ async def list_listings_endpoint(
         seller_id = current_user.id
         
     listings = await service.list_listings(
-        db, category, industry_id, search, featured_only, seller_id, limit, offset
+        db, category, industry_id, search, featured_only, seller_id, limit, offset, approved_only=not my
     )
     # Map names for response
     for l in listings:

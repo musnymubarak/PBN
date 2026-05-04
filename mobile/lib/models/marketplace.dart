@@ -57,6 +57,8 @@ class MarketplaceListing {
   
   final int viewCount;
   final int interestCount;
+  final bool isApproved;
+  final String? rejectionReason;
   final DateTime createdAt;
   final DateTime updatedAt;
   
@@ -82,6 +84,8 @@ class MarketplaceListing {
     this.contactPhone,
     required this.viewCount,
     required this.interestCount,
+    required this.isApproved,
+    this.rejectionReason,
     required this.createdAt,
     required this.updatedAt,
     this.sellerName,
