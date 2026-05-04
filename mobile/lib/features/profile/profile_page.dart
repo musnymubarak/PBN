@@ -12,6 +12,7 @@ import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:pbn/core/services/api_client.dart';
 import 'package:pbn/core/widgets/pbn_app_bar_actions.dart';
+import 'package:pbn/features/matchmaking/business_matching_profile_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -365,6 +366,25 @@ class _ProfilePageState extends State<ProfilePage> {
                       Text('Payment History', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppColors.text, letterSpacing: -0.3)),
                       const SizedBox(height: 4),
                       Text('Manage your payments and invoices', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+                    ])),
+                    const Icon(TablerIcons.chevron_right, color: AppColors.textSecondary, size: 20),
+                  ]),
+                ),
+              ),
+              const SizedBox(height: 12),
+              GestureDetector(
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BusinessMatchingProfilePage())),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))]),
+                  child: Row(children: [
+                    Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: AppColors.accent.withOpacity(0.08), borderRadius: BorderRadius.circular(12)),
+                      child: const Icon(TablerIcons.sparkles, color: AppColors.accent, size: 24)),
+                    const SizedBox(width: 16),
+                    const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text('Business Matching Profile', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppColors.text, letterSpacing: -0.3)),
+                      const SizedBox(height: 4),
+                      Text('Setup your needs and target sectors', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
                     ])),
                     const Icon(TablerIcons.chevron_right, color: AppColors.textSecondary, size: 20),
                   ]),

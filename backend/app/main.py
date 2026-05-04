@@ -144,6 +144,7 @@ def _register_routes(app: FastAPI) -> None:
     from app.features.community.router import router as comm_router
     from app.features.horizontal_clubs.router import router as club_router
     from app.features.marketplace.router import router as market_router
+    from app.features.matchmaking.router import router as match_router
     from fastapi.staticfiles import StaticFiles
     import os
 
@@ -165,6 +166,7 @@ def _register_routes(app: FastAPI) -> None:
     app.include_router(comm_router, prefix=settings.API_V1_PREFIX)
     app.include_router(club_router, prefix=settings.API_V1_PREFIX)
     app.include_router(market_router, prefix=settings.API_V1_PREFIX + "/marketplace")
+    app.include_router(match_router, prefix=settings.API_V1_PREFIX + "/matchmaking")
 
     # ── Infrastructure Endpoints ─────────────────────────────────────────
     @app.get("/health", tags=["Infrastructure"])

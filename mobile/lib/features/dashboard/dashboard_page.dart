@@ -27,6 +27,7 @@ import 'package:pbn/features/profile/profile_page.dart';
 import 'package:pbn/features/support/support_page.dart';
 import 'package:pbn/features/community/community_page.dart';
 import 'package:pbn/features/marketplace/marketplace_page.dart';
+import 'package:pbn/features/matchmaking/matchmaking_page.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -130,7 +131,7 @@ class _DashboardPageState extends State<DashboardPage> {
             _buildDashboardBody(),
             const MembersPage(),
             const MarketplacePage(),
-            const ReferralDashboardPage(),
+            const MatchmakingDashboardPage(),
             const ProfilePage(),
           ];
 
@@ -555,7 +556,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 const BottomNavigationBarItem(icon: Icon(TablerIcons.smart_home), label: 'Home'),
                 const BottomNavigationBarItem(icon: Icon(TablerIcons.users), label: 'Members'),
                 const BottomNavigationBarItem(icon: Icon(TablerIcons.shopping_cart), label: 'Market'),
-                const BottomNavigationBarItem(icon: Icon(TablerIcons.briefcase), label: 'Opportunities'),
+                const BottomNavigationBarItem(icon: Icon(TablerIcons.briefcase), label: 'Matches'),
                 const BottomNavigationBarItem(icon: Icon(TablerIcons.user_circle), label: 'Me'),
               ],
       ),

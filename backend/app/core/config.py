@@ -63,6 +63,7 @@ class Settings(BaseSettings):
     WEBXPAY_NOTIFY_URL: str = "http://localhost:8000/api/v1/payments/webhook"
 
     FIREBASE_SERVICE_ACCOUNT_JSON: str | None = None
+    GEMINI_API_KEY: str | None = None
 
     # ── SMTP / Email ──────────────────────────────────────────
     SMTP_HOST: str = "mail.primebusiness.network"
