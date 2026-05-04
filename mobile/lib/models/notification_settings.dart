@@ -6,6 +6,8 @@ class NotificationSettings {
   final bool newRewards;
   final bool newMembers;
   final bool referralActivity;
+  final bool noticeBoardMatches;
+  final bool dealOpportunityAlerts;
 
   NotificationSettings({
     required this.newPosts,
@@ -15,6 +17,8 @@ class NotificationSettings {
     required this.newRewards,
     required this.newMembers,
     required this.referralActivity,
+    required this.noticeBoardMatches,
+    required this.dealOpportunityAlerts,
   });
 
   factory NotificationSettings.fromJson(Map<String, dynamic> json) {
@@ -26,6 +30,8 @@ class NotificationSettings {
       newRewards: json['new_rewards'] ?? true,
       newMembers: json['new_members'] ?? true,
       referralActivity: json['referral_activity'] ?? true,
+      noticeBoardMatches: json['notice_board_matches'] ?? true,
+      dealOpportunityAlerts: json['deal_opportunity_alerts'] ?? true,
     );
   }
 
@@ -38,6 +44,8 @@ class NotificationSettings {
       'new_rewards': newRewards,
       'new_members': newMembers,
       'referral_activity': referralActivity,
+      'notice_board_matches': noticeBoardMatches,
+      'deal_opportunity_alerts': dealOpportunityAlerts,
     };
   }
 
@@ -49,6 +57,8 @@ class NotificationSettings {
     bool? newRewards,
     bool? newMembers,
     bool? referralActivity,
+    bool? noticeBoardMatches,
+    bool? dealOpportunityAlerts,
   }) {
     return NotificationSettings(
       newPosts: newPosts ?? this.newPosts,
@@ -58,6 +68,8 @@ class NotificationSettings {
       newRewards: newRewards ?? this.newRewards,
       newMembers: newMembers ?? this.newMembers,
       referralActivity: referralActivity ?? this.referralActivity,
+      noticeBoardMatches: noticeBoardMatches ?? this.noticeBoardMatches,
+      dealOpportunityAlerts: dealOpportunityAlerts ?? this.dealOpportunityAlerts,
     );
   }
 }

@@ -37,6 +37,8 @@ TYPE_TO_SETTING_MAP = {
     "NEW_MEMBER_JOINED": "new_members",
     "NEW_REFERRAL": "referral_activity",
     "REFERRAL_UPDATE": "referral_activity",
+    "NOTICE_MATCH": "notice_board_matches",
+    "DEAL_ALERT": "deal_opportunity_alerts",
 }
 
 # Cache the Firebase app initialization state

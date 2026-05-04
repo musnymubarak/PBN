@@ -61,6 +61,11 @@ async def create_post_endpoint(
         result["post"]["id"]
     )
 
+    # Auto-surface lead/rfp to perfectly matching members via AI engine
+    if data.post_type in ["lead", "rfp"]:
+        from app.features.matchmaking.tasks import process_new_opportunity_post
+        background_tasks.add_task(process_new_opportunity_post, result["post"]["id"])
+
     return success_response(
         data=result["post"],
         message="Post created successfully",

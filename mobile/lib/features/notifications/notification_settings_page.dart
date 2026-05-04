@@ -49,6 +49,8 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
       newRewards: key == 'new_rewards' ? val : null,
       newMembers: key == 'new_members' ? val : null,
       referralActivity: key == 'referral_activity' ? val : null,
+      noticeBoardMatches: key == 'notice_board_matches' ? val : null,
+      dealOpportunityAlerts: key == 'deal_opportunity_alerts' ? val : null,
     );
 
     setState(() => _settings = updated);
@@ -165,6 +167,26 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                       TablerIcons.transfer_in,
                       _settings!.referralActivity,
                       (v) => _toggle('referral_activity', v),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                _settingSection(
+                  'AI Matchmaking Alerts',
+                  [
+                    _toggleItem(
+                      'Smart Lead Alerts',
+                      'Notify me when a Community Lead or RFP perfectly matches my business profile',
+                      TablerIcons.sparkles,
+                      _settings!.noticeBoardMatches,
+                      (v) => _toggle('notice_board_matches', v),
+                    ),
+                    _toggleItem(
+                      'Smart Deal Alerts',
+                      'Notify me when a new Marketplace listing matches my current business needs',
+                      TablerIcons.briefcase,
+                      _settings!.dealOpportunityAlerts,
+                      (v) => _toggle('deal_opportunity_alerts', v),
                     ),
                   ],
                 ),

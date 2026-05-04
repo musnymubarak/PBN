@@ -7,7 +7,7 @@ from __future__ import annotations
 import uuid
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, Query, status, Request, UploadFile, File
+from fastapi import APIRouter, Depends, Query, status, Request, UploadFile, File, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_db
@@ -30,10 +30,16 @@ router = APIRouter(tags=["Marketplace"])
 @router.post("/listings", response_model=MarketplaceListingRead, status_code=status.HTTP_201_CREATED)
 async def create_listing_endpoint(
     data: MarketplaceListingCreate,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     listing = await service.create_listing(current_user.id, data, db)
+    
+    # Auto-surface new marketplace listing to perfectly matching members via AI engine
+    from app.features.matchmaking.tasks import process_new_marketplace_listing
+    background_tasks.add_task(process_new_marketplace_listing, listing.id)
+    
     # Map additional fields for response
     listing.seller_name = current_user.full_name
     return listing
