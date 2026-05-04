@@ -324,7 +324,7 @@ async def admin_list_listings_endpoint(
                 "id": str(l.id),
                 "title": l.title,
                 "description": l.description,
-                "price": float(l.price),
+                "price": float(l.regular_price) if l.regular_price else 0,
                 "member_price": float(l.member_price) if l.member_price else None,
                 "currency": l.currency,
                 "image_urls": l.image_urls,
