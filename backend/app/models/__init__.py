@@ -17,6 +17,7 @@ from app.models.payments import Payment  # noqa: F401
 from app.models.notifications import Notification  # noqa: F401
 from app.models.audit_logs import AuditLog  # noqa: F401
 from app.models.community import CommunityPost, PostLike, PostComment  # noqa: F401
+from app.models.marketplace import MarketplaceListing, MarketplaceInterest  # noqa: F401
 
 __all__ = [
     "Base",
@@ -35,5 +36,6 @@ __all__ = [
     "Notification",
     "AuditLog",
     "CommunityPost", "PostLike", "PostComment",
+    "MarketplaceListing", "MarketplaceInterest",
 ]
 

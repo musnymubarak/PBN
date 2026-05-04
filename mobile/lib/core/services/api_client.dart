@@ -108,6 +108,13 @@ class ApiClient {
       dio.patch(path, data: data);
 
   Future<Response> delete(String path) => dio.delete(path);
+  
+  Future<Response> upload(String path, String filePath, {String fieldName = 'file'}) async {
+    final formData = FormData.fromMap({
+      fieldName: await MultipartFile.fromFile(filePath),
+    });
+    return dio.post(path, data: formData);
+  }
 
   /// Extract the `data` field from the standard API response envelope.
   dynamic unwrap(Response response) => response.data['data'];

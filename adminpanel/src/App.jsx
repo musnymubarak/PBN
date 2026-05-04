@@ -34,6 +34,8 @@ import {
   IconUserCheck,
   IconTrash,
   IconPencil,
+  IconStar,
+  IconStarFilled,
 } from '@tabler/icons-react';
 import { api, STATIC_BASE_URL } from './lib/api';
 import { useApi } from './hooks/useApi';
@@ -159,6 +161,7 @@ const MENU_GROUPS = [
       { id: 'applications', icon: IconClipboardList, label: 'Applications' },
       { id: 'referrals', icon: IconHierarchy2, label: 'Referral Pipeline' },
       { id: 'events', icon: IconCalendarEvent, label: 'Event Management' },
+      { id: 'marketplace', icon: IconBuildingStore, label: 'Member Marketplace' },
       { id: 'payments', icon: IconCoin, label: 'Payments' },
       { id: 'revenue', icon: IconChartBar, label: 'Revenue & ROI' },
     ]
@@ -3900,6 +3903,233 @@ function ClubsPage() {
 
 // ── Main App ────────────────────────────────────────────────────────────────
 
+function MarketplacePage() {
+  const [listings, setListings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState('');
+  const [selectedListing, setSelectedListing] = useState(null);
+  const [showInterestsModal, setShowInterestsModal] = useState(false);
+  const [interests, setInterests] = useState([]);
+  const [loadingInterests, setLoadingInterests] = useState(false);
+
+  const fetchListings = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = {};
+      if (statusFilter) params.status = statusFilter;
+      const data = await api.listMarketplaceListings(params);
+      setListings(data || []);
+    } catch (err) {
+      console.error('Failed to load listings:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [statusFilter]);
+
+  useEffect(() => { fetchListings(); }, [fetchListings]);
+
+  const toggleFeatured = async (id, current) => {
+    try {
+      await api.featureMarketplaceListing(id, !current);
+      setListings(prev => prev.map(l => l.id === id ? { ...l, is_featured: !current } : l));
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const updateStatus = async (id, status) => {
+    try {
+      await api.updateMarketplaceListing(id, { status });
+      setListings(prev => prev.map(l => l.id === id ? { ...l, status } : l));
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const deleteListing = async (id) => {
+    if (!confirm('Are you sure you want to delete this listing permanently?')) return;
+    try {
+      await api.deleteMarketplaceListing(id);
+      setListings(prev => prev.filter(l => l.id !== id));
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const viewInterests = async (listing) => {
+    setSelectedListing(listing);
+    setShowInterestsModal(true);
+    setLoadingInterests(true);
+    try {
+      const data = await api.listMarketplaceInterests(listing.id);
+      setInterests(data || []);
+    } catch (err) {
+      console.error('Failed to load interests:', err);
+    } finally {
+      setLoadingInterests(false);
+    }
+  };
+
+  return (
+    <section className="dashboard-body">
+      <div className="page-title-wrap">
+        <h1 className="page-title">Member Marketplace</h1>
+        <p style={{ color: 'var(--text-secondary)', marginTop: '0.4rem', fontWeight: 500 }}>
+          Manage member listings, feature premium deals, and monitor marketplace activity.
+        </p>
+      </div>
+
+      <div className="data-section">
+        <div className="section-head">
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Global Listings</h3>
+            <select 
+              className="filter-input v2" 
+              value={statusFilter} 
+              onChange={e => setStatusFilter(e.target.value)}
+              style={{ width: '150px', padding: '0.5rem' }}
+            >
+              <option value="">All Status</option>
+              <option value="active">Active</option>
+              <option value="paused">Paused</option>
+              <option value="sold">Sold</option>
+            </select>
+          </div>
+          <button className="view-detail-btn" onClick={fetchListings}><IconRefresh size={18} /></button>
+        </div>
+
+        <table className="modern-table">
+          <thead>
+            <tr>
+              <th>Featured</th>
+              <th>Listing Detail</th>
+              <th>Seller (Member)</th>
+              <th>Category</th>
+              <th>Price</th>
+              <th>Status</th>
+              <th style={{ textAlign: 'right' }}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr><td colSpan={7} style={{ textAlign: 'center', padding: '3rem' }}>Loading marketplace data...</td></tr>
+            ) : listings.length === 0 ? (
+              <tr><td colSpan={7} style={{ textAlign: 'center', padding: '3rem' }}>No listings found.</td></tr>
+            ) : listings.map(l => (
+              <tr key={l.id}>
+                <td>
+                  <button 
+                    onClick={() => toggleFeatured(l.id, l.is_featured)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: l.is_featured ? '#f59e0b' : '#cbd5e1' }}
+                  >
+                    {l.is_featured ? <IconStarFilled size={22} /> : <IconStar size={22} />}
+                  </button>
+                </td>
+                <td>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ width: 48, height: 48, borderRadius: '8px', background: '#f8fafc', overflow: 'hidden', border: '1px solid #e2e8f0', flexShrink: 0 }}>
+                      {l.images && l.images.length > 0 ? (
+                        <img src={l.images[0].startsWith('http') ? l.images[0] : `${STATIC_BASE_URL}${l.images[0]}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
+                          <IconBuildingStore size={20} />
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 700 }}>{l.title}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>ID: {String(l.id).slice(0, 8)}</div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div style={{ fontWeight: 600 }}>{l.user?.full_name || 'Unknown'}</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{l.user?.business_name || '—'}</div>
+                </td>
+                <td>
+                  <span className="pill" style={{ background: '#f1f5f9', color: '#475569', fontSize: '0.7rem' }}>
+                    {l.category || 'General'}
+                  </span>
+                </td>
+                <td>
+                  <div style={{ fontWeight: 700 }}>{formatCurrency(l.price)}</div>
+                  {l.member_price && <div style={{ fontSize: '0.7rem', color: '#059669', fontWeight: 600 }}>Member: {formatCurrency(l.member_price)}</div>}
+                </td>
+                <td>
+                  <span className={`pill ${l.status === 'active' ? 'pill-approved' : l.status === 'paused' ? 'pill-pending' : 'pill-rejected'}`}>
+                    {l.status}
+                  </span>
+                </td>
+                <td style={{ textAlign: 'right' }}>
+                  <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                    <button className="view-detail-btn" title="View Interests" onClick={() => viewInterests(l)}>
+                      <IconEye size={18} />
+                    </button>
+                    <button 
+                      className="view-detail-btn" 
+                      title={l.status === 'active' ? 'Pause Listing' : 'Activate Listing'}
+                      onClick={() => updateStatus(l.id, l.status === 'active' ? 'paused' : 'active')}
+                    >
+                      {l.status === 'active' ? <IconLock size={18} /> : <IconRefresh size={18} />}
+                    </button>
+                    <button className="view-detail-btn" title="Delete" style={{ color: '#ef4444' }} onClick={() => deleteListing(l.id)}>
+                      <IconTrash size={18} />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {showInterestsModal && (
+        <div className="modal-overlay" onClick={() => setShowInterestsModal(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 650 }}>
+            <div className="modal-header">
+              <div>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Lead Generation Activity</h2>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Members interested in: {selectedListing?.title}</p>
+              </div>
+              <button type="button" className="modal-close-btn" onClick={() => setShowInterestsModal(false)}>
+                <IconX size={20} />
+              </button>
+            </div>
+            <div style={{ padding: '1.5rem' }}>
+              {loadingInterests ? (
+                <div style={{ padding: '2rem', textAlign: 'center' }}>Loading interests...</div>
+              ) : interests.length === 0 ? (
+                <div style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8' }}>No interest registered yet.</div>
+              ) : (
+                <table className="modern-table">
+                  <thead>
+                    <tr>
+                      <th>Interested Member</th>
+                      <th>Chapter</th>
+                      <th>Method</th>
+                      <th>Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {interests.map(i => (
+                      <tr key={i.id}>
+                        <td style={{ fontWeight: 600 }}>{i.user?.full_name}</td>
+                        <td>{i.user?.chapter?.name || '—'}</td>
+                        <td style={{ textTransform: 'capitalize' }}>{i.contact_method}</td>
+                        <td style={{ fontSize: '0.8rem' }}>{new Date(i.created_at).toLocaleDateString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => !!localStorage.getItem('access_token'));
   const [adminUser, setAdminUser] = useState(null);
@@ -3994,6 +4224,7 @@ export default function App() {
     const commonProps = { adminUser, showToast, onShowChangePassword: () => setShowChangePassword(true) };
     if (activeTab === 'applications') return <ApplicationsPage />;
     if (activeTab === 'members') return <MembersPage />;
+    if (activeTab === 'marketplace') return <MarketplacePage />;
     if (activeTab === 'payments') return <PaymentsPage />;
     if (activeTab === 'rewards') return <PartnersPage />;
     if (activeTab === 'referrals') return <ReferralsPage />;

@@ -180,4 +180,19 @@ export const api = {
     method: 'PATCH',
     body: JSON.stringify(body),
   }),
+
+  // Marketplace
+  listMarketplaceListings: (params = {}) => apiFetch(`/marketplace?${new URLSearchParams(params)}`),
+  updateMarketplaceListing: (id, body) => apiFetch(`/marketplace/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+  }),
+  deleteMarketplaceListing: (id) => apiFetch(`/marketplace/${id}`, {
+    method: 'DELETE',
+  }),
+  featureMarketplaceListing: (id, isFeatured) => apiFetch(`/marketplace/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ is_featured: isFeatured }),
+  }),
+  listMarketplaceInterests: (listingId) => apiFetch(`/marketplace/${listingId}/interests`),
 };

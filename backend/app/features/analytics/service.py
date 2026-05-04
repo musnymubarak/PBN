@@ -153,14 +153,24 @@ async def get_dashboard(user_id: UUID, db: AsyncSession) -> Dict[str, Any]:
                 "days_until_expiry": (mem.end_date - now.date()).days if mem.end_date else None
             }
 
-        # 6. Economic Engine (Leads & RFPs)
+        # 6. Economic Engine (Leads, RFPs & Marketplace)
         from app.models.community import CommunityPost, PostType
+        from app.models.marketplace import MarketplaceListing, MarketplaceInterest, InterestStatus
+        
         econ_stmt = select(
             func.count(1).filter(CommunityPost.author_id == user_id, CommunityPost.post_type == PostType.LEAD).label("leads_sent"),
             func.count(1).filter(CommunityPost.author_id == user_id, CommunityPost.post_type == PostType.RFP).label("rfps_sent"),
             func.coalesce(func.sum(CommunityPost.business_value).filter(CommunityPost.author_id == user_id), 0).label("tyfb_value")
         )
         econ_stats = (await db.execute(econ_stmt)).one()
+        
+        market_stmt = select(
+            func.coalesce(func.sum(MarketplaceInterest.business_value), 0)
+        ).join(MarketplaceListing).where(
+            MarketplaceListing.seller_id == user_id,
+            MarketplaceInterest.status == InterestStatus.DEAL_CONFIRMED
+        )
+        market_value = (await db.execute(market_stmt)).scalar_one()
 
         payload = {
             "referrals": {
@@ -172,11 +182,12 @@ async def get_dashboard(user_id: UUID, db: AsyncSession) -> Dict[str, Any]:
                 "conversion_rate": round(conversion_rate, 2)
             },
             "roi": {
-                "total_value_generated": total_val + float(econ_stats.tyfb_value),
+                "total_value_generated": total_val + float(econ_stats.tyfb_value) + float(market_value),
                 "this_month_value": month_val,
                 "avg_deal_value": round(avg_deal, 2),
                 "referral_value": total_val,
-                "lead_value": float(econ_stats.tyfb_value)
+                "lead_value": float(econ_stats.tyfb_value),
+                "marketplace_value": float(market_value)
             },
             "economic_activity": {
                 "leads_shared": econ_stats.leads_sent,
@@ -353,6 +364,8 @@ async def get_admin_overview(db: AsyncSession) -> Dict[str, Any]:
 
     # Economic Engine Admin Stats
     from app.models.community import CommunityPost, PostType
+    from app.models.marketplace import MarketplaceInterest, InterestStatus
+    
     econ_stmt = select(
         func.count(case((CommunityPost.post_type == PostType.LEAD, 1))).label("total_leads"),
         func.count(case((CommunityPost.post_type == PostType.RFP, 1))).label("total_rfps"),
@@ -360,12 +373,18 @@ async def get_admin_overview(db: AsyncSession) -> Dict[str, Any]:
     )
     econ_stats = (await db.execute(econ_stmt)).one()
 
+    market_val = (await db.execute(
+        select(func.coalesce(func.sum(MarketplaceInterest.business_value), 0))
+        .where(MarketplaceInterest.status == InterestStatus.DEAL_CONFIRMED)
+    )).scalar_one()
+
     return {
         "total_members": total_members,
         "total_referrals": ref_stats.total_ref,
-        "total_value": float(ref_stats.tot_val) + float(econ_stats.tot_econ_val),
+        "total_value": float(ref_stats.tot_val) + float(econ_stats.tot_econ_val) + float(market_val),
         "referral_value": float(ref_stats.tot_val),
         "lead_value": float(econ_stats.tot_econ_val),
+        "marketplace_value": float(market_val),
         "total_leads": econ_stats.total_leads,
         "total_rfps": econ_stats.total_rfps,
         "conversion_rate": round(conversion_rate, 2),

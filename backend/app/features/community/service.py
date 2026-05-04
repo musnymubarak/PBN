@@ -9,9 +9,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload, joinedload
 
 from app.core.exceptions import BadRequestException, NotFoundException, ForbiddenException
-from app.models.community import CommunityPost, PostLike, PostComment
+from app.models.community import CommunityPost, PostLike, PostComment, LeadStatus
 from app.models.memberships import ChapterMembership
 from app.models.user import User, UserRole
+from app.features.notifications.service import send_push_notification
+from app.features.auth.verification import update_member_verification
+from decimal import Decimal
 
 
 async def _get_user_chapter_id(user_id: uuid.UUID, db: AsyncSession) -> uuid.UUID:
@@ -327,27 +330,91 @@ async def toggle_pin(user_id: uuid.UUID, post_id: uuid.UUID, db: AsyncSession) -
 
 
 async def update_lead_status(user_id: uuid.UUID, post_id: uuid.UUID, status: str, db: AsyncSession) -> None:
-    post = (await db.execute(select(CommunityPost).where(CommunityPost.id == post_id))).scalar_one_or_none()
+    stmt = select(CommunityPost).where(CommunityPost.id == post_id).options(joinedload(CommunityPost.author))
+    post = (await db.execute(stmt)).scalar_one_or_none()
     if not post:
         raise NotFoundException("Post not found")
         
-    if post.author_id != user_id:
-        raise ForbiddenException("Only the author can update lead status")
+    old_status = post.lead_status.value if post.lead_status else "None"
+    
+    # Author or Admin can update status
+    user_stmt = select(User.role).where(User.id == user_id)
+    user_role = (await db.execute(user_stmt)).scalar()
+    
+    if post.author_id != user_id and user_role not in [UserRole.SUPER_ADMIN, UserRole.CHAPTER_ADMIN]:
+        raise ForbiddenException("Only the author or an admin can update lead status")
         
     from app.models.community import LeadStatus
     post.lead_status = LeadStatus(status)
     await db.commit()
+    
+    # Notify author if an admin changed the status
+    if post.author_id != user_id:
+        try:
+            await send_push_notification(
+                user_id=post.author_id,
+                title="Lead Status Updated",
+                body=f"Admin updated your lead '{post.content[:30]}...' to {status}",
+                notification_type="LEAD_STATUS_UPDATE",
+                data={"post_id": str(post.id), "route": "/community"}
+            )
+        except Exception:
+            pass
 
 
 async def record_tyfb(user_id: uuid.UUID, post_id: uuid.UUID, business_value: float, db: AsyncSession) -> None:
-    post = (await db.execute(select(CommunityPost).where(CommunityPost.id == post_id))).scalar_one_or_none()
+    """Record business value generated from a post. Usually called by the person who RECEIVED the business."""
+    stmt = select(CommunityPost).where(CommunityPost.id == post_id).options(joinedload(CommunityPost.author))
+    post = (await db.execute(stmt)).scalar_one_or_none()
     if not post:
         raise NotFoundException("Post not found")
         
-    if post.author_id != user_id:
-        raise ForbiddenException("Only the author can record business value")
-        
+    # Get the person thanking (the one recording it)
+    thanker_stmt = select(User.full_name).where(User.id == user_id)
+    thanker_name = (await db.execute(thanker_stmt)).scalar() or "A member"
+
+    old_value = float(post.business_value) if post.business_value else 0.0
     post.business_value = business_value
+    
     from app.models.community import LeadStatus
     post.lead_status = LeadStatus.CLOSED_WON
     await db.commit()
+    
+    # Attribution & Leveling: The AUTHOR (referrer) gets the credit for generating value
+    value_delta = Decimal(str(business_value)) - Decimal(str(old_value))
+    if value_delta != 0:
+        await update_member_verification(post.author, value_delta, db)
+        
+    # Notify the Author (The Referrer)
+    if post.author_id != user_id:
+        try:
+            await send_push_notification(
+                user_id=post.author_id,
+                title="Business Generated! 💰",
+                body=f"{thanker_name} recorded {business_value:,.2f} LKR for your lead!",
+                notification_type="TYFB_RECEIVED",
+                data={"post_id": str(post.id), "route": "/community"}
+            )
+        except Exception:
+            pass
+            
+    # Notify Chapter Admins of major deal
+    if business_value >= 100000:
+        try:
+            # Find chapter admins
+            admin_stmt = select(ChapterMembership.user_id).where(
+                ChapterMembership.chapter_id == post.chapter_id,
+                ChapterMembership.is_active == True
+            ).join(User).where(User.role == UserRole.CHAPTER_ADMIN)
+            admin_ids = (await db.execute(admin_stmt)).scalars().all()
+            
+            from app.features.notifications.service import notify_multiple_users
+            await notify_multiple_users(
+                admin_ids,
+                "Big Deal Alert! 🚀",
+                f"A deal worth {business_value:,.2f} LKR was closed in your chapter!",
+                "ADMIN_DEAL_ALERT",
+                {"post_id": str(post.id)}
+            )
+        except Exception:
+            pass

@@ -587,9 +587,16 @@ class _PostCardState extends State<_PostCard> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(widget.post.author.fullName,
-                              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppColors.text)),
+                          Flexible(
+                            child: Text(
+                              widget.post.author.fullName,
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppColors.text),
+                            ),
+                          ),
                           if (widget.post.visibility == 'network') ...[
                             const SizedBox(width: 6),
                             const Icon(TablerIcons.world, size: 14, color: Colors.blue),
@@ -598,6 +605,8 @@ class _PostCardState extends State<_PostCard> {
                       ),
                       Text(
                         '${widget.post.author.role.toUpperCase()} • ${_formatTime(widget.post.createdAt)}',
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
                         style: TextStyle(fontSize: 10, color: Colors.grey.shade500, fontWeight: FontWeight.w700),
                       ),
                     ],

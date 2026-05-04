@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 from uuid import UUID
-from typing import List
+from typing import List, Dict, Any
 
 from fastapi import APIRouter, Depends, Query, BackgroundTasks
 from fastapi.responses import ORJSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_db
-from app.core.response import success_response
+from app.core.response import success_response, error_response
 from app.features.auth.dependencies import require_role
 from app.features.community.schemas import PostCreate, CommentCreate, PostResponse, CommentResponse
 from app.features.community.service import (

@@ -12,7 +12,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload, joinedload
 
 from app.core.exceptions import BadRequestException, NotFoundException, ForbiddenException
-from app.features.notifications.service import send_push_notification
+from app.features.auth.service import hash_password
+from app.features.auth.verification import update_member_verification
+from app.features.notifications.service import send_push_notification, notify_multiple_users
 from app.features.referrals.schemas import ReferralCreate, ReferralStatusUpdate
 from app.models.referrals import Referral, ReferralStatus, ReferralStatusHistory
 from app.models.user import User, VerificationLevel
@@ -235,39 +237,8 @@ async def update_referral_status(ref_id: UUID, data: ReferralStatusUpdate, actor
         delta = (ref.actual_value or Decimal("0.00")) - old_actual_value
             
     if delta != Decimal("0.00"):
-        await _update_member_verification(ref.from_member, delta, db)
+        await update_member_verification(ref.from_member, delta, db)
 
     return await _serialize_referral(ref)
 
 
-async def _update_member_verification(user: User, delta_value: Decimal, db: AsyncSession):
-    """Update user's cumulative value and potentially promote to next verification tier."""
-    user.cumulative_value_generated += delta_value
-    
-    val = user.cumulative_value_generated
-    new_level = VerificationLevel.NONE
-    
-    if val >= 5000000:
-        new_level = VerificationLevel.PLATINUM
-    elif val >= 2500000:
-        new_level = VerificationLevel.GOLD
-    elif val >= 1000000:
-        new_level = VerificationLevel.SILVER
-    elif val >= 25000:
-        new_level = VerificationLevel.VERIFIED
-        
-    if new_level != user.verification_level:
-        user.verification_level = new_level
-        user.verification_updated_at = datetime.now()
-        
-        # Send Celebration Notification
-        try:
-            await send_push_notification(
-                user_id=user.id,
-                title="Level Up! 🏆",
-                body=f"Congratulations! You've reached {new_level.value.upper()} verification level for your contributions to the network.",
-                notification_type="VERIFICATION_UPGRADE",
-                data={"level": new_level.value, "route": "/profile"}
-            )
-        except Exception:
-            pass
