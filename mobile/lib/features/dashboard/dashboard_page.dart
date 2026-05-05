@@ -17,7 +17,7 @@ import 'package:pbn/core/widgets/custom_button.dart';
 import 'package:pbn/core/widgets/pbn_app_bar_actions.dart';
 import 'package:pbn/models/dashboard_data.dart';
 import 'package:pbn/models/reward.dart';
-import 'package:pbn/core/widgets/privilege_card_widget.dart';
+
 import 'package:pbn/core/widgets/cached_avatar.dart';
 import 'package:pbn/features/members/members_page.dart';
 import 'package:pbn/features/referrals/my_referrals_page.dart';
@@ -40,7 +40,7 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   int _currentIndex = 0;
   DashboardData? _data;
-  PrivilegeCard? _card;
+
   List<dynamic> _leaderboard = [];
   bool _loading = true;
   String? _error;
@@ -85,13 +85,11 @@ class _DashboardPageState extends State<DashboardPage> {
       final auth = context.read<AuthProvider>();
       final results = await Future.wait([
         _dashboardService.getDashboard(),
-        _rewardService.getMyCard(),
         auth.refreshProfile(),
       ]);
       if (mounted) {
         setState(() {
           _data = results[0] as DashboardData;
-          _card = results[1] as PrivilegeCard?;
           _loading = false;
         });
         _loadLeaderboard();
@@ -178,11 +176,6 @@ class _DashboardPageState extends State<DashboardPage> {
       child: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         children: [
-          PrivilegeCardWidget(card: _card!),
-          const SizedBox(height: 12),
-          _buildClubsQuickLink(),
-          const SizedBox(height: 16),
-          
           // -- TRANSITIONING AD PANEL (SLIDER) --
           AspectRatio(
             aspectRatio: 1.586,
@@ -197,12 +190,14 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
           ),
           
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           Row(mainAxisAlignment: MainAxisAlignment.center, children: [
             _adDot(0), const SizedBox(width: 8), _adDot(1), const SizedBox(width: 8), _adDot(2),
           ]),
           
           const SizedBox(height: 16),
+          _buildClubsQuickLink(),
+          const SizedBox(height: 24),
           const Text('PERFORMANCE OVERVIEW', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF64748B), letterSpacing: 1.5)),
           const SizedBox(height: 12),
           
