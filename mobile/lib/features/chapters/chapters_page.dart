@@ -3,7 +3,6 @@ import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/services/chapter_service.dart';
 import 'package:pbn/models/chapter.dart';
-
 import 'package:pbn/core/widgets/pbn_app_bar_actions.dart';
 
 class ChaptersPage extends StatefulWidget {
@@ -105,8 +104,6 @@ class _ChaptersPageState extends State<ChaptersPage> {
                     ),
                   ),
                   const SizedBox(height: 32),
-
-                  const SizedBox(height: 16),
 
                   if (_chapters.isEmpty)
                     _buildEmptyState()

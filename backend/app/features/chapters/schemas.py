@@ -16,9 +16,25 @@ from app.models.memberships import MembershipType
 class ChapterResponse(BaseModel):
     id: UUID
     name: str
+    district: str
     description: Optional[str] = None
     meeting_schedule: Optional[str] = None
     is_active: bool
+
+
+class ChapterCreate(BaseModel):
+    name: str
+    district: str
+    description: Optional[str] = None
+    meeting_schedule: Optional[str] = None
+
+
+class ChapterUpdate(BaseModel):
+    name: Optional[str] = None
+    district: Optional[str] = None
+    description: Optional[str] = None
+    meeting_schedule: Optional[str] = None
+    is_active: Optional[bool] = None
 
 
 class IndustryCategorySimple(BaseModel):

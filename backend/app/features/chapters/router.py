@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.dependencies import get_db
 from app.core.response import success_response
 from app.features.auth.dependencies import get_current_user, require_role
-from app.features.chapters.schemas import ChapterMemberResponse, ChapterResponse, MyMembershipResponse
+from app.features.chapters.schemas import ChapterCreate, ChapterMemberResponse, ChapterResponse, ChapterUpdate, MyMembershipResponse
 from app.features.chapters.service import (
     get_all_members,
     get_chapter_members,
@@ -56,12 +56,52 @@ async def list_chapters_endpoint(
             {
                 "id": str(c.id),
                 "name": c.name,
+                "district": c.district,
                 "description": c.description,
                 "meeting_schedule": c.meeting_schedule,
                 "is_active": c.is_active,
             }
             for c in chapters
         ]
+    )
+
+
+@router.post("", summary="Create a new chapter", dependencies=[Depends(require_role([UserRole.SUPER_ADMIN]))])
+async def create_chapter_endpoint(
+    data: ChapterCreate,
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    from app.features.chapters.service import create_chapter
+    chapter = await create_chapter(data, db)
+    return success_response(
+        data={"id": str(chapter.id), "name": chapter.name},
+        message="Chapter created successfully"
+    )
+
+
+@router.patch("/{chapter_id}", summary="Update a chapter", dependencies=[Depends(require_role([UserRole.SUPER_ADMIN]))])
+async def update_chapter_endpoint(
+    chapter_id: UUID,
+    data: ChapterUpdate,
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    from app.features.chapters.service import update_chapter
+    chapter = await update_chapter(chapter_id, data, db)
+    return success_response(
+        data={"id": str(chapter.id), "name": chapter.name},
+        message="Chapter updated successfully"
+    )
+
+
+@router.delete("/{chapter_id}", summary="Delete a chapter", dependencies=[Depends(require_role([UserRole.SUPER_ADMIN]))])
+async def delete_chapter_endpoint(
+    chapter_id: UUID,
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    from app.features.chapters.service import delete_chapter
+    await delete_chapter(chapter_id, db)
+    return success_response(
+        message="Chapter deleted successfully"
     )
 
 

@@ -91,6 +91,17 @@ export const api = {
 
   // Chapters
   listChapters: () => apiFetch('/chapters'),
+  createChapter: (body) => apiFetch('/chapters', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  }),
+  updateChapter: (id, body) => apiFetch(`/chapters/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+  }),
+  deleteChapter: (id) => apiFetch(`/chapters/${id}`, {
+    method: 'DELETE',
+  }),
   getOccupiedIndustries: (chapterId) => apiFetch(`/chapters/${chapterId}/occupied-industries`),
 
   // Users

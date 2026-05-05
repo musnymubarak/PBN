@@ -36,6 +36,8 @@ import {
   IconPencil,
   IconStar,
   IconStarFilled,
+  IconBuildingCommunity,
+  IconMapPin,
 } from '@tabler/icons-react';
 import { api, STATIC_BASE_URL } from './lib/api';
 import { useApi } from './hooks/useApi';
@@ -170,6 +172,7 @@ const MENU_GROUPS = [
     label: 'Expansion',
     links: [
       { id: 'rewards', icon: IconBuildingStore, label: 'Rewards Hub' },
+      { id: 'chapters', icon: IconBuildingCommunity, label: 'Global Chapters' },
       { id: 'clubs', icon: IconHierarchy2, label: 'Horizontal Clubs' },
     ]
   },
@@ -4298,6 +4301,221 @@ function MarketplacePage() {
   );
 }
 
+function ChaptersPage() {
+  const [chapters, setChapters] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [editingChapter, setEditingChapter] = useState(null);
+  
+  const districts = [
+    'Ampara', 'Anuradhapura', 'Badulla', 'Batticaloa', 'Colombo', 'Galle', 'Gampaha',
+    'Hambantota', 'Jaffna', 'Kalutara', 'Kandy', 'Kegalle', 'Kilinochchi', 'Kurunegala',
+    'Mannar', 'Matale', 'Matara', 'Moneragala', 'Mullaitivu', 'Nuwara Eliya',
+    'Polonnaruwa', 'Puttalam', 'Ratnapura', 'Trincomalee', 'Vavuniya'
+  ];
+
+  const fetchChapters = async () => {
+    setLoading(true);
+    try {
+      const data = await api.listChapters();
+      setChapters(data || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchChapters(); }, []);
+
+  const handleSave = async (formData) => {
+    try {
+      if (editingChapter) {
+        await api.updateChapter(editingChapter.id, formData);
+      } else {
+        await api.createChapter(formData);
+      }
+      setShowModal(false);
+      fetchChapters();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this chapter?')) return;
+    try {
+      await api.deleteChapter(id);
+      fetchChapters();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  return (
+    <section className="dashboard-body">
+      <div className="page-title-wrap">
+        <div>
+          <h1 className="page-title">Global Chapters</h1>
+          <p style={{ color: 'var(--text-secondary)', marginTop: '0.4rem', fontWeight: 500 }}>
+            Manage geographical chapters and their regional operations.
+          </p>
+        </div>
+        <button className="btn-primary" onClick={() => { setEditingChapter(null); setShowModal(true); }}>
+          <IconPlus size={18} /> Add New Chapter
+        </button>
+      </div>
+
+      <div className="data-section">
+        <table className="modern-table">
+          <thead>
+            <tr>
+              <th>Chapter Name</th>
+              <th>District</th>
+              <th>Meeting Schedule</th>
+              <th>Status</th>
+              <th style={{ textAlign: 'right' }}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr><td colSpan={5} style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>Loading chapters...</td></tr>
+            ) : chapters.length === 0 ? (
+              <tr><td colSpan={5} style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>No chapters found.</td></tr>
+            ) : chapters.map(c => (
+              <tr key={c.id}>
+                <td>
+                  <div style={{ fontWeight: 700 }}>{c.name}</div>
+                </td>
+                <td>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <IconMapPin size={16} color="var(--primary)" />
+                    {c.district}
+                  </div>
+                </td>
+                <td>{c.meeting_schedule || '—'}</td>
+                <td>
+                  <span className={`pill ${c.is_active ? 'pill-approved' : 'pill-rejected'}`}>
+                    {c.is_active ? 'Active' : 'Inactive'}
+                  </span>
+                </td>
+                <td style={{ textAlign: 'right' }}>
+                  <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                    <button className="view-detail-btn" onClick={() => { setEditingChapter(c); setShowModal(true); }}>
+                      <IconPencil size={18} />
+                    </button>
+                    <button className="view-detail-btn" style={{ color: '#ef4444' }} onClick={() => handleDelete(c.id)}>
+                      <IconTrash size={18} />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {showModal && (
+        <ChapterFormModal 
+          chapter={editingChapter} 
+          districts={districts}
+          onClose={() => setShowModal(false)} 
+          onSave={handleSave} 
+        />
+      )}
+    </section>
+  );
+}
+
+function ChapterFormModal({ chapter, districts, onClose, onSave }) {
+  const [formData, setFormData] = useState({
+    name: chapter?.name || '',
+    district: chapter?.district || '',
+    description: chapter?.description || '',
+    meeting_schedule: chapter?.meeting_schedule || '',
+    is_active: chapter?.is_active ?? true
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!formData.name || !formData.district) return alert('Name and District are required');
+    onSave(formData);
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 500 }}>
+        <div className="modal-header">
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>{chapter ? 'Edit Chapter' : 'Add New Chapter'}</h2>
+          <button type="button" className="modal-close-btn" onClick={onClose}>
+            <IconX size={20} />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} style={{ padding: '1.5rem 1.5rem 6rem' }}>
+          <div className="login-field">
+            <label>Chapter Name *</label>
+            <input 
+              type="text" 
+              className="filter-input v2" 
+              value={formData.name} 
+              onChange={e => setFormData({ ...formData, name: e.target.value })} 
+              required 
+            />
+          </div>
+          
+          <div style={{ marginBottom: '1.25rem' }}>
+            <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>District *</label>
+            <CustomSelect
+              label="Select District..."
+              value={formData.district}
+              options={districts.map(d => ({ id: d, name: d }))}
+              onChange={val => setFormData({ ...formData, district: val })}
+            />
+          </div>
+
+          <div className="login-field">
+            <label>Meeting Schedule</label>
+            <input 
+              type="text" 
+              className="filter-input v2" 
+              placeholder="e.g. Every Tuesday 7:00 AM"
+              value={formData.meeting_schedule} 
+              onChange={e => setFormData({ ...formData, meeting_schedule: e.target.value })} 
+            />
+          </div>
+
+          <div className="login-field">
+            <label>Description</label>
+            <textarea 
+              className="action-textarea" 
+              value={formData.description} 
+              onChange={e => setFormData({ ...formData, description: e.target.value })} 
+              style={{ minHeight: 80 }}
+            />
+          </div>
+
+          {chapter && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+              <input 
+                type="checkbox" 
+                checked={formData.is_active} 
+                onChange={e => setFormData({ ...formData, is_active: e.target.checked })} 
+                id="chapter-active"
+              />
+              <label htmlFor="chapter-active" style={{ fontSize: '0.9rem', fontWeight: 600 }}>Active Status</label>
+            </div>
+          )}
+
+          <button type="submit" className="login-btn">
+            {chapter ? 'Update Chapter' : 'Create Chapter'}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => !!localStorage.getItem('access_token'));
   const [adminUser, setAdminUser] = useState(null);
@@ -4392,6 +4610,7 @@ export default function App() {
     const commonProps = { adminUser, showToast, onShowChangePassword: () => setShowChangePassword(true) };
     if (activeTab === 'applications') return <ApplicationsPage />;
     if (activeTab === 'members') return <MembersPage />;
+    if (activeTab === 'chapters') return <ChaptersPage />;
     if (activeTab === 'marketplace') return <MarketplacePage />;
     if (activeTab === 'payments') return <PaymentsPage />;
     if (activeTab === 'rewards') return <PartnersPage />;

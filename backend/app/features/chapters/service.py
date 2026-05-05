@@ -21,9 +21,49 @@ from app.models.user import User
 
 
 async def list_active_chapters(db: AsyncSession) -> List[Chapter]:
-    stmt = select(Chapter).where(Chapter.is_active.is_(True)).order_by(Chapter.name)
+    stmt = select(Chapter).order_by(Chapter.name)
     result = await db.execute(stmt)
     return list(result.scalars().all())
+
+
+async def create_chapter(data: Any, db: AsyncSession) -> Chapter:
+    chapter = Chapter(
+        name=data.name,
+        district=data.district,
+        description=data.description,
+        meeting_schedule=data.meeting_schedule,
+    )
+    db.add(chapter)
+    await db.commit()
+    await db.refresh(chapter)
+    return chapter
+
+
+async def update_chapter(chapter_id: UUID, data: Any, db: AsyncSession) -> Chapter:
+    stmt = select(Chapter).where(Chapter.id == chapter_id)
+    chapter = (await db.execute(stmt)).scalar_one_or_none()
+    if not chapter:
+        raise NotFoundException("Chapter not found")
+    
+    if data.name is not None: chapter.name = data.name
+    if data.district is not None: chapter.district = data.district
+    if data.description is not None: chapter.description = data.description
+    if data.meeting_schedule is not None: chapter.meeting_schedule = data.meeting_schedule
+    if data.is_active is not None: chapter.is_active = data.is_active
+    
+    await db.commit()
+    await db.refresh(chapter)
+    return chapter
+
+
+async def delete_chapter(chapter_id: UUID, db: AsyncSession) -> None:
+    stmt = select(Chapter).where(Chapter.id == chapter_id)
+    chapter = (await db.execute(stmt)).scalar_one_or_none()
+    if not chapter:
+        raise NotFoundException("Chapter not found")
+    
+    await db.delete(chapter)
+    await db.commit()
 
 
 async def get_all_members(db: AsyncSession, requester_id: UUID | None = None) -> List[Dict[str, Any]]:
@@ -174,6 +214,7 @@ async def get_my_memberships(user_id: UUID, db: AsyncSession) -> List[Dict[str, 
             "chapter": {
                 "id": chap.id,
                 "name": chap.name,
+                "district": chap.district,
                 "description": chap.description,
                 "meeting_schedule": chap.meeting_schedule,
                 "is_active": chap.is_active,

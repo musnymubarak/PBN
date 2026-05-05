@@ -88,12 +88,12 @@ def _register_middleware(app: FastAPI) -> None:
     app.add_middleware(RateLimitMiddleware)
 
     # CORS (Must be outermost to handle preflights correctly)
-    # In development, allow all origins since Flutter web uses random ports
-    origins = ["*"] if settings.ENVIRONMENT == "development" else settings.CORS_ORIGINS
+    # Use specified origins and allow credentials to support Authorization headers
+    origins = settings.CORS_ORIGINS
     app.add_middleware(
         CORSMiddleware,
         allow_origins=origins,
-        allow_credentials=False if settings.ENVIRONMENT == "development" else True,
+        allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
