@@ -584,6 +584,13 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
 
 
 
+const SRI_LANKA_DISTRICTS = [
+  'Ampara', 'Anuradhapura', 'Badulla', 'Batticaloa', 'Colombo', 'Galle', 'Gampaha',
+  'Hambantota', 'Jaffna', 'Kalutara', 'Kandy', 'Kegalle', 'Kilinochchi', 'Kurunegala',
+  'Mannar', 'Matale', 'Matara', 'Moneragala', 'Mullaitivu', 'Nuwara Eliya',
+  'Polonnaruwa', 'Puttalam', 'Ratnapura', 'Trincomalee', 'Vavuniya'
+];
+
 function CreateApplicationModal({ onClose, onCreated }) {
   const [formData, setFormData] = useState({
     full_name: '',
@@ -596,6 +603,7 @@ function CreateApplicationModal({ onClose, onCreated }) {
   });
   const [industries, setIndustries] = useState([]);
   const [chapters, setChapters] = useState([]);
+  const [filteredChapters, setFilteredChapters] = useState([]);
   const [occupiedIndustries, setOccupiedIndustries] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingInitial, setLoadingInitial] = useState(true);
@@ -620,6 +628,15 @@ function CreateApplicationModal({ onClose, onCreated }) {
     init();
   }, []);
 
+  // Filter chapters whenever district or full chapters list changes
+  useEffect(() => {
+    if (formData.district) {
+      setFilteredChapters(chapters.filter(c => c.district === formData.district));
+    } else {
+      setFilteredChapters([]);
+    }
+  }, [formData.district, chapters]);
+
   useEffect(() => {
     if (formData.chapter_id) {
       setLoadingOccupancy(true);
@@ -634,6 +651,10 @@ function CreateApplicationModal({ onClose, onCreated }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!formData.district) {
+      setError('Please select a district');
+      return;
+    }
     if (!formData.chapter_id) {
       setError('Please select a target chapter');
       return;
@@ -667,7 +688,7 @@ function CreateApplicationModal({ onClose, onCreated }) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ padding: '1.5rem 1.5rem 8rem' }}>
+        <form onSubmit={handleSubmit} style={{ padding: '1.5rem 1.5rem 10rem' }}>
           {error && <div className="login-error" style={{ marginBottom: '1.25rem' }}>{error}</div>}
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
@@ -720,13 +741,23 @@ function CreateApplicationModal({ onClose, onCreated }) {
             </div>
           </div>
 
+          <div style={{ marginBottom: '1.25rem' }}>
+            <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>District *</label>
+            <CustomSelect
+              label="Select District..."
+              value={formData.district}
+              options={SRI_LANKA_DISTRICTS.map(d => ({ id: d, name: d }))}
+              onChange={val => setFormData({ ...formData, district: val, chapter_id: '', industry_category_id: '' })}
+            />
+          </div>
+
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
             <div>
               <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>Target Chapter *</label>
               <CustomSelect
-                label={loadingInitial ? "Loading..." : "Select Chapter..."}
+                label={!formData.district ? "Select District first" : (loadingInitial ? "Loading..." : "Select Chapter...")}
                 value={formData.chapter_id}
-                options={chapters}
+                options={filteredChapters}
                 onChange={val => setFormData({ ...formData, chapter_id: val, industry_category_id: '' })}
               />
             </div>
@@ -4307,13 +4338,6 @@ function ChaptersPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingChapter, setEditingChapter] = useState(null);
   
-  const districts = [
-    'Ampara', 'Anuradhapura', 'Badulla', 'Batticaloa', 'Colombo', 'Galle', 'Gampaha',
-    'Hambantota', 'Jaffna', 'Kalutara', 'Kandy', 'Kegalle', 'Kilinochchi', 'Kurunegala',
-    'Mannar', 'Matale', 'Matara', 'Moneragala', 'Mullaitivu', 'Nuwara Eliya',
-    'Polonnaruwa', 'Puttalam', 'Ratnapura', 'Trincomalee', 'Vavuniya'
-  ];
-
   const fetchChapters = async () => {
     setLoading(true);
     try {
@@ -4418,7 +4442,7 @@ function ChaptersPage() {
       {showModal && (
         <ChapterFormModal 
           chapter={editingChapter} 
-          districts={districts}
+          districts={SRI_LANKA_DISTRICTS}
           onClose={() => setShowModal(false)} 
           onSave={handleSave} 
         />

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:pbn/core/constants/app_colors.dart';
+import 'package:pbn/core/constants/districts.dart';
 import 'package:pbn/core/services/application_service.dart';
 import 'package:pbn/core/services/chapter_service.dart';
 import 'package:pbn/core/widgets/custom_button.dart';
@@ -21,13 +22,12 @@ class _ApplyPageState extends State<ApplyPage> {
   final _businessCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
-  final _districtCtrl = TextEditingController();
-  
   
   List<IndustryCategory> _categories = [];
   List<Chapter> _chapters = [];
   List<String> _occupiedIndustryIds = [];
   
+  String? _selectedDistrict;
   IndustryCategory? _selectedCategory;
   Chapter? _selectedChapter;
   
@@ -77,7 +77,7 @@ class _ApplyPageState extends State<ApplyPage> {
   Future<void> _submit() async {
     if (_nameCtrl.text.isEmpty || _businessCtrl.text.isEmpty ||
         _phoneCtrl.text.isEmpty || _emailCtrl.text.isEmpty ||
-        _districtCtrl.text.isEmpty || _selectedCategory == null || _selectedChapter == null) {
+        _selectedDistrict == null || _selectedCategory == null || _selectedChapter == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill all fields and select a chapter'),
           backgroundColor: Colors.redAccent, behavior: SnackBarBehavior.floating));
@@ -101,7 +101,7 @@ class _ApplyPageState extends State<ApplyPage> {
         businessName: _businessCtrl.text.trim(),
         contactNumber: formattedPhone,
         email: _emailCtrl.text.trim(),
-        district: _districtCtrl.text.trim(),
+        district: _selectedDistrict!,
         industryCategoryId: _selectedCategory!.id,
         chapterId: _selectedChapter!.id,
       );
@@ -250,7 +250,9 @@ class _ApplyPageState extends State<ApplyPage> {
         const SizedBox(height: 32),
         _modernField(_businessCtrl, 'Company Name', TablerIcons.building),
         const SizedBox(height: 20),
-        _modernField(_districtCtrl, 'Working District', TablerIcons.map_pin),
+        const Text('WORKING DISTRICT', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: AppColors.accent, letterSpacing: 1.5)),
+        const SizedBox(height: 8),
+        _districtDropdown(),
         const SizedBox(height: 20),
         const Text('TARGET CHAPTER', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: AppColors.accent, letterSpacing: 1.5)),
         const SizedBox(height: 8),
@@ -352,7 +354,38 @@ class _ApplyPageState extends State<ApplyPage> {
     );
   }
 
+  Widget _districtDropdown() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.grey.shade100),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _selectedDistrict,
+          hint: const Text('Select your district...', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+          isExpanded: true,
+          icon: const Icon(TablerIcons.chevron_down, size: 18),
+          items: sriLankaDistricts.map((d) => DropdownMenuItem(value: d, child: Text(d, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)))).toList(),
+          onChanged: (d) {
+            setState(() {
+              _selectedDistrict = d;
+              _selectedChapter = null;
+              _selectedCategory = null;
+            });
+          },
+        ),
+      ),
+    );
+  }
+
   Widget _chapterDropdown() {
+    final filteredChapters = _selectedDistrict == null 
+        ? <Chapter>[] 
+        : _chapters.where((c) => c.district == _selectedDistrict).toList();
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
@@ -363,11 +396,12 @@ class _ApplyPageState extends State<ApplyPage> {
       child: DropdownButtonHideUnderline(
         child: DropdownButton<Chapter>(
           value: _selectedChapter,
-          hint: const Text('Select your chapter...', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+          hint: Text(_selectedDistrict == null ? 'Select district first' : 'Select your chapter...', 
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
           isExpanded: true,
           icon: const Icon(TablerIcons.chevron_down, size: 18),
-          items: _chapters.map((c) => DropdownMenuItem(value: c, child: Text(c.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)))).toList(),
-          onChanged: (c) {
+          items: filteredChapters.map((c) => DropdownMenuItem(value: c, child: Text(c.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)))).toList(),
+          onChanged: _selectedDistrict == null ? null : (c) {
             setState(() {
               _selectedChapter = c;
               _selectedCategory = null;
@@ -404,11 +438,13 @@ class _ApplyPageState extends State<ApplyPage> {
                   Text(c.name, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: isOccupied ? Colors.grey : AppColors.text)),
                   if (isOccupied) ...[
                     const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(4)),
-                      child: const Text('OCCUPIED', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: Colors.grey)),
-                    ),
+                    ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(4)),
+                        child: const Text('OCCUPIED', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: Colors.grey)),
+                      ),
+                    ],
                   ],
                 ],
               ),

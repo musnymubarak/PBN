@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:pbn/core/constants/app_colors.dart';
+import 'package:pbn/core/constants/districts.dart';
 import 'package:pbn/core/services/chapter_service.dart';
 import 'package:pbn/models/chapter.dart';
 import 'package:pbn/core/widgets/pbn_app_bar_actions.dart';
@@ -16,6 +17,7 @@ class _ChaptersPageState extends State<ChaptersPage> {
   final _service = ChapterService();
   List<Chapter> _chapters = [];
   bool _loading = true;
+  String? _selectedDistrict;
 
   @override
   void initState() {
@@ -33,6 +35,10 @@ class _ChaptersPageState extends State<ChaptersPage> {
 
   @override
   Widget build(BuildContext context) {
+    final filteredChapters = _selectedDistrict == null
+        ? _chapters
+        : _chapters.where((c) => c.district == _selectedDistrict).toList();
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -50,7 +56,7 @@ class _ChaptersPageState extends State<ChaptersPage> {
           ],
         ),
         actions: [
-          PbnAppBarActions(),
+          const PbnAppBarActions(),
         ],
       ),
       body: _loading
@@ -105,15 +111,56 @@ class _ChaptersPageState extends State<ChaptersPage> {
                   ),
                   const SizedBox(height: 32),
 
-                  if (_chapters.isEmpty)
+                  // ── District Filter Bar ──────────────────
+                  const Text('FILTER BY DISTRICT', 
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1.2)),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: 45,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: [
+                        _buildFilterChip(null, 'All'),
+                        ...sriLankaDistricts.map((d) => _buildFilterChip(d, d)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  if (filteredChapters.isEmpty)
                     _buildEmptyState()
                   else
-                    ..._chapters.map((chapter) => _buildModernChapterCard(chapter)),
+                    ...filteredChapters.map((chapter) => _buildModernChapterCard(chapter)),
                   
                   const SizedBox(height: 40),
                 ],
               ),
             ),
+    );
+  }
+
+  Widget _buildFilterChip(String? value, String label) {
+    bool isSelected = _selectedDistrict == value;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedDistrict = value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        margin: const EdgeInsets.only(right: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primary : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: isSelected ? AppColors.primary : Colors.grey.shade200),
+        ),
+        child: Center(
+          child: Text(label, 
+            style: TextStyle(
+              fontSize: 12, 
+              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600, 
+              color: isSelected ? Colors.white : AppColors.textSecondary
+            )),
+        ),
+      ),
     );
   }
 
@@ -125,7 +172,7 @@ class _ChaptersPageState extends State<ChaptersPage> {
           children: [
             Icon(TablerIcons.building_off, size: 48, color: Colors.grey.shade300),
             const SizedBox(height: 12),
-            Text('No active chapters found', style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.w700)),
+            Text('No chapters in this district', style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.w700)),
           ],
         ),
       ),
@@ -157,6 +204,14 @@ class _ChaptersPageState extends State<ChaptersPage> {
               children: [
                 Text(chapter.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppColors.text, letterSpacing: -0.3)),
                 const SizedBox(height: 4),
+                Row(
+                  children: [
+                    const Icon(TablerIcons.map_pin, size: 12, color: AppColors.primary),
+                    const SizedBox(width: 4),
+                    Text(chapter.district, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primary)),
+                  ],
+                ),
+                const SizedBox(height: 8),
                 if (chapter.description != null)
                   Text(chapter.description!, 
                     style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.textSecondary, height: 1.4),

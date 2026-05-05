@@ -48,9 +48,10 @@ async def list_all_members_endpoint(
 
 @router.get("", summary="List active chapters", response_model=None)
 async def list_chapters_endpoint(
+    district: str | None = None,
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
-    chapters = await list_active_chapters(db)
+    chapters = await list_active_chapters(db, district=district)
     return success_response(
         data=[
             {

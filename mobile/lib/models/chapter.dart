@@ -1,6 +1,7 @@
 class Chapter {
   final String id;
   final String name;
+  final String district;
   final String? description;
   final String? meetingSchedule;
   final bool isActive;
@@ -8,6 +9,7 @@ class Chapter {
   Chapter({
     required this.id,
     required this.name,
+    required this.district,
     this.description,
     this.meetingSchedule,
     this.isActive = true,
@@ -16,6 +18,7 @@ class Chapter {
   factory Chapter.fromJson(Map<String, dynamic> json) => Chapter(
         id: json['id'] ?? '',
         name: json['name'] ?? '',
+        district: json['district'] ?? 'Colombo',
         description: json['description'],
         meetingSchedule: json['meeting_schedule'],
         isActive: json['is_active'] ?? true,
