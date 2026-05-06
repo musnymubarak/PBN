@@ -35,7 +35,7 @@ class Application(Base, TimestampMixin):
         UUID(as_uuid=True), ForeignKey("industry_categories.id"), nullable=False
     )
     chapter_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("chapters.id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("chapters.id", ondelete="CASCADE"), nullable=False
     )
     status: Mapped[ApplicationStatus] = mapped_column(
         Enum(ApplicationStatus, name="application_status", create_type=True),
