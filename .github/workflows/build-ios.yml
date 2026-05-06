@@ -25,6 +25,10 @@ jobs:
         working-directory: ./mobile
         run: flutter pub get
 
+      - name: Analyze code
+        working-directory: ./mobile
+        run: flutter analyze
+
       - name: Build iOS (Unsigned)
         working-directory: ./mobile
         run: flutter build ios --release --no-codesign

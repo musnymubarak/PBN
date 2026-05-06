@@ -1,0 +1,4053 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prime Business Network — Asia's No. 1 Technology-Powered Business Growth Ecosystem</title>
+  <link rel="preconnect" href="https://fonts.bunny.net">
+  <link href="https://fonts.bunny.net/css?family=playfair-display:400,600,700,900|dm-sans:300,400,500,600&display=swap"
+    rel="stylesheet">
+  <link rel="icon" type="image/svg+xml"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230a0f25'/%3E%3Ctext x='50' y='68' font-family='system-ui, -apple-system, sans-serif' font-size='46' font-weight='900' text-anchor='middle'%3E%3Ctspan fill='%23ffffff'%3EP%3C/tspan%3E%3Ctspan fill='%23c9a84c'%3EB%3C/tspan%3E%3Ctspan fill='%23ffffff'%3EN%3C/tspan%3E%3C/text%3E%3C/svg%3E">
+  <style>
+    :root {
+      --navy: #080d24;
+      --navy-mid: #0e1535;
+      --navy-light: #162050;
+      --white: #ffffff;
+      --gold: #c9a84c;
+      --gold-light: #e8c97a;
+      --text-muted: #7a85b0;
+      --border: rgba(255, 255, 255, 0.07);
+      --font-display: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
+      --font-body: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background: #080d24;
+      color: #ffffff;
+      overflow-x: hidden;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button {
+      font-family: var(--font-body);
+      cursor: pointer;
+    }
+
+    /* ── WHITE SECTION THEME ── */
+    .section-light {
+      background: #ffffff !important;
+      color: #0e1535 !important;
+    }
+
+    .section-light .section-label {
+      color: #c9a84c;
+    }
+
+    .section-light .section-title {
+      color: #080d24;
+    }
+
+    .section-light .section-sub {
+      color: #4a5580;
+    }
+
+    .section-light .divider {
+      background: #c9a84c;
+    }
+
+    .section-light .problem-card {
+      background: #f4f5f8;
+    }
+
+    .section-light .problem-card:hover {
+      background: #eaedf5;
+    }
+
+    .section-light .problem-desc {
+      color: #4a5580;
+    }
+
+    .section-light .problem-footer {
+      background: linear-gradient(135deg, rgba(201, 168, 76, 0.1), rgba(201, 168, 76, 0.04));
+      border-color: rgba(201, 168, 76, 0.3);
+      color: #8a6a20;
+    }
+
+    .section-light .problem-footer strong {
+      color: #c9a84c;
+    }
+
+    .section-light .pillar {
+      border-color: #dde1f0;
+    }
+
+    .section-light .pillar:hover {
+      border-color: #c9a84c;
+      background: rgba(201, 168, 76, 0.04);
+    }
+
+    .section-light .pillar-title {
+      color: #080d24;
+    }
+
+    .section-light .pillar-desc {
+      color: #4a5580;
+    }
+
+    .section-light .how-visual {
+      background: #f4f5f8;
+      border-color: #dde1f0;
+    }
+
+    .section-light .how-visual-title {
+      color: #080d24;
+    }
+
+    .section-light .how-visual-text {
+      color: #4a5580;
+    }
+
+    .section-light .benefit-card {
+      background: #f4f5f8;
+    }
+
+    .section-light .benefit-card:hover {
+      background: #eaedf5;
+    }
+
+    .section-light .benefit-title {
+      color: #080d24;
+    }
+
+    .section-light .benefit-desc {
+      color: #4a5580;
+    }
+
+    .section-light .chapter-card {
+      background: #f4f5f8;
+    }
+
+    .section-light .chapter-card:hover {
+      background: #eaedf5;
+    }
+
+    .section-light .ch-title {
+      color: #080d24;
+    }
+
+    .section-light .ch-tag {
+      background: rgba(8, 13, 36, 0.06);
+      color: #4a5580;
+    }
+
+    .section-light .ch-badge.launch {
+      background: rgba(201, 168, 76, 0.12);
+      color: #8a6a20;
+    }
+
+    .section-light .pricing-card {
+      border-color: #dde1f0;
+      background: #f4f5f8;
+    }
+
+    .section-light .pricing-card.featured {
+      background: linear-gradient(135deg, rgba(201, 168, 76, 0.08) 0%, #f4f5f8 100%);
+      border-color: #c9a84c;
+    }
+
+    .section-light .pricing-name {
+      color: #4a5580;
+    }
+
+    .section-light .pricing-price {
+      color: #080d24;
+    }
+
+    .section-light .pricing-divider {
+      background: #dde1f0;
+    }
+
+    .section-light .pricing-feature {
+      color: #4a5580;
+    }
+
+    .section-light .pricing-feature.yes {
+      color: #080d24;
+    }
+
+    .section-light .pricing-feature .cross {
+      color: #aaa;
+    }
+
+    .section-light .pricing-period {
+      color: #4a5580;
+    }
+
+    .section-light .btn-full.outline {
+      color: #080d24;
+      border-color: #dde1f0;
+    }
+
+    .section-light .btn-full.outline:hover {
+      border-color: #4a5580;
+    }
+
+    .section-light .perk-card {
+      background: #f4f5f8;
+    }
+
+    .section-light .perk-card:hover {
+      background: #eaedf5;
+    }
+
+    .section-light .perk-card-title {
+      color: #080d24;
+    }
+
+    .section-light .perk-card-desc {
+      color: #4a5580;
+    }
+
+    .section-light .card-perks-title {
+      color: #080d24;
+    }
+
+    .section-light p {
+      color: #4a5580;
+    }
+
+    .section-light .perk-item {
+      border-color: #dde1f0;
+    }
+
+    .section-light .perk-item:hover {
+      border-color: #c9a84c;
+    }
+
+    .section-light .perk-text {
+      color: #4a5580;
+    }
+
+    .section-light .perk-text strong {
+      color: #080d24;
+    }
+
+    .section-light table td {
+      color: #080d24;
+      border-bottom-color: #dde1f0;
+    }
+
+    .section-light table th {
+      color: #4a5580;
+    }
+
+    .section-light thead tr {
+      border-bottom-color: #c9a84c;
+    }
+
+    .section-light tr:hover td {
+      background: rgba(8, 13, 36, 0.02);
+    }
+
+    .section-light .roi-note {
+      color: #4a5580;
+      border-color: rgba(201, 168, 76, 0.3);
+    }
+
+    .section-light .tl-dot {
+      background: #ffffff;
+      border-color: #c9a84c;
+    }
+
+    .section-light .tl-item:hover .tl-dot {
+      background: #c9a84c;
+    }
+
+    .section-light .tl-title {
+      color: #080d24;
+    }
+
+    .section-light .tl-phase {
+      color: #4a5580;
+    }
+
+    .section-light .tl-desc {
+      color: #4a5580;
+    }
+
+    .section-light .cta-step {
+      color: #4a5580;
+      border-color: #dde1f0;
+      background: rgba(8, 13, 36, 0.03);
+    }
+
+    .section-light .cta-title {
+      color: #080d24;
+    }
+
+    .section-light .cta-sub {
+      color: #4a5580;
+    }
+
+    .section-light .tag {
+      border-color: #c9a84c;
+      color: #8a6a20;
+    }
+
+    .section-light .feature-card {
+      background: #f4f5f8;
+      border-color: #dde1f0;
+    }
+
+    .section-light .feature-card:hover {
+      border-color: #c9a84c;
+    }
+
+    .section-light .feature-title {
+      color: #080d24;
+    }
+
+    .section-light .feature-desc {
+      color: #4a5580;
+    }
+
+    .section-light .verify-card {
+      background: #f4f5f8;
+      border-color: #dde1f0;
+    }
+
+    .section-light .verify-title {
+      color: #080d24;
+    }
+
+    .section-light .verify-desc {
+      color: #4a5580;
+    }
+
+    .rf-prof {
+      font-weight: 600;
+      color: #c9a84c !important;
+      white-space: nowrap;
+    }
+
+    .section-light .rf-prof {
+      color: #8a6a20 !important;
+    }
+
+    .rf-give {
+      color: rgba(255, 255, 255, 0.6) !important;
+      font-size: 0.85rem;
+    }
+
+    .section-light .rf-give {
+      color: #4a5580 !important;
+    }
+
+    #rfSearch::placeholder {
+      color: #7a85b0;
+    }
+
+    #rfSearch:focus {
+      border-color: #c9a84c;
+      outline: none;
+    }
+
+    .ti {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .ti svg {
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.75;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 60px;
+      background: rgba(8, 13, 36, 0.92);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+      transition: padding 0.3s;
+    }
+
+    .nav-logo {
+      font-family: var(--font-body);
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .nav-logo span {
+      color: #c9a84c;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 28px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: #7a85b0;
+      font-size: 0.875rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover {
+      color: #ffffff;
+    }
+
+    .nav-cta {
+      background: #c9a84c;
+      color: #080d24;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 4px;
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 0.875rem;
+      letter-spacing: 0.04em;
+      transition: background 0.2s, transform 0.15s;
+      display: inline-block;
+    }
+
+    .nav-cta:hover {
+      background: #e8c97a;
+      transform: translateY(-1px);
+      color: #080d24;
+    }
+
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      cursor: pointer;
+    }
+
+    .hamburger span {
+      display: block;
+      width: 24px;
+      height: 2px;
+      background: #ffffff;
+      border-radius: 2px;
+    }
+
+    /* ── MOBILE MENU ── */
+    .mobile-menu {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #080d24;
+      z-index: 99;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 28px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+
+    .mobile-menu.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .mobile-menu a {
+      font-family: var(--font-body);
+      font-size: 1.8rem;
+      color: #ffffff;
+      transition: color 0.2s;
+    }
+
+    .mobile-menu a:hover {
+      color: #c9a84c;
+    }
+
+    .mobile-close {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      font-size: 1.5rem;
+      color: #7a85b0;
+      background: none;
+      border: none;
+    }
+
+    /* ── HERO ── */
+    #hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 120px 60px 80px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      background:
+        radial-gradient(ellipse 70% 60% at 75% 40%, rgba(201, 168, 76, 0.07) 0%, transparent 60%),
+        radial-gradient(ellipse 80% 80% at 0% 100%, rgba(22, 32, 80, 0.8) 0%, transparent 70%);
+    }
+
+    .hero-grid {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      background-image: linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+      background-size: 64px 64px;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid #c9a84c;
+      color: #c9a84c;
+      padding: 6px 18px;
+      border-radius: 100px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 32px;
+      opacity: 0;
+      animation: fadeUp 0.7s 0.2s forwards;
+    }
+
+    .hero-badge::before {
+      content: '★';
+      font-size: 0.6rem;
+    }
+
+    .hero-title {
+      font-family: var(--font-body);
+      font-size: clamp(2.8rem, 5.2vw, 5.5rem);
+      font-weight: 900;
+      line-height: 1.05;
+      color: #ffffff;
+      margin-bottom: 28px;
+      opacity: 0;
+      animation: fadeUp 0.7s 0.35s forwards;
+    }
+
+    .hero-title em {
+      color: #c9a84c;
+      font-style: normal;
+    }
+
+    .hero-sub {
+      font-size: 1.1rem;
+      color: #7a85b0;
+      line-height: 1.75;
+      max-width: 540px;
+      margin-bottom: 48px;
+      opacity: 0;
+      animation: fadeUp 0.7s 0.5s forwards;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      opacity: 0;
+      animation: fadeUp 0.7s 0.65s forwards;
+    }
+
+    .btn-primary {
+      background: #c9a84c;
+      color: #080d24;
+      border: none;
+      padding: 15px 36px;
+      border-radius: 4px;
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 0.95rem;
+      letter-spacing: 0.04em;
+      transition: all 0.2s;
+      display: inline-block;
+    }
+
+    .btn-primary:hover {
+      background: #e8c97a;
+      color: #080d24;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(201, 168, 76, 0.3);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      padding: 15px 36px;
+      border-radius: 4px;
+      font-family: var(--font-body);
+      font-weight: 500;
+      font-size: 0.95rem;
+      letter-spacing: 0.04em;
+      transition: all 0.2s;
+      display: inline-block;
+    }
+
+    .btn-outline:hover {
+      border-color: rgba(255, 255, 255, 0.7);
+      background: rgba(255, 255, 255, 0.05);
+      color: #ffffff;
+    }
+
+    .hero-stats {
+      position: absolute;
+      right: 60px;
+      bottom: 80px;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+      opacity: 0;
+      animation: fadeIn 1s 1s forwards;
+    }
+
+    .stat-item {
+      text-align: right;
+    }
+
+    .stat-num {
+      font-family: var(--font-body);
+      font-size: 2.4rem;
+      font-weight: 700;
+      color: #c9a84c;
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-size: 0.72rem;
+      color: #7a85b0;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    .scroll-hint {
+      position: absolute;
+      bottom: 32px;
+      left: 60px;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #7a85b0;
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      opacity: 0;
+      animation: fadeIn 1s 1.2s forwards;
+    }
+
+    .scroll-line {
+      width: 40px;
+      height: 1px;
+      background: #c9a84c;
+    }
+
+    /* ── SECTION BASE ── */
+    section {
+      padding: 100px 60px;
+    }
+
+    .section-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: #c9a84c;
+      margin-bottom: 14px;
+    }
+
+    .section-title {
+      font-family: var(--font-body);
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 700;
+      line-height: 1.15;
+      color: #ffffff;
+    }
+
+    .section-sub {
+      color: #7a85b0;
+      font-size: 1.05rem;
+      line-height: 1.75;
+      margin-top: 16px;
+      max-width: 560px;
+    }
+
+    .divider {
+      width: 48px;
+      height: 2px;
+      background: #c9a84c;
+      margin: 28px 0;
+    }
+
+    /* ── PROBLEM ── */
+    #problem {
+      background: #0e1535;
+    }
+
+    .problem-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+      margin-top: 60px;
+    }
+
+    .problem-card {
+      background: #080d24;
+      padding: 48px 36px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.3s;
+    }
+
+    .problem-card:hover {
+      transform: translateY(-4px);
+    }
+
+    .problem-card::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: #c9a84c;
+      transform: scaleX(0);
+      transition: transform 0.3s;
+      transform-origin: left;
+    }
+
+    .problem-card:hover::after {
+      transform: scaleX(1);
+    }
+
+    .problem-icon {
+      color: #c9a84c;
+      margin-bottom: 22px;
+    }
+
+    .problem-title {
+      font-family: var(--font-body);
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 14px;
+      color: #e05c5c;
+    }
+
+    .problem-desc {
+      color: #7a85b0;
+      line-height: 1.75;
+      font-size: 0.95rem;
+    }
+
+    .problem-footer {
+      margin-top: 60px;
+      padding: 28px 40px;
+      background: linear-gradient(135deg, rgba(201, 168, 76, 0.1), rgba(201, 168, 76, 0.03));
+      border: 1px solid rgba(201, 168, 76, 0.25);
+      border-radius: 4px;
+      text-align: center;
+      font-size: 1.05rem;
+      font-weight: 500;
+      color: #c9a84c;
+    }
+
+    /* ── HOW ── */
+    #how {
+      background: #080d24;
+    }
+
+    .how-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: center;
+      margin-top: 60px;
+    }
+
+    .pillars {
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    .pillar {
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+      padding: 28px;
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 4px;
+      transition: border-color 0.3s, background 0.3s;
+    }
+
+    .pillar:hover {
+      border-color: #c9a84c;
+      background: rgba(201, 168, 76, 0.04);
+    }
+
+    .pillar-num {
+      font-family: var(--font-body);
+      font-size: 2rem;
+      font-weight: 900;
+      color: #c9a84c;
+      opacity: 0.4;
+      line-height: 1;
+      min-width: 40px;
+    }
+
+    .pillar-title {
+      font-weight: 600;
+      font-size: 1.05rem;
+      margin-bottom: 8px;
+      color: #ffffff;
+    }
+
+    .pillar-desc {
+      color: #7a85b0;
+      font-size: 0.9rem;
+      line-height: 1.7;
+    }
+
+    .how-visual {
+      background: #0e1535;
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 8px;
+      padding: 48px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .how-visual::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center, rgba(201, 168, 76, 0.05) 0%, transparent 70%);
+    }
+
+    .how-visual-icon {
+      color: #c9a84c;
+      margin-bottom: 24px;
+      position: relative;
+    }
+
+    .how-visual-title {
+      font-family: var(--font-body);
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      position: relative;
+      color: #ffffff;
+    }
+
+    .how-visual-text {
+      color: #7a85b0;
+      font-size: 0.95rem;
+      line-height: 1.7;
+      position: relative;
+    }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 24px;
+      justify-content: center;
+      position: relative;
+    }
+
+    .tag {
+      border: 1px solid #c9a84c;
+      color: #c9a84c;
+      padding: 5px 14px;
+      border-radius: 100px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+    }
+
+    /* ── PLATFORM FEATURES ── */
+    #platform {
+      background: #0e1535;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-top: 60px;
+    }
+
+    .feature-card {
+      background: #080d24;
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 8px;
+      padding: 36px 28px;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: #c9a84c;
+      transform: scaleX(0);
+      transition: transform 0.3s;
+      transform-origin: left;
+    }
+
+    .feature-card:hover {
+      border-color: rgba(201, 168, 76, 0.3);
+      transform: translateY(-4px);
+    }
+
+    .feature-card:hover::before {
+      transform: scaleX(1);
+    }
+
+    .feature-icon {
+      color: #c9a84c;
+      margin-bottom: 20px;
+    }
+
+    .feature-title {
+      font-weight: 700;
+      font-size: 1.05rem;
+      margin-bottom: 10px;
+      color: #ffffff;
+    }
+
+    .feature-desc {
+      color: #7a85b0;
+      font-size: 0.875rem;
+      line-height: 1.7;
+    }
+
+    .feature-badge {
+      display: inline-block;
+      margin-top: 14px;
+      background: rgba(201, 168, 76, 0.12);
+      color: #c9a84c;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 3px;
+    }
+
+    /* ── BENEFITS ── */
+    #benefits {
+      background: #0e1535;
+    }
+
+    .benefits-intro {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: end;
+      margin-bottom: 60px;
+    }
+
+    .benefits-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 2px;
+    }
+
+    .benefit-card {
+      background: #080d24;
+      padding: 36px 28px;
+      transition: all 0.3s;
+    }
+
+    .benefit-card:hover {
+      background: #162050;
+    }
+
+    .benefit-icon {
+      color: #c9a84c;
+      margin-bottom: 20px;
+    }
+
+    .benefit-title {
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin-bottom: 10px;
+      color: #ffffff;
+    }
+
+    .benefit-desc {
+      color: #7a85b0;
+      font-size: 0.85rem;
+      line-height: 1.65;
+    }
+
+    /* ── HORIZONTAL CLUBS ── */
+    #clubs {
+      background: #080d24;
+    }
+
+    .clubs-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+      margin-top: 60px;
+    }
+
+    .club-card {
+      background: #0e1535;
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 8px;
+      padding: 36px;
+      transition: all 0.3s;
+    }
+
+    .club-card:hover {
+      border-color: rgba(201, 168, 76, 0.3);
+    }
+
+    .club-icon {
+      color: #c9a84c;
+      margin-bottom: 18px;
+    }
+
+    .club-title {
+      font-weight: 700;
+      font-size: 1.1rem;
+      margin-bottom: 12px;
+      color: #ffffff;
+    }
+
+    .club-members {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 16px;
+    }
+
+    .club-member {
+      background: rgba(201, 168, 76, 0.08);
+      color: #c9a84c;
+      padding: 4px 12px;
+      border-radius: 100px;
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+
+    /* ── VALUE VERIFICATION ── */
+    #verification {
+      background: #0e1535;
+    }
+
+    .verify-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 2px;
+      margin-top: 60px;
+    }
+
+    .verify-card {
+      background: #080d24;
+      padding: 40px 28px;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s;
+    }
+
+    .verify-card:hover {
+      background: #162050;
+    }
+
+    .verify-card::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--tier-color, #c9a84c);
+    }
+
+    .verify-icon {
+      margin-bottom: 18px;
+    }
+
+    .verify-level {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      color: var(--tier-color, #c9a84c);
+    }
+
+    .verify-title {
+      font-weight: 700;
+      font-size: 1.1rem;
+      margin-bottom: 8px;
+      color: #ffffff;
+    }
+
+    .verify-amount {
+      font-family: var(--font-body);
+      font-size: 1.5rem;
+      font-weight: 900;
+      margin-bottom: 14px;
+      color: var(--tier-color, #c9a84c);
+    }
+
+    .verify-desc {
+      color: #7a85b0;
+      font-size: 0.85rem;
+      line-height: 1.65;
+    }
+
+    /* ── MEMBER CARD ── */
+    #member-card {
+      background: #080d24;
+    }
+
+    .card-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: center;
+      margin-top: 60px;
+    }
+
+    .card-visual-wrap {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      perspective: 1200px;
+    }
+
+    .membership-card {
+      width: 380px;
+      height: 240px;
+      background: linear-gradient(135deg, #162050 0%, #0d1a4a 50%, #0a142e 100%);
+      border-radius: 16px;
+      border: 1px solid rgba(201, 168, 76, 0.4);
+      padding: 28px 32px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(201, 168, 76, 0.15);
+      transition: transform 0.5s ease;
+      transform: rotateY(-8deg) rotateX(4deg);
+    }
+
+    .membership-card:hover {
+      transform: rotateY(0deg) rotateX(0deg) translateY(-8px);
+    }
+
+    .card-shine {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, transparent 50%, rgba(201, 168, 76, 0.05) 100%);
+      pointer-events: none;
+    }
+
+    .card-dots {
+      position: absolute;
+      right: -20px;
+      top: -20px;
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      border: 30px solid rgba(201, 168, 76, 0.06);
+    }
+
+    .card-brand {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .card-logo-text {
+      font-family: var(--font-body);
+      font-size: 1rem;
+      font-weight: 700;
+      color: #ffffff;
+      line-height: 1.2;
+    }
+
+    .card-logo-text span {
+      color: #c9a84c;
+    }
+
+    .card-chip {
+      width: 40px;
+      height: 30px;
+      background: linear-gradient(135deg, #c9a84c, #e8c97a);
+      border-radius: 4px;
+      opacity: 0.9;
+    }
+
+    .card-number {
+      font-size: 1rem;
+      letter-spacing: 0.18em;
+      color: rgba(255, 255, 255, 0.5);
+      margin-top: 28px;
+    }
+
+    .card-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-top: 18px;
+    }
+
+    .card-name-label {
+      font-size: 0.6rem;
+      color: #7a85b0;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .card-name {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #ffffff;
+      margin-top: 3px;
+    }
+
+    .card-tier {
+      background: #c9a84c;
+      color: #080d24;
+      padding: 4px 12px;
+      border-radius: 100px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .card-perks {
+      margin-top: 40px;
+    }
+
+    .card-perks-title {
+      font-family: var(--font-body);
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 28px;
+      color: #ffffff;
+    }
+
+    .perk-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .perk-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 16px 20px;
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 4px;
+      transition: border-color 0.3s;
+    }
+
+    .perk-item:hover {
+      border-color: rgba(201, 168, 76, 0.4);
+    }
+
+    .perk-icon {
+      color: #c9a84c;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .perk-text {
+      font-size: 0.88rem;
+      color: #7a85b0;
+      line-height: 1.55;
+    }
+
+    .perk-text strong {
+      color: #ffffff;
+      display: block;
+      margin-bottom: 3px;
+      font-size: 0.9rem;
+    }
+
+    /* ── PRIVILEGE SECTION ── */
+    #privilege {
+      background: #0e1535;
+    }
+
+    .privilege-intro {
+      max-width: 640px;
+      margin-bottom: 60px;
+    }
+
+    .perks-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+    }
+
+    .perk-card {
+      background: #080d24;
+      padding: 40px 32px;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s;
+    }
+
+    .perk-card:hover {
+      background: #162050;
+    }
+
+    .perk-card::before {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: #c9a84c;
+      transform: scaleX(0);
+      transition: transform 0.3s;
+      transform-origin: left;
+    }
+
+    .perk-card:hover::before {
+      transform: scaleX(1);
+    }
+
+    .perk-card-icon {
+      color: #c9a84c;
+      margin-bottom: 20px;
+    }
+
+    .perk-card-title {
+      font-family: var(--font-body);
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: #ffffff;
+    }
+
+    .perk-card-desc {
+      color: #7a85b0;
+      font-size: 0.9rem;
+      line-height: 1.7;
+    }
+
+    .perk-card-badge {
+      display: inline-block;
+      margin-top: 16px;
+      background: rgba(201, 168, 76, 0.12);
+      color: #c9a84c;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 3px;
+    }
+
+    /* ── VENUE PARTNERS ── */
+    #venue-partners {
+      background: #080d24;
+      text-align: center;
+    }
+
+    .venue-grid {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 24px;
+      flex-wrap: wrap;
+      margin-top: 48px;
+    }
+
+    .venue-card {
+      background: #0e1535;
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 8px;
+      padding: 40px;
+      transition: all 0.3s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 280px;
+    }
+
+    .venue-card:hover {
+      border-color: rgba(201, 168, 76, 0.3);
+      transform: translateY(-4px);
+    }
+
+    .venue-logo-wrap {
+      height: 130px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 24px;
+      width: 100%;
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 12px;
+      box-sizing: border-box;
+    }
+
+    .venue-logo-wrap img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      transition: all 0.3s;
+    }
+
+    .venue-name {
+      font-family: var(--font-body);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 4px;
+    }
+
+    .venue-role {
+      font-size: 0.75rem;
+      color: #c9a84c;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    /* ── CHAPTERS ── */
+    #chapters {
+      background: #080d24;
+    }
+
+    .chapters-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+      margin-top: 60px;
+    }
+
+    .chapter-card {
+      background: #0e1535;
+      padding: 40px 32px;
+      transition: all 0.3s;
+    }
+
+    .chapter-card:hover {
+      background: #162050;
+    }
+
+    .ch-badge {
+      display: inline-block;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 3px;
+      margin-bottom: 20px;
+    }
+
+    .ch-badge.launch {
+      background: rgba(201, 168, 76, 0.12);
+      color: #c9a84c;
+    }
+
+    .ch-title {
+      font-family: var(--font-body);
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: #ffffff;
+    }
+
+    .ch-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .ch-tag {
+      background: rgba(255, 255, 255, 0.05);
+      color: #7a85b0;
+      padding: 4px 10px;
+      border-radius: 100px;
+      font-size: 0.75rem;
+    }
+
+    /* ── PRICING ── */
+    #pricing {
+      background: #0e1535;
+    }
+
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-top: 60px;
+      align-items: stretch;
+    }
+
+    .pricing-card {
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 8px;
+      padding: 36px 28px;
+      position: relative;
+      transition: border-color 0.3s;
+    }
+
+    .pricing-card:hover {
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .pricing-card.featured {
+      border-color: #c9a84c;
+      background: linear-gradient(135deg, rgba(201, 168, 76, 0.06) 0%, transparent 100%);
+    }
+
+    .featured-badge {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #c9a84c;
+      color: #080d24;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 4px 16px;
+      border-radius: 100px;
+      white-space: nowrap;
+    }
+
+    .pricing-name {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #7a85b0;
+      margin-bottom: 12px;
+    }
+
+    .pricing-price {
+      font-family: var(--font-body);
+      font-size: 2.4rem;
+      font-weight: 900;
+      line-height: 1;
+      margin-bottom: 4px;
+      color: #ffffff;
+    }
+
+    .pricing-price.strike {
+      text-decoration: line-through;
+      color: #7a85b0;
+      font-size: 2rem;
+    }
+
+    .pricing-period {
+      font-size: 0.85rem;
+      color: #7a85b0;
+      margin-bottom: 28px;
+    }
+
+    .pricing-divider {
+      height: 1px;
+      background: rgba(255, 255, 255, 0.07);
+      margin-bottom: 28px;
+    }
+
+    .pricing-features {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 36px;
+    }
+
+    .pricing-feature {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 0.875rem;
+      color: #7a85b0;
+    }
+
+    .pricing-feature.yes {
+      color: #ffffff;
+    }
+
+    .pricing-feature .check {
+      color: #c9a84c;
+      min-width: 16px;
+      margin-top: 2px;
+    }
+
+    .pricing-feature .cross {
+      color: #444;
+      min-width: 16px;
+      margin-top: 2px;
+    }
+
+    .btn-full {
+      width: 100%;
+      padding: 13px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      border-radius: 4px;
+      letter-spacing: 0.04em;
+      transition: all 0.2s;
+    }
+
+    .btn-full.gold {
+      background: #c9a84c;
+      color: #080d24;
+      border: none;
+    }
+
+    .btn-full.gold:hover {
+      background: #e8c97a;
+    }
+
+    .btn-full.outline {
+      background: transparent;
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    .btn-full.outline:hover {
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    /* ── REFUND GUARANTEE ── */
+    .guarantee-box {
+      margin-top: 48px;
+      padding: 36px 48px;
+      background: linear-gradient(135deg, rgba(201, 168, 76, 0.08), rgba(201, 168, 76, 0.02));
+      border: 1px solid rgba(201, 168, 76, 0.3);
+      border-radius: 8px;
+      display: flex;
+      gap: 32px;
+      align-items: flex-start;
+    }
+
+    .guarantee-icon {
+      color: #c9a84c;
+      flex-shrink: 0;
+    }
+
+    .guarantee-title {
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: #ffffff;
+      margin-bottom: 8px;
+    }
+
+    .guarantee-desc {
+      color: #7a85b0;
+      font-size: 0.9rem;
+      line-height: 1.7;
+    }
+
+    /* ── ROI ── */
+    #roi {
+      background: #080d24;
+    }
+
+    .roi-table-wrap {
+      margin-top: 60px;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead tr {
+      border-bottom: 1px solid #c9a84c;
+    }
+
+    th {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #7a85b0;
+      padding: 16px 20px;
+      text-align: left;
+    }
+
+    td {
+      padding: 18px 20px;
+      font-size: 0.9rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+      color: #ffffff;
+    }
+
+    tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .roi-val {
+      color: #c9a84c;
+      font-weight: 600;
+    }
+
+    .roi-note {
+      text-align: center;
+      margin-top: 28px;
+      font-size: 0.9rem;
+      color: #7a85b0;
+      padding: 20px;
+      border: 1px solid rgba(201, 168, 76, 0.2);
+      border-radius: 4px;
+    }
+
+    .roi-note strong {
+      color: #c9a84c;
+    }
+
+    /* ── TIMELINE ── */
+    #timeline {
+      background: #0e1535;
+    }
+
+    .timeline-track {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0;
+      margin-top: 60px;
+      position: relative;
+    }
+
+    .timeline-track::before {
+      content: '';
+      position: absolute;
+      top: 28px;
+      left: 10%;
+      right: 10%;
+      height: 1px;
+      background: linear-gradient(90deg, #c9a84c, rgba(201, 168, 76, 0.3));
+      z-index: 0;
+    }
+
+    .tl-item {
+      text-align: center;
+      padding: 0 16px;
+      position: relative;
+    }
+
+    .tl-dot {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: #0e1535;
+      border: 2px solid #c9a84c;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-body);
+      font-size: 1rem;
+      font-weight: 700;
+      color: #c9a84c;
+      margin: 0 auto 20px;
+      position: relative;
+      z-index: 1;
+      transition: all 0.3s;
+    }
+
+    .tl-item:hover .tl-dot {
+      background: #c9a84c;
+      color: #080d24;
+    }
+
+    .tl-phase {
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #7a85b0;
+      margin-bottom: 8px;
+    }
+
+    .tl-title {
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin-bottom: 8px;
+      color: #ffffff;
+    }
+
+    .tl-desc {
+      font-size: 0.78rem;
+      color: #7a85b0;
+      line-height: 1.55;
+    }
+
+    /* ── CEO FORUM + PODCAST ── */
+    #ecosystem {
+      background: #080d24;
+    }
+
+    .ecosystem-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 60px;
+    }
+
+    .ecosystem-card {
+      background: #0e1535;
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 8px;
+      padding: 48px 36px;
+      transition: all 0.3s;
+    }
+
+    .ecosystem-card:hover {
+      border-color: rgba(201, 168, 76, 0.3);
+    }
+
+    .ecosystem-icon {
+      color: #c9a84c;
+      margin-bottom: 24px;
+    }
+
+    .ecosystem-title {
+      font-weight: 700;
+      font-size: 1.4rem;
+      margin-bottom: 14px;
+      color: #ffffff;
+    }
+
+    .ecosystem-desc {
+      color: #7a85b0;
+      font-size: 0.95rem;
+      line-height: 1.75;
+    }
+
+    .ecosystem-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 20px;
+    }
+
+    .ecosystem-tag {
+      border: 1px solid rgba(201, 168, 76, 0.3);
+      color: #c9a84c;
+      padding: 4px 12px;
+      border-radius: 100px;
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+
+    /* ── CTA ── */
+    #cta {
+      background: linear-gradient(135deg, #162050 0%, #080d24 100%);
+      text-align: center;
+      padding: 120px 60px;
+      border-top: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    .cta-title {
+      font-family: var(--font-body);
+      font-size: clamp(2rem, 5vw, 4rem);
+      font-weight: 900;
+      margin-bottom: 20px;
+      color: #ffffff;
+    }
+
+    .cta-title em {
+      color: #c9a84c;
+      font-style: normal;
+    }
+
+    .cta-sub {
+      color: #7a85b0;
+      font-size: 1.1rem;
+      max-width: 500px;
+      margin: 0 auto 48px;
+      line-height: 1.75;
+    }
+
+    .cta-steps {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 48px;
+    }
+
+    .cta-step {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      padding: 12px 20px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      color: #7a85b0;
+    }
+
+    .cta-step-num {
+      background: #c9a84c;
+      color: #080d24;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .cta-contact {
+      margin-top: 48px;
+      color: #7a85b0;
+      font-size: 0.9rem;
+    }
+
+    .cta-contact a {
+      color: #c9a84c;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      background: #0e1535;
+      padding: 48px 60px;
+      border-top: 1px solid rgba(255, 255, 255, 0.07);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 24px;
+    }
+
+    .footer-brand {
+      font-family: var(--font-body);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .footer-brand span {
+      color: #c9a84c;
+    }
+
+    .footer-copy {
+      color: #7a85b0;
+      font-size: 0.78rem;
+      margin-top: 6px;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 28px;
+      flex-wrap: wrap;
+    }
+
+    .footer-links a {
+      color: #7a85b0;
+      font-size: 0.85rem;
+      transition: color 0.2s;
+    }
+
+    .footer-links a:hover {
+      color: #ffffff;
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(28px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(32px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── APPLICATION MODAL ── */
+    #applyModal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 40px 20px;
+      overflow-y: auto;
+    }
+
+    #applyModal.open {
+      display: flex;
+    }
+
+    .modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(5, 9, 20, 0.85);
+      backdrop-filter: blur(8px);
+    }
+
+    .modal-box {
+      position: relative;
+      z-index: 1;
+      background: #ffffff;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 600px;
+      margin: auto;
+      box-shadow: 0 40px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(201, 168, 76, 0.3);
+      animation: modalIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    @keyframes modalIn {
+      from {
+        opacity: 0;
+        transform: scale(0.92) translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    .modal-header {
+      background: #080d24;
+      padding: 32px 36px 28px;
+      border-radius: 12px 12px 0 0;
+      position: relative;
+    }
+
+    .modal-header::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 36px;
+      right: 36px;
+      height: 1px;
+      background: rgba(201, 168, 76, 0.3);
+    }
+
+    .modal-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid #c9a84c;
+      color: #c9a84c;
+      padding: 4px 12px;
+      border-radius: 100px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    .modal-badge::before {
+      content: '★';
+    }
+
+    .modal-title {
+      font-family: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
+      font-size: 1.6rem;
+      font-weight: 900;
+      color: #ffffff;
+      line-height: 1.15;
+    }
+
+    .modal-title em {
+      color: #c9a84c;
+      font-style: normal;
+    }
+
+    .modal-sub {
+      color: #7a85b0;
+      font-size: 0.85rem;
+      margin-top: 8px;
+      line-height: 1.55;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      border: none;
+      cursor: pointer;
+      color: #7a85b0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      transition: all 0.2s;
+    }
+
+    .modal-close:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+    }
+
+    .modal-body {
+      padding: 32px 36px 36px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 18px;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .form-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #4a5580;
+    }
+
+    .form-label span {
+      color: #e05c5c;
+      margin-left: 2px;
+    }
+
+    .form-input,
+    .form-select {
+      width: 100%;
+      padding: 12px 16px;
+      background: #f4f5f8;
+      border: 1.5px solid #dde1f0;
+      border-radius: 6px;
+      font-family: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
+      font-size: 0.9rem;
+      color: #080d24;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+      appearance: none;
+    }
+
+    .form-input::placeholder {
+      color: #aab0cc;
+    }
+
+    .form-input:focus,
+    .form-select:focus {
+      border-color: #c9a84c;
+      box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.15);
+      background: #ffffff;
+    }
+
+    .form-select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%237a85b0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 40px;
+      cursor: pointer;
+    }
+
+    .form-select option {
+      color: #080d24;
+      background: #fff;
+    }
+
+    .modal-divider {
+      height: 1px;
+      background: #dde1f0;
+      margin: 6px 0 22px;
+    }
+
+    /* Privacy consent row */
+    .privacy-consent {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background: #f4f5f8;
+      border: 1.5px solid #dde1f0;
+      border-radius: 6px;
+      padding: 14px 16px;
+      margin-bottom: 18px;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+
+    .privacy-consent:has(input:checked) {
+      border-color: #c9a84c;
+      background: rgba(201, 168, 76, 0.06);
+    }
+
+    .privacy-consent input[type="checkbox"] {
+      margin-top: 2px;
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+      accent-color: #c9a84c;
+      cursor: pointer;
+    }
+
+    .privacy-consent-text {
+      font-size: 0.82rem;
+      color: #4a5580;
+      line-height: 1.5;
+    }
+
+    .privacy-consent-text a {
+      color: #c9a84c;
+      text-decoration: underline;
+      font-weight: 600;
+    }
+
+    .privacy-consent-text a:hover {
+      color: #8a6a20;
+    }
+
+    .form-submit {
+      width: 100%;
+      padding: 15px;
+      background: #c9a84c;
+      color: #080d24;
+      border: none;
+      border-radius: 6px;
+      font-family: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 6px;
+    }
+
+    .form-submit:hover {
+      background: #e8c97a;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(201, 168, 76, 0.35);
+    }
+
+    .form-submit:active {
+      transform: translateY(0);
+    }
+
+    .form-submit:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .form-note {
+      text-align: center;
+      margin-top: 14px;
+      font-size: 0.78rem;
+      color: #7a85b0;
+    }
+
+    .modal-success {
+      display: none;
+      text-align: center;
+      padding: 48px 36px;
+    }
+
+    .modal-success.show {
+      display: block;
+    }
+
+    .modal-success .success-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: rgba(201, 168, 76, 0.12);
+      border: 2px solid #c9a84c;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+      color: #c9a84c;
+    }
+
+    .modal-success h3 {
+      font-family: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #080d24;
+      margin-bottom: 12px;
+    }
+
+    .modal-success p {
+      color: #4a5580;
+      font-size: 0.95rem;
+      line-height: 1.7;
+    }
+
+    .modal-success .success-close {
+      margin-top: 28px;
+      display: inline-block;
+      background: #c9a84c;
+      color: #080d24;
+      padding: 12px 32px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      border: none;
+      font-family: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
+    }
+
+    /* ── SCROLL TO TOP ── */
+    #scrollTop {
+      position: fixed;
+      bottom: 36px;
+      right: 36px;
+      z-index: 90;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #c9a84c;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.3s, transform 0.3s, background 0.2s;
+      pointer-events: none;
+    }
+
+    #scrollTop.visible {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: all;
+    }
+
+    #scrollTop:hover {
+      background: #e8c97a;
+    }
+
+    /* ── MOBILE ── */
+    @media (max-width: 960px) {
+      nav {
+        padding: 16px 24px;
+      }
+
+      .nav-links,
+      .nav-cta {
+        display: none;
+      }
+
+      .hamburger {
+        display: flex;
+      }
+
+      section {
+        padding: 72px 24px;
+      }
+
+      #hero {
+        padding: 100px 24px 72px;
+      }
+
+      .hero-stats,
+      .scroll-hint {
+        display: none;
+      }
+
+      .problem-grid,
+      .chapters-grid,
+      .perks-grid,
+      .features-grid,
+      .verify-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .pricing-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .benefits-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .how-layout,
+      .card-section,
+      .benefits-intro,
+      .ecosystem-grid,
+      .clubs-grid {
+        grid-template-columns: 1fr;
+        gap: 40px;
+      }
+
+      .timeline-track {
+        grid-template-columns: 1fr 1fr;
+        gap: 32px;
+      }
+
+      .timeline-track::before {
+        display: none;
+      }
+
+      footer {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .membership-card {
+        width: 100%;
+        max-width: 340px;
+        transform: none;
+      }
+
+      #cta {
+        padding: 72px 24px;
+      }
+
+      .guarantee-box {
+        flex-direction: column;
+        padding: 28px;
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+
+      .modal-header {
+        padding: 24px 24px 20px;
+      }
+
+      .modal-body {
+        padding: 24px;
+      }
+
+      .modal-title {
+        font-size: 1.35rem;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .pricing-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* ROI TABLE MOBILE */
+    @media (max-width: 960px) {
+      .roi-table-wrap {
+        overflow-x: unset;
+      }
+
+      #rfTable thead {
+        display: none;
+      }
+
+      #rfTable,
+      #rfTable tbody,
+      #rfTable tr,
+      #rfTable td {
+        display: block;
+        width: 100%;
+      }
+
+      #rfTable tr {
+        margin-bottom: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        border-radius: 6px;
+        overflow: hidden;
+      }
+
+      #rfTable tr:hover td {
+        background: transparent;
+      }
+
+      #rfTable td {
+        padding: 12px 16px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        font-size: 0.85rem;
+        position: relative;
+        white-space: normal;
+      }
+
+      #rfTable td:last-child {
+        border-bottom: none;
+      }
+
+      #rfTable td::before {
+        content: attr(data-label);
+        display: block;
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #c9a84c;
+        margin-bottom: 4px;
+      }
+
+      #rfTable td[data-label="Profession"] {
+        background: rgba(201, 168, 76, 0.05);
+        font-size: 0.95rem;
+      }
+
+      #rfSearch {
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- NAV -->
+  <nav id="mainNav">
+    <a class="nav-logo" href="#hero">Prime <span>Business</span> Network</a>
+    <ul class="nav-links">
+      <li><a href="#how">How It Works</a></li>
+      <li><a href="#platform">Platform</a></li>
+      <li><a href="#benefits">Benefits</a></li>
+      <li><a href="#clubs">Clubs</a></li>
+      <li><a href="#chapters">Chapters</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+    </ul>
+    <a href="#cta" class="nav-cta">Secure Your Seat</a>
+    <div class="hamburger" id="hamburger" onclick="openMenu()">
+      <span></span><span></span><span></span>
+    </div>
+  </nav>
+
+  <!-- MOBILE MENU -->
+  <div class="mobile-menu" id="mobileMenu">
+    <button class="mobile-close" onclick="closeMenu()">✕</button>
+    <a href="#how" onclick="closeMenu()">How It Works</a>
+    <a href="#platform" onclick="closeMenu()">Platform</a>
+    <a href="#benefits" onclick="closeMenu()">Benefits</a>
+    <a href="#clubs" onclick="closeMenu()">Clubs</a>
+    <a href="#chapters" onclick="closeMenu()">Chapters</a>
+    <a href="#pricing" onclick="closeMenu()">Pricing</a>
+    <a href="#cta" onclick="closeMenu()">Secure Your Seat →</a>
+  </div>
+
+  <!-- HERO -->
+  <section id="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-grid"></div>
+    <div class="hero-content">
+      <div class="hero-badge">Asia's No. 1 Business Growth Ecosystem — 30 Founding Seats Now Open</div>
+      <h1 class="hero-title">Sri Lanka's First<br /><em>AI-Powered</em><br />Business Growth Ecosystem</h1>
+      <p class="hero-sub">Prime Business Network is not a networking group. It's a structured, AI-powered ecosystem
+        where ambitious entrepreneurs CREATE BUSINESS TOGETHER — with digital tracking, real ROI, and zero guessing.</p>
+      <div class="hero-actions">
+        <a href="#cta" class="btn-primary">Start 1 Month Free Trial</a>
+        <a href="#how" class="btn-outline">How It Works</a>
+      </div>
+    </div>
+    <div class="hero-stats">
+      <div class="stat-item">
+        <div class="stat-num">30</div>
+        <div class="stat-label">Founding Seats</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">AI</div>
+        <div class="stat-label">Matchmaking System</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">100%</div>
+        <div class="stat-label">Digital Tracking</div>
+      </div>
+    </div>
+    <div class="scroll-hint">
+      <div class="scroll-line"></div>Scroll to explore
+    </div>
+  </section>
+
+  <!-- PROBLEM -->
+  <section id="problem" class="section-light">
+    <div class="reveal">
+      <div class="section-label">The Problem</div>
+      <h2 class="section-title">Why Networking in Sri Lanka<br />Is Broken</h2>
+    </div>
+    <div class="problem-grid reveal">
+      <div class="problem-card">
+        <div class="problem-icon"><span class="ti"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"
+              viewBox="0 0 24 24">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <circle cx="12" cy="12" r="9" />
+              <path d="M14.8 9a2 2 0 0 0 -1.8 -1h-2a2 2 0 1 0 0 4h2a2 2 0 1 0 0 4h-2a2 2 0 0 1 -1.8 -1" />
+              <path d="M12 6v2m0 8v2" />
+              <path d="M3 3l18 18" />
+            </svg></span></div>
+        <div class="problem-title">Too Expensive</div>
+        <div class="problem-desc">Traditional networks charge LKR 60,000–80,000 per year with little transparency on
+          what you get. Most SMEs and entrepreneurs simply cannot justify the cost.</div>
+      </div>
+      <div class="problem-card">
+        <div class="problem-icon"><span class="ti"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"
+              viewBox="0 0 24 24">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 7v5l3 3" />
+              <path d="M3 3l18 18" />
+            </svg></span></div>
+        <div class="problem-title">Too Rigid</div>
+        <div class="problem-desc">Mandatory 7AM weekly meetings with strict attendance rules don't fit the modern
+          entrepreneur's schedule or lifestyle.</div>
+      </div>
+      <div class="problem-card">
+        <div class="problem-icon"><span class="ti"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"
+              viewBox="0 0 24 24">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <rect x="3" y="4" width="18" height="12" rx="1" />
+              <path d="M7 20h10" />
+              <path d="M9 16v4" />
+              <path d="M15 16v4" />
+              <path d="M3 3l18 18" />
+            </svg></span></div>
+        <div class="problem-title">No Technology</div>
+        <div class="problem-desc">Referrals tracked on paper slips. No dashboard, no AI matching, no analytics, no proof
+          of ROI. Members have no idea if membership is paying off.</div>
+      </div>
+    </div>
+    <div class="problem-footer reveal">★ The future of business is not WHO YOU KNOW — it is <strong>WHAT VALUE YOUR
+        NETWORK GENERATED.</strong></div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="how">
+    <div class="reveal">
+      <div class="section-label">How It Works</div>
+      <h2 class="section-title">Three Pillars That Set Us Apart</h2>
+      <div class="divider"></div>
+    </div>
+    <div class="how-layout">
+      <div class="pillars reveal">
+        <div class="pillar">
+          <div class="pillar-num">01</div>
+          <div>
+            <div class="pillar-title">Structured Business Creation</div>
+            <div class="pillar-desc">One member per industry — exclusively. When your fellow members need what you
+              offer, you are the only one they call. Every opportunity is tracked and reported digitally via our
+              AI-Powered Platform.</div>
+          </div>
+        </div>
+        <div class="pillar">
+          <div class="pillar-num">02</div>
+          <div>
+            <div class="pillar-title">AI-Powered Digital Platform</div>
+            <div class="pillar-desc">Sri Lanka's only ecosystem with an AI-Based Matchmaking System, ROI Dashboard,
+              Business Opportunity Notice Board, and Member Exclusive Marketplace. No paper, no guessing, no wasted
+              time.</div>
+          </div>
+        </div>
+        <div class="pillar">
+          <div class="pillar-num">03</div>
+          <div>
+            <div class="pillar-title">Flexible Monthly Power Forums</div>
+            <div class="pillar-desc">No mandatory 7AM meetings. Monthly Power Networking Forums at 6PM, bi-weekly
+              virtual sessions, and quarterly industry micro-forums — on your schedule.</div>
+          </div>
+        </div>
+      </div>
+      <div class="how-visual reveal">
+        <div class="how-visual-icon"><span class="ti"><svg xmlns="http://www.w3.org/2000/svg" width="56" height="56"
+              viewBox="0 0 24 24">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <circle cx="12" cy="12" r="1" />
+              <circle cx="12" cy="3" r="2" />
+              <circle cx="20.5" cy="17" r="2" />
+              <circle cx="3.5" cy="17" r="2" />
+              <path d="M12 5v6m0 2l7.24 4.17m-14.48 0l7.24 -4.17" />
+            </svg></span></div>
+        <div class="how-visual-title">Built to CREATE<br />BUSINESS TOGETHER</div>
+        <div class="how-visual-text">PBN is Asia's No. 1 technology-driven Business Growth Ecosystem — not a
+          conventional networking group. Every connection is intentional, every opportunity is measured, and every
+          member wins.</div>
+        <div class="tag-row">
+          <span class="tag">AI Matchmaking</span><span class="tag">ROI Dashboard</span><span
+            class="tag">Leaderboard</span><span class="tag">Notice Board</span><span class="tag">Marketplace</span><span
+            class="tag">Podcast</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DIGITAL PLATFORM FEATURES -->
+  <section id="platform" class="section-light">
+    <div class="reveal">
+      <div class="section-label">The Digital Platform</div>
+      <h2 class="section-title">Technology That Works<br />As Hard As You Do</h2>
+      <p class="section-sub">PBN's Digital Platform is the engine of the Business Growth Ecosystem — every feature
+        designed to help you CREATE BUSINESS TOGETHER, faster and smarter.</p>
+      <div class="divider"></div>
+    </div>
+    <div class="features-grid reveal">
+      <div class="feature-card">
+        <div class="feature-icon"><span class="ti"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"
+              viewBox="0 0 24 24">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M12 2a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+              <path d="M12 22a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+              <path d="M2 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+              <path d="M18 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+              <path d="M6 12h3" />
+              <path d="M15 12h3" />
+              <path d="M13 4.5l-1 3" />
+              <path d="M12 16.5l1 3" />
+            </svg></span></div>
+        <div class="feature-title">AI-Based Matchmaking System</div>
+        <div class="feature-desc">Our AI engine analyses member profiles, industries, business needs, and activity to
+          surface the most compatible business partnerships and deal opportunities across the entire ecosystem.</div>
+        <span class="feature-badge">Core Feature</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"><span class="ti"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"
+              viewBox="0 0 24 24">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2" />
+              <rect x="9" y="3" width="6" height="4" rx="2" />
+              <path d="M9 12l6 0" />
+              <path d="M9 16l6 0" />
+            </svg></span></div>
+        <div class="feature-title">Business Opportunity Notice Board</div>
+        <div class="feature-desc">Post a specific business need and the AI instantly surfaces it to the most relevant
+          members across all chapters. No need to wait for the next forum — business creation happens every day.</div>
+        <span class="feature-badge">Always-On</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"><span class="ti"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"
+              viewBox="0 0 24 24">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M3 3m0 1a1 1 0 0 1 1 -1h16a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1z" />
+              <path d="M3 10h18" />
+              <path d="M3 14h18" />
+              <path d="M3 18h18" />
+            </svg></span></div>
+        <div class="feature-title">ROI Dashboard</div>
+        <div class="feature-desc">See your real-time business value generated, Value Score, and performance rankings.
+          For the first time, you'll have undeniable proof that your membership is paying off.</div>
+        <span class="feature-badge">Real-Time</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"><span class="ti"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"
+              viewBox="0 0 24 24">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
+              <path d="M16 19h6" />
+              <path d="M19 16v6" />
+              <path d="M6 21v-2a4 4 0 0 1 4 -4h4" />
+            </svg></span></div>
+        <div class="feature-title">Member Exclusive Marketplace</div>
+        <div class="feature-desc">Advertise your products and services to the entire PBN ecosystem. Non-member
+          sponsorship slots available. A curated commercial space for high-quality business professionals.</div>
+        <span class="feature-badge">Members Only</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"><span class="ti"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"
+              viewBox="0 0 24 24">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M8 3m0 1a1 1 0 0 1 1 -1h6a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-6a1 1 0 0 1 -1 -1z" />
+              <path d="M12 14m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+              <path d="M7 3v2" />
+              <path d="M17 3v2" />
+              <path d="M12 5v5" />
+            </svg></span></div>
+        <div class="feature-title">Leaderboard & Value Scores</div>
+        <div class="feature-desc">Real-time ranking of members by verified business value generated. Top performers are
+          recognised at Monthly Power Networking Forums and the Annual Conference.</div>
+        <span class="feature-badge">Live Rankings</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"><span class="ti"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"
+              viewBox="0 0 24 24">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path
+                d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z" />
+            </svg></span></div>
+        <div class="feature-title">Verification Badge System</div>
+        <div class="feature-desc">Earn verified status — Silver, Gold, or Platinum — based on business value generated
+          through the ecosystem. Your badge appears on your profile and in the member directory.</div>
+        <span class="feature-badge">Value-Based</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- VALUE VERIFICATION TIERS -->
+  <section id="verification">
+    <div class="reveal">
+      <div class="section-label">Value-Based Membership</div>
+      <h2 class="section-title">Earn Your Status.<br />Your Membership, Proven.</h2>
+      <p class="section-sub">PBN is not a pay-and-sit organisation. Membership status is earned through verified
+        business value — generated through the ecosystem.</p>
+      <div class="divider"></div>
+    </div>
+    <div class="verify-grid reveal">
+      <div class="verify-card" style="--tier-color: #7a85b0;">
+        <div class="verify-level">Level 1</div>
+        <div class="verify-title">✓ Verified Member</div>
+        <div class="verify-amount">LKR 25,000+</div>
+        <div class="verify-desc">You've returned your entire membership investment through business created in PBN.
+          Verification badge on Digital Platform profile and member directory.</div>
+      </div>
+      <div class="verify-card" style="--tier-color: #aab0cc;">
+        <div class="verify-level">Level 2</div>
+        <div class="verify-title">🥈 Silver Member</div>
+        <div class="verify-amount">LKR 1,000,000+</div>
+        <div class="verify-desc">Silver Member badge and status. Priority listing in AI-Based Matchmaking System.
+          Recognition at Monthly Power Networking Forums and Annual Conference.</div>
+      </div>
+      <div class="verify-card" style="--tier-color: #c9a84c;">
+        <div class="verify-level">Level 3</div>
+        <div class="verify-title">🥇 Gold Member</div>
+        <div class="verify-amount">LKR 2,500,000+</div>
+        <div class="verify-desc">Gold Member badge. Enhanced Leaderboard visibility. Special recognition at Annual
+          Conference. Access to exclusive Gold Member sessions.</div>
+      </div>
+      <div class="verify-card" style="--tier-color: #e8c97a;">
+        <div class="verify-level">Level 4</div>
+        <div class="verify-title">💎 Platinum Member</div>
+        <div class="verify-amount">LKR 5,000,000+</div>
+        <div class="verify-desc">Top Leaderboard position. Keynote or panel opportunity at Annual Conference. Exclusive
+          Platinum Member benefits as determined by the Board.</div>
+      </div>
+    </div>
+    <div class="reveal"
+      style="margin-top:32px;padding:24px 36px;border:1px solid rgba(201,168,76,0.2);border-radius:6px;background:rgba(201,168,76,0.04);">
+      <p style="color:#7a85b0;font-size:0.9rem;line-height:1.7;text-align:center;margin:0;">★ Business value is verified
+        through the ROI Dashboard. Submit evidence (invoices, contracts, letters of engagement) via the platform.
+        <strong style="color:#c9a84c;">Only business generated through PBN ecosystem introductions qualifies.</strong>
+      </p>
+    </div>
+  </section>
+
+  <!-- BENEFITS -->
+  <section id="benefits" class="section-light">
+    <div class="benefits-intro">
+      <div class="reveal">
+        <div class="section-label">Charter Member Benefits</div>
+        <h2 class="section-title">Your Exclusive<br />Founding Privileges</h2>
+        <div class="divider"></div>
+      </div>
+      <div class="reveal">
+        <p class="section-sub">Charter Members receive benefits that will never be offered again. Only 30 seats exist —
+          one per industry. The rate is locked for the duration of continuous membership.</p>
+      </div>
+    </div>
+    <div class="benefits-grid reveal">
+      <div class="benefit-card">
+        <div class="benefit-icon"><span class="ti"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36"
+              viewBox="0 0 24 24">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M8 21l8 0" />
+              <path d="M12 17l0 4" />
+              <path d="M7 4l10 0" />
+              <path d="M17 4v8a5 5 0 0 1 -10 0v-8" />
+              <path d="M5 9m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+              <path d="M19 9m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+            </svg></span></div>
+        <div class="benefit-title">Exclusive Industry Seat</div>
+        <div class="benefit-desc">You are the ONLY representative of your industry. 100% of chapter business creation
+          opportunities in your field come directly to you.</div>
+      </div>
+      <div class="benefit-card">
+        <div class="benefit-icon"><span class="ti"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36"
+              viewBox="0 0 24 24">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <circle cx="12" cy="12" r="9" />
+              <path d="M14.8 9a2 2 0 0 0 -1.8 -1h-2a2 2 0 1 0 0 4h2a2 2 0 1 0 0 4h-2a2 2 0 0 1 -1.8 -1" />
+              <path d="M12 6v2m0 8v2" />
+            </svg></span></div>
+        <div class="benefit-title">1 Month Free Trial</div>
+        <div class="benefit-desc">Experience the Prime Business Network risk-free for 1 month before the affordable LKR
+          15,000 annual fee becomes payable.</div>
+      </div>
+      <div class="benefit-card">
+        <div class="benefit-icon"><span class="ti"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36"
+              viewBox="0 0 24 24">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M12 2a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+              <path d="M12 22a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+              <path d="M2 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+              <path d="M18 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+              <path d="M6 12h3" />
+              <path d="M15 12h3" />
+              <path d="M13 4.5l-1 3" />
+              <path d="M12 16.5l1 3" />
+            </svg></span></div>
+        <div class="benefit-title">AI Matchmaking Priority</div>
+        <div class="benefit-desc">Priority access to the AI-Based Matchmaking System recommendations — the first to be
+          surfaced for relevant business opportunities across the ecosystem.</div>
+      </div>
+      <div class="benefit-card">
+        <div class="benefit-icon"><span class="ti"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36"
+              viewBox="0 0 24 24">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path
+                d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z" />
+            </svg></span></div>
+        <div class="benefit-title">Founding Wall Recognition</div>
+        <div class="benefit-desc">Your name & business permanently displayed on PBN's Founding Member Wall — physical
+          and digital — per chapter.</div>
+      </div>
+      <div class="benefit-card">
+        <div class="benefit-icon"><span class="ti"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36"
+              viewBox="0 0 24 24">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M18 8a3 3 0 0 1 0 6" />
+              <path d="M10 8v11a1 1 0 0 1 -1 1h-1a1 1 0 0 1 -1 -1v-5" />
+              <path
+                d="M12 8h0l4.524 -3.77a0.9 .9 0 0 1 1.476 .692v12.156a0.9 .9 0 0 1 -1.476 .692l-4.524 -3.77h-8a1 1 0 0 1 -1 -1v-4a1 1 0 0 1 1 -1h8" />
+            </svg></span></div>
+        <div class="benefit-title">Co-branded Marketing</div>
+        <div class="benefit-desc">Your logo on all launch materials, social media campaigns, and press coverage for the
+          Prime Business Network launch.</div>
+      </div>
+      <div class="benefit-card">
+        <div class="benefit-icon"><span class="ti"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36"
+              viewBox="0 0 24 24">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2" />
+              <rect x="9" y="3" width="6" height="4" rx="2" />
+              <path d="M9 12l6 0" />
+              <path d="M9 16l6 0" />
+            </svg></span></div>
+        <div class="benefit-title">Vote in Governance</div>
+        <div class="benefit-desc">Charter Members shape chapter rules, Monthly Power Forum formats, and chapter culture.
+          This is your ecosystem — you have a voice.</div>
+      </div>
+      <div class="benefit-card">
+        <div class="benefit-icon"><span class="ti"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36"
+              viewBox="0 0 24 24">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M15 5l0 2" />
+              <path d="M15 11l0 2" />
+              <path d="M15 17l0 2" />
+              <path
+                d="M5 5h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-3a2 2 0 0 0 0 -4v-3a2 2 0 0 1 2 -2" />
+            </svg></span></div>
+        <div class="benefit-title">VIP Conference Access</div>
+        <div class="benefit-desc">Complimentary VIP ticket to the annual conference (valued LKR 15,000+), plus priority
+          speaking opportunities.</div>
+      </div>
+      <div class="benefit-card">
+        <div class="benefit-icon"><span class="ti"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36"
+              viewBox="0 0 24 24">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M22 9l-10 -4l-10 4l10 4l10 -4v6" />
+              <path d="M6 10.6v5.4a6 3 0 0 0 12 0v-5.4" />
+            </svg></span></div>
+        <div class="benefit-title">Training Workshops Free</div>
+        <div class="benefit-desc">All PBN training sessions — public speaking, business creation, business development —
+          free in Year 1.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HORIZONTAL CLUBS -->
+  <section id="clubs">
+    <div class="reveal">
+      <div class="section-label">Horizontal Clubs</div>
+      <h2 class="section-title">Deep Business Creation<br />Within Your Vertical</h2>
+      <p class="section-sub">Beyond your Primary Chapter, Horizontal Clubs unite the full ecosystem of a single industry
+        — bringing together all the complementary businesses that create deals together in a specific sector.</p>
+      <div class="divider"></div>
+    </div>
+    <div class="clubs-grid reveal">
+      <div class="club-card">
+        <div class="club-icon"><span class="ti"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36"
+              viewBox="0 0 24 24">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M3 21l18 0" />
+              <path d="M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16" />
+              <path d="M9 9l.01 0" />
+              <path d="M9 13l.01 0" />
+              <path d="M9 17l.01 0" />
+              <path d="M15 9l.01 0" />
+              <path d="M15 13l.01 0" />
+              <path d="M15 17l.01 0" />
+            </svg></span></div>
+        <div class="club-title">Real Estate Club</div>
+        <p style="color:#7a85b0;font-size:0.875rem;line-height:1.65;margin-bottom:4px;">All the professionals who CREATE
+          BUSINESS TOGETHER in real estate — united in one specialist club.</p>
+        <div class="club-members">
+          <span class="club-member">Real Estate Agent</span><span class="club-member">Lawyer</span><span
+            class="club-member">Contractor</span><span class="club-member">Architect</span><span
+            class="club-member">Interior Designer</span><span class="club-member">Quantity Surveyor</span><span
+            class="club-member">Finance Advisor</span>
+        </div>
+      </div>
+      <div class="club-card">
+        <div class="club-icon"><span class="ti"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36"
+              viewBox="0 0 24 24">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572" />
+            </svg></span></div>
+        <div class="club-title">Healthcare Club</div>
+        <p style="color:#7a85b0;font-size:0.875rem;line-height:1.65;margin-bottom:4px;">The complete healthcare &
+          wellness ecosystem working together to deliver holistic patient care and corporate health solutions.</p>
+        <div class="club-members">
+          <span class="club-member">Doctor / GP</span><span class="club-member">Dentist</span><span
+            class="club-member">Physiotherapist</span><span class="club-member">Pharmacist</span><span
+            class="club-member">Nutritionist</span><span class="club-member">Health Insurance</span>
+        </div>
+      </div>
+      <div class="club-card">
+        <div class="club-icon"><span class="ti"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36"
+              viewBox="0 0 24 24">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <rect x="4" y="8" width="4" height="12" />
+              <rect x="16" y="4" width="4" height="16" />
+              <rect x="10" y="12" width="4" height="8" />
+            </svg></span></div>
+        <div class="club-title">Technology Club</div>
+        <p style="color:#7a85b0;font-size:0.875rem;line-height:1.65;margin-bottom:4px;">Sri Lanka's tech ecosystem in a
+          single room — software, security, design, data, and marketing, building together.</p>
+        <div class="club-members">
+          <span class="club-member">Software Company</span><span class="club-member">Cybersecurity</span><span
+            class="club-member">UI/UX Designer</span><span class="club-member">Digital Marketer</span><span
+            class="club-member">Data Analyst</span><span class="club-member">IT Infrastructure</span>
+        </div>
+      </div>
+      <div class="club-card">
+        <div class="club-icon"><span class="ti"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36"
+              viewBox="0 0 24 24">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M3 21l18 0" />
+              <path d="M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16" />
+              <path d="M9 9l.01 0" />
+              <path d="M9 13l.01 0" />
+              <path d="M15 9l.01 0" />
+              <path d="M15 13l.01 0" />
+            </svg></span></div>
+        <div class="club-title">Hospitality Club</div>
+        <p style="color:#7a85b0;font-size:0.875rem;line-height:1.65;margin-bottom:4px;">Hotels, F&B, events, and travel
+          businesses — creating high-value hospitality experiences and corporate contracts together.</p>
+        <div class="club-members">
+          <span class="club-member">Hotel / Venue</span><span class="club-member">F&B Supplier</span><span
+            class="club-member">Event Organiser</span><span class="club-member">Tour Operator</span><span
+            class="club-member">Marketing Agency</span><span class="club-member">Hospitality Lawyer</span>
+        </div>
+      </div>
+    </div>
+    <div class="reveal"
+      style="margin-top:40px;padding:24px 32px;border:1px solid rgba(201,168,76,0.2);border-radius:6px;background:rgba(201,168,76,0.03);display:flex;align-items:center;gap:16px;">
+      <span style="color:#c9a84c;font-size:1.3rem;">★</span>
+      <p style="color:#7a85b0;font-size:0.9rem;line-height:1.65;margin:0;">Horizontal Clubs require a minimum of <strong
+          style="color:#ffffff;">5 eligible members</strong> to establish. A member's Primary Chapter seat remains their
+        primary affiliation — Horizontal Club is an additional, specialist business creation environment. A separate
+        annual fee applies.</p>
+    </div>
+  </section>
+
+  <!-- MEMBER CARD -->
+  <section id="member-card" class="section-light">
+    <div class="card-section">
+      <div class="card-visual-wrap reveal">
+        <div class="membership-card" id="memberCard">
+          <div class="card-shine"></div>
+          <div class="card-dots"></div>
+          <div class="card-brand">
+            <div class="card-logo-text">Prime <span>Business</span><br />Network</div>
+            <div class="card-chip"></div>
+          </div>
+          <div class="card-number">★★★★ &nbsp; ★★★★ &nbsp; ★★★★ &nbsp; 2026</div>
+          <div class="card-bottom">
+            <div>
+              <div class="card-name-label">Charter Member</div>
+              <div class="card-name">Your Name Here</div>
+            </div>
+            <div class="card-tier">Founding</div>
+          </div>
+        </div>
+      </div>
+      <div class="card-perks reveal">
+        <div class="section-label">Member Privilege Card</div>
+        <h2 class="card-perks-title">Unlock Exclusive<br />Deals &amp; Benefits</h2>
+        <div class="divider"></div>
+        <p style="color:#7a85b0;font-size:0.95rem;line-height:1.75;margin-bottom:28px;">Every Charter Member and
+          Founders Club Member receives a physical &amp; digital Prime Business Network Privilege Card — accepted at
+          partner hotels, restaurants, and service providers across Sri Lanka.</p>
+        <div class="perk-list">
+          <div class="perk-item">
+            <div class="perk-icon"><span class="ti"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22"
+                  viewBox="0 0 24 24">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M3 21l18 0" />
+                  <path d="M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16" />
+                </svg></span></div>
+            <div class="perk-text"><strong>Hotel &amp; Stay Offers</strong>Exclusive rates and complimentary upgrades at
+              partner hotels across Sri Lanka.</div>
+          </div>
+          <div class="perk-item">
+            <div class="perk-icon"><span class="ti"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22"
+                  viewBox="0 0 24 24">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path
+                    d="M19 3v12h-5c-.023 -3.681 .184 -7.406 5 -12zm0 12v6h-1v-3m-10 -14v17m-3 -17v3a3 3 0 1 0 6 0v-3" />
+                </svg></span></div>
+            <div class="perk-text"><strong>Dining Privileges</strong>Preferred rates and special menus at partner
+              restaurants and venues.</div>
+          </div>
+          <div class="perk-item">
+            <div class="perk-icon"><span class="ti"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22"
+                  viewBox="0 0 24 24">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path
+                    d="M11.5 21l-8.5 -8.5c-.667 -.667 -.667 -1.833 0 -2.5l7 -7c.667 -.667 1.833 -.667 2.5 0l8.5 8.5c.667 .667 .667 1.833 0 2.5l-7 7c-.667 .667 -1.833 .667 -2.5 0z" />
+                  <circle cx="15" cy="9" r="1" fill="#c9a84c" stroke="none" />
+                </svg></span></div>
+            <div class="perk-text"><strong>Exclusive Member Deals</strong>Access to curated offers from fellow member
+              businesses and partner brands.</div>
+          </div>
+          <div class="perk-item">
+            <div class="perk-icon"><span class="ti"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22"
+                  viewBox="0 0 24 24">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M18 8a3 3 0 0 1 0 6" />
+                  <path d="M10 8v11a1 1 0 0 1 -1 1h-1a1 1 0 0 1 -1 -1v-5" />
+                  <path
+                    d="M12 8h0l4.524 -3.77a0.9 .9 0 0 1 1.476 .692v12.156a0.9 .9 0 0 1 -1.476 .692l-4.524 -3.77h-8a1 1 0 0 1 -1 -1v-4a1 1 0 0 1 1 -1h8" />
+                </svg></span></div>
+            <div class="perk-text"><strong>Promote Your Business on the Card Network</strong>Feature your deals — reach
+              all member businesses and their extended networks instantly.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOR PARTNERS -->
+  <section id="privilege">
+    <div class="privilege-intro reveal">
+      <div class="section-label">For Partners &amp; Service Providers</div>
+      <h2 class="section-title">A Promotional Platform<br />Like No Other</h2>
+      <div class="divider"></div>
+      <p class="section-sub">The Prime Privilege Card is not just a member benefit — it's a marketing channel. Hotels,
+        restaurants, and service providers gain direct access to a curated community of high-value business
+        entrepreneurs.</p>
+    </div>
+    <div class="perks-grid reveal">
+      <div class="perk-card">
+        <div class="perk-card-icon"><span class="ti"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"
+              viewBox="0 0 24 24">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M3 21l18 0" />
+              <path d="M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16" />
+            </svg></span></div>
+        <div class="perk-card-title">Hotels &amp; Hospitality</div>
+        <div class="perk-card-desc">Feature your property on the Prime Privilege Card. Every member — and their clients
+          — sees your offer. Build direct B2B relationships with Sri Lanka's most active business entrepreneurs.</div>
+        <span class="perk-card-badge">Partner Opportunity</span>
+      </div>
+      <div class="perk-card">
+        <div class="perk-card-icon"><span class="ti"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"
+              viewBox="0 0 24 24">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M19 3v12h-5c-.023 -3.681 .184 -7.406 5 -12zm0 12v6h-1v-3m-10 -14v17m-3 -17v3a3 3 0 1 0 6 0v-3" />
+            </svg></span></div>
+        <div class="perk-card-title">Restaurants &amp; Venues</div>
+        <div class="perk-card-desc">PBN members choose venues with Privilege Card deals for Monthly Power Networking
+          Forums and business dinners. Get your brand in front of decision-makers who host meetings and events.</div>
+        <span class="perk-card-badge">Partner Opportunity</span>
+      </div>
+      <div class="perk-card">
+        <div class="perk-card-icon"><span class="ti"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"
+              viewBox="0 0 24 24">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <rect x="3" y="7" width="18" height="13" rx="2" />
+              <path d="M8 7v-2a2 2 0 0 1 2 -2h4a2 2 0 0 1 2 2v2" />
+              <path d="M12 12l0 .01" />
+              <path d="M3 13a20 20 0 0 0 18 0" />
+            </svg></span></div>
+        <div class="perk-card-title">Member Business Promotions</div>
+        <div class="perk-card-desc">As a member, list your own exclusive offer on the card network. Reach fellow members
+          and their combined business networks — a cost-free, targeted promotional platform.</div>
+        <span class="perk-card-badge">Member Benefit</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- VENUE PARTNERS -->
+  <section id="venue-partners">
+    <div class="reveal">
+      <div class="section-label">Our Venue Partners</div>
+      <h2 class="section-title">Where We Meet</h2>
+      <div class="divider" style="margin-left: auto; margin-right: auto;"></div>
+      <p class="section-sub" style="margin: 0 auto;">Experience our Monthly Power Forums and events at Sri Lanka's
+        finest business venues.</p>
+    </div>
+    <div class="venue-grid reveal">
+      <div class="venue-card">
+        <div class="venue-logo-wrap">
+          <img src="mandarina.png" alt="Mandarina Colombo" />
+        </div>
+        <div class="venue-name">Mandarina Colombo</div>
+        <div class="venue-role">Official Venue Partner</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHAPTERS -->
+  <section id="chapters" class="section-light">
+    <div class="reveal">
+      <div class="section-label">Chapters</div>
+      <h2 class="section-title">One Seat Per Industry</h2>
+      <p class="section-sub">One chapter. One city. 30 founding seats — each exclusively held by one professional per
+        industry. Once a seat is taken, it's gone.</p>
+    </div>
+    <div class="chapters-grid reveal">
+      <div class="chapter-card" style="grid-column: 1 / -1;"><span class="ch-badge launch">★ Launching Now</span>
+        <div class="ch-title">Flagship Mixed Primary Chapter — 30 Founding Seats</div>
+        <div class="ch-tags"><span class="ch-tag">Lawyer</span><span class="ch-tag">Accountant</span><span
+            class="ch-tag">Financial Advisor</span><span class="ch-tag">Insurance Agent</span><span class="ch-tag">HR
+            Consultant</span><span class="ch-tag">Business Coach</span><span class="ch-tag">Corporate
+            Trainer</span><span class="ch-tag">Company Secretary</span><span class="ch-tag">Tax Advisor</span><span
+            class="ch-tag">Management Consultant</span><span class="ch-tag">IT Company</span><span
+            class="ch-tag">Digital Marketer</span><span class="ch-tag">Cybersecurity</span><span class="ch-tag">Data
+            Analyst</span><span class="ch-tag">UI/UX Designer</span><span class="ch-tag">Real Estate Agent</span><span
+            class="ch-tag">Architect</span><span class="ch-tag">Contractor</span><span class="ch-tag">Interior
+            Designer</span><span class="ch-tag">Quantity Surveyor</span><span class="ch-tag">Doctor / GP</span><span
+            class="ch-tag">Dentist</span><span class="ch-tag">Physiotherapist</span><span
+            class="ch-tag">Nutritionist</span><span class="ch-tag">Pharmacist</span><span
+            class="ch-tag">Photographer</span><span class="ch-tag">PR Firm</span><span class="ch-tag">Event
+            Organiser</span><span class="ch-tag">Branding Designer</span><span class="ch-tag">Content Creator</span>
+        </div>
+      </div>
+      <div class="chapter-card" style="opacity:0.55;"><span class="ch-badge"
+          style="background:rgba(8,13,36,0.06);color:#7a85b0;">Year 2 — Coming Soon</span>
+        <div class="ch-title">Technology &amp; Innovation Primary Chapter</div>
+        <div class="ch-tags"><span class="ch-tag">Software Companies</span><span
+            class="ch-tag">Cybersecurity</span><span class="ch-tag">Data &amp; AI</span><span class="ch-tag">Digital
+            Marketing</span><span class="ch-tag">UI/UX</span><span class="ch-tag">Tech Consulting</span></div>
+      </div>
+      <div class="chapter-card" style="opacity:0.55;"><span class="ch-badge"
+          style="background:rgba(8,13,36,0.06);color:#7a85b0;">Year 2 — Coming Soon</span>
+        <div class="ch-title">Healthcare &amp; Wellness Primary Chapter</div>
+        <div class="ch-tags"><span class="ch-tag">Doctors</span><span class="ch-tag">Dentists</span><span
+            class="ch-tag">Physiotherapy</span><span class="ch-tag">Nutrition</span><span
+            class="ch-tag">Pharmacy</span><span class="ch-tag">Mental Health</span></div>
+      </div>
+      <div class="chapter-card" style="opacity:0.55;"><span class="ch-badge"
+          style="background:rgba(8,13,36,0.06);color:#7a85b0;">Year 2 — Coming Soon</span>
+        <div class="ch-title">Property &amp; Construction Primary Chapter</div>
+        <div class="ch-tags"><span class="ch-tag">Real Estate</span><span class="ch-tag">Architecture</span><span
+            class="ch-tag">Contractors</span><span class="ch-tag">Interior Design</span><span
+            class="ch-tag">QS</span><span class="ch-tag">Property Law</span></div>
+      </div>
+    </div>
+    <div class="reveal"
+      style="margin-top:40px;padding:24px 32px;border:1px solid rgba(201,168,76,0.2);border-radius:6px;background:rgba(201,168,76,0.03);display:flex;align-items:center;gap:16px;">
+      <span style="color:#c9a84c;font-size:1.3rem;">★</span>
+      <p style="color:#7a85b0;font-size:0.9rem;line-height:1.65;margin:0;">In <strong style="color:#080d24;">Year
+          2</strong>, PBN will launch dedicated <strong style="color:#c9a84c;">industry-specific Primary
+          Chapters</strong> and <strong style="color:#c9a84c;">Finance & Investments Chapter</strong>. Founding members
+        of today's mixed chapter get first right of access.</p>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section id="pricing">
+    <div class="reveal" style="text-align:center;max-width:640px;margin:0 auto;">
+      <div class="section-label">Pricing</div>
+      <h2 class="section-title">The Most Affordable<br />Ecosystem in Sri Lanka</h2>
+      <p class="section-sub" style="margin:0 auto;">As a Charter Member, you invest significantly less than traditional
+        networks — with far more value, flexibility, and technology.</p>
+    </div>
+    <div class="pricing-grid reveal">
+      <div class="pricing-card">
+        <div class="pricing-name">Prominent Networks</div>
+        <div class="pricing-price strike">~LKR 70,000</div>
+        <div class="pricing-period">per year</div>
+        <div class="pricing-divider"></div>
+        <div class="pricing-features">
+          <div class="pricing-feature"><span class="cross">✕</span> Rigid early morning meetings</div>
+          <div class="pricing-feature"><span class="cross">✕</span> Paper-based tracking</div>
+          <div class="pricing-feature"><span class="cross">✕</span> No AI matchmaking</div>
+          <div class="pricing-feature"><span class="cross">✕</span> No ROI dashboard</div>
+          <div class="pricing-feature"><span class="cross">✕</span> No marketplace</div>
+        </div>
+      </div>
+      <div class="pricing-card featured">
+        <div class="featured-badge">★ Your Charter Seat</div>
+        <div class="pricing-name">Prime — Charter Member</div>
+        <div class="pricing-price" style="color:#c9a84c">LKR 15,000</div>
+        <div class="pricing-period">per year + LKR 5,000/forum<br><strong
+            style="color:#c9a84c;display:inline-block;margin-top:8px;">★ 1 Month Free Trial</strong></div>
+        <div class="pricing-divider"></div>
+        <div class="pricing-features">
+          <div class="pricing-feature yes"><span class="check">✓</span> <strong>1 Month Free Trial</strong></div>
+          <div class="pricing-feature yes"><span class="check">✓</span> Exclusive industry seat (locked rate)</div>
+          <div class="pricing-feature yes"><span class="check">✓</span> AI Matchmaking System access</div>
+          <div class="pricing-feature yes"><span class="check">✓</span> ROI Dashboard & Leaderboard</div>
+          <div class="pricing-feature yes"><span class="check">✓</span> Business Opportunity Notice Board</div>
+          <div class="pricing-feature yes"><span class="check">✓</span> Member Exclusive Marketplace</div>
+          <div class="pricing-feature yes"><span class="check">✓</span> Privilege Card (hotels & deals)</div>
+          <div class="pricing-feature yes"><span class="check">✓</span> Chapter governance voting rights</div>
+        </div>
+        <button class="btn-full gold" onclick="openModal()">Start My 1 Month Free Trial</button>
+      </div>
+      <div class="pricing-card">
+        <div class="pricing-name">Prime — Founders Club</div>
+        <div class="pricing-price">LKR 50,000</div>
+        <div class="pricing-period">per year — premium tier</div>
+        <div class="pricing-divider"></div>
+        <div class="pricing-features">
+          <div class="pricing-feature yes"><span class="check">✓</span> Full Marketplace access</div>
+          <div class="pricing-feature yes"><span class="check">✓</span> Priority AI Matchmaking</div>
+          <div class="pricing-feature yes"><span class="check">✓</span> Exclusive webinars & events</div>
+          <div class="pricing-feature yes"><span class="check">✓</span> Founders-only roundtables</div>
+          <div class="pricing-feature yes"><span class="check">✓</span> Privilege Card</div>
+          <div class="pricing-feature yes"><span class="check">✓</span> Priority directory visibility</div>
+        </div>
+        <button class="btn-full outline" onclick="openModal()">Apply for Founders Club</button>
+      </div>
+      <div class="pricing-card">
+        <div class="pricing-name">Future Standard Members</div>
+        <div class="pricing-price">LKR 25,000</div>
+        <div class="pricing-period">per year</div>
+        <div class="pricing-divider"></div>
+        <div class="pricing-features">
+          <div class="pricing-feature yes"><span class="check">✓</span> Digital platform</div>
+          <div class="pricing-feature yes"><span class="check">✓</span> Flexible forums</div>
+          <div class="pricing-feature yes"><span class="check">✓</span> ROI dashboard</div>
+          <div class="pricing-feature"><span class="cross">✕</span> No founding privileges</div>
+          <div class="pricing-feature"><span class="cross">✕</span> No governance vote</div>
+        </div>
+        <button class="btn-full outline" disabled style="opacity:0.35;cursor:not-allowed;">Coming Soon</button>
+      </div>
+    </div>
+
+    <!-- Refund Guarantee -->
+    <div class="guarantee-box reveal">
+      <div class="guarantee-icon">
+        <span class="ti"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <path d="M5 13a16 16 0 0 1 7 -4a16 16 0 0 1 7 4" />
+            <path d="M12 20a16 16 0 0 1 -7 -4" />
+            <path d="M19 16a16 16 0 0 1 -7 4" />
+            <path d="M12 4v4" />
+            <path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
+          </svg></span>
+      </div>
+      <div>
+        <div class="guarantee-title">PBN's Business Value Guarantee</div>
+        <div class="guarantee-desc">If you fulfil all minimum membership obligations — attend 8 Monthly Power Networking
+          Forums, submit 4 business opportunities per quarter, respond to relevant Notice Board requests, and actively
+          participate in AI Matchmaking sessions — yet have not generated verified business value of LKR 25,000 within
+          your first year, PBN will refund your annual membership fee (less the cost of your physical branding kit). We
+          stand behind the ecosystem. <strong style="color:#c9a84c;">First-year members only. Written request within 14
+            days of anniversary.</strong></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CEO FORUM & PODCAST -->
+  <section id="ecosystem" class="section-light">
+    <div class="reveal">
+      <div class="section-label">CEO Forum &amp; Podcast</div>
+      <h2 class="section-title">Thought Leadership<br />Within the Ecosystem</h2>
+      <div class="divider"></div>
+    </div>
+    <div class="ecosystem-grid reveal">
+      <div class="ecosystem-card">
+        <div class="ecosystem-icon"><span class="ti"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"
+              viewBox="0 0 24 24">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              <path d="M21 21v-2a4 4 0 0 0 -3 -3.85" />
+            </svg></span></div>
+        <div class="ecosystem-title">CEO Forum</div>
+        <div class="ecosystem-desc">An honorary forum for CEOs, Managing Directors, Founders, and equivalent senior
+          business leaders within PBN. No fee for Forum participation — purely honorary. A space for senior leaders to
+          connect, advise, and collaborate at the highest level.</div>
+        <div class="ecosystem-tags">
+          <span class="ecosystem-tag">CEOs & MDs</span><span class="ecosystem-tag">Founders</span><span
+            class="ecosystem-tag">Honorary</span><span class="ecosystem-tag">No Fee</span>
+        </div>
+      </div>
+      <div class="ecosystem-card">
+        <div class="ecosystem-icon"><span class="ti"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"
+              viewBox="0 0 24 24">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M9 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
+              <path d="M19 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
+              <path
+                d="M9 12h-4a2 2 0 0 0 -2 2v1a2 2 0 0 0 2 2h1a2 2 0 0 0 2 -2v-6a2 2 0 0 1 2 -2h4a2 2 0 0 1 2 2v6a2 2 0 0 0 2 2h1a2 2 0 0 0 2 -2v-1a2 2 0 0 0 -2 -2h-4" />
+            </svg></span></div>
+        <div class="ecosystem-title">PBN Podcast Platform</div>
+        <div class="ecosystem-desc">PBN operates a Podcast Platform as a content and thought leadership channel
+          distributed across all major platforms. Charter Members and Founders Club Members may contribute content.
+          Corporate sponsors may sponsor episodes. All podcast content produced by PBN remains PBN's intellectual
+          property.</div>
+        <div class="ecosystem-tags">
+          <span class="ecosystem-tag">CEO Interviews</span><span class="ecosystem-tag">Business Insights</span><span
+            class="ecosystem-tag">Member Content</span><span class="ecosystem-tag">Sponsor Slots</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- REFERRAL FLOW MAP -->
+  <section id="roi">
+    <div class="reveal">
+      <div class="section-label">The Business Case</div>
+      <h2 class="section-title">Who Creates Business<br />With Whom — Flow Map</h2>
+      <p class="section-sub">This shows the natural business creation flows between the 30 professions in our mixed
+        chapter. See exactly who will be creating business with you — and who you'll create business for.</p>
+    </div>
+    <div class="reveal" style="margin-top:40px;margin-bottom:24px;max-width:360px;">
+      <input id="rfSearch" type="text" placeholder="Search your profession..." oninput="filterRF()"
+        style="width:100%;padding:12px 18px;background:rgba(255,255,255,0.05);border:1px solid rgba(201,168,76,0.3);border-radius:4px;color:#ffffff;font-family:var(--font-body);font-size:0.9rem;outline:none;" />
+    </div>
+    <div class="roi-table-wrap reveal">
+      <table id="rfTable">
+        <thead>
+          <tr>
+            <th>Member Profession</th>
+            <th>Business They RECEIVE</th>
+            <th>Business They CREATE FOR Others</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td data-label="Profession" class="rf-prof">Lawyer / Attorney</td>
+            <td data-label="Business They RECEIVE">Company reg., contracts, disputes, IP, property law</td>
+            <td data-label="Business They CREATE FOR Others" class="rf-give">Accountant, Financial Advisor, Real Estate
+              Agent</td>
+          </tr>
+          <tr>
+            <td data-label="Profession" class="rf-prof">Accountant / Auditor</td>
+            <td data-label="Business They RECEIVE">Tax filing, payroll, business accounts, audits</td>
+            <td data-label="Business They CREATE FOR Others" class="rf-give">Lawyer, HR Consultant, Financial Advisor
+            </td>
+          </tr>
+          <tr>
+            <td data-label="Profession" class="rf-prof">Financial Advisor</td>
+            <td data-label="Business They RECEIVE">Investment planning, wealth management, loans</td>
+            <td data-label="Business They CREATE FOR Others" class="rf-give">Lawyer, Accountant, Insurance Agent</td>
+          </tr>
+          <tr>
+            <td data-label="Profession" class="rf-prof">Insurance Agent</td>
+            <td data-label="Business They RECEIVE">Life, health, vehicle, business insurance</td>
+            <td data-label="Business They CREATE FOR Others" class="rf-give">Financial Advisor, Real Estate Agent, HR
+              Consultant</td>
+          </tr>
+          <tr>
+            <td data-label="Profession" class="rf-prof">HR Consultant</td>
+            <td data-label="Business They RECEIVE">Recruitment, payroll outsourcing, HR policies</td>
+            <td data-label="Business They CREATE FOR Others" class="rf-give">Lawyer, Accountant, IT Company, Business
+              Coach</td>
+          </tr>
+          <tr>
+            <td data-label="Profession" class="rf-prof">Business Coach</td>
+            <td data-label="Business They RECEIVE">Strategy, mentoring, startup &amp; leadership coaching</td>
+            <td data-label="Business They CREATE FOR Others" class="rf-give">Accountant, Lawyer, HR Consultant, Digital
+              Marketer</td>
+          </tr>
+          <tr>
+            <td data-label="Profession" class="rf-prof">Corporate Trainer</td>
+            <td data-label="Business They RECEIVE">Staff training, soft skills, leadership workshops</td>
+            <td data-label="Business They CREATE FOR Others" class="rf-give">HR Consultant, Business Coach, Event
+              Organiser</td>
+          </tr>
+          <tr>
+            <td data-label="Profession" class="rf-prof">Company Secretary</td>
+            <td data-label="Business They RECEIVE">Company filings, AGMs, compliance, board governance</td>
+            <td data-label="Business They CREATE FOR Others" class="rf-give">Lawyer, Accountant, Financial Advisor</td>
+          </tr>
+          <tr>
+            <td data-label="Profession" class="rf-prof">Tax Advisor</td>
+            <td data-label="Business They RECEIVE">Tax planning, VAT, income tax, customs duties</td>
+            <td data-label="Business They CREATE FOR Others" class="rf-give">Accountant, Lawyer, Financial Advisor</td>
+          </tr>
+          <tr>
+            <td data-label="Profession" class="rf-prof">Management Consultant</td>
+            <td data-label="Business They RECEIVE">Business process improvement, restructuring, feasibility</td>
+            <td data-label="Business They CREATE FOR Others" class="rf-give">Accountant, IT Company, HR Consultant,
+              Lawyer</td>
+          </tr>
+          <tr>
+            <td data-label="Profession" class="rf-prof">IT / Software Company</td>
+            <td data-label="Business They RECEIVE">Custom software, websites, cloud, cybersecurity, ERP</td>
+            <td data-label="Business They CREATE FOR Others" class="rf-give">Digital Marketer, Accountant, HR Consultant
+            </td>
+          </tr>
+          <tr>
+            <td data-label="Profession" class="rf-prof">Digital Marketer</td>
+            <td data-label="Business They RECEIVE">SEO, paid ads, social media, branding campaigns</td>
+            <td data-label="Business They CREATE FOR Others" class="rf-give">IT Company, Photographer, PR Firm, Content
+              Creator</td>
+          </tr>
+          <tr>
+            <td data-label="Profession" class="rf-prof">Cybersecurity Specialist</td>
+            <td data-label="Business They RECEIVE">Pen testing, security audits, compliance (ISO, PCI)</td>
+            <td data-label="Business They CREATE FOR Others" class="rf-give">IT Company, Lawyer, Management Consultant
+            </td>
+          </tr>
+          <tr>
+            <td data-label="Profession" class="rf-prof">Data Analyst</td>
+            <td data-label="Business They RECEIVE">Business intelligence, dashboards, data pipelines</td>
+            <td data-label="Business They CREATE FOR Others" class="rf-give">IT Company, Management Consultant,
+              Financial Advisor</td>
+          </tr>
+          <tr>
+            <td data-label="Profession" class="rf-prof">UI/UX Designer</td>
+            <td data-label="Business They RECEIVE">App design, website UX, product design, prototyping</td>
+            <td data-label="Business They CREATE FOR Others" class="rf-give">IT Company, Digital Marketer, Branding
+              Designer</td>
+          </tr>
+          <tr>
+            <td data-label="Profession" class="rf-prof">Real Estate Agent</td>
+            <td data-label="Business They RECEIVE">Property buying, selling, leasing, renting</td>
+            <td data-label="Business They CREATE FOR Others" class="rf-give">Lawyer, Interior Designer, Building
+              Contractor</td>
+          </tr>
+          <tr>
+            <td data-label="Profession" class="rf-prof">Architect</td>
+            <td data-label="Business They RECEIVE">Building design, renovation plans, permits</td>
+            <td data-label="Business They CREATE FOR Others" class="rf-give">Building Contractor, Interior Designer, QS
+            </td>
+          </tr>
+          <tr>
+            <td data-label="Profession" class="rf-prof">Building Contractor</td>
+            <td data-label="Business They RECEIVE">Construction, renovation, fit-out, civil works</td>
+            <td data-label="Business They CREATE FOR Others" class="rf-give">Architect, Interior Designer, Real Estate
+              Agent</td>
+          </tr>
+          <tr>
+            <td data-label="Profession" class="rf-prof">Interior Designer</td>
+            <td data-label="Business They RECEIVE">Home &amp; office interiors, space planning, fit-out</td>
+            <td data-label="Business They CREATE FOR Others" class="rf-give">Building Contractor, Real Estate Agent,
+              Photographer</td>
+          </tr>
+          <tr>
+            <td data-label="Profession" class="rf-prof">Quantity Surveyor</td>
+            <td data-label="Business They RECEIVE">Cost estimation, BOQ, project cost management</td>
+            <td data-label="Business They CREATE FOR Others" class="rf-give">Architect, Building Contractor, Real Estate
+              Agent</td>
+          </tr>
+          <tr>
+            <td data-label="Profession" class="rf-prof">Doctor / GP</td>
+            <td data-label="Business They RECEIVE">Medical consultations, referrals, corporate health</td>
+            <td data-label="Business They CREATE FOR Others" class="rf-give">Physiotherapist, Pharmacist, Nutritionist
+            </td>
+          </tr>
+          <tr>
+            <td data-label="Profession" class="rf-prof">Dentist</td>
+            <td data-label="Business They RECEIVE">Dental care, cosmetic dentistry, corporate packages</td>
+            <td data-label="Business They CREATE FOR Others" class="rf-give">Physiotherapist, Nutritionist, Pharmacist
+            </td>
+          </tr>
+          <tr>
+            <td data-label="Profession" class="rf-prof">Physiotherapist</td>
+            <td data-label="Business They RECEIVE">Injury rehab, sports physio, post-op recovery</td>
+            <td data-label="Business They CREATE FOR Others" class="rf-give">Doctor / GP, Nutritionist, Pharmacist</td>
+          </tr>
+          <tr>
+            <td data-label="Profession" class="rf-prof">Nutritionist / Dietitian</td>
+            <td data-label="Business They RECEIVE">Weight management, clinical nutrition, corporate wellness</td>
+            <td data-label="Business They CREATE FOR Others" class="rf-give">Doctor / GP, Physiotherapist, Pharmacist
+            </td>
+          </tr>
+          <tr>
+            <td data-label="Profession" class="rf-prof">Pharmacist</td>
+            <td data-label="Business They RECEIVE">Prescription, OTC products, corporate medicine supply</td>
+            <td data-label="Business They CREATE FOR Others" class="rf-give">Doctor / GP, Dentist, Insurance Agent</td>
+          </tr>
+          <tr>
+            <td data-label="Profession" class="rf-prof">Photographer / Videographer</td>
+            <td data-label="Business They RECEIVE">Corporate shoots, events, product &amp; brand photography</td>
+            <td data-label="Business They CREATE FOR Others" class="rf-give">Digital Marketer, PR Firm, Event Organiser
+            </td>
+          </tr>
+          <tr>
+            <td data-label="Profession" class="rf-prof">PR / Communications Firm</td>
+            <td data-label="Business They RECEIVE">Media relations, press releases, reputation management</td>
+            <td data-label="Business They CREATE FOR Others" class="rf-give">Digital Marketer, Event Organiser, Lawyer
+            </td>
+          </tr>
+          <tr>
+            <td data-label="Profession" class="rf-prof">Event Organiser</td>
+            <td data-label="Business They RECEIVE">Corporate events, conferences, product launches</td>
+            <td data-label="Business They CREATE FOR Others" class="rf-give">Photographer, PR Firm, Branding Designer
+            </td>
+          </tr>
+          <tr>
+            <td data-label="Profession" class="rf-prof">Branding / Graphic Designer</td>
+            <td data-label="Business They RECEIVE">Logo, brand identity, packaging, print materials</td>
+            <td data-label="Business They CREATE FOR Others" class="rf-give">Digital Marketer, Photographer, IT Company
+            </td>
+          </tr>
+          <tr>
+            <td data-label="Profession" class="rf-prof">Content Creator / Copywriter</td>
+            <td data-label="Business They RECEIVE">Website copy, blogs, social content, email marketing</td>
+            <td data-label="Business They CREATE FOR Others" class="rf-give">Digital Marketer, PR Firm, IT Company</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="roi-note">★ Every seat both creates and receives business. <strong>Your LKR 15,000 seat pays for
+          itself with a single introduction.</strong> ★</div>
+    </div>
+    <script>
+      function filterRF() {
+        const q = document.getElementById('rfSearch').value.toLowerCase();
+        document.querySelectorAll('#rfTable tbody tr').forEach(tr => {
+          tr.style.display = !q || tr.textContent.toLowerCase().includes(q) ? '' : 'none';
+        });
+      }
+    </script>
+  </section>
+
+  <!-- CTA -->
+  <section id="cta">
+    <div class="reveal">
+      <h2 class="cta-title">Ready to<br /><em>CREATE BUSINESS TOGETHER?</em></h2>
+      <p class="cta-sub">30 seats. One per industry. First confirmed wins the seat. Once your industry is taken — it's
+        gone forever.</p>
+      <div class="cta-steps">
+        <div class="cta-step"><span class="cta-step-num">1</span> Confirm your interest</div>
+        <div class="cta-step"><span class="cta-step-num">2</span> 30-min industry fit call</div>
+        <div class="cta-step"><span class="cta-step-num">3</span> Sign Charter Agreement</div>
+        <div class="cta-step"><span class="cta-step-num">4</span> Start 1 Month Free Trial</div>
+        <div class="cta-step"><span class="cta-step-num">5</span> Receive welcome pack &amp; card</div>
+      </div>
+      <a href="#" class="btn-primary" style="font-size:1.05rem;padding:18px 48px;"
+        onclick="openModal();return false;">Start Your 1 Month Free Trial</a>
+      <div class="cta-contact" style="margin-top:32px;">
+        <a href="mailto:info@primebusiness.network">info@primebusiness.network</a>
+        &nbsp;·&nbsp;
+        <a href="tel:+94777648344">+94 777 648 344</a>
+        &nbsp;·&nbsp;
+        <a href="https://www.primebusiness.network" target="_blank">www.primebusiness.network</a>
+      </div>
+      <p
+        style="margin-top:48px;font-family:var(--font-display);font-size:1.15rem;font-style:italic;color:#7a85b0;max-width:500px;margin-left:auto;margin-right:auto;">
+        "The future of business is not WHO YOU KNOW — it is WHAT VALUE YOUR NETWORK GENERATED."
+        <br /><span style="font-size:0.85rem;font-style:normal;display:block;margin-top:10px;">— Prime Business
+          Network</span>
+      </p>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div>
+      <div class="footer-brand">Prime <span>Business</span> Network</div>
+      <div class="footer-copy">© 2026 Prime Business Network (Pvt) Ltd · Sri Lanka · All rights reserved.</div>
+      <div class="footer-copy" style="margin-top:4px;">Registered in Sri Lanka under the Companies Act No. 7 of 2007
+      </div>
+      <div class="footer-copy" style="margin-top:8px;">Powered by <a href="https://hashnate.com/" target="_blank"
+          rel="noopener noreferrer" style="color:inherit;text-decoration:underline;opacity:0.7;">Hashnate</a></div>
+    </div>
+    <div class="footer-links">
+      <a href="#how">How It Works</a>
+      <a href="#platform">Platform</a>
+      <a href="#benefits">Benefits</a>
+      <a href="#clubs">Clubs</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#cta">Apply</a>
+      <a href="privacy-policy.html" target="_blank">Privacy Policy</a>
+      <a href="mailto:info@primebusiness.network">Contact</a>
+    </div>
+  </footer>
+
+  <!-- APPLICATION MODAL -->
+  <div id="applyModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-backdrop" onclick="closeModal()"></div>
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-badge">Founding Seat Application</div>
+        <h2 class="modal-title" id="modalTitle">Start Your<br /><em>1 Month Free Trial</em></h2>
+        <button class="modal-close" onclick="closeModal()" aria-label="Close">✕</button>
+      </div>
+
+      <div class="modal-body" id="modalFormWrap">
+        <form id="applyForm" onsubmit="submitForm(event)" novalidate>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Full Name <span>*</span></label>
+              <input class="form-input" type="text" name="full_name" required placeholder="Eg: Amal Perera" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Business Name <span>*</span></label>
+              <input class="form-input" type="text" name="business_name" required placeholder="Eg: Perera & Co." />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Contact Number <span>*</span></label>
+              <input class="form-input" type="tel" name="contact_number" required placeholder="Eg: 077 123 4567" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email Address</label>
+              <input class="form-input" type="email" name="email" placeholder="Eg: amal@business.lk" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">District <span>*</span></label>
+              <select class="form-select" id="f_district" name="district" required onchange="onDistrictChange(this.value)">
+                <option value="" disabled selected>Select your district</option>
+                <option>Colombo</option>
+                <option>Gampaha</option>
+                <option>Kalutara</option>
+                <option>Kandy</option>
+                <option>Matale</option>
+                <option>Nuwara Eliya</option>
+                <option>Galle</option>
+                <option>Matara</option>
+                <option>Hambantota</option>
+                <option>Jaffna</option>
+                <option>Kilinochchi</option>
+                <option>Mannar</option>
+                <option>Mullaitivu</option>
+                <option>Vavuniya</option>
+                <option>Trincomalee</option>
+                <option>Batticaloa</option>
+                <option>Ampara</option>
+                <option>Kurunegala</option>
+                <option>Puttalam</option>
+                <option>Anuradhapura</option>
+                <option>Polonnaruwa</option>
+                <option>Badulla</option>
+                <option>Monaragala</option>
+                <option>Ratnapura</option>
+                <option>Kegalle</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Target Chapter <span>*</span></label>
+              <select class="form-select" id="f_chapter" name="chapter_id" required disabled onchange="onChapterChange(this.value)">
+                <option value="" disabled selected>Select district first</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row" style="grid-template-columns: 1fr;">
+            <div class="form-group">
+              <label class="form-label">Industry Category <span>*</span></label>
+              <select class="form-select" id="f_category" name="industry_category_id" required disabled>
+                <option value="" disabled selected>Select a chapter first</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="modal-divider"></div>
+
+          <!-- Privacy Policy Consent -->
+          <label class="privacy-consent" for="privacyCheck">
+            <input type="checkbox" id="privacyCheck" name="privacy_accepted" required />
+            <span class="privacy-consent-text">
+              I have read and agree to the <a href="privacy-policy.html" target="_blank"
+                onclick="event.stopPropagation()">PBN Privacy Policy</a>. I understand that my personal and business
+              data will be processed as described therein, including for the AI-Based Matchmaking System and Digital
+              Platform operations. Acceptance is mandatory as required under PBN Bylaws Article 7.5.
+            </span>
+          </label>
+
+          <div id="formError"
+            style="display:none; background:#fff0f0; border:1px solid #f5c0c0; border-radius:6px; padding:12px 16px; font-size:0.82rem; color:#c0392b; margin-bottom:14px;">
+          </div>
+          <button class="form-submit" type="submit" id="formSubmitBtn">Start My Free Trial &rarr;</button>
+          <div class="form-note">By submitting, you acknowledge PBN's right to decline any application without detailed
+            reasons. Confirmed seats are subject to successful industry fit assessment.</div>
+        </form>
+      </div>
+
+      <div class="modal-success" id="modalSuccess">
+        <div class="success-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12l5 5l10 -10" />
+          </svg>
+        </div>
+        <h3>Application Received!</h3>
+        <p>Thank you for applying. We will review your application and contact you within <strong>48 hours</strong> to
+          confirm your industry fit and next steps.</p>
+        <button class="success-close" onclick="closeModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCROLL TO TOP -->
+  <button id="scrollTop" aria-label="Scroll to top" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#080d24"
+      stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 19V5M5 12l7-7 7 7" />
+    </svg>
+  </button>
+
+  <script>
+    // Scroll reveal
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e, i) => { if (e.isIntersecting) setTimeout(() => e.target.classList.add('visible'), i * 80); });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(r => io.observe(r));
+
+    // Nav compact on scroll
+    window.addEventListener('scroll', () => {
+      const nav = document.getElementById('mainNav');
+      const mob = window.innerWidth <= 960;
+      nav.style.padding = window.scrollY > 40 ? (mob ? '10px 24px' : '12px 60px') : (mob ? '16px 24px' : '20px 60px');
+    });
+
+    function openMenu() { document.getElementById('mobileMenu').classList.add('open'); }
+    function closeMenu() { document.getElementById('mobileMenu').classList.remove('open'); }
+
+    // Card 3D tilt
+    const card = document.getElementById('memberCard');
+    if (card) {
+      card.addEventListener('mousemove', e => {
+        const r = card.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width - 0.5;
+        const y = (e.clientY - r.top) / r.height - 0.5;
+        card.style.transform = `rotateY(${x * 18}deg) rotateX(${-y * 12}deg) translateY(-6px)`;
+      });
+      card.addEventListener('mouseleave', () => { card.style.transform = 'rotateY(-8deg) rotateX(4deg)'; });
+    }
+
+    // Scroll-to-top
+    window.addEventListener('scroll', () => {
+      const btn = document.getElementById('scrollTop');
+      if (btn) btn.classList.toggle('visible', window.scrollY > 400);
+    });
+
+    // Modal
+    const GATEWAY_URL = 'api-gateway.php';
+    let globalIndustries = [];
+
+    async function loadInitialData() {
+      try {
+        const res = await fetch(`${GATEWAY_URL}?path=industry-categories`);
+        const data = await res.json();
+        globalIndustries = data.data || data;
+      } catch (err) {
+        console.error('Error loading initial data:', err);
+      }
+    }
+
+    async function onDistrictChange(district) {
+      const chapterSelect = document.getElementById('f_chapter');
+      const industrySelect = document.getElementById('f_category');
+      if (!district) return;
+      
+      chapterSelect.innerHTML = '<option value="" disabled selected>Loading chapters...</option>';
+      chapterSelect.disabled = true;
+      industrySelect.disabled = true;
+      industrySelect.innerHTML = '<option value="" disabled selected>Select a chapter first</option>';
+
+      try {
+        const res = await fetch(`${GATEWAY_URL}?path=chapters&district=${encodeURIComponent(district)}`);
+        const data = await res.json();
+        const chapters = data.data || data;
+
+        if (Array.isArray(chapters) && chapters.length > 0) {
+          chapterSelect.innerHTML = '<option value="" disabled selected>Select your chapter</option>';
+          chapters.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id; opt.textContent = c.name;
+            chapterSelect.appendChild(opt);
+          });
+          chapterSelect.disabled = false;
+        } else {
+          chapterSelect.innerHTML = '<option value="" disabled selected>No chapters in this district</option>';
+        }
+      } catch (err) {
+        chapterSelect.innerHTML = '<option value="" disabled selected>Error loading chapters</option>';
+      }
+    }
+
+    async function onChapterChange(chapterId) {
+      const industrySelect = document.getElementById('f_category');
+      if (!chapterId) return;
+      industrySelect.innerHTML = '<option value="" disabled selected>Checking occupancy...</option>';
+      industrySelect.disabled = true;
+      try {
+        const res = await fetch(`${GATEWAY_URL}?path=chapters/${chapterId}/occupied-industries`);
+        const data = await res.json();
+        const occupiedIds = data.data || [];
+        industrySelect.innerHTML = '<option value="" disabled selected>Select Industry</option>';
+        globalIndustries.forEach(cat => {
+          const catId = cat.id || cat.industry_category_id;
+          const isOccupied = occupiedIds.includes(catId);
+          const opt = document.createElement('option');
+          opt.value = catId;
+          if (isOccupied) { opt.textContent = `${cat.name} (OCCUPIED)`; opt.disabled = true; opt.style.color = '#999'; }
+          else { opt.textContent = cat.name; }
+          industrySelect.appendChild(opt);
+        });
+        industrySelect.disabled = false;
+      } catch (err) {
+        industrySelect.innerHTML = '<option value="" disabled selected>Error loading industries</option>';
+      }
+    }
+
+    function openModal() {
+      document.getElementById('applyModal').classList.add('open');
+      document.body.style.overflow = 'hidden';
+      
+      // Reset form state
+      document.getElementById('f_district').value = "";
+      document.getElementById('f_chapter').innerHTML = '<option value="" disabled selected>Select district first</option>';
+      document.getElementById('f_chapter').disabled = true;
+      document.getElementById('f_category').innerHTML = '<option value="" disabled selected>Select a chapter first</option>';
+      document.getElementById('f_category').disabled = true;
+      
+      document.getElementById('formError').style.display = 'none';
+      document.getElementById('privacyCheck').checked = false;
+      document.getElementById('modalFormWrap').style.display = '';
+      document.getElementById('modalSuccess').classList.remove('show');
+      loadInitialData();
+    }
+
+    function closeModal() {
+      document.getElementById('applyModal').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    async function submitForm(e) {
+      e.preventDefault();
+      const privacyCheck = document.getElementById('privacyCheck');
+      const errEl = document.getElementById('formError');
+
+      if (!privacyCheck.checked) {
+        errEl.textContent = 'You must read and agree to the Privacy Policy before submitting your application.';
+        errEl.style.display = 'block';
+        return;
+      }
+
+      const form = document.getElementById('applyForm');
+      const btn = document.getElementById('formSubmitBtn');
+      btn.disabled = true; btn.textContent = 'Submitting...';
+      errEl.style.display = 'none';
+
+      const data = Object.fromEntries(new FormData(form).entries());
+      data.privacy_accepted = true;
+
+      try {
+        const res = await fetch(`${GATEWAY_URL}?path=applications`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        const json = await res.json();
+        if (res.ok && json.status === 'success') {
+          document.getElementById('modalFormWrap').style.display = 'none';
+          document.getElementById('modalSuccess').classList.add('show');
+        } else {
+          const errorMsg = json.message || json.error || 'Submission failed. Please try again or contact us directly.';
+          errEl.textContent = errorMsg; errEl.style.display = 'block';
+          btn.disabled = false; btn.textContent = 'Start My Free Trial →';
+        }
+      } catch (err) {
+        errEl.textContent = 'Network error. Please check your connection and try again.';
+        errEl.style.display = 'block';
+        btn.disabled = false; btn.textContent = 'Start My Free Trial →';
+      }
+    }
+  </script>
+</body>
+
+</html>

@@ -75,7 +75,7 @@
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
-		<true/>
+		<false/>
 		<key>NSExceptionDomains</key>
 		<dict>
 			<key>api.primebusiness.network</key>
@@ -92,6 +92,10 @@
 			</dict>
 		</dict>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>PBN needs access to your camera to scan member QR codes for offer redemption.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>PBN needs access to your photo library to allow you to upload and update your profile picture.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>

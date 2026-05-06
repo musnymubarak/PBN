@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Privacy Policy — Prime Business Network</title>
+    <link rel="preconnect" href="https://fonts.bunny.net">
+    <link href="https://fonts.bunny.net/css?family=dm-sans:300,400,500,600,700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230a0f25'/%3E%3Ctext x='50' y='68' font-family='system-ui, -apple-system, sans-serif' font-size='46' font-weight='900' text-anchor='middle'%3E%3Ctspan fill='%23ffffff'%3EP%3C/tspan%3E%3Ctspan fill='%23c9a84c'%3EB%3C/tspan%3E%3Ctspan fill='%23ffffff'%3EN%3C/tspan%3E%3C/text%3E%3C/svg%3E">
+    <style>
+        :root {
+            --navy: #080d24;
+            --navy-mid: #0e1535;
+            --gold: #c9a84c;
+            --gold-light: #e8c97a;
+            --text-muted: #7a85b0;
+            --font-body: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: #ffffff;
+            color: #1a2040;
+            overflow-x: hidden;
+            line-height: 1.75;
+        }
+
+        a {
+            color: #c9a84c;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        /* NAV */
+        nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 60px;
+            background: rgba(8, 13, 36, 0.97);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        .nav-logo {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-logo span {
+            color: #c9a84c;
+        }
+
+        .nav-back {
+            color: #7a85b0;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: color 0.2s;
+        }
+
+        .nav-back:hover {
+            color: #ffffff;
+            text-decoration: none;
+        }
+
+        /* HERO BAND */
+        .pp-hero {
+            background: linear-gradient(135deg, #080d24 0%, #0e1535 100%);
+            padding: 72px 60px 60px;
+            border-bottom: 1px solid rgba(201, 168, 76, 0.2);
+        }
+
+        .pp-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid #c9a84c;
+            color: #c9a84c;
+            padding: 4px 14px;
+            border-radius: 100px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+
+        .pp-title {
+            font-size: clamp(2rem, 4vw, 3.2rem);
+            font-weight: 900;
+            color: #ffffff;
+            line-height: 1.1;
+            margin-bottom: 16px;
+        }
+
+        .pp-title em {
+            color: #c9a84c;
+            font-style: normal;
+        }
+
+        .pp-meta {
+            color: #7a85b0;
+            font-size: 0.88rem;
+            margin-top: 16px;
+        }
+
+        .pp-meta span {
+            color: #c9a84c;
+            font-weight: 600;
+        }
+
+        /* LAYOUT */
+        .pp-layout {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            gap: 64px;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 64px 60px;
+        }
+
+        /* SIDEBAR TOC */
+        .pp-toc {
+            position: sticky;
+            top: 88px;
+            align-self: start;
+        }
+
+        .toc-label {
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: #7a85b0;
+            margin-bottom: 16px;
+        }
+
+        .toc-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .toc-list a {
+            display: block;
+            padding: 7px 12px;
+            border-radius: 4px;
+            font-size: 0.82rem;
+            color: #4a5580;
+            transition: all 0.2s;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-list a:hover {
+            color: #080d24;
+            background: rgba(201, 168, 76, 0.06);
+            border-left-color: #c9a84c;
+            text-decoration: none;
+        }
+
+        .toc-list a.active {
+            color: #080d24;
+            background: rgba(201, 168, 76, 0.08);
+            border-left-color: #c9a84c;
+            font-weight: 600;
+        }
+
+        /* CONTENT */
+        .pp-content {
+            min-width: 0;
+        }
+
+        .pp-section {
+            margin-bottom: 56px;
+            scroll-margin-top: 100px;
+        }
+
+        .pp-section-num {
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: #c9a84c;
+            margin-bottom: 8px;
+        }
+
+        .pp-section h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #080d24;
+            margin-bottom: 20px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #e8eaf2;
+        }
+
+        .pp-section p {
+            color: #3a4060;
+            font-size: 0.95rem;
+            line-height: 1.8;
+            margin-bottom: 16px;
+        }
+
+        .pp-section p:last-child {
+            margin-bottom: 0;
+        }
+
+        .pp-section ul,
+        .pp-section ol {
+            padding-left: 24px;
+            margin-bottom: 16px;
+        }
+
+        .pp-section li {
+            color: #3a4060;
+            font-size: 0.95rem;
+            line-height: 1.8;
+            margin-bottom: 6px;
+        }
+
+        .pp-section strong {
+            color: #080d24;
+        }
+
+        /* Data table */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.88rem;
+        }
+
+        .data-table th {
+            background: #f4f5f8;
+            color: #4a5580;
+            font-weight: 700;
+            font-size: 0.72rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 2px solid #c9a84c;
+        }
+
+        .data-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #e8eaf2;
+            color: #3a4060;
+            vertical-align: top;
+        }
+
+        .data-table tr:hover td {
+            background: rgba(201, 168, 76, 0.03);
+        }
+
+        /* Highlight box */
+        .pp-highlight {
+            background: linear-gradient(135deg, rgba(201, 168, 76, 0.08), rgba(201, 168, 76, 0.02));
+            border: 1px solid rgba(201, 168, 76, 0.3);
+            border-radius: 6px;
+            padding: 20px 24px;
+            margin: 20px 0;
+            font-size: 0.9rem;
+            color: #3a4060;
+            line-height: 1.7;
+        }
+
+        .pp-highlight strong {
+            color: #080d24;
+        }
+
+        /* Rights list */
+        .rights-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .right-item {
+            background: #f4f5f8;
+            border-radius: 6px;
+            padding: 16px 18px;
+            border-left: 3px solid #c9a84c;
+        }
+
+        .right-item strong {
+            display: block;
+            color: #080d24;
+            font-size: 0.88rem;
+            margin-bottom: 4px;
+        }
+
+        .right-item span {
+            color: #4a5580;
+            font-size: 0.82rem;
+            line-height: 1.55;
+        }
+
+        /* Contact box */
+        .contact-box {
+            background: #080d24;
+            border-radius: 8px;
+            padding: 32px 36px;
+            margin-top: 24px;
+        }
+
+        .contact-box h3 {
+            color: #ffffff;
+            font-size: 1.1rem;
+            margin-bottom: 12px;
+        }
+
+        .contact-box p {
+            color: #7a85b0;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+
+        .contact-box a {
+            color: #c9a84c;
+        }
+
+        /* Last updated banner */
+        .pp-footer-note {
+            background: #f4f5f8;
+            border-top: 1px solid #e8eaf2;
+            padding: 32px 60px;
+            text-align: center;
+            font-size: 0.82rem;
+            color: #7a85b0;
+        }
+
+        .pp-footer-note a {
+            color: #c9a84c;
+        }
+
+        /* Back to top */
+        #scrollTop {
+            position: fixed;
+            bottom: 36px;
+            right: 36px;
+            z-index: 90;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: #c9a84c;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            opacity: 0;
+            transform: translateY(16px);
+            transition: opacity 0.3s, transform 0.3s;
+            pointer-events: none;
+        }
+
+        #scrollTop.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+
+        #scrollTop:hover {
+            background: #e8c97a;
+        }
+
+        /* MOBILE */
+        @media (max-width: 900px) {
+            nav {
+                padding: 14px 20px;
+            }
+
+            .pp-hero {
+                padding: 48px 24px 40px;
+            }
+
+            .pp-layout {
+                grid-template-columns: 1fr;
+                padding: 40px 24px;
+                gap: 0;
+            }
+
+            .pp-toc {
+                display: none;
+            }
+
+            .rights-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .pp-footer-note {
+                padding: 24px;
+            }
+
+            #scrollTop {
+                bottom: 20px;
+                right: 16px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- NAV -->
+    <nav>
+        <a class="nav-logo" href="index.html">Prime <span>Business</span> Network</a>
+        <a class="nav-back" href="index.html">← Back to Website</a>
+    </nav>
+
+    <!-- HERO -->
+    <div class="pp-hero">
+        <div class="pp-badge">★ Legal Document</div>
+        <h1 class="pp-title">Privacy <em>Policy</em></h1>
+        <p style="color:#7a85b0;font-size:1rem;line-height:1.7;max-width:580px;margin-top:16px;">This Privacy Policy
+            explains how Prime Business Network (Pvt) Ltd collects, uses, stores, and protects your personal and
+            business information when you apply for membership, use our Digital Platform, or participate in PBN
+            activities.</p>
+        <div class="pp-meta">
+            Effective Date: <span>1 January 2026</span> &nbsp;·&nbsp;
+            Last Updated: <span>April 2026</span> &nbsp;·&nbsp;
+            Governed by: <span>Laws of Sri Lanka</span>
+        </div>
+    </div>
+
+    <!-- LAYOUT -->
+    <div class="pp-layout">
+
+        <!-- SIDEBAR TOC -->
+        <aside class="pp-toc">
+            <div class="toc-label">Contents</div>
+            <ul class="toc-list" id="tocList">
+                <li><a href="#s1">1. Who We Are</a></li>
+                <li><a href="#s2">2. Scope & Acceptance</a></li>
+                <li><a href="#s3">3. Data We Collect</a></li>
+                <li><a href="#s4">4. How We Use Your Data</a></li>
+                <li><a href="#s5">5. AI-Based Matchmaking System</a></li>
+                <li><a href="#s6">6. Legal Basis for Processing</a></li>
+                <li><a href="#s7">7. Data Sharing & Disclosure</a></li>
+                <li><a href="#s8">8. Data Retention</a></li>
+                <li><a href="#s9">9. Data Security</a></li>
+                <li><a href="#s10">10. Your Rights</a></li>
+                <li><a href="#s11">11. Cookies & Platform Tracking</a></li>
+                <li><a href="#s12">12. Third-Party Links</a></li>
+                <li><a href="#s13">13. Children's Privacy</a></li>
+                <li><a href="#s14">14. Changes to This Policy</a></li>
+                <li><a href="#s15">15. Contact Us</a></li>
+            </ul>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="pp-content">
+
+            <section class="pp-section" id="s1">
+                <div class="pp-section-num">Article 01</div>
+                <h2>Who We Are</h2>
+                <p><strong>Prime Business Network (Pvt) Ltd</strong> ("PBN", "we", "us", or "our") is a private limited
+                    liability company incorporated in Sri Lanka under the Companies Act No. 7 of 2007. PBN operates
+                    Asia's No. 1 technology-driven Business Growth Ecosystem — a structured, AI-powered platform
+                    enabling ambitious entrepreneurs and business leaders to CREATE BUSINESS TOGETHER.</p>
+                <p>PBN's Digital Platform is developed and maintained by <strong>Hashnate Software Engineering</strong>
+                    under the direction of PBN's Platform Manager.</p>
+                <div class="pp-highlight">
+                    <strong>Data Controller:</strong> Prime Business Network (Pvt) Ltd<br />
+                    <strong>Contact:</strong> <a href="mailto:info@primebusiness.network">info@primebusiness.network</a>
+                    &nbsp;·&nbsp; <a href="tel:+94777140803">+94 777 140 803</a><br />
+                    <strong>Website:</strong> <a href="https://www.primebusiness.network"
+                        target="_blank">www.primebusiness.network</a>
+                </div>
+            </section>
+
+            <section class="pp-section" id="s2">
+                <div class="pp-section-num">Article 02</div>
+                <h2>Scope &amp; Acceptance</h2>
+                <p>This Privacy Policy applies to all persons who:</p>
+                <ul>
+                    <li>Submit a membership application to PBN (via our website, Digital Platform, or any other
+                        channel);</li>
+                    <li>Are admitted as Charter Members, Standard Members, Founders Club Members, Associate Members, or
+                        Corporate Seat holders;</li>
+                    <li>Participate in PBN events, Monthly Power Networking Forums, the CEO Forum, or Podcast Platform;
+                    </li>
+                    <li>Use the PBN Digital Platform including the AI-Based Matchmaking System, ROI Dashboard, Business
+                        Opportunity Notice Board, Leaderboard, and Member Exclusive Marketplace;</li>
+                    <li>Hold or use the Prime Privilege Card; or</li>
+                    <li>Interact with PBN as a partner, sponsor, or service provider.</li>
+                </ul>
+                <div class="pp-highlight">
+                    <strong>Mandatory Acceptance:</strong> As required under Article 7.5 of PBN's Bylaws, all applicants
+                    must read and accept this Privacy Policy as part of the registration process on the Digital
+                    Platform. <strong>Acceptance is mandatory and is recorded digitally.</strong> By checking the
+                    consent box on our application form, you confirm that you have read, understood, and agree to this
+                    Privacy Policy in full.
+                </div>
+                <p>Participation in the AI-Based Matchmaking System is conditional on acceptance of this Privacy Policy
+                    (PBN Bylaws, Article 10.4). Members may adjust their matching preferences through the Digital
+                    Platform at any time.</p>
+            </section>
+
+            <section class="pp-section" id="s3">
+                <div class="pp-section-num">Article 03</div>
+                <h2>Data We Collect</h2>
+                <p>We collect the following categories of personal and business data:</p>
+
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Examples</th>
+                            <th>Source</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Identity Data</strong></td>
+                            <td>Full name, job title, photograph, LinkedIn profile</td>
+                            <td>Application form, member profile</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Contact Data</strong></td>
+                            <td>Email address, phone number, business address, district</td>
+                            <td>Application form, member profile</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Business Data</strong></td>
+                            <td>Business name, industry category, annual revenue range, business description, client
+                                base profile, sector relationships</td>
+                            <td>Application form, member profile, vetting process</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Platform Activity Data</strong></td>
+                            <td>Business creation submissions, Business Opportunity Notice Board posts and responses,
+                                Marketplace listings, AI Matchmaking interactions, ROI Dashboard entries, Leaderboard
+                                rankings, Value Score</td>
+                            <td>Digital Platform usage</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Verification Data</strong></td>
+                            <td>Invoices, contracts, letters of engagement, or equivalent evidence submitted for
+                                business value verification (Silver/Gold/Platinum status)</td>
+                            <td>Submitted by member via Digital Platform</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Financial Data</strong></td>
+                            <td>Payment records for membership fees and per-forum fees (we do not store full card
+                                details — payments processed by secure third-party payment gateway)</td>
+                            <td>Payment processing</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Event &amp; Attendance Data</strong></td>
+                            <td>Monthly Power Networking Forum attendance, event RSVPs, social nights, business tours,
+                                Annual Conference participation</td>
+                            <td>Digital Platform, event management</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Communications Data</strong></td>
+                            <td>Emails, messages, complaints, or correspondence sent to PBN; messages via Platform
+                                secure messaging</td>
+                            <td>Direct communication</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Podcast &amp; Content Data</strong></td>
+                            <td>Audio/video recordings, transcripts, and associated metadata if you participate in the
+                                PBN Podcast Platform</td>
+                            <td>Podcast Platform</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Technical Data</strong></td>
+                            <td>IP address, browser type, device type, session data, cookies, login timestamps</td>
+                            <td>Automatic collection via Digital Platform</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Privilege Card Data</strong></td>
+                            <td>Card usage data, partner redemptions, member offers listed on the card network</td>
+                            <td>Privilege Card system</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <p>We collect data <strong>only to the extent necessary</strong> for the purposes set out in this
+                    Policy. We do not collect special categories of sensitive personal data (e.g., health data,
+                    racial/ethnic origin) unless strictly required for a specific purpose and with your explicit
+                    consent.</p>
+            </section>
+
+            <section class="pp-section" id="s4">
+                <div class="pp-section-num">Article 04</div>
+                <h2>How We Use Your Data</h2>
+                <p>PBN uses your data for the following purposes:</p>
+                <ul>
+                    <li><strong>Membership Administration:</strong> Processing your application, conducting the member
+                        selection and vetting process (Article 7 of PBN Bylaws), managing your membership account,
+                        renewals, and correspondence.</li>
+                    <li><strong>Digital Platform Operations:</strong> Operating the AI-Based Matchmaking System, ROI
+                        Dashboard, Business Opportunity Notice Board, Member Exclusive Marketplace, and Leaderboard.
+                    </li>
+                    <li><strong>Business Creation Facilitation:</strong> Sharing your professional profile and industry
+                        information with other PBN members to facilitate introductions and business opportunities. This
+                        is a core and essential purpose of PBN membership.</li>
+                    <li><strong>AI-Based Matchmaking:</strong> Processing your member profile, industry, business needs,
+                        historical activity, and stated objectives to generate match suggestions. See Section 5 for full
+                        details.</li>
+                    <li><strong>Value Verification:</strong> Reviewing submitted evidence (invoices, contracts) to
+                        verify business value generated for Silver, Gold, and Platinum Member status.</li>
+                    <li><strong>Events:</strong> Managing registration, attendance, and communications for Monthly Power
+                        Networking Forums, social nights, business tours, Annual Conference, and CEO Forum events.</li>
+                    <li><strong>Privilege Card:</strong> Issuing and administering the Prime Privilege Card and the
+                        partner network.</li>
+                    <li><strong>Marketing &amp; Communications:</strong> Sending member newsletters, platform updates,
+                        event invitations, and co-branded marketing materials (Charter Members). You may opt out of
+                        non-essential marketing at any time by contacting us.</li>
+                    <li><strong>Governance:</strong> Recording and administering Charter Member voting rights on
+                        chapter-level governance matters.</li>
+                    <li><strong>Podcast Platform:</strong> Publishing content, distributing recordings, and
+                        administering sponsorship arrangements.</li>
+                    <li><strong>Legal &amp; Compliance:</strong> Complying with applicable Sri Lankan laws and
+                        regulations, enforcing PBN's Bylaws, and managing disputes.</li>
+                    <li><strong>Security &amp; Fraud Prevention:</strong> Monitoring for misuse of the platform,
+                        Leaderboard manipulation, and other conduct prohibited under Article 15 of the Bylaws.</li>
+                </ul>
+            </section>
+
+            <section class="pp-section" id="s5">
+                <div class="pp-section-num">Article 05</div>
+                <h2>AI-Based Matchmaking System</h2>
+                <p>PBN's AI-Based Matchmaking System is a core feature of the Digital Platform (as defined in Article 10
+                    of the PBN Bylaws). It uses artificial intelligence to enhance business creation between members.
+                    This section provides specific transparency about how your data is used by this system.</p>
+
+                <p><strong>What data does the AI process?</strong></p>
+                <ul>
+                    <li>Your industry category and business profile;</li>
+                    <li>Historical business creation activity recorded on the Platform;</li>
+                    <li>Your interactions with the Business Opportunity Notice Board;</li>
+                    <li>Stated business objectives and target sectors (from your member profile);</li>
+                    <li>Leaderboard performance data and Value Score.</li>
+                </ul>
+
+                <p><strong>What does the AI produce?</strong></p>
+                <ul>
+                    <li><strong>Member-to-Member Match Suggestions:</strong> Identifying the most compatible members
+                        across chapters and clubs for partnership, collaboration, or deal opportunities.</li>
+                    <li><strong>Partnership Strategy Suggestions:</strong> Suggested partnership structures and
+                        collaboration frameworks tailored to matched members' profiles.</li>
+                    <li><strong>Deal Opportunity Alerts:</strong> Notifications of relevant business creation
+                        opportunities across the ecosystem.</li>
+                    <li><strong>Business Opportunity Notice Board Surfacing:</strong> Automatically surfacing relevant
+                        Notice Board requests to members whose profile matches the stated need.</li>
+                    <li><strong>Forum Preparation:</strong> Before each Monthly Power Networking Forum, personalised
+                        match suggestions for attending members.</li>
+                </ul>
+
+                <div class="pp-highlight">
+                    <strong>No automated decision-making with legal effect:</strong> The AI-Based Matchmaking System
+                    produces <em>suggestions only</em>. No automated decision that has a legal or similarly significant
+                    effect on you is made by the AI system alone. All final business decisions remain with the relevant
+                    human members. PBN shall not be liable for commercial decisions made by members in reliance on
+                    AI-generated match suggestions (PBN Bylaws, Article 10.5).
+                </div>
+
+                <p><strong>Consent and control:</strong> Participation in the AI-Based Matchmaking System is conditional
+                    on your acceptance of this Privacy Policy. You may adjust your matching preferences and visibility
+                    through your settings on the Digital Platform at any time.</p>
+
+                <p><strong>Platform development:</strong> The AI-Based Matchmaking System is developed and maintained by
+                    Hashnate Software Engineering under the direction of the Platform Manager. Major updates to the core
+                    matching algorithms are approved by the PBN Board of Directors.</p>
+            </section>
+
+            <section class="pp-section" id="s6">
+                <div class="pp-section-num">Article 06</div>
+                <h2>Legal Basis for Processing</h2>
+                <p>PBN processes your personal data on the following legal bases:</p>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Legal Basis</th>
+                            <th>Processing Activities</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Contract Performance</strong></td>
+                            <td>Processing necessary to administer your PBN membership, operate your Digital Platform
+                                account, manage your industry seat, process payments, issue your Privilege Card, and
+                                deliver all membership services you have contracted for.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Legitimate Interests</strong></td>
+                            <td>Operating and improving the Digital Platform and AI Matchmaking System; maintaining the
+                                Leaderboard; fraud detection and platform security; sending member communications and
+                                updates; administering Horizontal Clubs and CEO Forum.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Consent</strong></td>
+                            <td>Participation in the AI-Based Matchmaking System; co-branded marketing use of your logo;
+                                Podcast Platform participation; any processing not covered by the above bases. You may
+                                withdraw consent at any time without affecting the lawfulness of prior processing.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Legal Obligation</strong></td>
+                            <td>Complying with applicable Sri Lankan law, regulatory requirements, and any lawful orders
+                                of Sri Lankan courts or authorities.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section class="pp-section" id="s7">
+                <div class="pp-section-num">Article 07</div>
+                <h2>Data Sharing &amp; Disclosure</h2>
+                <p>PBN does not sell your personal data to third parties. We share your data only in the following
+                    circumstances:</p>
+
+                <p><strong>Within the PBN Ecosystem (Members):</strong></p>
+                <p>Your professional profile — including name, business name, industry category, and contact details —
+                    is shared with other PBN members for the purpose of facilitating business creation. This is the core
+                    purpose of PBN membership and is consented to at the time of application. Sharing of detailed
+                    business creation data (invoices, contracts) is limited to the Platform Manager and VP of Operations
+                    for verification purposes only.</p>
+
+                <p><strong>Service Providers:</strong></p>
+                <p>We engage trusted third-party service providers who process data on our behalf under strict data
+                    processing agreements, including:</p>
+                <ul>
+                    <li><strong>Hashnate Software Engineering</strong> — Digital Platform development and maintenance;
+                    </li>
+                    <li>Payment processing providers (for membership fee collection);</li>
+                    <li>Email and communication platform providers;</li>
+                    <li>Cloud hosting and data storage providers;</li>
+                    <li>Event management platforms.</li>
+                </ul>
+                <p>All service providers are contractually bound to process data only as instructed by PBN and to
+                    maintain appropriate security measures.</p>
+
+                <p><strong>Privilege Card Partners:</strong></p>
+                <p>Where you redeem Privilege Card benefits, your member status (not full personal data) is confirmed to
+                    the relevant partner. Partners enter into a separate Partner Agreement with PBN governing data use.
+                </p>
+
+                <p><strong>Legal Requirements:</strong></p>
+                <p>We may disclose data where required by applicable Sri Lankan law, regulatory authority, or a lawful
+                    court order. We will notify you where legally permissible before making such disclosure.</p>
+
+                <p><strong>Podcast Platform:</strong></p>
+                <p>Content you contribute to the Podcast Platform is published across PBN's channels and third-party
+                    podcast platforms. By participating, you grant PBN a perpetual, royalty-free licence for use and
+                    distribution of your contributed content (PBN Bylaws, Article 20.4).</p>
+
+                <p><strong>Business Transfers:</strong></p>
+                <p>In the event of a merger, acquisition, or sale of substantially all assets of PBN, member data may be
+                    transferred to the successor entity subject to the same protections as this Policy.</p>
+
+                <div class="pp-highlight">
+                    <strong>No data sales:</strong> PBN does not sell, rent, or trade your personal data to any third
+                    party for their own marketing or commercial purposes. Member data is not disclosed without consent,
+                    except as required by law or for facilitating business creation between members (PBN Bylaws, Article
+                    12.6).
+                </div>
+            </section>
+
+            <section class="pp-section" id="s8">
+                <div class="pp-section-num">Article 08</div>
+                <h2>Data Retention</h2>
+                <p>We retain your personal data for as long as necessary for the purposes set out in this Policy, and in
+                    accordance with the following principles:</p>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Data Category</th>
+                            <th>Retention Period</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Active Member Data</strong></td>
+                            <td>Duration of active membership plus 2 years (to cover the confidentiality obligation
+                                period under Article 26.2 of the Bylaws)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Application Data (Declined)</strong></td>
+                            <td>6 months from date of decline (to facilitate re-application)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Financial Records &amp; Payment Data</strong></td>
+                            <td>7 years (to comply with Sri Lankan tax and accounting laws)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Business Verification Evidence</strong> (invoices, contracts)</td>
+                            <td>3 years from submission (for dispute resolution and audit purposes)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Platform Activity &amp; Analytics</strong></td>
+                            <td>3 years from date of creation (aggregated data may be retained longer in anonymised
+                                form)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Event &amp; Attendance Records</strong></td>
+                            <td>3 years from the event date</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Podcast Content</strong></td>
+                            <td>Indefinitely (perpetual licence granted under Article 20.4); you may request removal
+                                subject to PBN's editorial discretion</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Communications &amp; Correspondence</strong></td>
+                            <td>2 years from date of last communication</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Founding Member Wall</strong></td>
+                            <td>Founding Wall recognition is permanent; underlying personal data retained per active
+                                member rules</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p>Upon expiry of the retention period, data is securely deleted or anonymised. Where deletion is not
+                    possible due to legal or technical constraints, we restrict processing of the data until deletion is
+                    achievable.</p>
+            </section>
+
+            <section class="pp-section" id="s9">
+                <div class="pp-section-num">Article 09</div>
+                <h2>Data Security</h2>
+                <p>PBN and Hashnate Software Engineering implement appropriate technical and organisational measures to
+                    protect your personal data against unauthorised access, accidental loss, destruction, or disclosure.
+                    These measures include:</p>
+                <ul>
+                    <li>Encryption of data in transit (TLS/SSL) and at rest;</li>
+                    <li>Role-based access controls — only authorised PBN staff and platform administrators can access
+                        member data;</li>
+                    <li>Regular security assessments and platform maintenance;</li>
+                    <li>Scheduled maintenance communicated at least 24 hours in advance (PBN Bylaws, Article 12.7);</li>
+                    <li>Secure payment processing via certified third-party payment gateways (PBN does not store full
+                        payment card details);</li>
+                    <li>Contractual data security obligations imposed on all service providers.</li>
+                </ul>
+                <div class="pp-highlight">
+                    Despite these measures, no digital platform is completely immune from security risks. In the event
+                    of a data breach that is likely to result in a risk to your rights and freedoms, PBN will notify you
+                    without undue delay and take all reasonable steps to mitigate harm.
+                </div>
+            </section>
+
+            <section class="pp-section" id="s10">
+                <div class="pp-section-num">Article 10</div>
+                <h2>Your Rights</h2>
+                <p>Subject to applicable Sri Lankan data protection law, you have the following rights in relation to
+                    your personal data:</p>
+                <div class="rights-grid">
+                    <div class="right-item">
+                        <strong>Right of Access</strong>
+                        <span>Request a copy of the personal data PBN holds about you.</span>
+                    </div>
+                    <div class="right-item">
+                        <strong>Right of Rectification</strong>
+                        <span>Request correction of inaccurate or incomplete personal data.</span>
+                    </div>
+                    <div class="right-item">
+                        <strong>Right of Erasure</strong>
+                        <span>Request deletion of your personal data where it is no longer necessary for the purposes
+                            for which it was collected, subject to our legal obligations and legitimate
+                            interests.</span>
+                    </div>
+                    <div class="right-item">
+                        <strong>Right to Restrict Processing</strong>
+                        <span>Request that we limit processing of your data in certain circumstances.</span>
+                    </div>
+                    <div class="right-item">
+                        <strong>Right to Object</strong>
+                        <span>Object to processing based on legitimate interests (including direct marketing).</span>
+                    </div>
+                    <div class="right-item">
+                        <strong>Right to Withdraw Consent</strong>
+                        <span>Withdraw consent at any time for processing activities based on consent (e.g., AI
+                            Matchmaking preferences, podcast participation). Withdrawal does not affect lawfulness of
+                            prior processing.</span>
+                    </div>
+                    <div class="right-item">
+                        <strong>Right to Data Portability</strong>
+                        <span>Receive your personal data in a structured, commonly used, machine-readable format where
+                            technically feasible.</span>
+                    </div>
+                    <div class="right-item">
+                        <strong>Right Not to Be Subject to Automated Decisions</strong>
+                        <span>PBN's AI system produces suggestions only — no automated decision with legal or
+                            significant effect is made without human review.</span>
+                    </div>
+                </div>
+                <p>To exercise any of these rights, please contact us at <a
+                        href="mailto:info@primebusiness.network">info@primebusiness.network</a>. We will respond within
+                    <strong>30 days</strong> of receipt of your request. We may need to verify your identity before
+                    processing your request.</p>
+                <p>Please note that certain rights may be limited where processing is required for the performance of
+                    our contract with you (e.g., sharing your professional profile with members is a core membership
+                    function and cannot be restricted while you remain a member), or where we have a legal obligation to
+                    retain data.</p>
+            </section>
+
+            <section class="pp-section" id="s11">
+                <div class="pp-section-num">Article 11</div>
+                <h2>Cookies &amp; Platform Tracking</h2>
+                <p>The PBN website and Digital Platform use cookies and similar tracking technologies to:</p>
+                <ul>
+                    <li>Keep you logged in to your member account (essential cookies);</li>
+                    <li>Remember your preferences and settings on the Platform;</li>
+                    <li>Analyse platform usage and improve our services (analytics cookies);</li>
+                    <li>Monitor platform security and detect suspicious activity.</li>
+                </ul>
+                <p><strong>Essential cookies</strong> are necessary for the Platform to function and cannot be disabled.
+                    <strong>Analytics cookies</strong> are only set with your consent. You may manage your cookie
+                    preferences through your browser settings at any time.</p>
+                <p>PBN does not use advertising cookies or share cookie data with third-party advertisers. PBN products
+                    are ad-free.</p>
+            </section>
+
+            <section class="pp-section" id="s12">
+                <div class="pp-section-num">Article 12</div>
+                <h2>Third-Party Links</h2>
+                <p>The PBN website and Digital Platform may contain links to third-party websites and services
+                    (including Privilege Card partner websites, professional body partner websites, and podcast platform
+                    links). PBN is not responsible for the privacy practices or content of these third-party sites. We
+                    encourage you to review the privacy policies of any third-party sites you visit.</p>
+                <p>Transactions conducted through the Member Exclusive Marketplace or arising from Business Opportunity
+                    Notice Board interactions are between the relevant members directly. PBN is not a party to any such
+                    transaction and is not responsible for how transacting parties handle your data during the course of
+                    those transactions (PBN Bylaws, Article 14.5).</p>
+            </section>
+
+            <section class="pp-section" id="s13">
+                <div class="pp-section-num">Article 13</div>
+                <h2>Children's Privacy</h2>
+                <p>PBN is a business membership organisation and our services are directed exclusively at business
+                    professionals and entrepreneurs. We do not knowingly collect personal data from individuals under
+                    the age of 18. All applicants must be adults operating a legitimate business in their own right.</p>
+                <p>If you believe we have inadvertently collected data from a minor, please contact us immediately at <a
+                        href="mailto:info@primebusiness.network">info@primebusiness.network</a> and we will take
+                    immediate steps to delete such data.</p>
+            </section>
+
+            <section class="pp-section" id="s14">
+                <div class="pp-section-num">Article 14</div>
+                <h2>Changes to This Policy</h2>
+                <p>PBN may update this Privacy Policy from time to time to reflect changes in our practices, the Digital
+                    Platform, applicable law, or PBN Bylaws. When we make material changes, we will:</p>
+                <ul>
+                    <li>Update the "Last Updated" date at the top of this page;</li>
+                    <li>Notify active members via the Digital Platform and/or email at least <strong>14 days
+                            before</strong> the changes take effect;</li>
+                    <li>Where required by applicable law, seek your consent for new processing activities.</li>
+                </ul>
+                <p>We encourage you to review this Privacy Policy periodically. Your continued use of the Digital
+                    Platform and PBN services after the effective date of any changes constitutes your acceptance of the
+                    updated Policy.</p>
+                <p>Prior versions of this Privacy Policy are available on request by contacting <a
+                        href="mailto:info@primebusiness.network">info@primebusiness.network</a>.</p>
+            </section>
+
+            <section class="pp-section" id="s15">
+                <div class="pp-section-num">Article 15</div>
+                <h2>Contact Us</h2>
+                <p>If you have any questions about this Privacy Policy, wish to exercise your data rights, have a
+                    complaint about how we handle your personal data, or wish to report a suspected data breach, please
+                    contact us using the details below.</p>
+                <div class="contact-box">
+                    <h3>Privacy &amp; Data Enquiries</h3>
+                    <p><strong style="color:#c9a84c;">Prime Business Network (Pvt) Ltd</strong></p>
+                    <p>📧 <a href="mailto:info@primebusiness.network">info@primebusiness.network</a></p>
+                    <p>📞 <a href="tel:+94777140803">+94 777 140 803</a></p>
+                    <p>🌐 <a href="https://www.primebusiness.network" target="_blank">www.primebusiness.network</a></p>
+                    <p style="margin-top:16px;font-size:0.82rem;">We will acknowledge your request within <strong
+                            style="color:#c9a84c;">5 business days</strong> and respond in full within <strong
+                            style="color:#c9a84c;">30 days</strong>. If you are not satisfied with our response, you
+                        have the right to escalate to the relevant regulatory authority in Sri Lanka.</p>
+                </div>
+
+                <div class="pp-highlight" style="margin-top:28px;">
+                    <strong>Governing Law:</strong> This Privacy Policy is governed by and construed in accordance with
+                    the laws of Sri Lanka. Any disputes arising in connection with this Privacy Policy that cannot be
+                    resolved through our internal process are subject to the exclusive jurisdiction of the courts of Sri
+                    Lanka (PBN Bylaws, Article 30).
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- FOOTER NOTE -->
+    <div class="pp-footer-note">
+        <p>© 2026 <strong>Prime Business Network (Pvt) Ltd</strong> · Registered in Sri Lanka under the Companies Act
+            No. 7 of 2007 · All rights reserved.</p>
+        <p style="margin-top:8px;">
+            <a href="index.html">← Back to Website</a>
+            &nbsp;·&nbsp;
+            <a href="mailto:info@primebusiness.network">Contact Us</a>
+            &nbsp;·&nbsp;
+            Powered by <a href="https://hashnate.com/" target="_blank">Hashnate</a>
+        </p>
+    </div>
+
+    <!-- SCROLL TO TOP -->
+    <button id="scrollTop" aria-label="Scroll to top" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#080d24"
+            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 19V5M5 12l7-7 7 7" />
+        </svg>
+    </button>
+
+    <script>
+        // Scroll to top button
+        window.addEventListener('scroll', () => {
+            const btn = document.getElementById('scrollTop');
+            if (btn) btn.classList.toggle('visible', window.scrollY > 400);
+        });
+
+        // Active TOC highlighting
+        const sections = document.querySelectorAll('.pp-section');
+        const tocLinks = document.querySelectorAll('#tocList a');
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const id = entry.target.id;
+                    tocLinks.forEach(link => {
+                        link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+                    });
+                }
+            });
+        }, { rootMargin: '-20% 0px -70% 0px' });
+
+        sections.forEach(s => observer.observe(s));
+    </script>
+</body>
+
+</html>
