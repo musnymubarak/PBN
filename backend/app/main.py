@@ -115,14 +115,26 @@ def _register_exception_handlers(app: FastAPI) -> None:
         )
 
     @app.exception_handler(Exception)
-    async def _unhandled_exception_handler(
-        _request: Request, exc: Exception
-    ) -> ORJSONResponse:
-        logger.exception("Unhandled exception: %s", exc)
-        return error_response(
-            message="An unexpected error occurred.",
-            code="INTERNAL_ERROR",
+    async def global_exception_handler(request: Request, exc: Exception):
+        """Catch-all for unhandled exceptions (returns 500)."""
+        logger.error(f"Unhandled exception: {str(exc)}", exc_info=True)
+        
+        # Extract the actual error message to show in the UI
+        error_msg = str(exc)
+        
+        # If it's a known database error, make it a bit cleaner
+        if "UniqueViolationError" in error_msg:
+            error_msg = "A record with this information already exists (Unique constraint violation)."
+        elif "ForeignKeyViolationError" in error_msg:
+            error_msg = "This item cannot be deleted or modified because it is being used by other records."
+
+        return ORJSONResponse(
             status_code=500,
+            content={
+                "status": "error",
+                "message": error_msg,
+                "code": "INTERNAL_ERROR",
+            },
         )
 
 
