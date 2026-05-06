@@ -7,7 +7,7 @@ from __future__ import annotations
 from typing import List
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from fastapi.responses import ORJSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -49,7 +49,7 @@ async def list_all_members_endpoint(
 @router.get("", summary="List chapters", response_model=None)
 async def list_chapters_endpoint(
     district: str | None = None,
-    active_only: bool = True,
+    active_only: bool = Query(True),
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
     from app.features.chapters.service import list_chapters
