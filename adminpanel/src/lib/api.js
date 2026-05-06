@@ -95,7 +95,7 @@ export const api = {
   },
 
   // Chapters
-  listChapters: () => apiFetch('/chapters'),
+  listChapters: (params = { active_only: false }) => apiFetch(`/chapters?${new URLSearchParams(params)}`),
   createChapter: (body) => apiFetch('/chapters', {
     method: 'POST',
     body: JSON.stringify(body),

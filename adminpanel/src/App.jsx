@@ -250,7 +250,7 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
     setErrorMessage('');
     Promise.all([
       api.getApplication(appId),
-      api.listChapters().catch(() => ({ data: [] })),
+      api.listChapters({ active_only: true }).catch(() => []),
     ])
       .then(([appData, chaptersData]) => {
         setDetail(appData);
@@ -615,7 +615,7 @@ function CreateApplicationModal({ onClose, onCreated }) {
       try {
         const [indData, chapData] = await Promise.all([
           api.listIndustryCategories(),
-          api.listChapters()
+          api.listChapters({ active_only: true })
         ]);
         setIndustries(indData);
         setChapters(chapData);

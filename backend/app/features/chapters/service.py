@@ -20,10 +20,12 @@ from app.models.audit_logs import AuditLog
 from app.models.user import User
 
 
-async def list_active_chapters(db: AsyncSession, district: str | None = None) -> List[Chapter]:
+async def list_chapters(db: AsyncSession, district: str | None = None, active_only: bool = True) -> List[Chapter]:
     stmt = select(Chapter).order_by(Chapter.name)
     if district:
         stmt = stmt.where(Chapter.district == district)
+    if active_only:
+        stmt = stmt.where(Chapter.is_active.is_(True))
     result = await db.execute(stmt)
     return list(result.scalars().all())
 

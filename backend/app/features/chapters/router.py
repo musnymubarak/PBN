@@ -19,7 +19,7 @@ from app.features.chapters.service import (
     get_all_members,
     get_chapter_members,
     get_my_memberships,
-    list_active_chapters,
+    list_chapters,
     remove_member,
     get_occupied_industry_ids,
 )
@@ -46,12 +46,14 @@ async def list_all_members_endpoint(
     return success_response(data=members)
 
 
-@router.get("", summary="List active chapters", response_model=None)
+@router.get("", summary="List chapters", response_model=None)
 async def list_chapters_endpoint(
     district: str | None = None,
+    active_only: bool = True,
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
-    chapters = await list_active_chapters(db, district=district)
+    from app.features.chapters.service import list_chapters
+    chapters = await list_chapters(db, district=district, active_only=active_only)
     return success_response(
         data=[
             {
