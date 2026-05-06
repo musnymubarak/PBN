@@ -23,6 +23,7 @@ class _SplashPageState extends State<SplashPage> {
     // Cinematic Brand Delay - Ensures logo visibility on every open
     await Future.delayed(const Duration(milliseconds: 2500));
     
+    if (!mounted) return;
     final auth = context.read<AuthProvider>();
     await auth.tryAutoLogin();
 

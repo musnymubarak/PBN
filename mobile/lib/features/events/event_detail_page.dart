@@ -124,7 +124,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                         if (await canLaunchUrl(url)) {
                           await launchUrl(url, mode: LaunchMode.externalApplication);
                         } else {
-                          if (mounted) {
+                          if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not open map.')));
                           }
                         }
@@ -145,7 +145,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                         if (await canLaunchUrl(url)) {
                           await launchUrl(url, mode: LaunchMode.externalApplication);
                         } else {
-                          if (mounted) {
+                          if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not open link.')));
                           }
                         }

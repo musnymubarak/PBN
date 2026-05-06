@@ -90,7 +90,7 @@ class _AnimatedPbnLogoState extends State<AnimatedPbnLogo> with SingleTickerProv
             boxShadow: [
               // Subtle glow for the B
               BoxShadow(
-                color: AppColors.accent.withOpacity(0.3 * _bGlow.value),
+                color: AppColors.accent.withValues(alpha: 0.3 * _bGlow.value),
                 blurRadius: 30 * _bGlow.value,
                 spreadRadius: 2 * _bGlow.value,
               ),

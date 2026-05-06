@@ -84,6 +84,7 @@ class _ProfilePageState extends State<ProfilePage> {
       
       if (!mounted) return;
       await context.read<AuthProvider>().tryAutoLogin(); 
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profile photo updated successfully!')));
     } catch (e) {
       String message = 'Failed to upload photo.';
@@ -143,8 +144,9 @@ class _ProfilePageState extends State<ProfilePage> {
                       'full_name': nameCtrl.text.trim(),
                       'phone_number': phoneCtrl.text.trim(),
                     });
-                    if (mounted) {
+                    if (context.mounted) {
                       await context.read<AuthProvider>().tryAutoLogin();
+                      if (!context.mounted) return;
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profile updated successfully!')));
                     }
@@ -153,7 +155,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     if (e is DioException) {
                       message = e.response?.data?['message'] ?? message;
                     }
-                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+                    if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
                   }
                   setModalState(() => saving = false);
                 },
@@ -392,7 +394,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     context.read<MemberProvider>().clearCache();
                     context.read<NotificationProvider>().stopListening();
                     await auth.logout();
-                    if (mounted) Navigator.pushNamedAndRemoveUntil(context, '/login', (r) => false);
+                    if (context.mounted) Navigator.pushNamedAndRemoveUntil(context, '/login', (r) => false);
                   },
                   icon: const Icon(TablerIcons.logout, size: 20),
                   label: const Text('Sign Out', style: TextStyle(fontWeight: FontWeight.w800)),
