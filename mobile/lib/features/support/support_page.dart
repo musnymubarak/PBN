@@ -117,7 +117,44 @@ class SupportPage extends StatelessWidget {
           _categoryTile(TablerIcons.trending_up, 'Growth Support', 'How to get more referrals'),
           
           const SizedBox(height: 40),
+          // ── Social Media Section ──────────────────────────
+          const Text('Follow our ecosystem',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textSecondary, letterSpacing: 0.5)),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              _socialIcon(TablerIcons.brand_facebook, Colors.blue.shade700, () {
+                _launchUrl('https://www.facebook.com/profile.php?id=61589257288388');
+              }),
+              const SizedBox(width: 16),
+              _socialIcon(TablerIcons.brand_linkedin, Colors.blue.shade900, () {
+                _launchUrl('https://linkedin.com/company/prime-business-network');
+              }),
+              const SizedBox(width: 16),
+              _socialIcon(TablerIcons.brand_youtube, Colors.red.shade700, () {
+                _launchUrl('https://www.youtube.com/channel/UCJHWSU9Zag3Y0yBM3DG60Hg');
+              }),
+            ],
+          ),
+          const SizedBox(height: 40),
         ],
+      ),
+    );
+  }
+
+  Widget _socialIcon(IconData icon, Color color, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withOpacity(0.1)),
+        ),
+        child: Icon(icon, color: color, size: 24),
       ),
     );
   }
