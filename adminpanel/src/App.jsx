@@ -163,7 +163,7 @@ const MENU_GROUPS = [
       { id: 'applications', icon: IconClipboardList, label: 'Applications' },
       { id: 'referrals', icon: IconHierarchy2, label: 'Referral Pipeline' },
       { id: 'events', icon: IconCalendarEvent, label: 'Event Management' },
-      { id: 'marketplace', icon: IconBuildingStore, label: 'Member Marketplace' },
+      { id: 'marketplace', icon: IconBuildingStore, label: 'Marketplace' },
       { id: 'payments', icon: IconCoin, label: 'Payments' },
       { id: 'revenue', icon: IconChartBar, label: 'Revenue & ROI' },
     ]
@@ -4034,7 +4034,7 @@ function MarketplacePage() {
   return (
     <section className="dashboard-body">
       <div className="page-title-wrap">
-        <h1 className="page-title">Member Marketplace</h1>
+        <h1 className="page-title">Marketplace</h1>
         <p style={{ color: 'var(--text-secondary)', marginTop: '0.4rem', fontWeight: 500 }}>
           Manage member listings, feature premium deals, and monitor marketplace activity.
         </p>
@@ -4547,6 +4547,7 @@ export default function App() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
+  const [dashboardSearch, setDashboardSearch] = useState('');
   const { toasts, showToast } = useToast();
   
   // Notification State
@@ -4661,7 +4662,7 @@ export default function App() {
             Failed to load analytics. Check backend connection.
           </div>
         ) : (
-          <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+          <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
             <StatCard 
               title="TOTAL REVENUE (ROI)" 
               value={formatCurrency(overview?.total_value)} 
@@ -4682,21 +4683,46 @@ export default function App() {
               <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>Insights into the latest cross-chapter business exchanges.</p>
             </div>
             <div style={{ display: 'flex', gap: '1rem' }}>
-              <button 
-                className="btn-primary" 
-                style={{ background: 'white', color: 'var(--text-primary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                onClick={() => alert('Search filters are available in the dedicated Referrals and Directory pages.')}
-              >
-                <IconFilter size={18} />
-                Advanced Filtering
-              </button>
+              <div style={{ position: 'relative' }}>
+                <IconSearch size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                <input 
+                  type="text" 
+                  placeholder="Filter interactions..." 
+                  className="filter-input v2" 
+                  style={{ paddingLeft: '40px', height: '48px', width: '240px', background: 'white' }}
+                  value={dashboardSearch}
+                  onChange={(e) => setDashboardSearch(e.target.value)}
+                />
+              </div>
               <button 
                 className="btn-primary" 
                 style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}
                 onClick={async () => {
                   try {
-                    await api.exportData();
-                    showToast('Data report export started');
+                    const data = await api.exportData();
+                    if (data instanceof Blob) {
+                      const url = window.URL.createObjectURL(data);
+                      const link = document.createElement('a');
+                      link.href = url;
+                      link.setAttribute('download', `PBN_Report_${new Date().toISOString().split('T')[0]}.csv`);
+                      document.body.appendChild(link);
+                      link.click();
+                      link.remove();
+                      showToast('Data report downloaded');
+                    } else {
+                      // If it's JSON aggregate data, convert to a simple CSV for now
+                      const csvContent = "data:text/csv;charset=utf-8," 
+                        + Object.keys(data).join(",") + "\n"
+                        + Object.values(data).join(",");
+                      const encodedUri = encodeURI(csvContent);
+                      const link = document.createElement("a");
+                      link.setAttribute("href", encodedUri);
+                      link.setAttribute("download", "platform_summary.csv");
+                      document.body.appendChild(link);
+                      link.click();
+                      link.remove();
+                      showToast('Platform summary downloaded');
+                    }
                   } catch (e) {
                     showToast('Export failed: ' + e.message, 'error');
                   }
@@ -4725,7 +4751,15 @@ export default function App() {
                 <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>Loading referrals...</td></tr>
               ) : (!referrals || (Array.isArray(referrals) ? referrals.length === 0 : !referrals.referrals || referrals.referrals.length === 0)) ? (
                 <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>No referral data available</td></tr>
-              ) : (Array.isArray(referrals) ? referrals : referrals.referrals).slice(0, 8).map((ref, idx) => (
+              ) : (Array.isArray(referrals) ? referrals : referrals?.referrals || [])
+                .filter(ref => 
+                  !dashboardSearch || 
+                  ref.from_user?.full_name?.toLowerCase().includes(dashboardSearch.toLowerCase()) ||
+                  ref.target_user?.full_name?.toLowerCase().includes(dashboardSearch.toLowerCase()) ||
+                  ref.lead_name?.toLowerCase().includes(dashboardSearch.toLowerCase()) ||
+                  ref.status?.toLowerCase().includes(dashboardSearch.toLowerCase())
+                )
+                .slice(0, 8).map((ref, idx) => (
                 <tr key={ref.id || idx}>
                   <td><span className="id-badge">{ref.id ? `REF-${String(ref.id).slice(0, 4)}` : `REF-${idx}`}</span></td>
                   <td style={{ fontWeight: 600 }}>{ref.from_user?.full_name || '—'}</td>
@@ -4790,29 +4824,7 @@ export default function App() {
           ))}
         </nav>
 
-        <div className="sidebar-footer" style={{ marginTop: 'auto', padding: '0.5rem' }}>
-          <button
-            onClick={handleLogout}
-            style={{
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.75rem',
-              padding: '0.875rem 1rem',
-              background: 'rgba(239, 68, 68, 0.1)',
-              color: '#f87171',
-              border: '1px solid rgba(239, 68, 68, 0.2)',
-              borderRadius: '12px',
-              cursor: 'pointer',
-              fontSize: '0.875rem',
-              fontWeight: 700,
-              transition: 'all 0.2s'
-            }}
-          >
-            <IconLogout size={18} stroke={2} />
-            <span>Sign Out</span>
-          </button>
-        </div>
+
       </aside>
 
       {/* Main Experience */}
@@ -4857,7 +4869,7 @@ export default function App() {
                   <p style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>{adminUser?.full_name || 'Admin User'}</p>
                   <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>{adminUser?.role || 'Administrator'}</p>
                 </div>
-                <div style={{ width: 42, height: 42, borderRadius: 12, background: 'linear-gradient(135deg, var(--primary), #3b82f6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 800, fontSize: '0.9rem', border: '2px solid white', boxShadow: 'var(--shadow)' }}>
+                <div style={{ width: 42, height: 42, borderRadius: 12, background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 800, fontSize: '0.9rem', border: '2px solid white', boxShadow: 'var(--shadow)' }}>
                   {adminUser?.full_name ? adminUser.full_name.split(' ').map(n => n[0]).join('').toUpperCase() : 'AD'}
                 </div>
               </div>

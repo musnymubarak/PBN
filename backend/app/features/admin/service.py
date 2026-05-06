@@ -448,3 +448,45 @@ async def export_platform_data(db: AsyncSession) -> Dict[str, Any]:
         "total_payments": total_payments,
         "total_revenue": float(total_revenue),
     }
+
+async def export_referrals_csv(db: AsyncSession):
+    """Generate a CSV stream of all referrals."""
+    import csv
+    import io
+    from app.models.user import User as UserModel
+    
+    FromUser = aliased(UserModel)
+    ToUser = aliased(UserModel)
+    
+    stmt = (
+        select(Referral)
+        .join(FromUser, Referral.from_member_id == FromUser.id)
+        .join(ToUser, Referral.to_member_id == ToUser.id)
+        .options(
+            contains_eager(Referral.from_member, alias=FromUser),
+            contains_eager(Referral.to_member, alias=ToUser),
+        )
+        .order_by(desc(Referral.created_at))
+    )
+    
+    results = (await db.execute(stmt)).scalars().unique().all()
+    
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Referral ID", "From Member", "To Member", "Lead Name", "Lead Phone", "Lead Email", "Status", "Value", "Created At"])
+    
+    for ref in results:
+        writer.writerow([
+            str(ref.id),
+            ref.from_member.full_name,
+            ref.to_member.full_name,
+            ref.client_name,
+            ref.client_phone,
+            ref.client_email,
+            ref.status.value,
+            float(ref.actual_value) if ref.actual_value else 0,
+            ref.created_at.isoformat() if ref.created_at else ""
+        ])
+    
+    output.seek(0)
+    return output.getvalue()

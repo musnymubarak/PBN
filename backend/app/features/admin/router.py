@@ -140,9 +140,14 @@ async def audit_logs_endpoint(
 async def export_data_endpoint(
     current_user: User = Depends(admin_req),
     db: AsyncSession = Depends(get_db),
-) -> ORJSONResponse:
-    result = await service.export_platform_data(db)
-    return success_response(data=result)
+):
+    from fastapi.responses import Response
+    csv_data = await service.export_referrals_csv(db)
+    return Response(
+        content=csv_data,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=pbn_referrals_export.csv"}
+    )
 
 
 @router.get("/admin/referrals", summary="List all referrals (admin)")

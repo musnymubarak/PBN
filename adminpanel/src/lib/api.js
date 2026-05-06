@@ -27,6 +27,11 @@ async function apiFetch(path, options = {}) {
     const errorJson = await res.json().catch(() => ({}));
     throw new Error(`API ${res.status}: ${path} - ${errorJson.message || 'Unknown Error'} (${errorJson.code || 'NO_CODE'})`);
   }
+  const contentType = res.headers.get('Content-Type');
+  if (contentType && (contentType.includes('text/csv') || contentType.includes('application/octet-stream'))) {
+    return await res.blob();
+  }
+  
   const json = await res.json();
   return json.data;
 }
