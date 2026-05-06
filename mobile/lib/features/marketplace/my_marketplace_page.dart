@@ -138,7 +138,7 @@ class _MyMarketplacePageState extends State<MyMarketplacePage> with SingleTicker
                     width: double.infinity,
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.red.shade50.withOpacity(0.5),
+                      color: Colors.red.shade50.withValues(alpha: 0.5),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: Colors.red.shade100),
                     ),
@@ -207,7 +207,7 @@ class _MyMarketplacePageState extends State<MyMarketplacePage> with SingleTicker
               children: [
                 Row(
                   children: [
-                    CircleAvatar(radius: 16, backgroundColor: AppColors.primary.withOpacity(0.1), child: Text(i.interestedUserName[0], style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold))),
+                    CircleAvatar(radius: 16, backgroundColor: AppColors.primary.withValues(alpha: 0.1), child: Text(i.interestedUserName[0], style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold))),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
@@ -218,7 +218,7 @@ class _MyMarketplacePageState extends State<MyMarketplacePage> with SingleTicker
                         ],
                       ),
                     ),
-                    if (i.status == InterestStatus.deal_confirmed)
+                    if (i.status == InterestStatus.dealConfirmed)
                       const Icon(TablerIcons.circle_check_filled, color: Colors.green)
                   ],
                 ),
@@ -256,7 +256,7 @@ class _MyMarketplacePageState extends State<MyMarketplacePage> with SingleTicker
                       ),
                     ],
                   )
-                else if (i.status == InterestStatus.deal_confirmed)
+                else if (i.status == InterestStatus.dealConfirmed)
                   Text(
                     'Value: ${NumberFormat.currency(symbol: 'LKR ').format(i.businessValue ?? 0)}',
                     style: const TextStyle(color: Colors.green, fontWeight: FontWeight.w900, fontSize: 14),

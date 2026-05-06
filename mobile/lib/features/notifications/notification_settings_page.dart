@@ -226,7 +226,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
       secondary: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: AppColors.accent.withOpacity(0.1),
+          color: AppColors.accent.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(icon, color: AppColors.accent, size: 20),
@@ -235,8 +235,8 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
       subtitle: Text(subtitle, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
       value: value,
       onChanged: onChanged,
-      activeColor: AppColors.accent,
-      activeTrackColor: AppColors.accent.withOpacity(0.3),
+      activeThumbColor: AppColors.accent,
+      activeTrackColor: AppColors.accent.withValues(alpha: 0.3),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
     );
   }

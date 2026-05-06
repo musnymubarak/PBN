@@ -73,7 +73,7 @@ const _$ListingCategoryEnumMap = {
 const _$ListingStatusEnumMap = {
   ListingStatus.active: 'active',
   ListingStatus.paused: 'paused',
-  ListingStatus.sold_out: 'sold_out',
+  ListingStatus.soldOut: 'sold_out',
   ListingStatus.flagged: 'flagged',
   ListingStatus.removed: 'removed',
 };
@@ -107,6 +107,6 @@ Map<String, dynamic> _$MarketplaceInterestToJson(
 
 const _$InterestStatusEnumMap = {
   InterestStatus.pending: 'pending',
-  InterestStatus.deal_confirmed: 'deal_confirmed',
+  InterestStatus.dealConfirmed: 'deal_confirmed',
   InterestStatus.cancelled: 'cancelled',
 };

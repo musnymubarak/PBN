@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:pbn/core/services/auth_service.dart';
 import 'package:pbn/core/services/chapter_service.dart';
 import 'package:pbn/core/services/prefs_service.dart';
 import 'package:pbn/models/member.dart';

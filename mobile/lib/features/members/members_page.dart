@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:pbn/core/widgets/cached_avatar.dart';
 import 'package:provider/provider.dart';
 import 'package:pbn/core/constants/app_colors.dart';
-import 'package:pbn/core/constants/api_config.dart';
 import 'package:pbn/core/providers/member_provider.dart';
 import 'package:pbn/models/member.dart';
 import 'package:pbn/core/widgets/pbn_app_bar_actions.dart';
@@ -18,7 +16,6 @@ class MembersPage extends StatefulWidget {
 }
 
 class _MembersPageState extends State<MembersPage> {
-  List<Member> _filtered = [];
   String _search = '';
   String? _selectedIndustry;
   String? _selectedChapter;
@@ -209,7 +206,7 @@ class _MembersPageState extends State<MembersPage> {
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
+              color: Colors.black.withValues(alpha: 0.06),
               blurRadius: 20,
               offset: const Offset(0, 8),
             ),
@@ -242,7 +239,7 @@ class _MembersPageState extends State<MembersPage> {
                         Container(
                           margin: const EdgeInsets.only(left: 8),
                           padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(color: _getVerificationColor(member.verificationLevel).withOpacity(0.1), shape: BoxShape.circle),
+                          decoration: BoxDecoration(color: _getVerificationColor(member.verificationLevel).withValues(alpha: 0.1), shape: BoxShape.circle),
                           child: Icon(TablerIcons.discount_check_filled, color: _getVerificationColor(member.verificationLevel), size: 16),
                         ),
                     ],
@@ -386,7 +383,7 @@ class _MembersPageState extends State<MembersPage> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
-              color: isSelected ? AppColors.primary.withOpacity(0.1) : Colors.grey.shade50,
+              color: isSelected ? AppColors.primary.withValues(alpha: 0.1) : Colors.grey.shade50,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: isSelected ? AppColors.primary : Colors.grey.shade100, width: 1.5),
             ),
@@ -431,7 +428,7 @@ class _MembersPageState extends State<MembersPage> {
       decoration: BoxDecoration(
         color: AppColors.primary,
         borderRadius: BorderRadius.circular(30),
-        boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.2), blurRadius: 8, offset: const Offset(0, 4))],
+        boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.2), blurRadius: 8, offset: const Offset(0, 4))],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -530,9 +527,9 @@ class _MembersPageState extends State<MembersPage> {
                     
                     Row(
                       children: [
-                        Expanded(child: _detailRow(TablerIcons.building_store, "Chapter", member.chapterName ?? "Unknown")),
+                        Expanded(child: _detailRow(TablerIcons.building_store, 'Chapter', member.chapterName ?? 'Unknown')),
                         const SizedBox(width: 12),
-                        Expanded(child: _detailRow(TablerIcons.category, "Industry", member.industry)),
+                        Expanded(child: _detailRow(TablerIcons.category, 'Industry', member.industry)),
                       ],
                     ),
                     
@@ -540,14 +537,14 @@ class _MembersPageState extends State<MembersPage> {
                       const Divider(height: 30),
                       const Align(
                         alignment: Alignment.centerLeft,
-                        child: Text("CONTACT DETAILS", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1.5)),
+                        child: Text('CONTACT DETAILS', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1.5)),
                       ),
                       const SizedBox(height: 16),
                       Row(
                         children: [
-                          Expanded(child: _detailRow(TablerIcons.mail, "Email", member.email ?? "-")),
+                          Expanded(child: _detailRow(TablerIcons.mail, 'Email', member.email ?? '-')),
                           const SizedBox(width: 12),
-                          Expanded(child: _detailRow(TablerIcons.phone, "Phone", member.phoneNumber ?? "-")),
+                          Expanded(child: _detailRow(TablerIcons.phone, 'Phone', member.phoneNumber ?? '-')),
                         ],
                       ),
                       
@@ -555,7 +552,7 @@ class _MembersPageState extends State<MembersPage> {
                       Row(
                         children: [
                           Expanded(
-                            child: _contactButton(TablerIcons.phone, "Call", () {
+                            child: _contactButton(TablerIcons.phone, 'Call', () {
                               if (member.phoneNumber != null) {
                                 launchUrl(Uri.parse('tel:${member.phoneNumber}'));
                               }
@@ -563,7 +560,7 @@ class _MembersPageState extends State<MembersPage> {
                           ),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: _contactButton(TablerIcons.brand_whatsapp, "WA", () {
+                            child: _contactButton(TablerIcons.brand_whatsapp, 'WA', () {
                               if (member.phoneNumber != null) {
                                 final phone = member.phoneNumber!.replaceAll(RegExp(r'\D'), '');
                                 launchUrl(Uri.parse('https://wa.me/$phone'), mode: LaunchMode.externalApplication);
@@ -572,7 +569,7 @@ class _MembersPageState extends State<MembersPage> {
                           ),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: _contactButton(TablerIcons.mail, "Email", () {
+                            child: _contactButton(TablerIcons.mail, 'Email', () {
                                if (member.email != null) {
                                 launchUrl(Uri.parse('mailto:${member.email}'));
                               }
@@ -594,7 +591,7 @@ class _MembersPageState extends State<MembersPage> {
                               SizedBox(width: 12),
                               Expanded(
                                 child: Text(
-                                  "Contact details are only visible to chapter members.",
+                                  'Contact details are only visible to chapter members.',
                                   style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
                                 ),
                               ),
@@ -619,7 +616,7 @@ class _MembersPageState extends State<MembersPage> {
         children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.05), borderRadius: BorderRadius.circular(8)),
+            decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(8)),
             child: Icon(icon, size: 18, color: AppColors.primary),
           ),
           const SizedBox(width: 10),

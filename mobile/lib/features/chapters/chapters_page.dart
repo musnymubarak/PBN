@@ -79,7 +79,7 @@ class _ChaptersPageState extends State<ChaptersPage> {
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
-                            color: const Color(0xFF0F172A).withOpacity(0.3),
+                            color: const Color(0xFF0F172A).withValues(alpha: 0.3),
                             blurRadius: 20,
                             offset: const Offset(0, 10))
                       ],
@@ -102,7 +102,7 @@ class _ChaptersPageState extends State<ChaptersPage> {
                         const SizedBox(height: 12),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                          decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
                           child: const Text('Rapidly Expanding in 2024', 
                             style: TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w700)),
                         ),
@@ -187,14 +187,14 @@ class _ChaptersPageState extends State<ChaptersPage> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.grey.shade100),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.05), borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12)),
             child: const Icon(TablerIcons.building_community, color: AppColors.primary, size: 24),
           ),
           const SizedBox(width: 16),
@@ -220,7 +220,7 @@ class _ChaptersPageState extends State<ChaptersPage> {
                   const SizedBox(height: 12),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(color: AppColors.accent.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
+                    decoration: BoxDecoration(color: AppColors.accent.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [

@@ -4,10 +4,10 @@ import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/services/reward_service.dart';
 import 'package:pbn/features/rewards/qr_redeem_screen.dart';
 import 'package:pbn/models/reward.dart';
-import 'package:pbn/core/widgets/privilege_card_widget.dart';
 import 'package:pbn/core/constants/api_config.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:pbn/core/widgets/privilege_card_widget.dart';
 
 import 'package:pbn/core/widgets/pbn_app_bar_actions.dart';
 
@@ -85,7 +85,7 @@ class _RewardsPageState extends State<RewardsPage> {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.05),
+                  color: AppColors.primary.withValues(alpha: 0.05),
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
                 ),
                 child: Column(
@@ -232,7 +232,7 @@ class _RewardsPageState extends State<RewardsPage> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.grey.shade100),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -247,7 +247,7 @@ class _RewardsPageState extends State<RewardsPage> {
                   height: 48,
                   clipBehavior: Clip.antiAlias,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.05),
+                    color: AppColors.primary.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: p.logoUrl != null && p.logoUrl!.isNotEmpty
@@ -318,13 +318,13 @@ class _RewardsPageState extends State<RewardsPage> {
 
   Widget _buildOfferItem(Offer o, String partnerName) {
     final isRedeemed = o.isRedeemedByMe;
-    final color = isRedeemed ? Colors.grey : AppColors.primary;
+    // color variable removed because it was unused
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isRedeemed ? Colors.grey.shade50.withOpacity(0.5) : AppColors.background,
+        color: isRedeemed ? Colors.grey.shade50.withValues(alpha: 0.5) : AppColors.background,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -345,7 +345,7 @@ class _RewardsPageState extends State<RewardsPage> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                            color: isRedeemed ? Colors.grey.withOpacity(0.1) : Colors.green.withOpacity(0.1),
+                            color: isRedeemed ? Colors.grey.withValues(alpha: 0.1) : Colors.green.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(4)),
                         child: Text('${o.discountPercent.toStringAsFixed(0)}% OFF',
                             style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: isRedeemed ? Colors.grey : Colors.green)),
@@ -355,7 +355,7 @@ class _RewardsPageState extends State<RewardsPage> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                          color: Colors.blue.withOpacity(0.05),
+                          color: Colors.blue.withValues(alpha: 0.05),
                           borderRadius: BorderRadius.circular(4)),
                       child: Row(
                         children: [

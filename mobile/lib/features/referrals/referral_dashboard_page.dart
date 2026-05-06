@@ -89,7 +89,7 @@ By joining, you become part of a strong ecosystem built on reliable partnerships
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
-                          color: const Color(0xFF0F172A).withOpacity(0.3),
+                          color: const Color(0xFF0F172A).withValues(alpha: 0.3),
                           blurRadius: 20,
                           offset: const Offset(0, 10))
                     ],
@@ -112,7 +112,7 @@ By joining, you become part of a strong ecosystem built on reliable partnerships
                       const SizedBox(height: 12),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                        decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
                         child: Text(_sentCount >= _receivedCount ? 'High Giving Ratio' : 'Potential Growth Needed', 
                           style: const TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w700)),
                       ),
@@ -193,9 +193,9 @@ By joining, you become part of a strong ecosystem built on reliable partnerships
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.blueAccent.withOpacity(0.1)),
+        border: Border.all(color: Colors.blueAccent.withValues(alpha: 0.1)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))
+          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))
         ],
       ),
       child: Column(
@@ -205,7 +205,7 @@ By joining, you become part of a strong ecosystem built on reliable partnerships
             children: [
               Container(
                 padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(color: Colors.blueAccent.withOpacity(0.1), shape: BoxShape.circle),
+                decoration: BoxDecoration(color: Colors.blueAccent.withValues(alpha: 0.1), shape: BoxShape.circle),
                 child: const Icon(TablerIcons.user_plus, color: Colors.blueAccent, size: 20),
               ),
               const SizedBox(width: 12),
@@ -258,7 +258,7 @@ By joining, you become part of a strong ecosystem built on reliable partnerships
           decoration: BoxDecoration(
             color: color,
             borderRadius: BorderRadius.circular(20),
-            boxShadow: [BoxShadow(color: color.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))],
+            boxShadow: [BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 15, offset: const Offset(0, 8))],
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -282,13 +282,13 @@ By joining, you become part of a strong ecosystem built on reliable partnerships
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: Colors.grey.shade100),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))],
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 4))],
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
               child: Icon(icon, color: color, size: 24),
             ),
             const SizedBox(width: 20),
@@ -315,9 +315,9 @@ By joining, you become part of a strong ecosystem built on reliable partnerships
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.05),
+        color: AppColors.primary.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.primary.withOpacity(0.1)),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -332,7 +332,7 @@ By joining, you become part of a strong ecosystem built on reliable partnerships
           const SizedBox(height: 16),
           Text(
             'High business creation flow helps you climb the leaderboard and unlock premium rewards. Always update the ROI once an opportunity is closed successfully.',
-            style: TextStyle(fontSize: 13, height: 1.5, color: AppColors.primary.withOpacity(0.8), fontWeight: FontWeight.w500),
+            style: TextStyle(fontSize: 13, height: 1.5, color: AppColors.primary.withValues(alpha: 0.8), fontWeight: FontWeight.w500),
           ),
         ],
       ),

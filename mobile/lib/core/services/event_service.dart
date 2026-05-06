@@ -6,7 +6,7 @@ class EventService {
 
   Future<List<Event>> listEvents({String? chapterId}) async {
     final res = await _api.get('/events', queryParams: {
-      if (chapterId != null) 'chapter_id': chapterId,
+      'chapter_id': ?chapterId,
       'published_only': true,
     });
     final list = _api.unwrap(res) as List<dynamic>;

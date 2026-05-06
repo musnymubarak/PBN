@@ -4,7 +4,6 @@ import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/services/chapter_service.dart';
 import 'package:pbn/core/services/referral_service.dart';
 import 'package:pbn/core/services/auth_service.dart';
-import 'package:pbn/core/widgets/custom_button.dart';
 import 'package:pbn/models/member.dart';
 import 'package:pbn/models/user.dart';
 
@@ -140,7 +139,7 @@ class _CreateReferralPageState extends State<CreateReferralPage> {
                     decoration: BoxDecoration(
                       color: AppColors.primary,
                       borderRadius: BorderRadius.circular(30),
-                      boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.25), blurRadius: 15, offset: const Offset(0, 8))],
+                      boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.25), blurRadius: 15, offset: const Offset(0, 8))],
                     ),
                     child: Center(
                       child: _loading 

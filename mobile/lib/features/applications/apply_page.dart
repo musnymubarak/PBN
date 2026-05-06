@@ -109,9 +109,11 @@ class _ApplyPageState extends State<ApplyPage> {
         _showSuccessDialog();
       }
     } catch (_) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Submission failed'),
           backgroundColor: Colors.redAccent, behavior: SnackBarBehavior.floating));
+      }
     }
     if (mounted) setState(() => _submitting = false);
   }
@@ -128,7 +130,7 @@ class _ApplyPageState extends State<ApplyPage> {
             const SizedBox(height: 20),
             Container(
               padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(color: Colors.green.withOpacity(0.1), shape: BoxShape.circle),
+              decoration: BoxDecoration(color: Colors.green.withValues(alpha: 0.1), shape: BoxShape.circle),
               child: const Icon(TablerIcons.check, color: Colors.green, size: 40),
             ),
             const SizedBox(height: 24),
@@ -184,7 +186,7 @@ class _ApplyPageState extends State<ApplyPage> {
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
+                          color: Colors.black.withValues(alpha: 0.04),
                           blurRadius: 30,
                           offset: const Offset(0, 10),
                         ),
@@ -227,7 +229,7 @@ class _ApplyPageState extends State<ApplyPage> {
             color: active || completed ? AppColors.primary : Colors.white,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: active || completed ? AppColors.primary : Colors.grey.shade200, width: 2),
-            boxShadow: active ? [BoxShadow(color: AppColors.primary.withOpacity(0.2), blurRadius: 10, offset: const Offset(0, 4))] : null,
+            boxShadow: active ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.2), blurRadius: 10, offset: const Offset(0, 4))] : null,
           ),
           child: Center(
             child: completed 
@@ -332,7 +334,7 @@ class _ApplyPageState extends State<ApplyPage> {
         Container(
           decoration: BoxDecoration(
             boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.01), blurRadius: 20, offset: const Offset(0, 10)),
+              BoxShadow(color: Colors.black.withValues(alpha: 0.01), blurRadius: 20, offset: const Offset(0, 10)),
             ],
           ),
           child: TextField(

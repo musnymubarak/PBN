@@ -110,16 +110,16 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
                         gradient: LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
-                          colors: [AppColors.primary.withOpacity(0.05), AppColors.primary.withOpacity(0.2)],
+                          colors: [AppColors.primary.withValues(alpha: 0.05), AppColors.primary.withValues(alpha: 0.2)],
                         ),
                       ),
                       child: Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(TablerIcons.shopping_bag, size: 80, color: AppColors.primary.withOpacity(0.1)),
+                            Icon(TablerIcons.shopping_bag, size: 80, color: AppColors.primary.withValues(alpha: 0.1)),
                             const SizedBox(height: 16),
-                            Text('Exclusive Member Deal', style: TextStyle(color: AppColors.primary.withOpacity(0.3), fontWeight: FontWeight.w800, fontSize: 16)),
+                            Text('Exclusive Member Deal', style: TextStyle(color: AppColors.primary.withValues(alpha: 0.3), fontWeight: FontWeight.w800, fontSize: 16)),
                           ],
                         ),
                       ),
@@ -149,7 +149,7 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
-                                color: AppColors.primary.withOpacity(0.1),
+                                color: AppColors.primary.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
@@ -238,7 +238,7 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
                   Row(
                     children: [
                       CircleAvatar(
-                        backgroundColor: AppColors.primary.withOpacity(0.1),
+                        backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                         child: const Icon(TablerIcons.user, color: AppColors.primary),
                       ),
                       const SizedBox(width: 12),
@@ -304,7 +304,7 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
               decoration: BoxDecoration(
                 color: Colors.white,
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5))],
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, -5))],
               ),
               child: SizedBox(
                 width: double.infinity,
@@ -332,7 +332,7 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
           children: [
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
+              decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
               child: Icon(icon, color: color, size: 24),
             ),
             const SizedBox(height: 8),

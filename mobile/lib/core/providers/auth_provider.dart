@@ -20,7 +20,7 @@ class AuthProvider extends ChangeNotifier {
   AuthProvider() {
     // Listen for global session expiration (401 + failed refresh)
     _sessionSubscription = ApiClient.onSessionExpired.stream.listen((_) {
-      debugPrint("AuthProvider: Detected expired session. Logging out.");
+      debugPrint('AuthProvider: Detected expired session. Logging out.');
       logout();
     });
   }
@@ -143,10 +143,10 @@ class AuthProvider extends ChangeNotifier {
       final token = await PushNotificationService.getToken();
       if (token != null) {
         await _notificationService.registerFcmToken(token);
-        debugPrint("FCM token registered: $token");
+        debugPrint('FCM token registered: $token');
       }
     } catch (e) {
-      debugPrint("Failed to register FCM token: $e");
+      debugPrint('Failed to register FCM token: $e');
     }
   }
 

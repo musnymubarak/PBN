@@ -80,7 +80,7 @@ class _MyApplicationsPageState extends State<MyApplicationsPage> {
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: [
                           BoxShadow(
-                              color: const Color(0xFF0F172A).withOpacity(0.3),
+                              color: const Color(0xFF0F172A).withValues(alpha: 0.3),
                               blurRadius: 20,
                               offset: const Offset(0, 10))
                         ],
@@ -104,7 +104,7 @@ class _MyApplicationsPageState extends State<MyApplicationsPage> {
                           const SizedBox(height: 12),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                            decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
                             child: const Text('Review Process: 3-5 Days', 
                               style: TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w700)),
                           ),
@@ -162,7 +162,7 @@ class _MyApplicationsPageState extends State<MyApplicationsPage> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.grey.shade100),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -171,7 +171,7 @@ class _MyApplicationsPageState extends State<MyApplicationsPage> {
             children: [
               Container(
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: color.withOpacity(0.08), borderRadius: BorderRadius.circular(12)),
+                decoration: BoxDecoration(color: color.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(12)),
                 child: Icon(icon, color: color, size: 24),
               ),
               const SizedBox(width: 16),
@@ -203,7 +203,7 @@ class _MyApplicationsPageState extends State<MyApplicationsPage> {
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
                 child: Text(app.statusLabel.toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: color, letterSpacing: 0.5)),
               ),
             ],

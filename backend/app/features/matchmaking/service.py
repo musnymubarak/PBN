@@ -289,10 +289,19 @@ class MatchmakingService:
         u1 = match.user
         u2 = match.matched_user
         
-        # Get industries
-        m1_res = await self.db.execute(select(IndustryCategory).join(ChapterMembership).where(ChapterMembership.user_id == u1.id))
+        # Get industries (only active memberships)
+        m1_res = await self.db.execute(
+            select(IndustryCategory)
+            .join(ChapterMembership)
+            .where(and_(ChapterMembership.user_id == u1.id, ChapterMembership.is_active == True))
+        )
         ind1 = m1_res.scalar_one_or_none()
-        m2_res = await self.db.execute(select(IndustryCategory).join(ChapterMembership).where(ChapterMembership.user_id == u2.id))
+        
+        m2_res = await self.db.execute(
+            select(IndustryCategory)
+            .join(ChapterMembership)
+            .where(and_(ChapterMembership.user_id == u2.id, ChapterMembership.is_active == True))
+        )
         ind2 = m2_res.scalar_one_or_none()
 
         prompt = f"""Analyze these two business owners in the Prime Business Network (PBN) and suggest a specific partnership strategy.
@@ -319,9 +328,11 @@ Format: Return only the suggestion text."""
             def _call_gemini():
                 client = genai.Client(api_key=settings.GEMINI_API_KEY)
                 response = client.models.generate_content(
-                    model="gemini-2.5-flash",
+                    model="gemini-2.0-flash",
                     contents=prompt
                 )
+                if not response.text:
+                    return "No strategy could be generated at this time."
                 return response.text.strip()
 
             strategy = await asyncio.to_thread(_call_gemini)

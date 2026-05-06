@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:pbn/core/constants/app_colors.dart';
-import 'package:pbn/core/constants/api_config.dart';
 import 'package:provider/provider.dart';
 import 'package:pbn/core/providers/member_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -101,7 +100,7 @@ class _AiMatchesViewState extends State<AiMatchesView> {
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 10))],
+        boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 10))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -112,7 +111,7 @@ class _AiMatchesViewState extends State<AiMatchesView> {
           const SizedBox(height: 8),
           Text(
             'We analyze the network to find members who can generate the most business value with you.',
-            style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 13, height: 1.5, fontWeight: FontWeight.w500),
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 13, height: 1.5, fontWeight: FontWeight.w500),
           ),
         ],
       ),
@@ -144,7 +143,7 @@ class _AiMatchesViewState extends State<AiMatchesView> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))],
         border: Border.all(color: Colors.grey.shade100),
       ),
       child: Column(
@@ -165,13 +164,13 @@ class _AiMatchesViewState extends State<AiMatchesView> {
                     children: [
                       Text(match.matchedUserName ?? 'Unknown Member', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppColors.text)),
                       const SizedBox(height: 2),
-                      Text(match.matchedUserIndustry ?? 'Member', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary.withOpacity(0.7))),
+                      Text(match.matchedUserIndustry ?? 'Member', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary.withValues(alpha: 0.7))),
                     ],
                   ),
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(color: AppColors.accent.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                  decoration: BoxDecoration(color: AppColors.accent.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
                   child: Text('$percentage% Match', style: const TextStyle(color: Color(0xFFB45309), fontSize: 10, fontWeight: FontWeight.w900)),
                 ),
               ],
@@ -250,16 +249,16 @@ class _AiMatchesViewState extends State<AiMatchesView> {
               const SizedBox(height: 30),
               Row(
                 children: [
-                  _contactCircle(TablerIcons.phone, "Call", Colors.blue, () {
+                  _contactCircle(TablerIcons.phone, 'Call', Colors.blue, () {
                     if (member.phoneNumber != null) launchUrl(Uri.parse('tel:${member.phoneNumber}'));
                   }),
-                  _contactCircle(TablerIcons.brand_whatsapp, "WhatsApp", Colors.green, () {
+                  _contactCircle(TablerIcons.brand_whatsapp, 'WhatsApp', Colors.green, () {
                     if (member.phoneNumber != null) {
                       final phone = member.phoneNumber!.replaceAll(RegExp(r'\D'), '');
                       launchUrl(Uri.parse('https://wa.me/$phone'), mode: LaunchMode.externalApplication);
                     }
                   }),
-                  _contactCircle(TablerIcons.mail, "Email", Colors.red, () {
+                  _contactCircle(TablerIcons.mail, 'Email', Colors.red, () {
                     if (member.email != null) launchUrl(Uri.parse('mailto:${member.email}'));
                   }),
                 ],
@@ -279,7 +278,7 @@ class _AiMatchesViewState extends State<AiMatchesView> {
           children: [
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
+              decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
               child: Icon(icon, color: color, size: 28),
             ),
             const SizedBox(height: 8),
@@ -317,11 +316,13 @@ class _MatchDetailSheetState extends State<_MatchDetailSheet> {
       final strategy = await widget.service.getAiStrategy(widget.match.id);
       if (mounted) setState(() { _strategy = strategy; _loading = false; });
     } catch (e) {
-      debugPrint("Error loading AI strategy: $e");
-      if (mounted) setState(() { 
-        _strategy = "Error loading strategy: $e"; 
+      debugPrint('Error loading AI strategy: $e');
+      if (mounted) {
+        setState(() { 
+        _strategy = 'Error loading strategy: $e'; 
         _loading = false; 
       });
+      }
     }
   }
 

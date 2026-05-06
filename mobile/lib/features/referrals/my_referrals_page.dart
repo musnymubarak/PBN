@@ -100,7 +100,7 @@ class _MyReferralsPageState extends State<MyReferralsPage> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -117,7 +117,7 @@ class _MyReferralsPageState extends State<MyReferralsPage> {
                 width: 60,
                 height: 60,
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Icon(TablerIcons.briefcase, color: color, size: 28),
@@ -288,7 +288,7 @@ class _ReferralDetailsSheetState extends State<_ReferralDetailsSheet> {
                   onTap: () => Navigator.pop(context),
                   child: Container(
                     padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), shape: BoxShape.circle),
+                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.1), shape: BoxShape.circle),
                     child: const Icon(TablerIcons.x, size: 20, color: Colors.white),
                   ),
                 ),

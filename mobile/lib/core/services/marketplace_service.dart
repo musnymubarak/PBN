@@ -131,7 +131,7 @@ class MarketplaceService {
   Future<MarketplaceInterest> updateInterestStatus(String interestId, {required String status, double? businessValue}) async {
     final response = await _client.patch('/marketplace/interests/$interestId', data: {
       'status': status,
-      if (businessValue != null) 'business_value': businessValue,
+      'business_value': ?businessValue,
     });
     return MarketplaceInterest.fromJson(response.data);
   }

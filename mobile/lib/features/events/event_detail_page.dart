@@ -186,7 +186,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 imageUrl: fullImageUrl,
                 fit: BoxFit.cover,
                 placeholder: (context, url) => Container(
-                  color: Colors.grey.withOpacity(0.2),
+                  color: Colors.grey.withValues(alpha: 0.2),
                   child: const Center(child: CircularProgressIndicator()),
                 ),
                 errorWidget: (context, url, error) => _buildPlaceholderImage(),
@@ -200,9 +200,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.black.withOpacity(0.3),
+                    Colors.black.withValues(alpha: 0.3),
                     Colors.transparent,
-                    Colors.black.withOpacity(0.7),
+                    Colors.black.withValues(alpha: 0.7),
                   ],
                 ),
               ),
@@ -254,7 +254,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
         child: Icon(
           TablerIcons.calendar_event,
           size: 80,
-          color: Colors.white.withOpacity(0.3),
+          color: Colors.white.withValues(alpha: 0.3),
         ),
       ),
     );
@@ -269,7 +269,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.secondary.withOpacity(0.1),
+                color: AppColors.secondary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
@@ -348,10 +348,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.withOpacity(0.1)),
+        border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -362,7 +362,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.05),
+              color: AppColors.primary.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, color: AppColors.primary, size: 24),
@@ -418,7 +418,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
           _currentEvent.description ?? 'No description provided for this event.',
           style: TextStyle(
             fontSize: 15,
-            color: AppColors.text.withOpacity(0.8),
+            color: AppColors.text.withValues(alpha: 0.8),
             height: 1.6,
           ),
         ),
@@ -455,7 +455,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
         ),
         Text(
           label,
-          style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 10, fontWeight: FontWeight.bold),
+          style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 10, fontWeight: FontWeight.bold),
         ),
       ],
     );
@@ -470,7 +470,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, -5)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, -5)),
         ],
       ),
       child: Column(
@@ -484,9 +484,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   ? Container(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       decoration: BoxDecoration(
-                        color: Colors.green.withOpacity(0.1),
+                        color: Colors.green.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.green.withOpacity(0.3)),
+                        border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
                       ),
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -504,9 +504,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
                       ? Container(
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF59E0B).withOpacity(0.1),
+                            color: const Color(0xFFF59E0B).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.3)),
+                            border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.3)),
                           ),
                           child: const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -545,7 +545,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     style: OutlinedButton.styleFrom(
                       foregroundColor: isNotGoing ? Colors.red : Colors.grey[600],
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      side: BorderSide(color: isNotGoing ? Colors.red.withOpacity(0.3) : Colors.grey.withOpacity(0.3)),
+                      side: BorderSide(color: isNotGoing ? Colors.red.withValues(alpha: 0.3) : Colors.grey.withValues(alpha: 0.3)),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     ),
                     child: Text(

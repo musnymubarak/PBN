@@ -4,9 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/services/auth_service.dart';
 import 'package:pbn/core/services/event_service.dart';
-import 'package:pbn/core/services/api_client.dart';
 import 'package:pbn/core/services/chapter_service.dart';
-import 'package:pbn/models/chapter.dart';
 import 'package:pbn/models/event.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'event_detail_page.dart';
@@ -180,9 +178,8 @@ class _EventsPageState extends State<EventsPage> {
 
     final String placeholderUrl = _getPlaceholderImage(event);
     
-    final status = _currentUserId != null ? event.getRsvpStatus(_currentUserId!) : null;
-    final bool isGoing = status == 'going';
-    final bool isNotGoing = status == 'not_going';
+    // status variable removed because it was unused
+    // isGoing and isNotGoing variables removed because they were unused
 
     return Container(
       margin: const EdgeInsets.only(bottom: 24),
@@ -190,7 +187,7 @@ class _EventsPageState extends State<EventsPage> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 20, offset: const Offset(0, 4)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 20, offset: const Offset(0, 4)),
         ],
       ),
       child: InkWell(
@@ -223,13 +220,13 @@ class _EventsPageState extends State<EventsPage> {
                       width: double.infinity,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [AppColors.primary.withOpacity(0.1), AppColors.primary.withOpacity(0.05)],
+                          colors: [AppColors.primary.withValues(alpha: 0.1), AppColors.primary.withValues(alpha: 0.05)],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
                       ),
                       child: Center(
-                        child: Icon(TablerIcons.photo_off, size: 40, color: AppColors.primary.withOpacity(0.2)),
+                        child: Icon(TablerIcons.photo_off, size: 40, color: AppColors.primary.withValues(alpha: 0.2)),
                       ),
                     ),
                   ),
@@ -241,7 +238,7 @@ class _EventsPageState extends State<EventsPage> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.95),
+                      color: Colors.white.withValues(alpha: 0.95),
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
                     ),
@@ -262,7 +259,7 @@ class _EventsPageState extends State<EventsPage> {
                     decoration: BoxDecoration(
                       color: event.eventType == 'virtual' ? const Color(0xFF3B82F6) : const Color(0xFF10B981),
                       borderRadius: BorderRadius.circular(8),
-                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 8)],
+                      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 8)],
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -294,7 +291,7 @@ class _EventsPageState extends State<EventsPage> {
                           end: Alignment.bottomRight,
                         ),
                         borderRadius: BorderRadius.circular(20),
-                        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 4)],
+                        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4)],
                       ),
                       child: Row(
                         children: [

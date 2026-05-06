@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:provider/provider.dart';
@@ -62,7 +61,7 @@ class _LoginPageState extends State<LoginPage> {
               width: 250, height: 250,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.primary.withOpacity(0.03),
+                color: AppColors.primary.withValues(alpha: 0.03),
               ),
             ),
           ),
@@ -81,9 +80,9 @@ class _LoginPageState extends State<LoginPage> {
                     text: const TextSpan(
                       style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, letterSpacing: 5),
                       children: [
-                        const TextSpan(text: 'PRIME ', style: TextStyle(color: AppColors.primary)),
-                        const TextSpan(text: 'BUSINESS ', style: TextStyle(color: AppColors.accent)),
-                        const TextSpan(text: 'NETWORK', style: TextStyle(color: AppColors.primary)),
+                        TextSpan(text: 'PRIME ', style: TextStyle(color: AppColors.primary)),
+                        TextSpan(text: 'BUSINESS ', style: TextStyle(color: AppColors.accent)),
+                        TextSpan(text: 'NETWORK', style: TextStyle(color: AppColors.primary)),
                       ],
                     ),
                   ),
@@ -100,7 +99,7 @@ class _LoginPageState extends State<LoginPage> {
                       color: AppColors.surface,
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
-                        BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 30, offset: const Offset(0, 15)),
+                        BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 30, offset: const Offset(0, 15)),
                       ],
                     ),
                     child: Column(
@@ -108,7 +107,7 @@ class _LoginPageState extends State<LoginPage> {
                       children: [
                         const Text('Log In', style: TextStyle(color: AppColors.text, fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -1)),
                         const SizedBox(height: 4),
-                        Text('Secure Executive Access', style: TextStyle(color: AppColors.textSecondary.withOpacity(0.6), fontSize: 12, fontWeight: FontWeight.w500)),
+                        Text('Secure Executive Access', style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.6), fontSize: 12, fontWeight: FontWeight.w500)),
                         const SizedBox(height: 20),
 
                         _buildLabel('EMAIL OR PHONE'),
@@ -155,8 +154,8 @@ class _LoginPageState extends State<LoginPage> {
                         Center(
                           child: Column(
                             children: [
-                              Text("Join our elite partner network?", 
-                                style: TextStyle(color: AppColors.textSecondary.withOpacity(0.7), fontSize: 11, fontWeight: FontWeight.w500)
+                              Text('Join our elite partner network?', 
+                                style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.7), fontSize: 11, fontWeight: FontWeight.w500)
                               ),
                               const SizedBox(height: 2),
                               InkWell(
@@ -182,7 +181,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _buildLabel(String text) {
-    return Text(text, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.textSecondary.withOpacity(0.4), letterSpacing: 1.5));
+    return Text(text, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.textSecondary.withValues(alpha: 0.4), letterSpacing: 1.5));
   }
 
   Widget _buildPremiumTextField({
@@ -197,7 +196,7 @@ class _LoginPageState extends State<LoginPage> {
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black.withOpacity(0.01)),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.01)),
       ),
       child: TextField(
         controller: controller,

@@ -196,7 +196,7 @@ class _BusinessMatchingProfilePageState extends State<BusinessMatchingProfilePag
                 });
               },
               backgroundColor: Colors.white,
-              selectedColor: AppColors.primary.withOpacity(0.2),
+              selectedColor: AppColors.primary.withValues(alpha: 0.2),
               checkmarkColor: AppColors.primary,
               labelStyle: TextStyle(
                 color: isSelected ? AppColors.primary : AppColors.text,

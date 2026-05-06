@@ -7,7 +7,6 @@ import 'package:pbn/core/services/application_service.dart';
 import 'package:pbn/core/services/club_service.dart';
 import 'package:pbn/models/chapter.dart';
 import 'package:pbn/models/horizontal_club.dart';
-import 'package:pbn/core/widgets/custom_button.dart';
 
 class CreatePostPage extends StatefulWidget {
   const CreatePostPage({super.key});
@@ -140,7 +139,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
                   maxLines: 6,
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: AppColors.text),
                   decoration: InputDecoration(
-                    hintText: _postType == 'general' ? "What's on your mind?" : "Describe the business opportunity...",
+                    hintText: _postType == 'general' ? "What's on your mind?" : 'Describe the business opportunity...',
                     border: InputBorder.none,
                   ),
                 ),
@@ -155,7 +154,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
                   TextField(
                     controller: _budgetController,
                     decoration: InputDecoration(
-                      hintText: "e.g. LKR 50,000 - 150,000",
+                      hintText: 'e.g. LKR 50,000 - 150,000',
                       prefixIcon: const Icon(TablerIcons.coin, size: 20),
                       filled: true,
                       fillColor: Colors.grey.shade50,

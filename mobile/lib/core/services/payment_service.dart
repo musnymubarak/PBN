@@ -12,7 +12,7 @@ class PaymentService {
     final res = await _api.post('/payments/initiate', data: {
       'payment_type': paymentType,
       'amount': amount,
-      if (eventId != null) 'event_id': eventId,
+      'event_id': ?eventId,
     });
     return _api.unwrap(res) as Map<String, dynamic>;
   }

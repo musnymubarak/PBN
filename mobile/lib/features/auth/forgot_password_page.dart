@@ -120,7 +120,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
-                    BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 30, offset: const Offset(0, 15)),
+                    BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 30, offset: const Offset(0, 15)),
                   ],
                 ),
                 child: Column(
@@ -135,7 +135,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                       _otpSent 
                         ? 'Enter the 6-digit code sent to your email and choose a new password.'
                         : 'Enter your registered email or phone number to receive a reset code.',
-                      style: TextStyle(color: AppColors.textSecondary.withOpacity(0.7), fontSize: 13, height: 1.5, fontWeight: FontWeight.w500),
+                      style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.7), fontSize: 13, height: 1.5, fontWeight: FontWeight.w500),
                     ),
                     const SizedBox(height: 32),
 
@@ -219,7 +219,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   }
 
   Widget _buildLabel(String text) {
-    return Text(text, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.textSecondary.withOpacity(0.4), letterSpacing: 1.5));
+    return Text(text, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.textSecondary.withValues(alpha: 0.4), letterSpacing: 1.5));
   }
 
   Widget _buildField({

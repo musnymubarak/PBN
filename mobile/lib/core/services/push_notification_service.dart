@@ -27,7 +27,7 @@ class PushNotificationService {
     // Firebase Messaging is only supported on Android/iOS/Web
     // Skipping initialization on Windows/Desktop to prevent crashes
     if (kIsWeb || (!Platform.isAndroid && !Platform.isIOS)) {
-      debugPrint("Push Notifications skip: Not on Mobile/Web");
+      debugPrint('Push Notifications skip: Not on Mobile/Web');
       _initialized = true;
       return;
     }
@@ -36,7 +36,7 @@ class PushNotificationService {
     try {
       await Firebase.initializeApp();
     } catch (e) {
-      debugPrint("Firebase.initializeApp() failed: $e");
+      debugPrint('Firebase.initializeApp() failed: $e');
       _initialized = true;
       return;
     }
@@ -49,7 +49,7 @@ class PushNotificationService {
         sound: true,
       );
     } catch (e) {
-      debugPrint("Firebase messaging requestPermission failed: $e");
+      debugPrint('Firebase messaging requestPermission failed: $e');
     }
 
     // 3. Setup Local Notifications (for foreground messages)
@@ -68,7 +68,7 @@ class PushNotificationService {
         },
       );
     } catch (e) {
-      debugPrint("Local notifications init failed: $e");
+      debugPrint('Local notifications init failed: $e');
     }
 
     // 4. Handle Incoming Messages
@@ -90,7 +90,7 @@ class PushNotificationService {
         _handleNotificationTap(initialMessage);
       }
     } catch (e) {
-      debugPrint("Firebase message listeners setup failed: $e");
+      debugPrint('Firebase message listeners setup failed: $e');
     }
 
     _initialized = true;

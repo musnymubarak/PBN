@@ -16,7 +16,7 @@ class PrivilegeCardWidget extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.4),
+            color: Colors.black.withValues(alpha: 0.4),
             blurRadius: 30,
             offset: const Offset(0, 15),
           ),
@@ -36,7 +36,7 @@ class PrivilegeCardWidget extends StatelessWidget {
                 decoration: BoxDecoration(
                   gradient: RadialGradient(
                     colors: [
-                      Colors.white.withOpacity(0.04),
+                      Colors.white.withValues(alpha: 0.04),
                       Colors.transparent,
                     ],
                   ),
@@ -49,7 +49,7 @@ class PrivilegeCardWidget extends StatelessWidget {
             Opacity(
               opacity: 0.1,
               child: Center(
-                child: Icon(TablerIcons.square_rotated, size: 400, color: Colors.white.withOpacity(0.3)),
+                child: Icon(TablerIcons.square_rotated, size: 400, color: Colors.white.withValues(alpha: 0.3)),
               ),
             ),
 
@@ -73,9 +73,9 @@ class PrivilegeCardWidget extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.1),
+                          color: Colors.white.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.white.withOpacity(0.1)),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                         ),
                         child: Text(
                           card.tier.toUpperCase(),
@@ -104,7 +104,7 @@ class PrivilegeCardWidget extends StatelessWidget {
                     ),
                     child: Stack(
                       children: [
-                        Center(child: Icon(TablerIcons.border_all, color: Colors.black.withOpacity(0.2), size: 20)),
+                        Center(child: Icon(TablerIcons.border_all, color: Colors.black.withValues(alpha: 0.2), size: 20)),
                       ],
                     ),
                   ),

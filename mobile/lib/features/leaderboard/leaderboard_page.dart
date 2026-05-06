@@ -188,7 +188,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
         decoration: BoxDecoration(
           color: selected ? Colors.white : Colors.transparent,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: selected ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))] : [],
+          boxShadow: selected ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 2))] : [],
         ),
         child: Center(
           child: Text(label,
@@ -203,7 +203,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
   }
 
   Widget _buildPodium(List<dynamic> entries) {
-    final top1 = entries.length >= 1 ? entries[0] : null;
+    final top1 = entries.isNotEmpty ? entries[0] : null;
     final top2 = entries.length >= 2 ? entries[1] : null;
     final top3 = entries.length >= 3 ? entries[2] : null;
 
@@ -265,10 +265,10 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
               height: avatarSize,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: hasPhoto ? Colors.white : color.withOpacity(0.1),
+                color: hasPhoto ? Colors.white : color.withValues(alpha: 0.1),
                 border: Border.all(color: color, width: rank == 1 ? 4 : 3),
                 boxShadow: [
-                  BoxShadow(color: color.withOpacity(0.3), blurRadius: 15, spreadRadius: 2, offset: const Offset(0, 4)),
+                  BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 15, spreadRadius: 2, offset: const Offset(0, 4)),
                 ],
               ),
               child: ClipOval(
@@ -324,7 +324,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Row(
@@ -358,7 +358,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))
+          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))
         ],
       ),
       child: Row(

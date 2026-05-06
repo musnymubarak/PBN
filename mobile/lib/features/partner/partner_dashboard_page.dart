@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:pbn/core/theme/app_theme.dart';
 import 'package:pbn/core/constants/app_colors.dart';
 import 'package:provider/provider.dart';
 import 'package:pbn/core/providers/auth_provider.dart';
@@ -121,7 +120,7 @@ class _PartnerDashboardPageState extends State<PartnerDashboardPage> {
                   ),
                 )
               else
-                ..._stats!.recentRedemptions.map((r) => _buildRedemptionTile(r)).toList(),
+                ..._stats!.recentRedemptions.map((r) => _buildRedemptionTile(r)),
             ],
           ),
         ),
@@ -175,7 +174,7 @@ class _PartnerDashboardPageState extends State<PartnerDashboardPage> {
       child: Row(
         children: [
           CircleAvatar(
-            backgroundColor: AppColors.accent.withOpacity(0.1),
+            backgroundColor: AppColors.accent.withValues(alpha: 0.1),
             child: Text(item.userName[0].toUpperCase(), style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
           ),
           const SizedBox(width: 16),

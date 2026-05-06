@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:provider/provider.dart';
 import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/providers/auth_provider.dart';
@@ -55,7 +54,7 @@ class _SplashPageState extends State<SplashPage> {
               width: 300, height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.4), blurRadius: 100, spreadRadius: 20)],
+                boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.4), blurRadius: 100, spreadRadius: 20)],
               ),
             ),
           ),
@@ -73,15 +72,15 @@ class _SplashPageState extends State<SplashPage> {
             right: 0,
             child: Column(
               children: [
-                Text('from', style: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 10, letterSpacing: 1),),
+                Text('from', style: TextStyle(color: Colors.white.withValues(alpha: 0.3), fontSize: 10, letterSpacing: 1),),
                 const SizedBox(height: 6),
                 RichText(
                   text: TextSpan(
                     style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 3),
                     children: [
-                      TextSpan(text: 'PRIME ', style: TextStyle(color: Colors.white.withOpacity(0.8))),
+                      TextSpan(text: 'PRIME ', style: TextStyle(color: Colors.white.withValues(alpha: 0.8))),
                       const TextSpan(text: 'BUSINESS ', style: TextStyle(color: AppColors.accent)),
-                      TextSpan(text: 'NETWORK', style: TextStyle(color: Colors.white.withOpacity(0.8))),
+                      TextSpan(text: 'NETWORK', style: TextStyle(color: Colors.white.withValues(alpha: 0.8))),
                     ],
                   ),
                 ),

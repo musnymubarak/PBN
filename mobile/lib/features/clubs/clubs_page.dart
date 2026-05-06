@@ -66,7 +66,7 @@ class _ClubsPageState extends State<ClubsPage> {
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
-                            color: const Color(0xFF0F172A).withOpacity(0.2),
+                            color: const Color(0xFF0F172A).withValues(alpha: 0.2),
                             blurRadius: 15,
                             offset: const Offset(0, 8))
                       ],
@@ -137,7 +137,7 @@ class _ClubsPageState extends State<ClubsPage> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.grey.shade100),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -147,7 +147,7 @@ class _ClubsPageState extends State<ClubsPage> {
             children: [
               Container(
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.05), borderRadius: BorderRadius.circular(12)),
+                decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12)),
                 child: const Icon(TablerIcons.layers_linked, color: AppColors.primary, size: 24),
               ),
               const SizedBox(width: 16),
@@ -165,7 +165,7 @@ class _ClubsPageState extends State<ClubsPage> {
               if (club.isMember)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(color: Colors.green.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                  decoration: BoxDecoration(color: Colors.green.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
                   child: const Text('JOINED', style: TextStyle(color: Colors.green, fontSize: 10, fontWeight: FontWeight.w900)),
                 ),
             ],

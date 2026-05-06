@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
-import 'package:pbn/core/constants/app_colors.dart';
 import 'dart:async';
 import 'dart:ui';
 import 'package:pbn/core/services/prefs_service.dart';
+import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 
 class OnboardingPage extends StatefulWidget {
   const OnboardingPage({super.key});
@@ -100,10 +99,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Colors.black.withOpacity(0.9),
-                    Colors.black.withOpacity(0.1),
-                    Colors.black.withOpacity(0.8),
-                    Colors.black.withOpacity(0.95),
+                    Colors.black.withValues(alpha: 0.9),
+                    Colors.black.withValues(alpha: 0.1),
+                    Colors.black.withValues(alpha: 0.8),
+                    Colors.black.withValues(alpha: 0.95),
                   ],
                   stops: const [0.0, 0.4, 0.7, 1.0],
                   begin: Alignment.topCenter,
@@ -129,9 +128,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: item['color'].withOpacity(0.2),
+                        color: item['color'].withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: item['color'].withOpacity(0.3)),
+                        border: Border.all(color: item['color'].withValues(alpha: 0.3)),
                       ),
                       child: Icon(item['icon'], color: item['color'], size: 30),
                     ),
@@ -150,7 +149,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     Text(
                       item['subtitle'],
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.8),
+                        color: Colors.white.withValues(alpha: 0.8),
                         fontSize: 15,
                         height: 1.6,
                         fontWeight: FontWeight.w500,
@@ -180,7 +179,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                         height: 4,
                         width: _currentPage == index ? 24 : 8,
                         decoration: BoxDecoration(
-                          color: _currentPage == index ? Colors.white : Colors.white.withOpacity(0.3),
+                          color: _currentPage == index ? Colors.white : Colors.white.withValues(alpha: 0.3),
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -195,9 +194,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
                         width: double.infinity,
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.1),
+                          color: Colors.white.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.white.withOpacity(0.1)),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                         ),
                         child: Row(
                           children: [
@@ -231,7 +230,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     child: RichText(
                       text: TextSpan(
                         children: [
-                          TextSpan(text: 'Already a member? ', style: TextStyle(color: Colors.white.withOpacity(0.6))),
+                          TextSpan(text: 'Already a member? ', style: TextStyle(color: Colors.white.withValues(alpha: 0.6))),
                           const TextSpan(text: 'Log In', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
                         ],
                       ),

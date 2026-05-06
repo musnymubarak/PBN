@@ -62,7 +62,7 @@ class AuthService {
       });
       return true;
     } on DioException catch (e) {
-      debugPrint("Change password failed: \${e.response?.data}");
+      debugPrint('Change password failed: ${e.response?.data}');
       if (e.response?.data is Map && e.response?.data['detail'] != null) {
           throw Exception(e.response?.data['detail'].toString());
       }
@@ -71,7 +71,7 @@ class AuthService {
       }
       throw Exception(e.message ?? 'Unknown error occurred');
     } catch (e) {
-      debugPrint("Change password failed: $e");
+      debugPrint('Change password failed: $e');
       throw Exception(e.toString());
     }
   }

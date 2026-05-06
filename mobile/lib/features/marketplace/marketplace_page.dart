@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
-import 'package:provider/provider.dart';
 import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/services/marketplace_service.dart';
 import 'package:pbn/models/marketplace.dart';
@@ -381,7 +380,7 @@ class _ListingCard extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+            BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
           ],
         ),
         child: Column(
@@ -397,16 +396,16 @@ class _ListingCard extends StatelessWidget {
                           gradient: LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
-                            colors: [AppColors.primary.withOpacity(0.05), AppColors.primary.withOpacity(0.1)],
+                            colors: [AppColors.primary.withValues(alpha: 0.05), AppColors.primary.withValues(alpha: 0.1)],
                           ),
                         ),
                         child: Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(TablerIcons.shopping_bag, color: AppColors.primary.withOpacity(0.2), size: 48),
+                              Icon(TablerIcons.shopping_bag, color: AppColors.primary.withValues(alpha: 0.2), size: 48),
                               const SizedBox(height: 8),
-                              Text('PBN Marketplace', style: TextStyle(color: AppColors.primary.withOpacity(0.3), fontSize: 10, fontWeight: FontWeight.w700)),
+                              Text('PBN Marketplace', style: TextStyle(color: AppColors.primary.withValues(alpha: 0.3), fontSize: 10, fontWeight: FontWeight.w700)),
                             ],
                           ),
                         ),
@@ -473,7 +472,7 @@ class _FeaturedCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 12, offset: const Offset(0, 4)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 12, offset: const Offset(0, 4)),
         ],
       ),
       child: ClipRRect(
@@ -486,16 +485,16 @@ class _FeaturedCard extends StatelessWidget {
               Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [AppColors.primary.withOpacity(0.1), AppColors.primary.withOpacity(0.3)],
+                    colors: [AppColors.primary.withValues(alpha: 0.1), AppColors.primary.withValues(alpha: 0.3)],
                   ),
                 ),
                 child: Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(TablerIcons.shopping_bag, size: 64, color: Colors.white.withOpacity(0.5)),
+                      Icon(TablerIcons.shopping_bag, size: 64, color: Colors.white.withValues(alpha: 0.5)),
                       const SizedBox(height: 8),
-                      Text('PBN Featured', style: TextStyle(color: Colors.white.withOpacity(0.8), fontWeight: FontWeight.w900)),
+                      Text('PBN Featured', style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontWeight: FontWeight.w900)),
                     ],
                   ),
                 ),
@@ -507,7 +506,7 @@ class _FeaturedCard extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Colors.black.withOpacity(0.8)],
+                  colors: [Colors.transparent, Colors.black.withValues(alpha: 0.8)],
                 ),
               ),
             ),

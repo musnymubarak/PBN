@@ -24,7 +24,7 @@ enum ListingStatus {
   @JsonValue('paused')
   paused,
   @JsonValue('sold_out')
-  sold_out,
+  soldOut,
   @JsonValue('flagged')
   flagged,
   @JsonValue('removed')
@@ -100,7 +100,7 @@ enum InterestStatus {
   @JsonValue('pending')
   pending,
   @JsonValue('deal_confirmed')
-  deal_confirmed,
+  dealConfirmed,
   @JsonValue('cancelled')
   cancelled,
 }

@@ -11,7 +11,7 @@ class DashboardService {
 
   Future<List<dynamic>> getLeaderboard({String? chapterId, String period = 'this_month'}) async {
     final res = await _api.get('/leaderboard', queryParams: {
-      if (chapterId != null) 'chapter_id': chapterId,
+      'chapter_id': ?chapterId,
       'period': period,
     });
     final data = _api.unwrap(res);

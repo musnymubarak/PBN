@@ -199,7 +199,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
-                    BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 6)),
+                    BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 6)),
                   ],
                 ),
                 child: Column(
@@ -217,7 +217,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           children: [
                             Container(
                               width: 80, height: 80,
-                              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withOpacity(0.2), width: 2)),
+                              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 2)),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(22),
                                 child: user?.id != null 
@@ -251,14 +251,14 @@ class _ProfilePageState extends State<ProfilePage> {
                             children: [
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(8)),
+                                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(8)),
                                 child: Text(user?.role.toUpperCase() ?? '', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1)),
                               ),
                               const SizedBox(width: 8),
                               if (user?.verificationLevel != 'none')
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                  decoration: BoxDecoration(color: _getVerificationColor(user?.verificationLevel).withOpacity(0.2), borderRadius: BorderRadius.circular(8), border: Border.all(color: _getVerificationColor(user?.verificationLevel).withOpacity(0.5))),
+                                  decoration: BoxDecoration(color: _getVerificationColor(user?.verificationLevel).withValues(alpha: 0.2), borderRadius: BorderRadius.circular(8), border: Border.all(color: _getVerificationColor(user?.verificationLevel).withValues(alpha: 0.5))),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
@@ -302,9 +302,9 @@ class _ProfilePageState extends State<ProfilePage> {
                 ..._memberships.map((m) => Container(
                   margin: const EdgeInsets.only(bottom: 12),
                   padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))]),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 4))]),
                   child: Row(children: [
-                    Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.08), borderRadius: BorderRadius.circular(12)),
+                    Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(12)),
                       child: const Icon(TablerIcons.building_skyscraper, color: AppColors.primary, size: 24)),
                     const SizedBox(width: 16),
                     Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -316,7 +316,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     ])),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(color: m.isActive ? Colors.green.withOpacity(0.1) : Colors.grey.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                      decoration: BoxDecoration(color: m.isActive ? Colors.green.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
                       child: Text(m.isActive ? 'ACTIVE' : 'INACTIVE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: m.isActive ? Colors.green : Colors.grey)),
                     ),
                   ]),
@@ -330,14 +330,14 @@ class _ProfilePageState extends State<ProfilePage> {
                 onTap: () => Navigator.pushNamed(context, '/notification-settings'),
                 child: Container(
                   padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))]),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 4))]),
                   child: Row(children: [
-                    Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: Colors.orange.withOpacity(0.08), borderRadius: BorderRadius.circular(12)),
+                    Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: Colors.orange.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(12)),
                       child: const Icon(TablerIcons.bell_cog, color: Colors.orange, size: 24)),
                     const SizedBox(width: 16),
                     const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Text('Notification Preferences', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppColors.text, letterSpacing: -0.3)),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4),
                       Text('Customize your push alerts', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
                     ])),
                     const Icon(TablerIcons.chevron_right, color: AppColors.textSecondary, size: 20),
@@ -349,14 +349,14 @@ class _ProfilePageState extends State<ProfilePage> {
                 onTap: () => Navigator.pushNamed(context, '/payments'),
                 child: Container(
                   padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))]),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 4))]),
                   child: Row(children: [
-                    Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: Colors.blue.withOpacity(0.08), borderRadius: BorderRadius.circular(12)),
+                    Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: Colors.blue.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(12)),
                       child: const Icon(TablerIcons.credit_card, color: Colors.blue, size: 24)),
                     const SizedBox(width: 16),
                     const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Text('Payment History', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppColors.text, letterSpacing: -0.3)),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4),
                       Text('Manage your payments and invoices', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
                     ])),
                     const Icon(TablerIcons.chevron_right, color: AppColors.textSecondary, size: 20),
@@ -368,14 +368,14 @@ class _ProfilePageState extends State<ProfilePage> {
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BusinessMatchingProfilePage())),
                 child: Container(
                   padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))]),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 4))]),
                   child: Row(children: [
-                    Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: AppColors.accent.withOpacity(0.08), borderRadius: BorderRadius.circular(12)),
+                    Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: AppColors.accent.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(12)),
                       child: const Icon(TablerIcons.sparkles, color: AppColors.accent, size: 24)),
                     const SizedBox(width: 16),
                     const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Text('Business Matching Profile', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppColors.text, letterSpacing: -0.3)),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4),
                       Text('Setup your needs and target sectors', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
                     ])),
                     const Icon(TablerIcons.chevron_right, color: AppColors.textSecondary, size: 20),
@@ -397,7 +397,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   icon: const Icon(TablerIcons.logout, size: 20),
                   label: const Text('Sign Out', style: TextStyle(fontWeight: FontWeight.w800)),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.redAccent.shade100.withOpacity(0.3),
+                    backgroundColor: Colors.redAccent.shade100.withValues(alpha: 0.3),
                     foregroundColor: Colors.redAccent.shade700,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),

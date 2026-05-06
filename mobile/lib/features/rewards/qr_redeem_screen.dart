@@ -177,7 +177,7 @@ class _QrRedeemScreenState extends State<QrRedeemScreen>
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                    color: AppColors.primary.withOpacity(0.25),
+                    color: AppColors.primary.withValues(alpha: 0.25),
                     blurRadius: 20,
                     offset: const Offset(0, 10)),
               ],
@@ -217,7 +217,7 @@ class _QrRedeemScreenState extends State<QrRedeemScreen>
               border: Border.all(color: Colors.grey.shade100),
               boxShadow: [
                 BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
+                    color: Colors.black.withValues(alpha: 0.04),
                     blurRadius: 20,
                     offset: const Offset(0, 8)),
               ],
@@ -304,7 +304,7 @@ class _QrRedeemScreenState extends State<QrRedeemScreen>
                 height: 14,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: AppColors.primary.withOpacity(0.3),
+                  color: AppColors.primary.withValues(alpha: 0.3),
                 ),
               ),
               const SizedBox(width: 12),
@@ -338,7 +338,7 @@ class _QrRedeemScreenState extends State<QrRedeemScreen>
                   border: Border.all(color: Colors.green.shade100, width: 2),
                   boxShadow: [
                     BoxShadow(
-                        color: Colors.green.withOpacity(0.1),
+                        color: Colors.green.withValues(alpha: 0.1),
                         blurRadius: 40),
                   ],
                 ),
@@ -382,7 +382,7 @@ class _QrRedeemScreenState extends State<QrRedeemScreen>
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16)),
                     elevation: 10,
-                    shadowColor: AppColors.primary.withOpacity(0.4),
+                    shadowColor: AppColors.primary.withValues(alpha: 0.4),
                   ),
                   child: const Text('DISMISS', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.5, fontSize: 13)),
                 ),

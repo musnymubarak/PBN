@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:pbn/core/theme/app_theme.dart';
 import 'package:pbn/features/partner/services/partner_service.dart';
 
 class PartnerScanPage extends StatefulWidget {

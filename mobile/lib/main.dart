@@ -35,16 +35,16 @@ Future<void> main() async {
   try {
     await PushNotificationService.initialize(navigatorKey: PBNApp.navigatorKey)
         .timeout(const Duration(seconds: 10), onTimeout: () {
-      debugPrint("Firebase/Push initialization timed out - continuing without push");
+      debugPrint('Firebase/Push initialization timed out - continuing without push');
     });
   } catch (e) {
-    debugPrint("Firebase/Push initialization failed: $e");
+    debugPrint('Firebase/Push initialization failed: $e');
   }
   
   try {
     await PrefsService.init();
   } catch (e) {
-    debugPrint("PrefsService initialization failed: $e");
+    debugPrint('PrefsService initialization failed: $e');
   }
 
   runApp(

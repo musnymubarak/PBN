@@ -219,7 +219,7 @@ class _CreateListingPageState extends State<CreateListingPage> {
 
                     _buildLabel('Category'),
                     DropdownButtonFormField<ListingCategory>(
-                      value: _category,
+                      initialValue: _category,
                       decoration: _buildInputDecoration('Select category'),
                       items: ListingCategory.values.map((c) => DropdownMenuItem(
                         value: c,
@@ -232,7 +232,7 @@ class _CreateListingPageState extends State<CreateListingPage> {
 
                     _buildLabel('Industry *'),
                     DropdownButtonFormField<String>(
-                      value: _selectedIndustryId,
+                      initialValue: _selectedIndustryId,
                       decoration: _buildInputDecoration('Select industry'),
                       items: _industries.map((i) => DropdownMenuItem(
                         value: i.id,

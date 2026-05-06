@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:provider/provider.dart';
@@ -9,24 +8,17 @@ import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/constants/api_config.dart';
 import 'package:pbn/core/providers/auth_provider.dart';
 import 'package:pbn/core/providers/notification_provider.dart';
-import 'package:pbn/core/providers/member_provider.dart';
 import 'package:pbn/core/services/dashboard_service.dart';
-import 'package:pbn/core/services/reward_service.dart';
 import 'package:pbn/core/widgets/stat_card.dart';
 import 'package:pbn/core/widgets/custom_button.dart';
 import 'package:pbn/core/widgets/pbn_app_bar_actions.dart';
 import 'package:pbn/models/dashboard_data.dart';
-import 'package:pbn/models/reward.dart';
 
 import 'package:pbn/core/widgets/cached_avatar.dart';
 import 'package:pbn/features/members/members_page.dart';
-import 'package:pbn/features/referrals/my_referrals_page.dart';
 import 'package:pbn/features/referrals/create_referral_page.dart';
-import 'package:pbn/features/referrals/referral_dashboard_page.dart';
-import 'package:pbn/features/events/events_page.dart';
 import 'package:pbn/features/profile/profile_page.dart';
 import 'package:pbn/features/support/support_page.dart';
-import 'package:pbn/features/community/community_page.dart';
 import 'package:pbn/features/marketplace/marketplace_page.dart';
 import 'package:pbn/features/matchmaking/matchmaking_page.dart';
 
@@ -51,7 +43,6 @@ class _DashboardPageState extends State<DashboardPage> {
   Timer? _adTimer;
 
   final _dashboardService = DashboardService();
-  final _rewardService = RewardService();
 
   @override
   void initState() {
@@ -149,7 +140,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   PreferredSizeWidget _buildAppBar(bool isProspect) {
     final auth = context.watch<AuthProvider>();
-    final notifs = context.watch<NotificationProvider>();
+    context.watch<NotificationProvider>();
     return AppBar(
       backgroundColor: Colors.white,
       elevation: 0,
@@ -235,7 +226,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _adDot(int index) {
     bool active = _adIndex == index;
-    return Container(width: active ? 22 : 8, height: 8, decoration: BoxDecoration(color: active ? AppColors.primary : Colors.grey.withOpacity(0.3), borderRadius: BorderRadius.circular(10)));
+    return Container(width: active ? 22 : 8, height: 8, decoration: BoxDecoration(color: active ? AppColors.primary : Colors.grey.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(10)));
   }
 
   Widget _buildAdPromoPanel() {
@@ -244,13 +235,13 @@ class _DashboardPageState extends State<DashboardPage> {
       decoration: BoxDecoration(
         color: const Color(0xFF0F172A),
         borderRadius: BorderRadius.circular(14),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 20, offset: const Offset(0, 10))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 20, offset: const Offset(0, 10))],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(14),
         child: Stack(children: [
           Positioned.fill(child: _smartImage('https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&q=80&w=600', const [Color(0xFF0F172A), Color(0xFF1E293B)])),
-          Positioned.fill(child: Container(decoration: BoxDecoration(gradient: LinearGradient(colors: [Colors.black.withOpacity(0.8), Colors.transparent], begin: Alignment.centerLeft, end: Alignment.centerRight)))),
+          Positioned.fill(child: Container(decoration: BoxDecoration(gradient: LinearGradient(colors: [Colors.black.withValues(alpha: 0.8), Colors.transparent], begin: Alignment.centerLeft, end: Alignment.centerRight)))),
           
           Padding(
             padding: const EdgeInsets.all(16),
@@ -284,7 +275,7 @@ class _DashboardPageState extends State<DashboardPage> {
       decoration: BoxDecoration(
         color: const Color(0xFF6366F1),
         borderRadius: BorderRadius.circular(14),
-        boxShadow: [BoxShadow(color: const Color(0xFF6366F1).withOpacity(0.2), blurRadius: 20, offset: const Offset(0, 10))],
+        boxShadow: [BoxShadow(color: const Color(0xFF6366F1).withValues(alpha: 0.2), blurRadius: 20, offset: const Offset(0, 10))],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(14),
@@ -302,8 +293,8 @@ class _DashboardPageState extends State<DashboardPage> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Colors.black.withOpacity(0.85), 
-                    Colors.black.withOpacity(0.3)
+                    Colors.black.withValues(alpha: 0.85), 
+                    Colors.black.withValues(alpha: 0.3)
                   ], 
                   begin: Alignment.centerLeft, 
                   end: Alignment.centerRight
@@ -327,7 +318,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 if (event != null)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(10)),
+                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
                     child: Row(mainAxisSize: MainAxisSize.min, children: [
                       const Icon(TablerIcons.calendar_event, color: Colors.white, size: 16),
                       const SizedBox(width: 8),
@@ -385,7 +376,7 @@ class _DashboardPageState extends State<DashboardPage> {
       decoration: BoxDecoration(
         color: AppColors.secondary,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 20, offset: const Offset(0, 10))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 20, offset: const Offset(0, 10))],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(14),
@@ -403,8 +394,8 @@ class _DashboardPageState extends State<DashboardPage> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Colors.black.withOpacity(0.85), 
-                    Colors.black.withOpacity(0.3)
+                    Colors.black.withValues(alpha: 0.85), 
+                    Colors.black.withValues(alpha: 0.3)
                   ], 
                   begin: Alignment.centerLeft, 
                   end: Alignment.centerRight
@@ -428,7 +419,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 if (event != null)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
                     child: Row(mainAxisSize: MainAxisSize.min, children: [
                       const Icon(TablerIcons.calendar_event, color: Colors.white, size: 16),
                       const SizedBox(width: 8),
@@ -518,7 +509,7 @@ class _DashboardPageState extends State<DashboardPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Container(padding: const EdgeInsets.all(24), decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.05), shape: BoxShape.circle), child: const Icon(TablerIcons.building_community, size: 64, color: AppColors.primary)),
+          Container(padding: const EdgeInsets.all(24), decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.05), shape: BoxShape.circle), child: const Icon(TablerIcons.building_community, size: 64, color: AppColors.primary)),
           const SizedBox(height: 32),
           const Text('Verification Pending', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: AppColors.text)),
           const SizedBox(height: 16),
@@ -532,14 +523,14 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _buildBottomNav(bool isProspect) {
     return Container(
-      decoration: BoxDecoration(boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20, offset: const Offset(0, -4))]),
+      decoration: BoxDecoration(boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 20, offset: const Offset(0, -4))]),
       child: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (i) => setState(() => _currentIndex = i),
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white,
         selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.textSecondary.withOpacity(0.4),
+        unselectedItemColor: AppColors.textSecondary.withValues(alpha: 0.4),
         selectedFontSize: 9,
         unselectedFontSize: 9,
         elevation: 0,
@@ -567,10 +558,10 @@ class _DashboardPageState extends State<DashboardPage> {
           decoration: BoxDecoration(
             color: Colors.white, 
             borderRadius: BorderRadius.circular(16), 
-            border: Border.all(color: color.withOpacity(0.15), width: 1.5),
+            border: Border.all(color: color.withValues(alpha: 0.15), width: 1.5),
             boxShadow: [
               BoxShadow(
-                color: color.withOpacity(0.1), 
+                color: color.withValues(alpha: 0.1), 
                 blurRadius: 15, 
                 offset: const Offset(0, 8),
               ),
@@ -632,7 +623,7 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
-                BoxShadow(color: const Color(0xFF0F172A).withOpacity(0.3), blurRadius: 25, offset: const Offset(0, 10)),
+                BoxShadow(color: const Color(0xFF0F172A).withValues(alpha: 0.3), blurRadius: 25, offset: const Offset(0, 10)),
               ],
             ),
             child: Row(
@@ -640,7 +631,7 @@ class _DashboardPageState extends State<DashboardPage> {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 if (_leaderboard.length >= 2) _buildMiniPodium(_leaderboard[1], 2, const Color(0xFF94A3B8)), // Silver
-                if (_leaderboard.length >= 1) _buildMiniPodium(_leaderboard[0], 1, AppColors.accent), // Gold
+                if (_leaderboard.isNotEmpty) _buildMiniPodium(_leaderboard[0], 1, AppColors.accent), // Gold
                 if (_leaderboard.length >= 3) _buildMiniPodium(_leaderboard[2], 3, const Color(0xFFB45309)), // Bronze
               ],
             ),
@@ -655,11 +646,9 @@ class _DashboardPageState extends State<DashboardPage> {
     final count = res['sent_count'] ?? 0;
     final double size = rank == 1 ? 74 : 54;
     final String? profilePhoto = res['profile_photo'];
-    final bool hasPhoto = profilePhoto != null && profilePhoto.isNotEmpty;
+    // hasPhoto variable removed because it was unused
     
-    final String imageUrl = hasPhoto
-        ? '${ApiConfig.baseUrl.replaceAll('/api/v1', '')}$profilePhoto'
-        : '';
+    // imageUrl variable removed because it was unused
         
     String initials = '?';
     if (res['full_name'] != null) {
@@ -690,7 +679,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   boxShadow: [
-                    BoxShadow(color: color.withOpacity(0.35), blurRadius: 20, spreadRadius: 4),
+                    BoxShadow(color: color.withValues(alpha: 0.35), blurRadius: 20, spreadRadius: 4),
                   ],
                 ),
               ),
@@ -698,7 +687,7 @@ class _DashboardPageState extends State<DashboardPage> {
               imageUrl: profilePhoto,
               initials: initials,
               size: size,
-              backgroundColor: color.withOpacity(0.15),
+              backgroundColor: color.withValues(alpha: 0.15),
               textColor: color,
               fontSize: rank == 1 ? 24 : 18,
             ),
@@ -722,7 +711,7 @@ class _DashboardPageState extends State<DashboardPage> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.15),
+            color: color.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Text('$count Sent', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: color)),
@@ -739,14 +728,14 @@ class _DashboardPageState extends State<DashboardPage> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))],
-          border: Border.all(color: Colors.blue.withOpacity(0.1)),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 4))],
+          border: Border.all(color: Colors.blue.withValues(alpha: 0.1)),
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: Colors.blue.withOpacity(0.08), borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(color: Colors.blue.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(12)),
               child: const Icon(TablerIcons.layers_linked, color: Colors.blue, size: 22),
             ),
             const SizedBox(width: 16),

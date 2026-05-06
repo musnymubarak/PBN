@@ -117,7 +117,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
           if (!notif.isRead) _markRead(notif.id);
           
           final route = notif.data?['route'];
-          print("DEBUG: Tapped notification. Data: ${notif.data}, Route found: $route");
+          debugPrint('DEBUG: Tapped notification. Data: ${notif.data}, Route found: $route');
           if (route != null) {
             Navigator.pushNamed(context, route);
           }
@@ -128,13 +128,13 @@ class _NotificationsPageState extends State<NotificationsPage> {
           decoration: BoxDecoration(
             color: notif.isRead ? Colors.white : const Color(0xFFF0F7FF),
             borderRadius: BorderRadius.circular(14),
-            border: notif.isRead ? null : Border.all(color: AppColors.primary.withOpacity(0.15)),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 6)],
+            border: notif.isRead ? null : Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 6)],
           ),
           child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Container(
               padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: (notif.isRead ? Colors.grey : AppColors.primary).withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(color: (notif.isRead ? Colors.grey : AppColors.primary).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
               child: Icon(TablerIcons.bell, size: 20, color: notif.isRead ? Colors.grey : AppColors.primary),
             ),
             const SizedBox(width: 14),
