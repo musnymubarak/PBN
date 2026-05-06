@@ -11,7 +11,7 @@ from typing import List, Optional
 
 from sqlalchemy import Boolean, ForeignKey, String, Text, Float, JSON, DateTime
 from sqlalchemy.dialects.postgresql import UUID, JSONB
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, backref
 
 from app.models.base import Base, TimestampMixin
 
@@ -35,7 +35,7 @@ class MatchingProfile(Base, TimestampMixin):
     matching_preferences: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
 
     # Relationship to user
-    user = relationship("User", backref="matching_profile", uselist=False)
+    user = relationship("User", backref=backref("matching_profile", uselist=False), uselist=False)
 
 
 class IndustryRelationshipType(str, enum.Enum):
