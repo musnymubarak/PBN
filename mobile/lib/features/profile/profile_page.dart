@@ -180,21 +180,29 @@ class _ProfilePageState extends State<ProfilePage> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        toolbarHeight: 60,
-        title: const Text(
-          'Profile', 
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: -0.5)
-        ),
-        actions: const [
-          PbnAppBarActions(),
-        ],
-      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-          : ListView(padding: const EdgeInsets.all(20), children: [
+          : CustomScrollView(
+              slivers: [
+                SliverAppBar(
+                  backgroundColor: Colors.white,
+                  elevation: 0,
+                  scrolledUnderElevation: 0,
+                  toolbarHeight: 60,
+                  floating: true,
+                  snap: true,
+                  title: const Text(
+                    'Profile', 
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: -0.5)
+                  ),
+                  actions: const [
+                    PbnAppBarActions(),
+                  ],
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.all(20),
+                  sliver: SliverList.list(
+                    children: [
               // ── Profile Split Card Modern UI ──────────────────────────
               Container(
                 decoration: BoxDecoration(
@@ -408,7 +416,11 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
               const SizedBox(height: 20),
-            ]),
+                    ],
+                  ),
+                ),
+              ],
+            ),
     );
   }
 

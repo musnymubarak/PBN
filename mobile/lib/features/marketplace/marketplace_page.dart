@@ -91,31 +91,34 @@ class _MarketplacePageState extends State<MarketplacePage> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        toolbarHeight: 60,
-        title: const Text(
-          'Marketplace',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: -0.5)
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(TablerIcons.layout_dashboard, color: AppColors.primary),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const MyMarketplacePage()),
-            ).then((_) => _loadData()),
-            tooltip: 'My Management',
-          ),
-          const PbnAppBarActions(),
-        ],
-      ),
       body: RefreshIndicator(
         onRefresh: _loadData,
         color: AppColors.primary,
         child: CustomScrollView(
           slivers: [
+            SliverAppBar(
+              backgroundColor: Colors.white,
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              toolbarHeight: 60,
+              floating: true,
+              snap: true,
+              title: const Text(
+                'Marketplace',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: -0.5)
+              ),
+              actions: [
+                IconButton(
+                  icon: const Icon(TablerIcons.layout_dashboard, color: AppColors.primary),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const MyMarketplacePage()),
+                  ).then((_) => _loadData()),
+                  tooltip: 'My Management',
+                ),
+                const PbnAppBarActions(),
+              ],
+            ),
             // Search and Filters
             SliverToBoxAdapter(
               child: _buildSearchAndFilter(),

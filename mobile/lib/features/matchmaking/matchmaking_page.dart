@@ -31,35 +31,43 @@ class _MatchmakingDashboardPageState extends State<MatchmakingDashboardPage> wit
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        toolbarHeight: 60,
-        title: const Text(
-          'Opportunities', 
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: -0.5)
-        ),
-        actions: const [
-          PbnAppBarActions(),
+      body: NestedScrollView(
+        floatHeaderSlivers: true,
+        headerSliverBuilder: (context, innerBoxIsScrolled) => [
+          SliverAppBar(
+            backgroundColor: Colors.white,
+            elevation: 0,
+            scrolledUnderElevation: 0,
+            toolbarHeight: 60,
+            floating: true,
+            snap: true,
+            title: const Text(
+              'Opportunities', 
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: -0.5)
+            ),
+            actions: const [
+              PbnAppBarActions(),
+            ],
+            bottom: TabBar(
+              controller: _tabController,
+              labelColor: AppColors.primary,
+              unselectedLabelColor: Colors.grey,
+              indicatorColor: AppColors.primary,
+              labelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+              tabs: const [
+                Tab(text: 'AI MATCHES', icon: Icon(TablerIcons.sparkles, size: 20)),
+                Tab(text: 'REFERRALS', icon: Icon(TablerIcons.arrows_exchange, size: 20)),
+              ],
+            ),
+          ),
         ],
-        bottom: TabBar(
+        body: TabBarView(
           controller: _tabController,
-          labelColor: AppColors.primary,
-          unselectedLabelColor: Colors.grey,
-          indicatorColor: AppColors.primary,
-          labelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
-          tabs: const [
-            Tab(text: 'AI MATCHES', icon: Icon(TablerIcons.sparkles, size: 20)),
-            Tab(text: 'REFERRALS', icon: Icon(TablerIcons.arrows_exchange, size: 20)),
+          children: const [
+            AiMatchesView(),
+            ReferralDashboardPage(isEmbedded: true),
           ],
         ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: const [
-          AiMatchesView(),
-          ReferralDashboardPage(isEmbedded: true),
-        ],
       ),
     );
   }

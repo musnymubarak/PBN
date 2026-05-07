@@ -67,42 +67,49 @@ class _MembersPageState extends State<MembersPage> {
       length: 2,
       child: Scaffold(
         backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        toolbarHeight: 60,
-        title: const Text(
-          'Network Directory', 
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: -0.5)
-        ),
-        actions: const [
-          PbnAppBarActions(),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(48),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border(bottom: BorderSide(color: Colors.grey.shade100, width: 1)),
-            ),
-            child: const TabBar(
-              tabs: [
-                Tab(text: 'My Chapter'),
-                Tab(text: 'Global'),
+        body: NestedScrollView(
+          floatHeaderSlivers: true,
+          headerSliverBuilder: (context, innerBoxIsScrolled) => [
+            SliverAppBar(
+              backgroundColor: Colors.white,
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              toolbarHeight: 60,
+              floating: true,
+              snap: true,
+              title: const Text(
+                'Network Directory',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: -0.5),
+              ),
+              actions: const [
+                PbnAppBarActions(),
               ],
-              labelStyle: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: 0.2),
-              unselectedLabelStyle: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
-              indicatorColor: Color(0xFF1E3A8A),
-              labelColor: Color(0xFF1E3A8A),
-              unselectedLabelColor: Color(0xFF94A3B8),
-              indicatorWeight: 3,
-              indicatorSize: TabBarIndicatorSize.tab,
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(48),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border(bottom: BorderSide(color: Colors.grey.shade100, width: 1)),
+                  ),
+                  child: const TabBar(
+                    tabs: [
+                      Tab(text: 'My Chapter'),
+                      Tab(text: 'Global'),
+                    ],
+                    labelStyle: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: 0.2),
+                    unselectedLabelStyle: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                    indicatorColor: Color(0xFF1E3A8A),
+                    labelColor: Color(0xFF1E3A8A),
+                    unselectedLabelColor: Color(0xFF94A3B8),
+                    indicatorWeight: 3,
+                    indicatorSize: TabBarIndicatorSize.tab,
+                  ),
+                ),
+              ),
             ),
-          ),
-        ),
-      ),
-      body: Column(
-        children: [
+          ],
+          body: Column(
+            children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             child: Row(
@@ -154,7 +161,8 @@ class _MembersPageState extends State<MembersPage> {
         ],
       ),
     ),
-  );
+  ),
+);
 }
 
   Widget _buildMemberList(MemberProvider provider, List<Member> members) {
@@ -510,7 +518,7 @@ class _MembersPageState extends State<MembersPage> {
                       size: 120,
                       fontSize: 40,
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 32),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [

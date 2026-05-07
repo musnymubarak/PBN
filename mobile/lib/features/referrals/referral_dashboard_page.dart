@@ -69,121 +69,126 @@ By joining, you become part of a strong ecosystem built on reliable partnerships
   Widget build(BuildContext context) {
     final totalReferrals = _receivedCount + _sentCount;
 
-    Widget body = _loading
-        ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-        : RefreshIndicator(
-            onRefresh: _loadStats,
-            child: ListView(
-              padding: const EdgeInsets.all(20),
-              children: [
-                // -- MAIN OVERVIEW CARD --
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(32),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                          color: const Color(0xFF0F172A).withValues(alpha: 0.3),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10))
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      const Text('Total Business Opportunities',
-                          style: TextStyle(
-                              color: Colors.blueAccent,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 1.5)),
-                      const SizedBox(height: 12),
-                      Text('$totalReferrals',
-                          style: const TextStyle(
-                              fontSize: 64,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.white,
-                              letterSpacing: -2)),
-                      const SizedBox(height: 12),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
-                        child: Text(_sentCount >= _receivedCount ? 'High Giving Ratio' : 'Potential Growth Needed', 
-                          style: const TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w700)),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // -- ACTION TILES --
-                Row(
-                  children: [
-                    _buildActionTile(
-                      icon: TablerIcons.plus,
-                      label: 'New Opportunity',
-                      color: AppColors.primary,
-                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateReferralPage())).then((_) => _loadStats()),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-
-                const Text('BUSINESS ACTIVITY',
-                    style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.textSecondary,
-                        letterSpacing: 1.5)),
-                const SizedBox(height: 16),
-
-                // -- PERFORMANCE ROWS --
-                _buildTrackerCard(
-                  title: 'Received Opportunities',
-                  count: _receivedCount,
-                  icon: TablerIcons.arrow_down_left,
-                  color: const Color(0xFF15803D),
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyReferralsPage(isReceived: true))).then((_) => _loadStats()),
-                ),
-                const SizedBox(height: 12),
-                _buildTrackerCard(
-                  title: 'Given Opportunities',
-                  count: _sentCount,
-                  icon: TablerIcons.arrow_up_right,
-                  color: const Color(0xFF0369A1),
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyReferralsPage(isReceived: false))).then((_) => _loadStats()),
-                ),
-
-                const SizedBox(height: 32),
-                _buildInviteCard(),
-                const SizedBox(height: 20),
-                _buildInstructionCard(),
-              ],
-            ),
-          );
-
-    if (widget.isEmbedded) return body;
-
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        toolbarHeight: 60,
-        title: const Text(
-          'Business Creation', 
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: -0.5)
-        ),
-        actions: const [
-          PbnAppBarActions(),
-        ],
-      ),
-      body: body,
+      body: _loading
+          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+          : RefreshIndicator(
+              onRefresh: _loadStats,
+              child: CustomScrollView(
+                slivers: [
+                  SliverAppBar(
+                    backgroundColor: Colors.white,
+                    elevation: 0,
+                    scrolledUnderElevation: 0,
+                    toolbarHeight: 60,
+                    floating: true,
+                    snap: true,
+                    title: const Text(
+                      'Business Creation', 
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: -0.5)
+                    ),
+                    actions: const [
+                      PbnAppBarActions(),
+                    ],
+                  ),
+                  SliverPadding(
+                    padding: const EdgeInsets.all(20),
+                    sliver: SliverList.list(
+                      children: [
+                        // -- MAIN OVERVIEW CARD --
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(32),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(24),
+                            boxShadow: [
+                              BoxShadow(
+                                  color: const Color(0xFF0F172A).withValues(alpha: 0.3),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 10))
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              const Text('Total Business Opportunities',
+                                  style: TextStyle(
+                                      color: Colors.blueAccent,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 1.5)),
+                              const SizedBox(height: 12),
+                              Text('$totalReferrals',
+                                  style: const TextStyle(
+                                      fontSize: 64,
+                                      fontWeight: FontWeight.w900,
+                                      color: Colors.white,
+                                      letterSpacing: -2)),
+                              const SizedBox(height: 12),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+                                child: Text(_sentCount >= _receivedCount ? 'High Giving Ratio' : 'Potential Growth Needed', 
+                                  style: const TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w700)),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+
+                        // -- ACTION TILES --
+                        Row(
+                          children: [
+                            _buildActionTile(
+                              icon: TablerIcons.plus,
+                              label: 'New Opportunity',
+                              color: AppColors.primary,
+                              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateReferralPage())).then((_) => _loadStats()),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+
+                        const Text('BUSINESS ACTIVITY',
+                            style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w900,
+                                color: AppColors.textSecondary,
+                                letterSpacing: 1.5)),
+                        const SizedBox(height: 16),
+
+                        // -- PERFORMANCE ROWS --
+                        _buildTrackerCard(
+                          title: 'Received Opportunities',
+                          count: _receivedCount,
+                          icon: TablerIcons.arrow_down_left,
+                          color: const Color(0xFF15803D),
+                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyReferralsPage(isReceived: true))).then((_) => _loadStats()),
+                        ),
+                        const SizedBox(height: 12),
+                        _buildTrackerCard(
+                          title: 'Given Opportunities',
+                          count: _sentCount,
+                          icon: TablerIcons.arrow_up_right,
+                          color: const Color(0xFF0369A1),
+                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyReferralsPage(isReceived: false))).then((_) => _loadStats()),
+                        ),
+
+                        const SizedBox(height: 32),
+                        _buildInviteCard(),
+                        const SizedBox(height: 20),
+                        _buildInstructionCard(),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
     );
   }
 
