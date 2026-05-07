@@ -78,7 +78,7 @@ class _CommunityPageState extends State<CommunityPage> with WidgetsBindingObserv
 
   void _startLiveUpdates() {
     _stopLiveUpdates();
-    _liveTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+    _liveTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
       if (mounted && _searchQuery.isEmpty) {
         _loadFeed(isSilent: true);
       }
@@ -101,7 +101,9 @@ class _CommunityPageState extends State<CommunityPage> with WidgetsBindingObserv
   }
 
   Future<void> _loadFeed({bool isSilent = false}) async {
-    if (isSilent) debugPrint('COMMUNITY_SYNC: Background silent refresh started at ${DateTime.now()}');
+    if (isSilent) {
+      // Background refresh without logging
+    }
     if (!isSilent) {
       setState(() {
         _loading = true;
@@ -155,9 +157,9 @@ class _CommunityPageState extends State<CommunityPage> with WidgetsBindingObserv
                   height: 8,
                   margin: const EdgeInsets.only(top: 4),
                   decoration: const BoxDecoration(
-                    color: Colors.green,
+                    color: AppColors.success,
                     shape: BoxShape.circle,
-                    boxShadow: [BoxShadow(color: Colors.greenAccent, blurRadius: 4)],
+                    boxShadow: [BoxShadow(color: AppColors.success, blurRadius: 4)],
                   ),
                 ),
               ],
@@ -168,7 +170,7 @@ class _CommunityPageState extends State<CommunityPage> with WidgetsBindingObserv
               height: 40,
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                color: Colors.grey.shade100,
+                color: AppColors.surfaceAlt,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -245,9 +247,9 @@ class _CommunityPageState extends State<CommunityPage> with WidgetsBindingObserv
           // Search Bar
           Container(
             decoration: BoxDecoration(
-              color: AppColors.background,
+              color: AppColors.surfaceAlt,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.grey.shade100),
+              border: Border.all(color: AppColors.borderLight),
             ),
             child: TextField(
               controller: _searchController,
@@ -338,18 +340,18 @@ class _CommunityPageState extends State<CommunityPage> with WidgetsBindingObserv
         decoration: BoxDecoration(
           color: isSelected ? AppColors.primary : Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: isSelected ? AppColors.primary : Colors.grey.shade200),
+          border: Border.all(color: isSelected ? AppColors.primary : AppColors.border),
           boxShadow: isSelected ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4))] : [],
         ),
         child: Row(
           children: [
-            Icon(icon, size: 16, color: isSelected ? Colors.white : Colors.grey.shade600),
+            Icon(icon, size: 16, color: isSelected ? Colors.white : AppColors.textSecondary),
             const SizedBox(width: 8),
             Text(label, 
               style: TextStyle(
                 fontSize: 12, 
                 fontWeight: FontWeight.w700, 
-                color: isSelected ? Colors.white : Colors.grey.shade600
+                color: isSelected ? Colors.white : AppColors.textSecondary
               ),
             ),
           ],
@@ -562,7 +564,7 @@ class _PostCardState extends State<_PostCard> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: hasBusinessDetails 
-          ? Border(left: BorderSide(color: isLead ? Colors.amber.shade600 : Colors.blue.shade600, width: 4))
+          ? Border(left: BorderSide(color: isLead ? AppColors.accent : AppColors.accentBlue, width: 4))
           : null,
         boxShadow: [
           BoxShadow(
@@ -599,7 +601,7 @@ class _PostCardState extends State<_PostCard> {
                           ),
                           if (widget.post.visibility == 'network') ...[
                             const SizedBox(width: 6),
-                            const Icon(TablerIcons.world, size: 14, color: Colors.blue),
+                            const Icon(TablerIcons.world, size: 14, color: AppColors.accentBlue),
                           ],
                         ],
                       ),
@@ -616,12 +618,12 @@ class _PostCardState extends State<_PostCard> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: (isLead ? Colors.amber : Colors.blue).withValues(alpha: 0.1),
+                      color: (isLead ? AppColors.accent : AppColors.accentBlue).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       widget.post.postType.toUpperCase(),
-                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: isLead ? Colors.amber.shade800 : Colors.blue.shade800),
+                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: isLead ? AppColors.accent : AppColors.accentBlue),
                     ),
                   ),
                 IconButton(
@@ -700,7 +702,7 @@ class _PostCardState extends State<_PostCard> {
                 _buildActionButton(
                   icon: _isLiked ? TablerIcons.heart_filled : TablerIcons.heart,
                   label: '$_likesCount',
-                  color: _isLiked ? Colors.redAccent : Colors.grey.shade600,
+                  color: _isLiked ? AppColors.error : AppColors.textSecondary,
                   onTap: _toggleLike,
                 ),
                 const SizedBox(width: 24),

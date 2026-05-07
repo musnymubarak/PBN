@@ -77,21 +77,7 @@ By joining, you become part of a strong ecosystem built on reliable partnerships
               onRefresh: _loadStats,
               child: CustomScrollView(
                 slivers: [
-                  SliverAppBar(
-                    backgroundColor: Colors.white,
-                    elevation: 0,
-                    scrolledUnderElevation: 0,
-                    toolbarHeight: 60,
-                    floating: true,
-                    snap: true,
-                    title: const Text(
-                      'Business Creation', 
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: -0.5)
-                    ),
-                    actions: const [
-                      PbnAppBarActions(),
-                    ],
-                  ),
+
                   SliverPadding(
                     padding: const EdgeInsets.all(20),
                     sliver: SliverList.list(
@@ -167,7 +153,7 @@ By joining, you become part of a strong ecosystem built on reliable partnerships
                           title: 'Received Opportunities',
                           count: _receivedCount,
                           icon: TablerIcons.arrow_down_left,
-                          color: const Color(0xFF15803D),
+                          color: AppColors.success,
                           onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyReferralsPage(isReceived: true))).then((_) => _loadStats()),
                         ),
                         const SizedBox(height: 12),
@@ -175,7 +161,7 @@ By joining, you become part of a strong ecosystem built on reliable partnerships
                           title: 'Given Opportunities',
                           count: _sentCount,
                           icon: TablerIcons.arrow_up_right,
-                          color: const Color(0xFF0369A1),
+                          color: AppColors.accentBlue,
                           onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyReferralsPage(isReceived: false))).then((_) => _loadStats()),
                         ),
 
@@ -210,11 +196,11 @@ By joining, you become part of a strong ecosystem built on reliable partnerships
             children: [
               Container(
                 padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(color: Colors.blueAccent.withValues(alpha: 0.1), shape: BoxShape.circle),
-                child: const Icon(TablerIcons.user_plus, color: Colors.blueAccent, size: 20),
+                decoration: BoxDecoration(color: AppColors.accent.withValues(alpha: 0.1), shape: BoxShape.circle),
+                child: const Icon(TablerIcons.user_plus, color: AppColors.accent, size: 20),
               ),
               const SizedBox(width: 12),
-              const Text('GROW YOUR NETWORK', style: TextStyle(fontWeight: FontWeight.w900, color: Colors.blueAccent, fontSize: 10, letterSpacing: 1.5)),
+              const Text('GROW YOUR NETWORK', style: TextStyle(fontWeight: FontWeight.w900, color: AppColors.accent, fontSize: 10, letterSpacing: 1.5)),
             ],
           ),
           const SizedBox(height: 16),
@@ -234,7 +220,7 @@ By joining, you become part of a strong ecosystem built on reliable partnerships
                   const SnackBar(
                     content: Text('Invitation copied to clipboard!'),
                     behavior: SnackBarBehavior.floating,
-                    backgroundColor: Colors.blueAccent,
+                    backgroundColor: AppColors.primary,
                   ),
                 );
               },
@@ -242,10 +228,10 @@ By joining, you become part of a strong ecosystem built on reliable partnerships
               label: const Text('COPY INVITATION TEXT', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
-                foregroundColor: Colors.blueAccent,
+                foregroundColor: AppColors.accent,
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: Colors.blueAccent, width: 1.5)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: AppColors.accent, width: 1.5)),
               ),
             ),
           ),

@@ -27,7 +27,6 @@ class PushNotificationService {
     // Firebase Messaging is only supported on Android/iOS/Web
     // Skipping initialization on Windows/Desktop to prevent crashes
     if (kIsWeb || (!Platform.isAndroid && !Platform.isIOS)) {
-      debugPrint('Push Notifications skip: Not on Mobile/Web');
       _initialized = true;
       return;
     }
