@@ -42,7 +42,7 @@ class PbnAppBarActions extends StatelessWidget {
                     border: Border.all(color: Colors.white, width: 1.5),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.accent.withOpacity(0.3),
+                        color: AppColors.accent.withValues(alpha: 0.3),
                         blurRadius: 4,
                         offset: const Offset(0, 2),
                       ),
@@ -79,7 +79,7 @@ class PbnAppBarActions extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.surfaceAlt,
           shape: BoxShape.circle,
-          border: Border.all(color: AppColors.border.withOpacity(0.5), width: 1),
+          border: Border.all(color: AppColors.border.withValues(alpha: 0.5), width: 1),
         ),
         child: Icon(icon, color: AppColors.text, size: 20),
       ),

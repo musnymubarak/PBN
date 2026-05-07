@@ -50,7 +50,7 @@ class AppTheme {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: BorderSide(color: AppColors.border.withOpacity(0.5), width: 1),
+          side: BorderSide(color: AppColors.border.withValues(alpha: 0.5), width: 1),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
