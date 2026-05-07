@@ -523,14 +523,16 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _buildBottomNav(bool isProspect) {
     return Container(
-      decoration: BoxDecoration(boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 20, offset: const Offset(0, -4))]),
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: Color(0xFF1E293B), width: 0.5))
+      ),
       child: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (i) => setState(() => _currentIndex = i),
         type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.white,
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.textSecondary.withValues(alpha: 0.4),
+        backgroundColor: AppColors.primary,
+        selectedItemColor: AppColors.accent,
+        unselectedItemColor: Colors.white.withValues(alpha: 0.4),
         selectedFontSize: 9,
         unselectedFontSize: 9,
         elevation: 0,
