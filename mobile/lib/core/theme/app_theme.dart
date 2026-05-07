@@ -17,30 +17,30 @@ class AppTheme {
         error: AppColors.error,
       ),
       scaffoldBackgroundColor: AppColors.background,
-      textTheme: GoogleFonts.interTextTheme().copyWith(
-        displayLarge: GoogleFonts.outfit(
+      textTheme: GoogleFonts.dmSansTextTheme().copyWith(
+        displayLarge: GoogleFonts.dmSans(
           fontSize: 32,
           fontWeight: FontWeight.w700,
           color: AppColors.text,
           letterSpacing: -0.5,
         ),
-        headlineMedium: GoogleFonts.outfit(
+        headlineMedium: GoogleFonts.dmSans(
           fontSize: 24,
           fontWeight: FontWeight.w700,
           color: AppColors.text,
           letterSpacing: -0.3,
         ),
-        titleLarge: GoogleFonts.outfit(
+        titleLarge: GoogleFonts.dmSans(
           fontSize: 20,
           fontWeight: FontWeight.w600,
           color: AppColors.text,
         ),
-        bodyLarge: GoogleFonts.inter(
+        bodyLarge: GoogleFonts.dmSans(
           fontSize: 16,
           color: AppColors.text,
           fontWeight: FontWeight.w500,
         ),
-        bodyMedium: GoogleFonts.inter(
+        bodyMedium: GoogleFonts.dmSans(
           fontSize: 14,
           color: AppColors.textSecondary,
         ),
@@ -75,7 +75,7 @@ class AppTheme {
           backgroundColor: AppColors.accent,
           foregroundColor: Colors.white,
           elevation: 0,
-          textStyle: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 14),
+          textStyle: GoogleFonts.dmSans(fontWeight: FontWeight.w700, fontSize: 14),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),

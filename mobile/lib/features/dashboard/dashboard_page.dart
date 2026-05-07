@@ -283,7 +283,7 @@ class _DashboardPageState extends State<DashboardPage> {
             children: [
               Text(
                 'Performance Overview',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.dmSans(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
                   color: AppColors.text,
@@ -305,7 +305,8 @@ class _DashboardPageState extends State<DashboardPage> {
 
           _buildRoiHeroCard(),
           const SizedBox(height: 12),
-          IntrinsicHeight(
+          SizedBox(
+            height: 160,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -345,7 +346,7 @@ class _DashboardPageState extends State<DashboardPage> {
           const SizedBox(height: 30),
           Text(
             'Explore Network',
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.dmSans(
               fontSize: 18,
               fontWeight: FontWeight.w700,
               color: AppColors.text,
@@ -927,7 +928,7 @@ class _DashboardPageState extends State<DashboardPage> {
             const SizedBox(height: 24),
             Text(
               'Failed to load dashboard',
-              style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.text),
+              style: GoogleFonts.dmSans(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.text),
             ),
             const SizedBox(height: 8),
             Text(
@@ -996,7 +997,7 @@ class _DashboardPageState extends State<DashboardPage> {
               Text(
                 'Verification Pending',
                 textAlign: TextAlign.center,
-                style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.w800, color: AppColors.text, letterSpacing: -0.5),
+                style: GoogleFonts.dmSans(fontSize: 24, fontWeight: FontWeight.w800, color: AppColors.text, letterSpacing: -0.5),
               ),
               const SizedBox(height: 16),
               Text(
@@ -1216,7 +1217,7 @@ class _DashboardPageState extends State<DashboardPage> {
           children: [
             Text(
               'Top Performers',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.dmSans(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
                 color: AppColors.text,
@@ -1408,7 +1409,7 @@ class _DashboardPageState extends State<DashboardPage> {
         const SizedBox(height: 16),
         Text(
           name,
-          style: GoogleFonts.inter(
+          style: GoogleFonts.dmSans(
             fontSize: 13,
             fontWeight: FontWeight.w700,
             color: AppColors.text,
@@ -1496,7 +1497,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         children: [
                           Text(
                             'Horizontal Clubs',
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.dmSans(
                               fontWeight: FontWeight.w800,
                               fontSize: 16,
                               color: AppColors.text,
@@ -1568,7 +1569,7 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
             child: Icon(icon, color: accentColor, size: 15),
           ),
-          const SizedBox(height: 16),
+          const Spacer(),
           FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
@@ -1576,7 +1577,7 @@ class _DashboardPageState extends State<DashboardPage> {
               children: [
                 Text(
                   value,
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.dmSans(
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
                     color: AppColors.text,

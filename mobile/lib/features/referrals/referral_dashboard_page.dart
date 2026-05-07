@@ -5,7 +5,6 @@ import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/services/referral_service.dart';
 import 'package:pbn/features/referrals/create_referral_page.dart';
 import 'package:pbn/features/referrals/my_referrals_page.dart';
-import 'package:pbn/core/widgets/pbn_app_bar_actions.dart';
 
 class ReferralDashboardPage extends StatefulWidget {
   final bool isEmbedded;
