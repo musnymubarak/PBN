@@ -530,9 +530,13 @@
       position: absolute;
       inset: 0;
       z-index: 0;
-      background:
-        radial-gradient(ellipse 70% 60% at 75% 40%, rgba(201, 168, 76, 0.07) 0%, transparent 60%),
-        radial-gradient(ellipse 80% 80% at 0% 100%, rgba(22, 32, 80, 0.8) 0%, transparent 70%);
+      background-image:
+        linear-gradient(to right, rgba(8, 13, 36, 0.95) 0%, rgba(8, 13, 36, 0.7) 45%, transparent 100%),
+        linear-gradient(to top, rgba(8, 13, 36, 0.8) 0%, transparent 30%),
+        url('hero-promo.png');
+      background-size: cover;
+      background-position: center right;
+      background-attachment: scroll;
     }
 
     .hero-grid {
@@ -546,6 +550,7 @@
     .hero-content {
       position: relative;
       z-index: 1;
+      max-width: 650px;
     }
 
     .hero-badge {
@@ -2476,6 +2481,12 @@
         padding: 100px 24px 72px;
       }
 
+      .hero-bg {
+        filter: blur(5px) brightness(0.6);
+        transform: scale(1.05);
+        background-position: center;
+      }
+
       .hero-stats,
       .scroll-hint {
         display: none;
@@ -3411,6 +3422,20 @@
         <button class="btn-full gold" onclick="openModal()">Start My 1 Month Free Trial</button>
       </div>
       <div class="pricing-card">
+        <div class="pricing-name">Future Standard Members</div>
+        <div class="pricing-price">LKR 25,000</div>
+        <div class="pricing-period">per year</div>
+        <div class="pricing-divider"></div>
+        <div class="pricing-features">
+          <div class="pricing-feature yes"><span class="check">✓</span> Digital platform</div>
+          <div class="pricing-feature yes"><span class="check">✓</span> Flexible forums</div>
+          <div class="pricing-feature yes"><span class="check">✓</span> ROI dashboard</div>
+          <div class="pricing-feature"><span class="cross">✕</span> No founding privileges</div>
+          <div class="pricing-feature"><span class="cross">✕</span> No governance vote</div>
+        </div>
+        <button class="btn-full outline" disabled style="opacity:0.35;cursor:not-allowed;">Coming Soon</button>
+      </div>
+      <div class="pricing-card">
         <div class="pricing-name">Prime — Founders Club</div>
         <div class="pricing-price">LKR 50,000</div>
         <div class="pricing-period">per year — premium tier</div>
@@ -3424,20 +3449,6 @@
           <div class="pricing-feature yes"><span class="check">✓</span> Priority directory visibility</div>
         </div>
         <button class="btn-full outline" onclick="openModal()">Apply for Founders Club</button>
-      </div>
-      <div class="pricing-card">
-        <div class="pricing-name">Future Standard Members</div>
-        <div class="pricing-price">LKR 25,000</div>
-        <div class="pricing-period">per year</div>
-        <div class="pricing-divider"></div>
-        <div class="pricing-features">
-          <div class="pricing-feature yes"><span class="check">✓</span> Digital platform</div>
-          <div class="pricing-feature yes"><span class="check">✓</span> Flexible forums</div>
-          <div class="pricing-feature yes"><span class="check">✓</span> ROI dashboard</div>
-          <div class="pricing-feature"><span class="cross">✕</span> No founding privileges</div>
-          <div class="pricing-feature"><span class="cross">✕</span> No governance vote</div>
-        </div>
-        <button class="btn-full outline" disabled style="opacity:0.35;cursor:not-allowed;">Coming Soon</button>
       </div>
     </div>
 
