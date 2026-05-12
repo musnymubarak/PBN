@@ -112,6 +112,40 @@ async def get_my_card(user_id: UUID, db: AsyncSession) -> Dict[str, Any]:
     if not card:
         raise NotFoundException("Privilege card not found")
 
+    # If card fields are missing (for older cards), try to fetch from user profile/chapters
+    member_name = card.member_name
+    member_email = card.member_email
+    chapter_name = card.chapter_name
+    business_name = card.business_name
+    industry_name = card.industry_name
+    membership_type = card.membership_type
+
+    if not member_name and card.user:
+        member_name = card.user.full_name
+    if not member_email and card.user:
+        member_email = card.user.email
+    
+    # Try to get chapter/business from membership if still null
+    if not chapter_name or not business_name:
+        from app.models.community import UserChapter, Chapter
+        membership = (await db.execute(
+            select(UserChapter, Chapter)
+            .join(Chapter, UserChapter.chapter_id == Chapter.id)
+            .where(UserChapter.user_id == user_id)
+            .limit(1)
+        )).first()
+        
+        if membership:
+            m_user_chapter, m_chapter = membership
+            if not chapter_name:
+                chapter_name = m_chapter.name
+            if not business_name:
+                business_name = m_user_chapter.business_name
+            if not industry_name:
+                industry_name = m_user_chapter.industry_name
+            if not membership_type:
+                membership_type = m_user_chapter.membership_tier
+
     return {
         "id": str(card.id),
         "card_number": card.card_number,
@@ -120,12 +154,12 @@ async def get_my_card(user_id: UUID, db: AsyncSession) -> Dict[str, Any]:
         "issued_at": card.issued_at.isoformat(),
         "expires_at": card.expires_at.isoformat() if card.expires_at else None,
         "nfc_uid": card.nfc_uid,
-        "member_name": card.member_name or (card.user.full_name if card.user else None),
-        "member_email": card.member_email or (card.user.email if card.user else None),
-        "membership_type": card.membership_type,
-        "chapter_name": card.chapter_name,
-        "business_name": card.business_name,
-        "industry_name": card.industry_name,
+        "member_name": member_name,
+        "member_email": member_email,
+        "membership_type": membership_type or "standard",
+        "chapter_name": chapter_name or "Network",
+        "business_name": business_name,
+        "industry_name": industry_name,
         "verification_level": card.verification_level,
         "card_status": card.card_status,
         "physical_issued": card.physical_issued,
