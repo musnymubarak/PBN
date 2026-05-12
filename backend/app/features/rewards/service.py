@@ -108,16 +108,28 @@ async def _serialize_partner(partner: Partner, user_id: UUID | None = None, db: 
 
 
 async def get_my_card(user_id: UUID, db: AsyncSession) -> Dict[str, Any]:
-    card = (await db.execute(select(PrivilegeCard).where(PrivilegeCard.user_id == user_id))).scalar_one_or_none()
+    card = (await db.execute(select(PrivilegeCard).options(selectinload(PrivilegeCard.user)).where(PrivilegeCard.user_id == user_id))).scalar_one_or_none()
     if not card:
         raise NotFoundException("Privilege card not found")
 
     return {
+        "id": str(card.id),
         "card_number": card.card_number,
         "qr_code_data": card.qr_code_data,
         "is_active": card.is_active,
         "issued_at": card.issued_at.isoformat(),
-        "expires_at": card.expires_at.isoformat() if card.expires_at else None
+        "expires_at": card.expires_at.isoformat() if card.expires_at else None,
+        "nfc_uid": card.nfc_uid,
+        "member_name": card.member_name or (card.user.full_name if card.user else None),
+        "member_email": card.member_email or (card.user.email if card.user else None),
+        "membership_type": card.membership_type,
+        "chapter_name": card.chapter_name,
+        "business_name": card.business_name,
+        "industry_name": card.industry_name,
+        "verification_level": card.verification_level,
+        "card_status": card.card_status,
+        "physical_issued": card.physical_issued,
+        "card_version": card.card_version,
     }
 
 
