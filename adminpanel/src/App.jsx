@@ -2619,6 +2619,8 @@ function PrivilegeCardsTab() {
   const [showIssueModal, setShowIssueModal] = useState(false);
   const [editingCard, setEditingCard] = useState(null);
   const [historyCard, setHistoryCard] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
 
   const fetchCards = useCallback(async () => {
     setLoading(true);
@@ -2633,6 +2635,17 @@ function PrivilegeCardsTab() {
   }, []);
 
   useEffect(() => { fetchCards(); }, [fetchCards]);
+
+  const filteredCards = cards.filter(card => {
+    const matchesSearch = 
+      card.card_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      card.member_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (card.member_email || '').toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || card.card_status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
 
   const handleSuspend = async (id) => {
     if (!confirm('Suspend this card?')) return;
@@ -2666,6 +2679,31 @@ function PrivilegeCardsTab() {
           <IconPlus size={18} /> Issue Card
         </button>
       </div>
+
+      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', background: '#f8fafc', padding: '1rem', borderRadius: '12px' }}>
+        <div style={{ flex: 1, position: 'relative' }}>
+          <IconSearch size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+          <input 
+            type="text" 
+            placeholder="Search by card #, name, or email..." 
+            className="filter-input v2"
+            style={{ paddingLeft: '40px', marginBottom: 0 }}
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <select 
+          className="filter-input v2" 
+          style={{ width: '200px', marginBottom: 0 }}
+          value={statusFilter}
+          onChange={e => setStatusFilter(e.target.value)}
+        >
+          <option value="all">All Statuses</option>
+          <option value="active">Active Only</option>
+          <option value="suspended">Suspended</option>
+          <option value="replaced">Replaced</option>
+        </select>
+      </div>
       
       {loading ? (
         <div style={{ padding: '4rem', textAlign: 'center' }}>Loading cards...</div>
@@ -2681,7 +2719,7 @@ function PrivilegeCardsTab() {
             </tr>
           </thead>
           <tbody>
-            {cards.map(card => (
+            {filteredCards.map(card => (
               <tr key={card.id}>
                 <td style={{ fontWeight: 600 }}>{card.card_number}</td>
                 <td>
@@ -2720,7 +2758,7 @@ function PrivilegeCardsTab() {
                 </td>
               </tr>
             ))}
-            {cards.length === 0 && <tr><td colSpan="5" style={{ textAlign: 'center', padding: '2rem' }}>No cards issued yet.</td></tr>}
+            {filteredCards.length === 0 && <tr><td colSpan="5" style={{ textAlign: 'center', padding: '2rem' }}>{searchTerm || statusFilter !== 'all' ? 'No matching cards found.' : 'No cards issued yet.'}</td></tr>}
           </tbody>
         </table>
       )}
