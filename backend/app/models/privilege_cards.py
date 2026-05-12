@@ -41,11 +41,52 @@ class PrivilegeCard(Base, TimestampMixin):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     issued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    
+    # Physical & Metadata fields
+    nfc_uid: Mapped[str | None] = mapped_column(String(100), unique=True, nullable=True, index=True)
+    member_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    membership_type: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    chapter_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    business_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    industry_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    verification_level: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    card_status: Mapped[str] = mapped_column(String(50), default="active", nullable=False)
+    physical_issued: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    card_version: Mapped[int] = mapped_column(sqlalchemy.Integer, default=1, nullable=False)
 
     user: Mapped["User"] = sqlalchemy.orm.relationship("User")
+    history: Mapped[list["CardHistory"]] = sqlalchemy.orm.relationship("CardHistory", back_populates="card", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return f"<PrivilegeCard {self.card_number}>"
+
+
+class CardHistory(Base, TimestampMixin):
+    """Audit trail for privilege card lifecycle events."""
+    __tablename__ = "card_history"
+
+    card_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("privilege_cards.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    action: Mapped[str] = mapped_column(String(50), nullable=False) # issued, replaced, suspended, reactivated, updated
+    old_card_number: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    new_card_number: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    old_nfc_uid: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    new_nfc_uid: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    old_version: Mapped[int | None] = mapped_column(nullable=True)
+    new_version: Mapped[int | None] = mapped_column(nullable=True)
+    old_status: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    performed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    card: Mapped["PrivilegeCard"] = sqlalchemy.orm.relationship("PrivilegeCard", back_populates="history")
+    user: Mapped["User"] = sqlalchemy.orm.relationship("User")
+
+    def __repr__(self) -> str:
+        return f"<CardHistory card={self.card_id} action={self.action}>"
 
 
 class Partner(Base, TimestampMixin):

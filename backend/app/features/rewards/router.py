@@ -26,7 +26,8 @@ from app.core.dependencies import get_db
 from app.core.response import success_response
 from app.features.auth.dependencies import get_current_user, require_role
 from app.features.rewards.schemas import (
-    PartnerCreate, OfferCreate, ConfirmRedemptionRequest, PartnerUpdate
+    PartnerCreate, OfferCreate, ConfirmRedemptionRequest, PartnerUpdate,
+    IssuePrivilegeCardRequest, UpdatePrivilegeCardRequest
 )
 from app.features.rewards.service import (
     check_redemption_status,
@@ -40,6 +41,13 @@ from app.features.rewards.service import (
     list_partners,
     redeem_offer,
     update_partner,
+    list_privilege_cards,
+    issue_privilege_card,
+    update_privilege_card,
+    suspend_privilege_card,
+    replace_privilege_card,
+    verify_privilege_card,
+    list_privilege_card_history,
 )
 from app.models.user import User, UserRole
 
@@ -57,6 +65,16 @@ partner_req = require_role([UserRole.PARTNER_ADMIN, UserRole.SUPER_ADMIN])
 # ── Privilege Card ──────────────────────────────────────────
 
 
+@router.get("/rewards/verify/{nfc_uid}", summary="Public: Verify a privilege card via NFC UID")
+async def verify_card_endpoint(
+    nfc_uid: str,
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    from app.features.rewards.service import verify_privilege_card
+    result = await verify_privilege_card(nfc_uid, db)
+    return success_response(data=result)
+
+
 @router.get("/rewards/my-card", summary="Get my active privilege card")
 async def my_card_endpoint(
     current_user: User = Depends(member_req),
@@ -64,6 +82,68 @@ async def my_card_endpoint(
 ) -> ORJSONResponse:
     card = await get_my_card(current_user.id, db)
     return success_response(data=card)
+
+
+# ── Privilege Card (Admin) ──────────────────────────────────
+
+@router.get("/admin/cards", summary="Admin: List all privilege cards")
+async def admin_list_cards_endpoint(
+    status: str | None = None,
+    chapter_id: UUID | None = None,
+    current_user: User = Depends(admin_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    from app.features.rewards.service import list_privilege_cards
+    cards = await list_privilege_cards(status, chapter_id, db)
+    return success_response(data=cards)
+
+@router.post("/admin/cards/issue", summary="Admin: Issue new privilege card", status_code=201)
+async def admin_issue_card_endpoint(
+    data: IssuePrivilegeCardRequest,
+    current_user: User = Depends(admin_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    from app.features.rewards.service import issue_privilege_card
+    result = await issue_privilege_card(data, db)
+    return success_response(data=result, message="Card issued successfully", status_code=201)
+
+@router.patch("/admin/cards/{card_id}", summary="Admin: Update card physical details")
+async def admin_update_card_endpoint(
+    card_id: UUID,
+    data: UpdatePrivilegeCardRequest,
+    current_user: User = Depends(admin_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    from app.features.rewards.service import update_privilege_card
+    result = await update_privilege_card(card_id, data, db)
+    return success_response(data=result, message="Card updated")
+
+@router.post("/admin/cards/{card_id}/suspend", summary="Admin: Suspend a lost card")
+async def admin_suspend_card_endpoint(
+    card_id: UUID,
+    current_user: User = Depends(admin_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    from app.features.rewards.service import suspend_privilege_card
+    result = await suspend_privilege_card(card_id, db)
+    return success_response(data=result, message="Card suspended")
+
+@router.post("/admin/cards/{card_id}/replace", summary="Admin: Replace card (charges Rs. 1000 fee conceptually)")
+async def admin_replace_card_endpoint(
+    card_id: UUID,
+    current_user: User = Depends(admin_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    from app.features.rewards.service import replace_privilege_card
+    result = await replace_privilege_card(card_id, db)
+    return success_response(data=result, message="Card replaced successfully. Rs. 1000 fee applies.")
+
+
+@router.get("/admin/cards/{card_id}/history", dependencies=[Depends(require_role([UserRole.SUPER_ADMIN, UserRole.CHAPTER_ADMIN]))])
+async def admin_list_card_history(card_id: UUID, db: AsyncSession = Depends(get_db)):
+    """List audit trail for a specific card."""
+    data = await list_privilege_card_history(card_id, db)
+    return success_response(data)
 
 
 # ── Partners & Offers ───────────────────────────────────────

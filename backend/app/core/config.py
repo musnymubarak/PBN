@@ -74,7 +74,7 @@ class Settings(BaseSettings):
     SMTP_FROM_EMAIL: str = "info@primebusiness.network"
 
     # ── CORS ─────────────────────────────────────────────────
-    CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:5173"]
+    CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:5173"]
 
     # ── Validators ───────────────────────────────────────────
     @field_validator("CORS_ORIGINS", mode="before")

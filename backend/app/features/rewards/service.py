@@ -19,7 +19,7 @@ from app.core.exceptions import BadRequestException, NotFoundException
 from app.features.rewards.schemas import PartnerCreate, OfferCreate, PartnerUpdate
 from app.features.notifications.service import broadcast_notification
 from app.models.privilege_cards import (
-    PrivilegeCard, Partner, Offer, OfferRedemption,
+    PrivilegeCard, CardHistory, Partner, Offer, OfferRedemption,
     RedemptionToken, CouponCode, TokenStatus, CouponStatus,
 )
 
@@ -38,6 +38,33 @@ def _generate_coupon_code() -> str:
 
 
 # ── Serialization Helpers ────────────────────────────────────
+
+
+async def _log_card_history(
+    db: AsyncSession,
+    card: PrivilegeCard,
+    action: str,
+    old_values: Dict[str, Any] = None,
+    notes: str = None
+) -> None:
+    """Helper to log card lifecycle events."""
+    now = datetime.now(timezone.utc)
+    history_entry = CardHistory(
+        id=UUID(int=secrets.randbits(128)), # Random UUID
+        card_id=card.id,
+        user_id=card.user_id,
+        action=action,
+        old_card_number=old_values.get("card_number") if old_values else None,
+        new_card_number=card.card_number,
+        old_nfc_uid=old_values.get("nfc_uid") if old_values else None,
+        new_nfc_uid=card.nfc_uid,
+        old_version=old_values.get("card_version") if old_values else None,
+        new_version=card.card_version,
+        old_status=old_values.get("card_status") if old_values else None,
+        notes=notes,
+        performed_at=now
+    )
+    db.add(history_entry)
 
 
 async def _serialize_offer(offer: Offer, user_id: UUID | None = None, db: AsyncSession | None = None) -> Dict[str, Any]:
@@ -584,3 +611,220 @@ async def partner_scan_token(token_str: str, partner_id: UUID, db: AsyncSession)
         "confirmed_at": now.isoformat(),
     }
 
+async def list_privilege_cards(status: str | None, chapter_id: UUID | None, db: AsyncSession) -> List[Dict[str, Any]]:
+    stmt = select(PrivilegeCard).options(selectinload(PrivilegeCard.user))
+    if status:
+        stmt = stmt.where(PrivilegeCard.card_status == status)
+    
+    # If chapter filtering is needed, join with User and UserChapter
+    # For now, just return all matching cards
+    result = await db.execute(stmt)
+    cards = result.scalars().all()
+    
+    data = []
+    for c in cards:
+        data.append({
+            "id": str(c.id),
+            "user_id": str(c.user_id),
+            "card_number": c.card_number,
+            "nfc_uid": c.nfc_uid,
+            "member_name": c.member_name or c.user.full_name,
+            "membership_type": c.membership_type,
+            "chapter_name": c.chapter_name,
+            "business_name": c.business_name,
+            "industry_name": c.industry_name,
+            "verification_level": c.verification_level,
+            "card_status": c.card_status,
+            "physical_issued": c.physical_issued,
+            "card_version": c.card_version,
+            "issued_at": c.issued_at.isoformat() if c.issued_at else None,
+            "expires_at": c.expires_at.isoformat() if c.expires_at else None,
+            "is_active": c.is_active,
+        })
+    return data
+
+
+async def issue_privilege_card(data: Any, db: AsyncSession) -> Dict[str, Any]:
+    from app.models.user import User
+    # Check if user already has an active card
+    user = (await db.execute(select(User).where(User.id == data.user_id))).scalar_one_or_none()
+    if not user:
+        raise NotFoundException("User not found")
+        
+    existing = (await db.execute(select(PrivilegeCard).where(PrivilegeCard.user_id == data.user_id))).scalar_one_or_none()
+    if existing and existing.card_status == "active":
+        raise BadRequestException("User already has an active privilege card")
+        
+    # Generate sequential card number
+    count = (await db.execute(select(func.count(PrivilegeCard.id)))).scalar() or 0
+    card_number = f"PBN-CRD-{(count + 1):06d}"
+    
+    now = datetime.now(timezone.utc)
+    card = PrivilegeCard(
+        user_id=data.user_id,
+        card_number=card_number,
+        is_active=True,
+        issued_at=now,
+        nfc_uid=data.nfc_uid,
+        member_name=user.full_name,
+        card_status="active",
+        physical_issued=data.physical_issued,
+        card_version=1
+    )
+    db.add(card)
+    try:
+        await db.flush()
+        await _log_card_history(db, card, "issued", notes=f"Initial issuance to {user.full_name}")
+    except IntegrityError:
+        await db.rollback()
+        raise BadRequestException("Failed to issue card. NFC UID may already be in use.")
+        
+    return {
+        "id": str(card.id),
+        "card_number": card.card_number,
+        "status": card.card_status
+    }
+
+
+async def update_privilege_card(card_id: UUID, data: Any, db: AsyncSession) -> Dict[str, Any]:
+    card = (await db.execute(select(PrivilegeCard).where(PrivilegeCard.id == card_id))).scalar_one_or_none()
+    if not card:
+        raise NotFoundException("Card not found")
+        
+    old_values = {
+        "nfc_uid": card.nfc_uid,
+        "physical_issued": card.physical_issued,
+        "card_status": card.card_status,
+        "is_active": card.is_active,
+        "card_version": card.card_version,
+        "card_number": card.card_number
+    }
+    
+    changed = False
+    if data.nfc_uid is not None and data.nfc_uid != card.nfc_uid:
+        card.nfc_uid = data.nfc_uid
+        changed = True
+    if data.physical_issued is not None and data.physical_issued != card.physical_issued:
+        card.physical_issued = data.physical_issued
+        changed = True
+    if data.card_status is not None and data.card_status != card.card_status:
+        card.card_status = data.card_status
+        changed = True
+    if data.is_active is not None and data.is_active != card.is_active:
+        card.is_active = data.is_active
+        changed = True
+        
+    if changed:
+        try:
+            await db.flush()
+            await _log_card_history(db, card, "updated", old_values=old_values)
+        except IntegrityError:
+            await db.rollback()
+            raise BadRequestException("NFC UID already in use")
+        
+    return {"id": str(card.id), "status": "updated"}
+
+
+async def suspend_privilege_card(card_id: UUID, db: AsyncSession) -> Dict[str, Any]:
+    card = (await db.execute(select(PrivilegeCard).where(PrivilegeCard.id == card_id))).scalar_one_or_none()
+    if not card:
+        raise NotFoundException("Card not found")
+        
+    old_values = {
+        "card_status": card.card_status,
+        "is_active": card.is_active,
+        "card_number": card.card_number,
+        "card_version": card.card_version,
+        "nfc_uid": card.nfc_uid
+    }
+    
+    card.card_status = "suspended"
+    card.is_active = False
+    await db.flush()
+    
+    await _log_card_history(db, card, "suspended", old_values=old_values)
+    
+    return {"id": str(card.id), "status": "suspended"}
+
+
+async def replace_privilege_card(card_id: UUID, db: AsyncSession) -> Dict[str, Any]:
+    card = (await db.execute(select(PrivilegeCard).where(PrivilegeCard.id == card_id))).scalar_one_or_none()
+    if not card:
+        raise NotFoundException("Card not found")
+
+    if card.card_status != "active":
+        raise BadRequestException("Only active cards can be replaced.")
+
+    old_version = card.card_version
+    now = datetime.now(timezone.utc)
+    
+    old_values = {
+        "card_number": card.card_number,
+        "nfc_uid": card.nfc_uid,
+        "card_version": card.card_version,
+        "card_status": card.card_status,
+        "physical_issued": card.physical_issued
+    }
+
+    # Update the existing card in-place (user_id has a UNIQUE constraint)
+    card.nfc_uid = None  # detach old NFC chip
+    card.card_number = f"{card.card_number.split('-V')[0]}-V{old_version + 1}"
+    card.card_version = old_version + 1
+    card.physical_issued = False  # needs a new physical card
+    card.issued_at = now
+    card.card_status = "active"
+    card.is_active = True
+
+    try:
+        await db.flush()
+        await _log_card_history(db, card, "replaced", old_values=old_values)
+    except IntegrityError:
+        await db.rollback()
+        raise BadRequestException("Failed to replace card due to a data conflict.")
+
+    return {"id": str(card.id), "new_card_number": card.card_number, "version": card.card_version, "status": "replaced"}
+
+
+async def verify_privilege_card(nfc_uid: str, db: AsyncSession) -> Dict[str, Any]:
+    """
+    Publicly verify a card via NFC UID.
+    Used for the tap-to-verify landing page.
+    """
+    stmt = select(PrivilegeCard).where(PrivilegeCard.nfc_uid == nfc_uid)
+    card = (await db.execute(stmt)).scalar_one_or_none()
+    
+    if not card:
+        raise NotFoundException("Card not found or unregistered.")
+        
+    return {
+        "is_valid": card.card_status == "active" and card.is_active,
+        "status": card.card_status,
+        "member_name": card.member_name,
+        "business_name": card.business_name,
+        "chapter_name": card.chapter_name,
+        "industry_name": card.industry_name,
+        "membership_type": card.membership_type,
+        "verification_level": card.verification_level,
+        "issued_at": card.issued_at.isoformat() if card.issued_at else None,
+        "card_version": card.card_version
+    }
+
+
+async def list_privilege_card_history(card_id: UUID, db: AsyncSession) -> List[Dict[str, Any]]:
+    stmt = select(CardHistory).where(CardHistory.card_id == card_id).order_by(CardHistory.performed_at.desc())
+    result = await db.execute(stmt)
+    history = result.scalars().all()
+    
+    return [{
+        "id": str(h.id),
+        "action": h.action,
+        "old_card_number": h.old_card_number,
+        "new_card_number": h.new_card_number,
+        "old_nfc_uid": h.old_nfc_uid,
+        "new_nfc_uid": h.new_nfc_uid,
+        "old_version": h.old_version,
+        "new_version": h.new_version,
+        "old_status": h.old_status,
+        "notes": h.notes,
+        "performed_at": h.performed_at.isoformat()
+    } for h in history]

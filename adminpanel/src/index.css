@@ -892,26 +892,31 @@ input:checked + .slider:before {
   background: white;
 }
 
-.modal-close-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: white;
-  color: var(--text-secondary);
+.modal-close-btn, .close-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  background: #ffffff;
+  color: #64748b;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
   flex-shrink: 0;
 }
 
-.modal-close-btn:hover {
-  background: #fef2f2;
+.modal-close-btn:hover, .close-btn:hover {
+  background: #f8fafc;
+  color: #ef4444;
   border-color: #fca5a5;
-  color: #dc2626;
+  transform: rotate(90deg);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.08);
 }
+
+
 
 .modal-body {
   padding: 2rem 2.5rem 6.5rem; /* Increased bottom padding for dropdown space */
@@ -1571,26 +1576,31 @@ input.filter-input {
   animation: selectFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.modal-close-btn {
-  width: 40px;
-  height: 40px;
+.modal-close-btn, .close-btn {
+  width: 42px;
+  height: 42px;
   border-radius: 12px;
-  border: 1px solid var(--border);
-  background: white;
-  color: var(--text-secondary);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  background: #ffffff;
+  color: #64748b;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  flex-shrink: 0;
 }
 
-.modal-close-btn:hover {
-  background: #f1f5f9;
+.modal-close-btn:hover, .close-btn:hover {
+  background: #f8fafc;
   color: #ef4444;
-  border-color: #fecaca;
+  border-color: #fca5a5;
   transform: rotate(90deg);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.08);
 }
+
+
 
 @keyframes selectFadeIn {
   from { opacity: 0; transform: translateY(-10px); }
@@ -1757,3 +1767,181 @@ input.filter-input {
   border-color: var(--secondary);
   box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
 }
+
+/* ── Modern Form Controls ────────────────────────────────────────────────── */
+.form-group {
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-label {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.form-input, .form-select {
+  width: 100%;
+  height: 52px;
+  padding: 0 1.25rem;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: white;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  transition: all 0.3s;
+  color: var(--text-primary);
+}
+
+.form-input:focus, .form-select:focus {
+  outline: none;
+  border-color: var(--secondary);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+}
+
+.form-input::placeholder {
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.form-checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: #f8fafc;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.form-checkbox-group:hover {
+  background: #f1f5f9;
+  border-color: var(--secondary);
+}
+
+.form-checkbox-group input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  accent-color: var(--secondary);
+}
+
+.form-checkbox-group label {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  margin: 0;
+}
+
+/* -- Flexible Action Buttons -- */
+.btn-action {
+  padding: 0.5rem 1rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: white;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.btn-action:hover {
+  border-color: var(--secondary);
+  color: var(--secondary);
+  background: #f8fafc;
+}
+
+.btn-action-danger {
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.btn-action-danger:hover {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+}
+
+.btn-action icon, .btn-action svg {
+  flex-shrink: 0;
+}
+.modern-table td:last-child {
+  white-space: nowrap;
+}
+
+/* -- Card Action Dropdown -- */
+.action-menu-container {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.action-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.5rem;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  z-index: 100;
+  min-width: 160px;
+  overflow: hidden;
+  animation: dropdownFadeIn 0.2s ease-out;
+}
+
+@keyframes dropdownFadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.action-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: none;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.action-item:hover {
+  background: #f1f5f9;
+}
+
+.action-item.danger {
+  color: #dc2626;
+}
+
+.action-item.danger:hover {
+  background: #fef2f2;
+}
+
+.action-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0.25rem 0;
+}
+

@@ -14,12 +14,34 @@ from app.models.privilege_cards import OfferType, RedemptionMethod
 
 
 class PrivilegeCardResponse(BaseModel):
+    id: UUID
     card_number: str
     qr_code_data: Optional[str]
     is_active: bool
     issued_at: datetime
     expires_at: Optional[datetime]
+    nfc_uid: Optional[str] = None
+    member_name: Optional[str] = None
+    membership_type: Optional[str] = None
+    chapter_name: Optional[str] = None
+    business_name: Optional[str] = None
+    industry_name: Optional[str] = None
+    verification_level: Optional[str] = None
+    card_status: str
+    physical_issued: bool
+    card_version: int
 
+
+class IssuePrivilegeCardRequest(BaseModel):
+    user_id: UUID
+    nfc_uid: Optional[str] = None
+    physical_issued: Optional[bool] = False
+
+class UpdatePrivilegeCardRequest(BaseModel):
+    nfc_uid: Optional[str] = None
+    physical_issued: Optional[bool] = None
+    card_status: Optional[str] = None
+    is_active: Optional[bool] = None
 
 class PartnerCreate(BaseModel):
     name: str

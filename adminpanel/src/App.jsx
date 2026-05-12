@@ -320,7 +320,7 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
   };
 
   if (loading) return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal-content" onClick={e => e.stopPropagation()}>
         <div style={{ padding: '3rem', textAlign: 'center', color: '#94a3b8' }}>Loading application...</div>
       </div>
@@ -349,7 +349,7 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
   const availableActions = statusActions[detail.status] || [];
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal-content app-detail-modal" onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div className="modal-header">
@@ -676,7 +676,7 @@ function CreateApplicationModal({ onClose, onCreated }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 550 }}>
         <div className="modal-header">
           <div>
@@ -794,6 +794,35 @@ function CreateApplicationModal({ onClose, onCreated }) {
           </div>
         </form>
       </div>
+    </div>
+  );
+}
+
+function ApplicationActionMenu({ app, onView }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setIsOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className="action-menu-container" ref={menuRef}>
+      <button className="view-detail-btn" title="Actions" onClick={() => setIsOpen(!isOpen)}>
+        <IconSettings size={20} />
+      </button>
+      
+      {isOpen && (
+        <div className="action-dropdown" style={{ right: 0, left: 'auto' }}>
+          <button className="action-item" onClick={() => { onView(); setIsOpen(false); }}>
+            <IconEye size={16} /> View Details
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -940,9 +969,10 @@ function ApplicationsPage() {
                   {new Date(app.created_at).toLocaleDateString()}
                 </td>
                 <td>
-                  <button className="view-detail-btn" onClick={e => { e.stopPropagation(); setSelectedAppId(app.id); }}>
-                    <IconEye size={18} />
-                  </button>
+                  <ApplicationActionMenu 
+                    app={app} 
+                    onView={() => { setSelectedAppId(app.id); }}
+                  />
                 </td>
               </tr>
             ))}
@@ -1097,7 +1127,7 @@ function UserEditModal({ user, onClose, onUpdate, chapters = [] }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 450 }}>
         <div className="modal-header">
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Manage Member</h2>
@@ -1188,6 +1218,35 @@ function UserEditModal({ user, onClose, onUpdate, chapters = [] }) {
 }
 
 
+
+function UserActionMenu({ user, onEdit }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setIsOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className="action-menu-container" ref={menuRef}>
+      <button className="view-detail-btn" title="Actions" onClick={() => setIsOpen(!isOpen)}>
+        <IconSettings size={20} />
+      </button>
+      
+      {isOpen && (
+        <div className="action-dropdown" style={{ right: 0, left: 'auto' }}>
+          <button className="action-item" onClick={() => { onEdit(); setIsOpen(false); }}>
+            <IconPencil size={16} /> Edit Profile
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ── Members Directory Page ──────────────────────────────────────────────────
 
@@ -1310,6 +1369,7 @@ function MembersPage() {
               <th>Role</th>
               <th>Status</th>
               <th>Joined Date</th>
+              <th style={{ textAlign: 'right' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -1361,8 +1421,14 @@ function MembersPage() {
                     {user.is_active ? 'Active' : user.role === 'PROSPECT' ? 'Awaiting Payment' : 'Inactive'}
                   </span>
                 </td>
-                <td style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                <td style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
                   {user.created_at ? new Date(user.created_at).toLocaleDateString() : '—'}
+                </td>
+                <td style={{ textAlign: 'right' }}>
+                  <UserActionMenu 
+                    user={user}
+                    onEdit={() => setSelectedUser(user)}
+                  />
                 </td>
               </tr>
             ))}
@@ -1396,6 +1462,35 @@ function MembersPage() {
 }
 
 
+
+function PaymentActionMenu({ payment, onEdit }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setIsOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className="action-menu-container" ref={menuRef}>
+      <button className="view-detail-btn" title="Actions" onClick={() => setIsOpen(!isOpen)}>
+        <IconSettings size={20} />
+      </button>
+      
+      {isOpen && (
+        <div className="action-dropdown" style={{ right: 0, left: 'auto' }}>
+          <button className="action-item" onClick={() => { onEdit(); setIsOpen(false); }}>
+            <IconPencil size={16} /> Update Payment
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ── Payments Page ─────────────────────────────────────────────────────────────
 
@@ -1463,7 +1558,7 @@ function RecordPaymentModal({ onClose, onRecord, users = [] }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 500 }}>
         <div className="modal-header">
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Record Manual Payment</h2>
@@ -1558,7 +1653,7 @@ function UpdatePaymentModal({ payment, onClose, onUpdate }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 500 }}>
         <div className="modal-header">
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Update Payment</h2>
@@ -1684,9 +1779,10 @@ function PaymentsPage() {
                   </span>
                 </td>
                 <td>
-                  <button className="view-detail-btn" onClick={() => setEditingPayment(p)}>
-                    <IconSettings size={18} />
-                  </button>
+                  <PaymentActionMenu 
+                    payment={p}
+                    onEdit={() => setEditingPayment(p)}
+                  />
                 </td>
               </tr>
             ))}
@@ -1760,7 +1856,7 @@ function CreatePartnerModal({ onClose, onCreated }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 500 }}>
         <div className="modal-header">
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Add New Partner</h2>
@@ -1887,7 +1983,7 @@ function EditPartnerModal({ partner, onClose, onUpdated }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 500 }}>
         <div className="modal-header">
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Edit Partner</h2>
@@ -2017,7 +2113,7 @@ function CreateOfferModal({ partner, onClose, onCreated }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 550 }}>
         <div className="modal-header">
           <div>
@@ -2127,7 +2223,543 @@ function CreateOfferModal({ partner, onClose, onCreated }) {
   );
 }
 
-function PartnersPage() {
+function SearchableSelect({ label, value, options, onChange, placeholder = "Search...", style }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const filteredOptions = (options || []).filter(opt => 
+    (opt.name || opt.label || '').toLowerCase().includes(search.toLowerCase()) ||
+    (opt.email || '').toLowerCase().includes(search.toLowerCase())
+  );
+
+  const selectedOption = (options || []).find(opt => String(opt.id) === String(value));
+
+  return (
+    <div className="custom-select-container" ref={containerRef} style={style}>
+      <button
+        type="button"
+        className={`custom-select-trigger ${isOpen ? 'active' : ''}`}
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <span>{selectedOption ? (selectedOption.name || selectedOption.label) : label}</span>
+        <IconChevronDown size={18} className={`select-arrow ${isOpen ? 'rotated' : ''}`} />
+      </button>
+
+      {isOpen && (
+        <div className="custom-select-menu">
+          <div style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)' }}>
+            <input 
+              type="text" 
+              className="form-input" 
+              style={{ height: '36px', fontSize: '0.8rem', borderRadius: '8px' }}
+              placeholder={placeholder}
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              autoFocus
+              onClick={e => e.stopPropagation()}
+            />
+          </div>
+          <div style={{ maxHeight: '250px', overflowY: 'auto' }}>
+            {filteredOptions.length === 0 ? (
+              <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+                No results found
+              </div>
+            ) : (
+              filteredOptions.map((opt) => (
+                <div
+                  key={opt.id}
+                  className={`custom-select-option ${String(value) === String(opt.id) ? 'selected' : ''}`}
+                  onClick={() => { 
+                    onChange(opt.id); 
+                    setIsOpen(false); 
+                    setSearch('');
+                  }}
+                >
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                    <span style={{ fontWeight: 600 }}>{opt.name || opt.label}</span>
+                    {opt.email && <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{opt.email}</span>}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function IssueCardModal({ onClose, onIssued }) {
+  const [loading, setLoading] = useState(false);
+  const [userId, setUserId] = useState('');
+  const [nfcUid, setNfcUid] = useState('');
+  const [physicalIssued, setPhysicalIssued] = useState(false);
+  const [users, setUsers] = useState([]);
+
+  useEffect(() => {
+    api.listUsers({ limit: 1000 }).then(data => {
+      setUsers(data?.users || []);
+    }).catch(console.error);
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await api.issuePrivilegeCard({
+        user_id: userId,
+        nfc_uid: nfcUid || null,
+        physical_issued: physicalIssued
+      });
+      onIssued();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+        <div className="modal-header">
+          <h2>Issue Privilege Card</h2>
+          <button type="button" className="modal-close-btn" onClick={onClose}><IconX size={20} /></button>
+        </div>
+        <form className="modal-body" onSubmit={handleSubmit} style={{ padding: '2rem' }}>
+          <div className="form-group">
+            <label className="form-label">Member</label>
+            <SearchableSelect 
+              label="Select Member..."
+              value={userId}
+              onChange={val => setUserId(val)}
+              options={users.map(u => ({ id: u.id, name: u.full_name, email: u.email }))}
+              placeholder="Search by name or email..."
+            />
+          </div>
+          <div className="form-group">
+            <label className="form-label">NFC UID (Optional)</label>
+            <input 
+              type="text" 
+              className="form-input" 
+              value={nfcUid} 
+              onChange={e => setNfcUid(e.target.value)} 
+              placeholder="Tap card or enter hex manually" 
+            />
+          </div>
+          <div className="form-group">
+            <div className="form-checkbox-group" onClick={() => setPhysicalIssued(!physicalIssued)}>
+              <input 
+                type="checkbox" 
+                id="physical_issued" 
+                checked={physicalIssued} 
+                onChange={e => setPhysicalIssued(e.target.checked)} 
+                onClick={e => e.stopPropagation()}
+              />
+              <label htmlFor="physical_issued">Physical Card Handed Over</label>
+            </div>
+          </div>
+          <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '1rem', height: '52px' }} disabled={loading || !userId}>
+            {loading ? 'Processing...' : 'Issue Card'}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function CardHistoryModal({ card, onClose }) {
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.listPrivilegeCardHistory(card.id).then(setHistory).catch(console.error).finally(() => setLoading(false));
+  }, [card.id]);
+
+  const getActionColor = (action) => {
+    switch(action) {
+      case 'issued': return '#10b981';
+      case 'suspended': return '#f59e0b';
+      case 'replaced': return '#ef4444';
+      case 'reactivated': return '#3b82f6';
+      default: return 'var(--text-secondary)';
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '650px' }}>
+        <div className="modal-header">
+          <div>
+            <h2 style={{ marginBottom: '4px' }}>Card Lifecycle History</h2>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{card.card_number} — {card.member_name}</p>
+          </div>
+          <button type="button" className="modal-close-btn" onClick={onClose}><IconX size={20} /></button>
+        </div>
+        <div className="modal-body" style={{ padding: '1.5rem', maxHeight: '70vh', overflowY: 'auto' }}>
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: '2rem' }}>Loading history...</div>
+          ) : history.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>No history found for this card.</div>
+          ) : (
+            <div className="timeline" style={{ paddingLeft: '1.5rem', borderLeft: '2px solid var(--border)', position: 'relative', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+              {history.map((h, i) => (
+                <div key={h.id} style={{ position: 'relative' }}>
+                  <div style={{ 
+                    position: 'absolute', 
+                    left: '-23px', 
+                    top: '4px', 
+                    width: '14px', 
+                    height: '14px', 
+                    borderRadius: '50%', 
+                    background: getActionColor(h.action),
+                    border: '3px solid white',
+                    boxShadow: '0 0 0 2px ' + getActionColor(h.action)
+                  }} />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                    <h4 style={{ margin: 0, textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.05em', color: getActionColor(h.action) }}>
+                      {h.action}
+                    </h4>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                      {new Date(h.performed_at).toLocaleString()}
+                    </span>
+                  </div>
+                  <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', fontSize: '0.85rem' }}>
+                      {h.new_card_number && h.old_card_number !== h.new_card_number && (
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '2px' }}>Card Number</label>
+                          <span style={{ fontWeight: 600 }}>{h.old_card_number || 'None'} → {h.new_card_number}</span>
+                        </div>
+                      )}
+                      {(h.old_nfc_uid || h.new_nfc_uid) && (
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '2px' }}>NFC UID</label>
+                          <span style={{ fontWeight: 600, fontFamily: 'monospace' }}>{h.old_nfc_uid || 'None'} → {h.new_nfc_uid || 'Cleared'}</span>
+                        </div>
+                      )}
+                      {h.new_version && h.old_version !== h.new_version && (
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '2px' }}>Version</label>
+                          <span>v{h.old_version || 0} → v{h.new_version}</span>
+                        </div>
+                      )}
+                    </div>
+                    {h.notes && (
+                      <div style={{ marginTop: '0.75rem', fontSize: '0.85rem', color: 'var(--text-secondary)', fontStyle: 'italic', borderTop: '1px dashed var(--border)', paddingTop: '0.75rem' }}>
+                        "{h.notes}"
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EditCardModal({ card, onClose, onUpdated }) {
+  const [loading, setLoading] = useState(false);
+  const [nfcUid, setNfcUid] = useState(card.nfc_uid || '');
+  const [physicalIssued, setPhysicalIssued] = useState(card.physical_issued);
+  const [status, setStatus] = useState(card.card_status);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await api.updatePrivilegeCard(card.id, {
+        nfc_uid: nfcUid || null,
+        physical_issued: physicalIssued,
+        card_status: status
+      });
+      onUpdated();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+        <div className="modal-header">
+          <h2>Edit Privilege Card</h2>
+          <button type="button" className="modal-close-btn" onClick={onClose}><IconX size={20} /></button>
+        </div>
+        <form className="modal-body" onSubmit={handleSubmit} style={{ padding: '2rem' }}>
+          <div className="form-group">
+            <label className="form-label">Member</label>
+            <div className="form-input" style={{ background: '#f8fafc', color: 'var(--text-secondary)' }}>
+              {card.member_name}
+            </div>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Card Number</label>
+            <div className="form-input" style={{ background: '#f8fafc', color: 'var(--text-secondary)' }}>
+              {card.card_number}
+            </div>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Status</label>
+            <select className="form-select" value={status} onChange={e => setStatus(e.target.value)}>
+              <option value="active">Active</option>
+              <option value="suspended">Suspended</option>
+              <option value="replaced">Replaced</option>
+            </select>
+          </div>
+          <div className="form-group">
+            <label className="form-label">NFC UID</label>
+            <input 
+              type="text" 
+              className="form-input" 
+              value={nfcUid} 
+              onChange={e => setNfcUid(e.target.value)} 
+              placeholder="NFC Hex UID" 
+            />
+          </div>
+          <div className="form-group">
+            <div className="form-checkbox-group" onClick={() => setPhysicalIssued(!physicalIssued)}>
+              <input 
+                type="checkbox" 
+                id="edit_physical_issued" 
+                checked={physicalIssued} 
+                onChange={e => setPhysicalIssued(e.target.checked)} 
+                onClick={e => e.stopPropagation()}
+              />
+              <label htmlFor="edit_physical_issued">Physical Card Handed Over</label>
+            </div>
+          </div>
+          <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '1rem', height: '52px' }} disabled={loading}>
+            {loading ? 'Saving...' : 'Save Changes'}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function CardActionMenu({ card, onEdit, onHistory, onSuspend, onReplace, onActivate }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setIsOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className="action-menu-container" ref={menuRef}>
+      <button className="view-detail-btn" title="Actions" onClick={() => setIsOpen(!isOpen)}>
+        <IconSettings size={20} />
+      </button>
+      
+      {isOpen && (
+        <div className="action-dropdown">
+          <button className="action-item" onClick={() => { onEdit(); setIsOpen(false); }}>
+            <IconPencil size={16} /> Edit
+          </button>
+          <button className="action-item" onClick={() => { onHistory(); setIsOpen(false); }}>
+            <IconClock size={16} /> History
+          </button>
+          
+          {card.card_status === 'suspended' && (
+            <>
+              <div className="action-divider" />
+              <button className="action-item" style={{ color: '#166534' }} onClick={() => { onActivate(); setIsOpen(false); }}>
+                <IconCheck size={16} /> Activate
+              </button>
+            </>
+          )}
+
+          {card.card_status === 'active' && (
+            <>
+              <div className="action-divider" />
+              <button className="action-item danger" onClick={() => { onSuspend(); setIsOpen(false); }}>
+                <IconLock size={16} /> Suspend
+              </button>
+              <button className="action-item" onClick={() => { onReplace(); setIsOpen(false); }}>
+                <IconRefresh size={16} /> Replace
+              </button>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PrivilegeCardsTab() {
+  const [cards, setCards] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showIssueModal, setShowIssueModal] = useState(false);
+  const [editingCard, setEditingCard] = useState(null);
+  const [historyCard, setHistoryCard] = useState(null);
+
+  const fetchCards = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await api.listPrivilegeCards();
+      setCards(data || []);
+    } catch (err) {
+      console.error('Failed to load cards:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchCards(); }, [fetchCards]);
+
+  const handleSuspend = async (id) => {
+    if (!confirm('Suspend this card?')) return;
+    try {
+      await api.suspendPrivilegeCard(id);
+      fetchCards();
+    } catch (err) { alert(err.message); }
+  };
+
+  const handleReplace = async (id) => {
+    if (!confirm('Replace this card? This conceptually charges a Rs. 1000 fee.')) return;
+    try {
+      await api.replacePrivilegeCard(id);
+      fetchCards();
+    } catch (err) { alert(err.message); }
+  };
+
+  const handleActivate = async (id) => {
+    if (!confirm('Reactivate this card?')) return;
+    try {
+      await api.updatePrivilegeCard(id, { card_status: 'active', is_active: true });
+      fetchCards();
+    } catch (err) { alert(err.message); }
+  };
+
+  return (
+    <div>
+      <div className="section-head">
+        <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Issued Cards</h3>
+        <button className="btn-primary" onClick={() => setShowIssueModal(true)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <IconPlus size={18} /> Issue Card
+        </button>
+      </div>
+      
+      {loading ? (
+        <div style={{ padding: '4rem', textAlign: 'center' }}>Loading cards...</div>
+      ) : (
+        <table className="modern-table">
+          <thead>
+            <tr>
+              <th>Card Number</th>
+              <th>Member Name</th>
+              <th>NFC UID</th>
+              <th>Status</th>
+              <th>Physical Issued</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {cards.map(card => (
+              <tr key={card.id}>
+                <td style={{ fontWeight: 600 }}>{card.card_number}</td>
+                <td>{card.member_name}</td>
+                <td style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>
+                  {card.nfc_uid ? (
+                    <span style={{ color: 'var(--text-primary)' }}>{card.nfc_uid}</span>
+                  ) : (
+                    <span style={{ color: 'var(--text-secondary)', opacity: 0.5 }}>—</span>
+                  )}
+                </td>
+                <td>
+                  <span className={`pill ${
+                    card.card_status === 'active' ? 'pill-completed' : 
+                    card.card_status === 'suspended' ? 'pill-awaiting-payment' : 
+                    'pill-rejected'
+                  }`}>
+                    {card.card_status.toUpperCase()}
+                  </span>
+                </td>
+                <td>
+                  {card.physical_issued ? (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#10b981', fontWeight: 600 }}>
+                      <IconCheck size={18} /> Yes
+                    </span>
+                  ) : (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-secondary)' }}>
+                      <IconX size={18} /> No
+                    </span>
+                  )}
+                </td>
+                <td>
+                  <CardActionMenu 
+                    card={card}
+                    onEdit={() => setEditingCard(card)}
+                    onHistory={() => setHistoryCard(card)}
+                    onSuspend={() => handleSuspend(card.id)}
+                    onReplace={() => handleReplace(card.id)}
+                    onActivate={() => handleActivate(card.id)}
+                  />
+                </td>
+              </tr>
+            ))}
+            {cards.length === 0 && <tr><td colSpan="6" style={{ textAlign: 'center', padding: '2rem' }}>No cards issued yet.</td></tr>}
+          </tbody>
+        </table>
+      )}
+
+      {showIssueModal && <IssueCardModal onClose={() => setShowIssueModal(false)} onIssued={() => { setShowIssueModal(false); fetchCards(); }} />}
+      {editingCard && <EditCardModal card={editingCard} onClose={() => setEditingCard(null)} onUpdated={() => { setEditingCard(null); fetchCards(); }} />}
+      {historyCard && <CardHistoryModal card={historyCard} onClose={() => setHistoryCard(null)} />}
+    </div>
+  );
+}
+
+function RewardsHubPage() {
+  const [activeSubTab, setActiveSubTab] = useState('cards');
+
+  return (
+    <section className="dashboard-body">
+      <div className="page-title-wrap">
+        <h1 className="page-title">Rewards Hub</h1>
+        <p style={{ color: 'var(--text-secondary)', marginTop: '0.4rem', fontWeight: 500 }}>
+          Manage privilege cards, partners, and exclusive member offers.
+        </p>
+      </div>
+
+      <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', borderBottom: '2px solid #e2e8f0', paddingBottom: '1rem' }}>
+        <button onClick={() => setActiveSubTab('cards')} style={{ background: 'none', border: 'none', fontSize: '1.1rem', fontWeight: activeSubTab === 'cards' ? 800 : 500, color: activeSubTab === 'cards' ? 'var(--primary)' : 'var(--text-secondary)', cursor: 'pointer', borderBottom: activeSubTab === 'cards' ? '2px solid var(--primary)' : 'none', paddingBottom: '0.5rem', marginBottom: '-1rem' }}>
+          Privilege Cards
+        </button>
+        <button onClick={() => setActiveSubTab('partners')} style={{ background: 'none', border: 'none', fontSize: '1.1rem', fontWeight: activeSubTab === 'partners' ? 800 : 500, color: activeSubTab === 'partners' ? 'var(--primary)' : 'var(--text-secondary)', cursor: 'pointer', borderBottom: activeSubTab === 'partners' ? '2px solid var(--primary)' : 'none', paddingBottom: '0.5rem', marginBottom: '-1rem' }}>
+          Partners & Offers
+        </button>
+      </div>
+
+      <div className="data-section" style={{ padding: '2rem', background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+        {activeSubTab === 'cards' ? <PrivilegeCardsTab /> : <PartnersTab />}
+      </div>
+    </section>
+  );
+}
+
+function PartnersTab() {
   const [partners, setPartners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddPartner, setShowAddPartner] = useState(false);
@@ -2149,13 +2781,8 @@ function PartnersPage() {
   useEffect(() => { fetchPartners(); }, [fetchPartners]);
 
   return (
-    <section className="dashboard-body">
-      <div className="page-title-wrap">
-        <h1 className="page-title">Rewards & Network Partners</h1>
-        <p style={{ color: 'var(--text-secondary)', marginTop: '0.4rem', fontWeight: 500 }}>
-          Manage business alliances and member exclusive privileges.
-        </p>
-      </div>
+    <div>
+
 
       <div className="stat-grid" style={{ marginBottom: '2rem' }}>
         <StatCard title="TOTAL PARTNERS" value={partners.length} icon={IconBuildingStore} color="#2563eb" />
@@ -2230,10 +2857,39 @@ function PartnersPage() {
           onCreated={() => { setAddingOfferTo(null); fetchPartners(); }}
         />
       )}
-    </section>
+    </div>
   );
 }
 
+
+function ReferralActionMenu({ referral }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setIsOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className="action-menu-container" ref={menuRef}>
+      <button className="view-detail-btn" title="Actions" onClick={() => setIsOpen(!isOpen)}>
+        <IconSettings size={20} />
+      </button>
+      
+      {isOpen && (
+        <div className="action-dropdown" style={{ right: 0, left: 'auto' }}>
+          <div style={{ padding: '0.5rem 1rem', fontSize: '0.75rem', color: '#94a3b8', fontStyle: 'italic' }}>
+            No actions available
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ── Referrals Page ────────────────────────────────────────────────────────
 function ReferralsPage() {
@@ -2331,6 +2987,7 @@ function ReferralsPage() {
               <th>Value</th>
               <th>Status</th>
               <th>Date</th>
+              <th style={{ textAlign: 'right' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -2351,6 +3008,9 @@ function ReferralsPage() {
                   </span>
                 </td>
                 <td style={{ color: 'var(--text-secondary)' }}>{new Date(ref.created_at).toLocaleDateString()}</td>
+                <td style={{ textAlign: 'right' }}>
+                  <ReferralActionMenu referral={ref} />
+                </td>
               </tr>
             ))}
           </tbody>
@@ -2398,7 +3058,7 @@ function EditFeeModal({ fee, onClose, onUpdate }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 400 }}>
         <div className="modal-header">
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Edit {fee.membership_type.replace('_', ' ').toUpperCase()} Rate</h2>
@@ -2631,7 +3291,7 @@ function ChangePasswordModal({ onClose, showToast }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 400 }}>
         <div className="modal-header">
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Change Password</h2>
@@ -2894,7 +3554,7 @@ function AddEventModal({ onClose, onCreated, chapters = [] }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 600, maxHeight: '90vh', overflowY: 'auto' }}>
         <div className="modal-header">
           <div>
@@ -3138,7 +3798,7 @@ function EditEventModal({ event, onClose, onUpdated, chapters = [] }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 600, maxHeight: '90vh', overflowY: 'auto' }}>
         <div className="modal-header">
           <div>
@@ -3456,6 +4116,38 @@ function ManageRsvpsModal({ event, onClose, onUpdated }) {
   );
 }
 
+function EventActionMenu({ event, onManageRsvps, onEdit }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setIsOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className="action-menu-container" ref={menuRef}>
+      <button className="view-detail-btn" title="Actions" onClick={() => setIsOpen(!isOpen)}>
+        <IconSettings size={20} />
+      </button>
+      
+      {isOpen && (
+        <div className="action-dropdown" style={{ right: 0, left: 'auto' }}>
+          <button className="action-item" onClick={() => { onManageRsvps(); setIsOpen(false); }}>
+            <IconUserCheck size={16} /> Manage RSVPs
+          </button>
+          <button className="action-item" onClick={() => { onEdit(); setIsOpen(false); }}>
+            <IconPencil size={16} /> Edit Event
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function EventsPage() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -3600,13 +4292,12 @@ function EventsPage() {
                       <div style={{ fontWeight: 700 }}>{ev.rsvps?.filter(r => r.status === 'going').length || 0}</div>
                       <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Going</div>
                     </td>
-                    <td style={{ display: 'flex', gap: '0.5rem' }}>
-                      <button className="view-detail-btn" onClick={() => setManagingRsvpsEvent(ev)} title="Manage RSVPs">
-                        <IconUserCheck size={18} />
-                      </button>
-                      <button className="view-detail-btn" onClick={() => setEditingEvent(ev)} title="Edit Event">
-                        <IconSettings size={18} />
-                      </button>
+                    <td>
+                      <EventActionMenu 
+                        event={ev}
+                        onManageRsvps={() => setManagingRsvpsEvent(ev)}
+                        onEdit={() => setEditingEvent(ev)}
+                      />
                     </td>
                   </tr>
                 );
@@ -3712,7 +4403,7 @@ function AddClubModal({ onClose, onCreated, club }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 550, maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
         <div className="modal-header">
           <div>
@@ -3819,6 +4510,39 @@ function AddClubModal({ onClose, onCreated, club }) {
   );
 }
 
+function ClubActionMenu({ club, onEdit, onDelete }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setIsOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className="action-menu-container" ref={menuRef}>
+      <button className="view-detail-btn" title="Actions" onClick={() => setIsOpen(!isOpen)}>
+        <IconSettings size={20} />
+      </button>
+      
+      {isOpen && (
+        <div className="action-dropdown" style={{ right: 0, left: 'auto' }}>
+          <button className="action-item" onClick={() => { onEdit(); setIsOpen(false); }}>
+            <IconPencil size={16} /> Edit Club
+          </button>
+          <div className="action-divider" />
+          <button className="action-item danger" onClick={() => { onDelete(); setIsOpen(false); }}>
+            <IconTrash size={16} /> Delete Club
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ClubsPage() {
   const [clubs, setClubs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -3894,22 +4618,16 @@ function ClubsPage() {
                   {club.description || '—'}
                 </td>
                 <td style={{ textAlign: 'right' }}>
-                  <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                    <button className="view-detail-btn" title="Edit Club" onClick={() => {
-                      setEditingClub(club);
-                      setShowAddModal(true);
-                    }}>
-                      <IconPencil size={18} />
-                    </button>
-                    <button className="view-detail-btn" title="Delete Club" style={{ color: '#ef4444' }} onClick={async () => {
+                  <ClubActionMenu 
+                    club={club}
+                    onEdit={() => { setEditingClub(club); setShowAddModal(true); }}
+                    onDelete={async () => {
                       if (confirm(`Are you sure you want to delete "${club.name}"?`)) {
                         await api.deleteClub(club.id);
                         fetchClubs();
                       }
-                    }}>
-                      <IconTrash size={18} />
-                    </button>
-                  </div>
+                    }}
+                  />
                 </td>
               </tr>
             ))}
@@ -3936,6 +4654,63 @@ function ClubsPage() {
 }
 
 // ── Main App ────────────────────────────────────────────────────────────────
+
+function ListingActionMenu({ listing, onViewInterests, onPreview, onApprove, onReject, onToggleStatus, onDelete }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setIsOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className="action-menu-container" ref={menuRef}>
+      <button className="view-detail-btn" title="Actions" onClick={() => setIsOpen(!isOpen)}>
+        <IconSettings size={20} />
+      </button>
+      
+      {isOpen && (
+        <div className="action-dropdown" style={{ right: 0, left: 'auto' }}>
+          <button className="action-item" onClick={() => { onPreview(); setIsOpen(false); }}>
+            <IconEye size={16} /> View Details
+          </button>
+          <button className="action-item" onClick={() => { onViewInterests(); setIsOpen(false); }}>
+            <IconClipboardList size={16} /> Interests
+          </button>
+          
+          <div className="action-divider" />
+          
+          {!listing.is_approved ? (
+            <button className="action-item" style={{ color: '#059669' }} onClick={() => { onApprove(); setIsOpen(false); }}>
+              <IconCheck size={16} /> Approve
+            </button>
+          ) : (
+            <button className="action-item" style={{ color: '#ef4444' }} onClick={() => { onReject(); setIsOpen(false); }}>
+              <IconX size={16} /> Reject
+            </button>
+          )}
+
+          <button className="action-item" onClick={() => { onToggleStatus(); setIsOpen(false); }}>
+            {listing.status === 'active' ? (
+              <><IconLock size={16} /> Pause Listing</>
+            ) : (
+              <><IconRefresh size={16} /> Activate Listing</>
+            )}
+          </button>
+
+          <div className="action-divider" />
+          <button className="action-item danger" onClick={() => { onDelete(); setIsOpen(false); }}>
+            <IconTrash size={16} /> Delete Listing
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function MarketplacePage() {
   const [listings, setListings] = useState([]);
@@ -4137,33 +4912,15 @@ function MarketplacePage() {
                   </span>
                 </td>
                 <td style={{ textAlign: 'right' }}>
-                  <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                    <button className="view-detail-btn" title="View Interests" onClick={() => viewInterests(l)}>
-                      <IconClipboardList size={18} />
-                    </button>
-                    <button className="view-detail-btn" title="View Full Details" onClick={() => setSelectedListing(l)}>
-                      <IconEye size={18} />
-                    </button>
-                    {!l.is_approved ? (
-                      <button className="view-detail-btn" title="Approve" style={{ color: '#059669' }} onClick={() => handleApprove(l.id)}>
-                        <IconCheck size={18} />
-                      </button>
-                    ) : (
-                      <button className="view-detail-btn" title="Reject" style={{ color: '#ef4444' }} onClick={() => { setSelectedListing(l); setShowRejectModal(true); }}>
-                        <IconX size={18} />
-                      </button>
-                    )}
-                    <button 
-                      className="view-detail-btn" 
-                      title={l.status === 'active' ? 'Pause Listing' : 'Activate Listing'}
-                      onClick={() => updateStatus(l.id, l.status === 'active' ? 'paused' : 'active')}
-                    >
-                      {l.status === 'active' ? <IconLock size={18} /> : <IconRefresh size={18} />}
-                    </button>
-                    <button className="view-detail-btn" title="Delete" style={{ color: '#ef4444' }} onClick={() => deleteListing(l.id)}>
-                      <IconTrash size={18} />
-                    </button>
-                  </div>
+                  <ListingActionMenu 
+                    listing={l}
+                    onViewInterests={() => viewInterests(l)}
+                    onPreview={() => setSelectedListing(l)}
+                    onApprove={() => handleApprove(l.id)}
+                    onReject={() => { setSelectedListing(l); setShowRejectModal(true); }}
+                    onToggleStatus={() => updateStatus(l.id, l.status === 'active' ? 'paused' : 'active')}
+                    onDelete={() => deleteListing(l.id)}
+                  />
                 </td>
               </tr>
             ))}
@@ -4172,7 +4929,7 @@ function MarketplacePage() {
       </div>
 
       {selectedListing && !showInterestsModal && !showRejectModal && (
-        <div className="modal-overlay" onClick={() => setSelectedListing(null)}>
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setSelectedListing(null)}>
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 750 }}>
             <div className="modal-header">
               <div>
@@ -4259,7 +5016,7 @@ function MarketplacePage() {
       )}
 
       {showInterestsModal && (
-        <div className="modal-overlay" onClick={() => setShowInterestsModal(false)}>
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setShowInterestsModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 650 }}>
             <div className="modal-header">
               <div>
@@ -4303,7 +5060,7 @@ function MarketplacePage() {
       )}
 
       {showRejectModal && (
-        <div className="modal-overlay" onClick={() => setShowRejectModal(false)}>
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setShowRejectModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 450 }}>
             <div className="modal-header">
               <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Reject Marketplace Listing</h2>
@@ -4329,6 +5086,39 @@ function MarketplacePage() {
         </div>
       )}
     </section>
+  );
+}
+
+function ChapterActionMenu({ chapter, onEdit, onDelete }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setIsOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className="action-menu-container" ref={menuRef}>
+      <button className="view-detail-btn" title="Actions" onClick={() => setIsOpen(!isOpen)}>
+        <IconSettings size={20} />
+      </button>
+      
+      {isOpen && (
+        <div className="action-dropdown" style={{ right: 0, left: 'auto' }}>
+          <button className="action-item" onClick={() => { onEdit(); setIsOpen(false); }}>
+            <IconPencil size={16} /> Edit Chapter
+          </button>
+          <div className="action-divider" />
+          <button className="action-item danger" onClick={() => { onDelete(); setIsOpen(false); }}>
+            <IconTrash size={16} /> Delete Chapter
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -4424,14 +5214,11 @@ function ChaptersPage() {
                   </span>
                 </td>
                 <td style={{ textAlign: 'right' }}>
-                  <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                    <button className="view-detail-btn" onClick={() => { setEditingChapter(c); setShowModal(true); }}>
-                      <IconPencil size={18} />
-                    </button>
-                    <button className="view-detail-btn" style={{ color: '#ef4444' }} onClick={() => handleDelete(c.id)}>
-                      <IconTrash size={18} />
-                    </button>
-                  </div>
+                  <ChapterActionMenu 
+                    chapter={c}
+                    onEdit={() => { setEditingChapter(c); setShowModal(true); }}
+                    onDelete={() => handleDelete(c.id)}
+                  />
                 </td>
               </tr>
             ))}
@@ -4467,7 +5254,7 @@ function ChapterFormModal({ chapter, districts, onClose, onSave }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 500 }}>
         <div className="modal-header">
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>{chapter ? 'Edit Chapter' : 'Add New Chapter'}</h2>
@@ -4638,7 +5425,7 @@ export default function App() {
     if (activeTab === 'chapters') return <ChaptersPage />;
     if (activeTab === 'marketplace') return <MarketplacePage />;
     if (activeTab === 'payments') return <PaymentsPage />;
-    if (activeTab === 'rewards') return <PartnersPage />;
+    if (activeTab === 'rewards') return <RewardsHubPage />;
     if (activeTab === 'referrals') return <ReferralsPage />;
     if (activeTab === 'events') return <EventsPage />;
     if (activeTab === 'clubs') return <ClubsPage />;

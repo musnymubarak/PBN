@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Member Verification | Prime Business Network</title>
+    <link href="https://fonts.bunny.net/css?family=dm-sans:300,400,500,600,700,800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --navy: #080d24;
+            --navy-mid: #0e1535;
+            --navy-light: #162050;
+            --white: #ffffff;
+            --gold: #c9a84c;
+            --gold-light: #e8c97a;
+            --success: #059669;
+            --error: #dc2626;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --text-muted: #7a85b0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--navy);
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .bg-glow {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(201, 168, 76, 0.1) 0%, transparent 70%);
+            z-index: -1;
+            filter: blur(40px);
+            animation: pulse 8s infinite alternate;
+        }
+
+        @keyframes pulse {
+            from { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+            to { transform: translate(-50%, -50%) scale(1.2); opacity: 0.8; }
+        }
+
+        .verify-container {
+            width: 100%;
+            max-width: 440px;
+            padding: 20px;
+            text-align: center;
+            perspective: 1000px;
+        }
+
+        .card {
+            background: linear-gradient(145deg, var(--navy-mid), var(--navy-light));
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 40px 30px;
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(20px);
+            opacity: 0;
+            transform: translateY(20px) rotateX(10deg);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .card.active {
+            opacity: 1;
+            transform: translateY(0) rotateX(0);
+        }
+
+        .logo-box {
+            margin-bottom: 30px;
+        }
+
+        .logo-text {
+            font-size: 1.25rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-text span {
+            color: var(--gold);
+        }
+
+        .status-icon-wrap {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin: 0 auto 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .status-icon-wrap::after {
+            content: '';
+            position: absolute;
+            inset: -8px;
+            border-radius: 50%;
+            border: 2px solid currentColor;
+            opacity: 0.2;
+            animation: ripple 2s infinite;
+        }
+
+        @keyframes ripple {
+            0% { transform: scale(1); opacity: 0.2; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+
+        .icon-success { color: var(--success); background: rgba(5, 150, 105, 0.1); }
+        .icon-error { color: var(--error); background: rgba(220, 38, 38, 0.1); }
+
+        .member-name {
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+            background: linear-gradient(to right, #fff, #a1a1aa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .business-info {
+            font-size: 1rem;
+            color: var(--gold-light);
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid var(--glass-border);
+            text-align: left;
+        }
+
+        .detail-item label {
+            display: block;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+            font-weight: 700;
+        }
+
+        .detail-item span {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+
+        .tier-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 15px;
+        }
+
+        .tier-gold { background: linear-gradient(135deg, #c9a84c, #8a6a20); color: #fff; box-shadow: 0 10px 20px rgba(201, 168, 76, 0.2); }
+        .tier-silver { background: linear-gradient(135deg, #94a3b8, #475569); color: #fff; }
+        
+        .loader {
+            width: 48px;
+            height: 48px;
+            border: 3px solid var(--glass-border);
+            border-bottom-color: var(--gold);
+            border-radius: 50%;
+            display: inline-block;
+            animation: rotation 1s linear infinite;
+        }
+
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        #loading-screen {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 15px;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-glow"></div>
+
+    <div class="verify-container">
+        <div id="loading-screen">
+            <span class="loader"></span>
+            <p style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">Authenticating Card...</p>
+        </div>
+
+        <div id="verify-card" class="card">
+            <div class="logo-box">
+                <span class="logo-text">Prime <span>Business</span> Network</span>
+            </div>
+
+            <div id="status-icon" class="status-icon-wrap"></div>
+
+            <h1 id="member-name" class="member-name">Member Name</h1>
+            <p id="business-info" class="business-info">Company Name</p>
+            
+            <div id="tier-badge" class="tier-badge">Gold Tier</div>
+
+            <div class="details-grid">
+                <div class="detail-item">
+                    <label>Chapter</label>
+                    <span id="chapter-name">—</span>
+                </div>
+                <div class="detail-item">
+                    <label>Industry</label>
+                    <span id="industry-name">—</span>
+                </div>
+                <div class="detail-item">
+                    <label>Member ID</label>
+                    <span id="card-version">V1.0</span>
+                </div>
+                <div class="detail-item">
+                    <label>Joined</label>
+                    <span id="joined-date">—</span>
+                </div>
+            </div>
+
+            <div id="error-message" style="display: none; margin-top: 20px; color: var(--error); font-weight: 600; font-size: 0.9rem;"></div>
+        </div>
+
+        <p style="margin-top: 30px; font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">
+            Secure Blockchain Verification &copy; 2026 PBN Ecosystem
+        </p>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin.includes('localhost') 
+            ? 'http://localhost:8000/api/v1' 
+            : '/api/v1'; 
+
+        async function verifyMember() {
+            const params = new URLSearchParams(window.location.search);
+            const uid = params.get('uid');
+
+            if (!uid) {
+                showError("No Card UID detected. Please tap your card again.");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/rewards/verify/${uid}`);
+                const resData = await response.json();
+                
+                if (!response.ok) {
+                    showError(resData.message || "Unable to verify card.");
+                    return;
+                }
+
+                const data = resData.data;
+                displayCard(data);
+            } catch (err) {
+                showError("Network error. Please try again.");
+            }
+        }
+
+        function displayCard(data) {
+            document.getElementById('loading-screen').style.display = 'none';
+            const card = document.getElementById('verify-card');
+            
+            document.getElementById('member-name').textContent = data.member_name;
+            document.getElementById('business-info').textContent = data.business_name || 'Individual Member';
+            document.getElementById('chapter-name').textContent = data.chapter_name || '—';
+            document.getElementById('industry-name').textContent = data.industry_name || '—';
+            document.getElementById('card-version').textContent = `VERIFIED V${data.card_version}`;
+            document.getElementById('joined-date').textContent = data.issued_at ? new Date(data.issued_at).toLocaleDateString() : '—';
+
+            const tierBadge = document.getElementById('tier-badge');
+            const tier = (data.verification_level || 'silver').toLowerCase();
+            tierBadge.textContent = `${tier} Tier`;
+            tierBadge.className = `tier-badge tier-${tier}`;
+
+            const iconWrap = document.getElementById('status-icon');
+            if (data.is_valid) {
+                iconWrap.classList.add('icon-success');
+                iconWrap.innerHTML = '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+            } else {
+                iconWrap.classList.add('icon-error');
+                iconWrap.innerHTML = '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+                document.getElementById('error-message').style.display = 'block';
+                document.getElementById('error-message').textContent = `This card is currently ${data.status}. Access denied.`;
+            }
+
+            card.classList.add('active');
+        }
+
+        function showError(msg) {
+            document.getElementById('loading-screen').style.display = 'none';
+            const card = document.getElementById('verify-card');
+            const iconWrap = document.getElementById('status-icon');
+            
+            iconWrap.classList.add('icon-error');
+            iconWrap.innerHTML = '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+            
+            document.getElementById('member-name').textContent = "Verification Failed";
+            document.getElementById('business-info').textContent = "Invalid or Unregistered Card";
+            document.getElementById('error-message').style.display = 'block';
+            document.getElementById('error-message').textContent = msg;
+            
+            card.classList.add('active');
+        }
+
+        setTimeout(verifyMember, 800);
+    </script>
+</body>
+</html>

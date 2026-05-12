@@ -70,6 +70,27 @@ export const api = {
       method: 'PATCH',
       body: JSON.stringify(body),
     }),
+  updatePaymentStatus: (appId, status) =>
+    apiFetch(`/admin/applications/${appId}/payment-status`, { method: 'PATCH', body: JSON.stringify({ payment_status: status }) }),
+
+  // ── Rewards / Privilege Cards Admin API ──
+  listPrivilegeCards: (filters = {}) => {
+    const q = new URLSearchParams();
+    if (filters.status) q.append('status', filters.status);
+    if (filters.chapter_id) q.append('chapter_id', filters.chapter_id);
+    return apiFetch(`/admin/cards?${q.toString()}`);
+  },
+  issuePrivilegeCard: (data) =>
+    apiFetch('/admin/cards/issue', { method: 'POST', body: JSON.stringify(data) }),
+  updatePrivilegeCard: (cardId, data) =>
+    apiFetch(`/admin/cards/${cardId}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  suspendPrivilegeCard: (cardId) =>
+    apiFetch(`/admin/cards/${cardId}/suspend`, { method: 'POST' }),
+  replacePrivilegeCard: (cardId) =>
+    apiFetch(`/admin/cards/${cardId}/replace`, { method: 'POST' }),
+  exportPrivilegeCards: () =>
+    apiFetch('/admin/cards/export'),
+
   createApplication: (body) =>
     apiFetch('/applications', {
       method: 'POST',
@@ -217,4 +238,7 @@ export const api = {
     body: JSON.stringify({ is_featured: isFeatured }),
   }),
   listMarketplaceInterests: (listingId) => apiFetch(`/marketplace/${listingId}/interests`),
+
+  listPrivilegeCardHistory: (cardId) => apiFetch(`/admin/cards/${cardId}/history`),
 };
+
