@@ -217,20 +217,6 @@ class _PrivilegeCardWidgetState extends State<PrivilegeCardWidget> with SingleTi
                                       Text('v${widget.card.cardVersion}', style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
                                     ],
                                   ),
-                                  const SizedBox(width: 20),
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      const Text('STATUS', style: TextStyle(color: Colors.white38, fontSize: 7, fontWeight: FontWeight.w800)),
-                                      Row(
-                                        children: [
-                                          Container(width: 5, height: 5, decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle)),
-                                          const SizedBox(width: 4),
-                                          Text(widget.card.cardStatus.toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
                                 ],
                               ),
                             ],

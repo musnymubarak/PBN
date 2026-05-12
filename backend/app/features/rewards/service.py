@@ -125,23 +125,29 @@ async def get_my_card(user_id: UUID, db: AsyncSession) -> Dict[str, Any]:
     if not member_email and card.user:
         member_email = card.user.email
     
-    # Try to get chapter/business from membership if still null
-    if not chapter_name or not business_name:
+    # Try to get chapter/business/industry from membership if still null
+    if not chapter_name or not business_name or not industry_name:
         from app.models.memberships import ChapterMembership
         from app.models.chapters import Chapter
         from app.models.businesses import Business
+        from app.models.industry_categories import IndustryCategory
         
-        # Get primary chapter
-        chapter_res = (await db.execute(
-            select(Chapter)
+        # Get primary membership details including industry
+        membership_res = (await db.execute(
+            select(Chapter, IndustryCategory)
             .join(ChapterMembership, ChapterMembership.chapter_id == Chapter.id)
+            .join(IndustryCategory, ChapterMembership.industry_category_id == IndustryCategory.id)
             .where(ChapterMembership.user_id == user_id)
             .where(ChapterMembership.is_active == True)
             .limit(1)
-        )).scalar_one_or_none()
+        )).first()
         
-        if chapter_res and not chapter_name:
-            chapter_name = chapter_res.name
+        if membership_res:
+            m_chapter, m_industry = membership_res
+            if not chapter_name:
+                chapter_name = m_chapter.name
+            if not industry_name:
+                industry_name = m_industry.name
             
         # Get primary business
         business_res = (await db.execute(
@@ -150,16 +156,13 @@ async def get_my_card(user_id: UUID, db: AsyncSession) -> Dict[str, Any]:
             .limit(1)
         )).scalar_one_or_none()
         
-        if business_res:
-            if not business_name:
-                business_name = business_res.business_name
-            if not industry_name:
-                # Try to get industry name from category relation if needed
-                industry_name = "Member" 
+        if business_res and not business_name:
+            business_name = business_res.business_name
     
-    # Final tier fallback from user verification level if membership_type is null
+    # Final tier fallback: Map 'NONE' verification level to 'STANDARD' for better UI
     if not membership_type and card.user:
-        membership_type = card.user.verification_level.value if card.user.verification_level else "standard"
+        v_level = card.user.verification_level.value if card.user.verification_level else "standard"
+        membership_type = "standard" if v_level == "none" else v_level
 
     return {
         "id": str(card.id),
