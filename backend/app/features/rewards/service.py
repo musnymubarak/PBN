@@ -127,24 +127,39 @@ async def get_my_card(user_id: UUID, db: AsyncSession) -> Dict[str, Any]:
     
     # Try to get chapter/business from membership if still null
     if not chapter_name or not business_name:
-        from app.models.community import UserChapter, Chapter
-        membership = (await db.execute(
-            select(UserChapter, Chapter)
-            .join(Chapter, UserChapter.chapter_id == Chapter.id)
-            .where(UserChapter.user_id == user_id)
-            .limit(1)
-        )).first()
+        from app.models.memberships import ChapterMembership
+        from app.models.chapters import Chapter
+        from app.models.businesses import Business
         
-        if membership:
-            m_user_chapter, m_chapter = membership
-            if not chapter_name:
-                chapter_name = m_chapter.name
+        # Get primary chapter
+        chapter_res = (await db.execute(
+            select(Chapter)
+            .join(ChapterMembership, ChapterMembership.chapter_id == Chapter.id)
+            .where(ChapterMembership.user_id == user_id)
+            .where(ChapterMembership.is_active == True)
+            .limit(1)
+        )).scalar_one_or_none()
+        
+        if chapter_res and not chapter_name:
+            chapter_name = chapter_res.name
+            
+        # Get primary business
+        business_res = (await db.execute(
+            select(Business)
+            .where(Business.owner_user_id == user_id)
+            .limit(1)
+        )).scalar_one_or_none()
+        
+        if business_res:
             if not business_name:
-                business_name = m_user_chapter.business_name
+                business_name = business_res.business_name
             if not industry_name:
-                industry_name = m_user_chapter.industry_name
-            if not membership_type:
-                membership_type = m_user_chapter.membership_tier
+                # Try to get industry name from category relation if needed
+                industry_name = "Member" 
+    
+    # Final tier fallback from user verification level if membership_type is null
+    if not membership_type and card.user:
+        membership_type = card.user.verification_level.value if card.user.verification_level else "standard"
 
     return {
         "id": str(card.id),
