@@ -90,6 +90,8 @@ class _PrivilegeCardWidgetState extends State<PrivilegeCardWidget> with SingleTi
   }
 
   Widget _buildFront() {
+    final expiryYear = widget.card.expiresAt?.year ?? 2026;
+    
     return Container(
       decoration: _cardDecoration(),
       child: ClipRRect(
@@ -98,37 +100,64 @@ class _PrivilegeCardWidgetState extends State<PrivilegeCardWidget> with SingleTi
           children: [
             _buildBackgroundPattern(),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'PRECISION BUSINESS NETWORK',
-                        style: TextStyle(
-                          color: Colors.white38,
-                          fontSize: 8,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 2,
-                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          RichText(
+                            text: TextSpan(
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                height: 1.1,
+                                letterSpacing: -0.5,
+                              ),
+                              children: [
+                                const TextSpan(text: 'Prime '),
+                                TextSpan(
+                                  text: 'Business',
+                                  style: TextStyle(color: Colors.amber.shade400),
+                                ),
+                                const TextSpan(text: '\nNetwork'),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                      _buildTierBadge(),
+                      _buildChip(),
                     ],
                   ),
                   const Spacer(),
-                  _buildChip(),
-                  const SizedBox(height: 14),
-                  Text(
-                    widget.card.cardNumber,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 4,
-                      fontFamily: 'Monospace',
-                    ),
+                  // Stars and Year
+                  Row(
+                    children: [
+                      const Text(
+                        '****   ****   ****',
+                        style: TextStyle(
+                          color: Colors.white38,
+                          fontSize: 16,
+                          letterSpacing: 4,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Text(
+                        '$expiryYear',
+                        style: const TextStyle(
+                          color: Colors.white60,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 2,
+                        ),
+                      ),
+                    ],
                   ),
                   const Spacer(),
                   Row(
@@ -140,31 +169,27 @@ class _PrivilegeCardWidgetState extends State<PrivilegeCardWidget> with SingleTi
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              (widget.card.memberName ?? 'MEMBER').toUpperCase(),
+                              (widget.card.tier == 'charter' ? 'CHARTER MEMBER' : 'PREMIUM MEMBER').toUpperCase(),
+                              style: const TextStyle(
+                                color: Colors.white38,
+                                fontSize: 9,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              widget.card.memberName ?? 'Musni',
                               style: const TextStyle(
                                 color: Colors.white,
-                                fontWeight: FontWeight.w900,
-                                fontSize: 16,
-                                letterSpacing: 0.5,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              '${widget.card.businessName ?? "PBN Member"} • ${widget.card.chapterName ?? "Network"}',
-                              style: const TextStyle(
-                                color: Colors.white54,
-                                fontSize: 9,
                                 fontWeight: FontWeight.w700,
+                                fontSize: 20,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
                       ),
-                      const Icon(TablerIcons.access_point, color: Colors.white38, size: 24),
+                      _buildTierBadge(),
                     ],
                   ),
                 ],
@@ -296,16 +321,17 @@ class _PrivilegeCardWidgetState extends State<PrivilegeCardWidget> with SingleTi
   Widget _buildBackgroundPattern() {
     return Stack(
       children: [
+        // Glow behind chip (top-right)
         Positioned(
-          right: -50,
-          top: -50,
+          right: -40,
+          top: -40,
           child: Container(
-            width: 250,
-            height: 250,
+            width: 200,
+            height: 200,
             decoration: BoxDecoration(
               gradient: RadialGradient(
                 colors: [
-                  Colors.white.withValues(alpha: 0.04),
+                  Colors.white.withValues(alpha: 0.08),
                   Colors.transparent,
                 ],
               ),
@@ -313,10 +339,11 @@ class _PrivilegeCardWidgetState extends State<PrivilegeCardWidget> with SingleTi
             ),
           ),
         ),
+        // Subtle Logo watermark
         Opacity(
-          opacity: 0.1,
+          opacity: 0.05,
           child: Center(
-            child: Icon(TablerIcons.square_rotated, size: 400, color: Colors.white.withValues(alpha: 0.3)),
+            child: Icon(TablerIcons.square_rotated, size: 400, color: Colors.white),
           ),
         ),
       ],
@@ -324,20 +351,30 @@ class _PrivilegeCardWidgetState extends State<PrivilegeCardWidget> with SingleTi
   }
 
   Widget _buildTierBadge() {
+    String label = widget.card.tier.toUpperCase();
+    if (label == 'CHARTER') label = 'FOUNDING';
+    if (label == 'STANDARD') label = 'MEMBER';
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        color: Colors.amber.shade400,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Text(
-        widget.card.tier.toUpperCase(),
+        label,
         style: const TextStyle(
-          color: Colors.amber,
-          fontSize: 9,
+          color: Color(0xFF0F172A),
+          fontSize: 10,
           fontWeight: FontWeight.w900,
-          letterSpacing: 1.5,
+          letterSpacing: 0.5,
         ),
       ),
     );
