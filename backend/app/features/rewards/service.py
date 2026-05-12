@@ -629,6 +629,7 @@ async def list_privilege_cards(status: str | None, chapter_id: UUID | None, db: 
             "card_number": c.card_number,
             "nfc_uid": c.nfc_uid,
             "member_name": c.member_name or c.user.full_name,
+            "member_email": c.member_email or c.user.email,
             "membership_type": c.membership_type,
             "chapter_name": c.chapter_name,
             "business_name": c.business_name,
@@ -667,6 +668,7 @@ async def issue_privilege_card(data: Any, db: AsyncSession) -> Dict[str, Any]:
         issued_at=now,
         nfc_uid=data.nfc_uid,
         member_name=user.full_name,
+        member_email=user.email,
         card_status="active",
         physical_issued=data.physical_issued,
         card_version=1

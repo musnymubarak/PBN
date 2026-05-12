@@ -45,6 +45,7 @@ class PrivilegeCard(Base, TimestampMixin):
     # Physical & Metadata fields
     nfc_uid: Mapped[str | None] = mapped_column(String(100), unique=True, nullable=True, index=True)
     member_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    member_email: Mapped[str | None] = mapped_column(String(255), nullable=True)
     membership_type: Mapped[str | None] = mapped_column(String(100), nullable=True)
     chapter_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     business_name: Mapped[str | None] = mapped_column(String(255), nullable=True)

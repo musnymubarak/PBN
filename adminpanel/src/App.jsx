@@ -2601,6 +2601,12 @@ function CardActionMenu({ card, onEdit, onHistory, onSuspend, onReplace, onActiv
               </button>
             </>
           )}
+
+          <div className="action-divider" />
+          <div style={{ padding: '0.5rem 0.75rem', fontSize: '0.7rem', color: 'var(--text-secondary)', background: '#f8fafc', borderRadius: '0 0 8px 8px' }}>
+            <div style={{ fontWeight: 600, marginBottom: '2px' }}>NFC UID</div>
+            <div style={{ fontFamily: 'monospace' }}>{card.nfc_uid || 'Not Linked'}</div>
+          </div>
         </div>
       )}
     </div>
@@ -2668,8 +2674,7 @@ function PrivilegeCardsTab() {
           <thead>
             <tr>
               <th>Card Number</th>
-              <th>Member Name</th>
-              <th>NFC UID</th>
+              <th>Member</th>
               <th>Status</th>
               <th>Physical Issued</th>
               <th>Actions</th>
@@ -2679,13 +2684,9 @@ function PrivilegeCardsTab() {
             {cards.map(card => (
               <tr key={card.id}>
                 <td style={{ fontWeight: 600 }}>{card.card_number}</td>
-                <td>{card.member_name}</td>
-                <td style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>
-                  {card.nfc_uid ? (
-                    <span style={{ color: 'var(--text-primary)' }}>{card.nfc_uid}</span>
-                  ) : (
-                    <span style={{ color: 'var(--text-secondary)', opacity: 0.5 }}>—</span>
-                  )}
+                <td>
+                  <div style={{ fontWeight: 700 }}>{card.member_name}</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{card.member_email}</div>
                 </td>
                 <td>
                   <span className={`pill ${
@@ -2719,7 +2720,7 @@ function PrivilegeCardsTab() {
                 </td>
               </tr>
             ))}
-            {cards.length === 0 && <tr><td colSpan="6" style={{ textAlign: 'center', padding: '2rem' }}>No cards issued yet.</td></tr>}
+            {cards.length === 0 && <tr><td colSpan="5" style={{ textAlign: 'center', padding: '2rem' }}>No cards issued yet.</td></tr>}
           </tbody>
         </table>
       )}
