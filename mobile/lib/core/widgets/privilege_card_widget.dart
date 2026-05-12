@@ -90,8 +90,6 @@ class _PrivilegeCardWidgetState extends State<PrivilegeCardWidget> with SingleTi
   }
 
   Widget _buildFront() {
-    final expiryYear = widget.card.expiresAt?.year ?? 2026;
-    
     return Container(
       decoration: _cardDecoration(),
       child: ClipRRect(
