@@ -130,25 +130,17 @@ class _PrivilegeCardWidgetState extends State<PrivilegeCardWidget> with SingleTi
                     ],
                   ),
                   const Spacer(),
-                  // Stars and Year
+                  // Real Card Number
                   Row(
                     children: [
-                      const Text(
-                        '****   ****   ****',
-                        style: TextStyle(
-                          color: Colors.white38,
-                          fontSize: 16,
-                          letterSpacing: 4,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
                       Text(
-                        '$expiryYear',
+                        widget.card.cardNumber,
                         style: const TextStyle(
-                          color: Colors.white60,
+                          color: Colors.white,
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                           letterSpacing: 2,
+                          fontFamily: 'Monospace',
                         ),
                       ),
                     ],
@@ -347,7 +339,7 @@ class _PrivilegeCardWidgetState extends State<PrivilegeCardWidget> with SingleTi
   Widget _buildTierBadge() {
     String label = widget.card.tier.toUpperCase();
     if (label == 'CHARTER') label = 'FOUNDING';
-    if (label == 'STANDARD') label = 'MEMBER';
+    if (label == 'STANDARD' || label == 'NONE') label = 'MEMBER';
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
