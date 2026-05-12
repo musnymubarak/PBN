@@ -106,31 +106,25 @@ class _PrivilegeCardWidgetState extends State<PrivilegeCardWidget> with SingleTi
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          RichText(
-                            text: TextSpan(
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                height: 1.1,
-                                letterSpacing: -0.5,
-                              ),
-                              children: [
-                                const TextSpan(text: 'Prime '),
-                                TextSpan(
-                                  text: 'Business',
-                                  style: TextStyle(color: Colors.amber.shade400),
-                                ),
-                                const TextSpan(text: '\nNetwork'),
-                              ],
-                            ),
+                      RichText(
+                        text: TextSpan(
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            letterSpacing: -0.5,
                           ),
-                        ],
+                          children: [
+                            const TextSpan(text: 'Prime '),
+                            TextSpan(
+                              text: 'Business',
+                              style: TextStyle(color: Colors.amber.shade400),
+                            ),
+                            const TextSpan(text: ' Network'),
+                          ],
+                        ),
                       ),
                       _buildChip(),
                     ],
