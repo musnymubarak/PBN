@@ -1,4 +1,4 @@
-package com.pbn.app
+package network.primebusiness.app
 
 import io.flutter.embedding.android.FlutterActivity
 
