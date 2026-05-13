@@ -56,12 +56,32 @@ class _LoginPageState extends State<LoginPage> {
         children: [
           // ── DECORATIVE SOFT ACCENTS ──────────────────────────
           Positioned(
-            top: -50, right: -50,
+            top: -80, right: -80,
             child: Container(
-              width: 250, height: 250,
+              width: 300, height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.primary.withValues(alpha: 0.03),
+                gradient: RadialGradient(
+                  colors: [
+                    AppColors.accent.withValues(alpha: 0.10),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -100, left: -80,
+            child: Container(
+              width: 280, height: 280,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    AppColors.primary.withValues(alpha: 0.05),
+                    Colors.transparent,
+                  ],
+                ),
               ),
             ),
           ),
@@ -94,12 +114,26 @@ class _LoginPageState extends State<LoginPage> {
 
                   // Premium Form Container
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                    padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 28),
                     decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(24),
+                      gradient: const LinearGradient(
+                        colors: AppColors.surfaceGradient,
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(28),
+                      border: Border.all(color: AppColors.border.withValues(alpha: 0.6)),
                       boxShadow: [
-                        BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 30, offset: const Offset(0, 15)),
+                        BoxShadow(
+                          color: AppColors.shadowBase.withValues(alpha: 0.06),
+                          blurRadius: 40,
+                          offset: const Offset(0, 20),
+                        ),
+                        BoxShadow(
+                          color: AppColors.accent.withValues(alpha: 0.05),
+                          blurRadius: 18,
+                          offset: const Offset(0, 6),
+                        ),
                       ],
                     ),
                     child: Column(
@@ -181,7 +215,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _buildLabel(String text) {
-    return Text(text, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.textSecondary.withValues(alpha: 0.4), letterSpacing: 1.5));
+    return Text(text, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1.8));
   }
 
   Widget _buildPremiumTextField({
@@ -196,7 +230,14 @@ class _LoginPageState extends State<LoginPage> {
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.01)),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.6), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadowBase.withValues(alpha: 0.025),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: TextField(
         controller: controller,
@@ -204,18 +245,22 @@ class _LoginPageState extends State<LoginPage> {
         style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.text),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: TextStyle(color: Colors.grey.shade300, fontSize: 14, fontWeight: FontWeight.w600),
-          prefixIcon: Icon(icon, size: 18, color: const Color(0xFF94A3B8)),
+          hintStyle: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.6), fontSize: 14, fontWeight: FontWeight.w600),
+          prefixIcon: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            child: Icon(icon, size: 18, color: AppColors.textMuted),
+          ),
+          prefixIconConstraints: const BoxConstraints(minWidth: 48),
           suffixIcon: isPassword ? IconButton(
-            icon: Icon(obscure ? TablerIcons.eye : TablerIcons.eye_off, size: 18, color: const Color(0xFF94A3B8)),
+            icon: Icon(obscure ? TablerIcons.eye : TablerIcons.eye_off, size: 18, color: AppColors.textMuted),
             onPressed: onToggleObscure,
           ) : null,
           filled: true,
           fillColor: Colors.transparent,
-          contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+          contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 8),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
           enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
+          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppColors.accent, width: 1.6)),
         ),
       ),
     );

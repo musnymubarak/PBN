@@ -27,7 +27,7 @@ class SupportPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        toolbarHeight: 70,
+        toolbarHeight: 60,
         title: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

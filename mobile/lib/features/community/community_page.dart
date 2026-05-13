@@ -138,35 +138,35 @@ class _CommunityPageState extends State<CommunityPage> with WidgetsBindingObserv
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        toolbarHeight: 120,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        toolbarHeight: 60,
+        title: Row(
           children: [
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                const Text('Chapter Feed',
-                    style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.text,
-                        letterSpacing: -0.5)),
-                const SizedBox(width: 8),
-                Container(
-                  width: 8,
-                  height: 8,
-                  margin: const EdgeInsets.only(top: 4),
-                  decoration: const BoxDecoration(
-                    color: AppColors.success,
-                    shape: BoxShape.circle,
-                    boxShadow: [BoxShadow(color: AppColors.success, blurRadius: 4)],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            // Scope Toggle
+            const Text('Chapter Feed',
+                style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.text,
+                    letterSpacing: -0.5)),
+            const SizedBox(width: 8),
             Container(
+              width: 8,
+              height: 8,
+              decoration: const BoxDecoration(
+                color: AppColors.success,
+                shape: BoxShape.circle,
+                boxShadow: [BoxShadow(color: AppColors.success, blurRadius: 4)],
+              ),
+            ),
+          ],
+        ),
+        actions: const [PbnAppBarActions()],
+      ),
+      body: Column(
+        children: [
+          // Scope Toggle (moved from AppBar)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+            child: Container(
               height: 40,
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
@@ -180,17 +180,7 @@ class _CommunityPageState extends State<CommunityPage> with WidgetsBindingObserv
                 ],
               ),
             ),
-          ],
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(bottom: 50),
-            child: PbnAppBarActions(),
           ),
-        ],
-      ),
-      body: Column(
-        children: [
           _buildSearchAndFilter(),
           Expanded(
             child: _loading

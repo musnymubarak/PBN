@@ -62,7 +62,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        toolbarHeight: 70,
+        toolbarHeight: 60,
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: false,

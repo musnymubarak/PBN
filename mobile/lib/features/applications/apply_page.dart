@@ -158,18 +158,13 @@ class _ApplyPageState extends State<ApplyPage> {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
-        toolbarHeight: 80,
+        toolbarHeight: 60,
         leading: IconButton(
           icon: const Icon(TablerIcons.chevron_left, color: AppColors.primary),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('BECOME A MEMBER', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.accent, letterSpacing: 2)),
-            Text('PBN Application', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.primary, letterSpacing: -0.5)),
-          ],
-        ),
+        title: const Text('PBN Application',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppColors.primary, letterSpacing: -0.5)),
       ),
       body: _loadingInitial 
         ? const Center(child: CircularProgressIndicator(color: AppColors.primary))

@@ -50,6 +50,9 @@ dependencies:
   cached_network_image: ^3.3.1
   flutter_svg: ^2.0.10+1
   json_annotation: ^4.9.0
+  flutter_animate: ^4.5.0
+  fl_chart: ^0.69.0
+  skeletonizer: ^2.1.0
 
   http: any
 dev_dependencies:

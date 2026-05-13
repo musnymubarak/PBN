@@ -77,7 +77,7 @@ class _EventsPageState extends State<EventsPage> {
       child: Scaffold(
         backgroundColor: Colors.grey[50],
         appBar: AppBar(
-          toolbarHeight: 70, // Align with other pages
+          toolbarHeight: 60,
           backgroundColor: Colors.white,
           elevation: 0,
           title: const Column(

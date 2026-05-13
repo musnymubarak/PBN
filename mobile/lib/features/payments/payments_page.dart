@@ -43,24 +43,13 @@ class _PaymentsPageState extends State<PaymentsPage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        toolbarHeight: 70,
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('FINANCIAL CENTER',
-                style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.textSecondary,
-                    letterSpacing: 2)),
-            Text('Billing & History',
-                style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.text,
-                    letterSpacing: -0.5)),
-          ],
-        ),
+        toolbarHeight: 60,
+        title: const Text('Billing & History',
+            style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+                color: AppColors.text,
+                letterSpacing: -0.5)),
         actions: [
           PbnAppBarActions(),
         ],

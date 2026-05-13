@@ -72,16 +72,37 @@ class PbnAppBarActions extends StatelessWidget {
   }
 
   Widget _buildActionIcon({required IconData icon, required VoidCallback onPressed}) {
-    return GestureDetector(
-      onTap: onPressed,
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: AppColors.surfaceAlt,
-          shape: BoxShape.circle,
-          border: Border.all(color: AppColors.border.withValues(alpha: 0.5), width: 1),
+    return Material(
+      color: Colors.transparent,
+      shape: const CircleBorder(),
+      child: InkWell(
+        onTap: onPressed,
+        customBorder: const CircleBorder(),
+        splashColor: AppColors.accent.withValues(alpha: 0.1),
+        highlightColor: AppColors.accent.withValues(alpha: 0.05),
+        child: Container(
+          padding: const EdgeInsets.all(9),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.white,
+                AppColors.surfaceAlt.withValues(alpha: 0.6),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            shape: BoxShape.circle,
+            border: Border.all(color: AppColors.border.withValues(alpha: 0.7), width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.shadowBase.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Icon(icon, color: AppColors.text, size: 20),
         ),
-        child: Icon(icon, color: AppColors.text, size: 20),
       ),
     );
   }

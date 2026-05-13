@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter analyze *)",
+      "Bash(git -C 'c:\\\\Users\\\\musny\\\\Desktop\\\\Hashnate\\\\PBN' status mobile/lib)",
+      "Bash(flutter pub *)"
+    ]
+  }
+}

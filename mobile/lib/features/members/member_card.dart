@@ -15,78 +15,168 @@ class MemberCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Center(
-                  child: Text(
-                    member.initials,
-                    style: const TextStyle(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 18,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: AppColors.surfaceGradient,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.6), width: 1),
+        boxShadow: AppColors.shadowMd,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          splashColor: AppColors.accent.withValues(alpha: 0.06),
+          highlightColor: AppColors.accent.withValues(alpha: 0.04),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                // Premium gold-ringed initial avatar
+                Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: const LinearGradient(
+                      colors: AppColors.goldSoftGradient,
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.accent.withValues(alpha: 0.18),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.primary,
+                          AppColors.primary.withValues(alpha: 0.85),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        member.initials,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 18,
+                          letterSpacing: -0.3,
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      member.fullName,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        member.fullName,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.text,
+                          letterSpacing: -0.3,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        const Icon(TablerIcons.briefcase, size: 14, color: AppColors.accent),
-                        const SizedBox(width: 6),
-                        Text(
-                          member.industry,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppColors.textSecondary,
-                            fontSize: 13,
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(3.5),
+                            decoration: BoxDecoration(
+                              color: AppColors.accent.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Icon(
+                              TablerIcons.briefcase,
+                              size: 11,
+                              color: AppColors.accent,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    Row(
-                      children: [
-                        const Icon(TablerIcons.building_community, size: 14, color: Colors.grey),
-                        const SizedBox(width: 6),
-                        Text(
-                          member.company,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.grey.shade500,
-                            fontSize: 12,
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              member.industry,
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(3.5),
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceAlt,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Icon(
+                              TablerIcons.building_community,
+                              size: 11,
+                              color: AppColors.textMuted,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              member.company,
+                              style: TextStyle(
+                                color: AppColors.textMuted,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const Icon(TablerIcons.chevron_right, color: Colors.grey, size: 20),
-            ],
+                Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceAlt,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    TablerIcons.chevron_right,
+                    color: AppColors.textMuted,
+                    size: 16,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
