@@ -315,10 +315,13 @@ class _ProfilePageState extends State<ProfilePage> {
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
               sliver: SliverList.list(
-                children: sections
-                    .animate(interval: 55.ms)
-                    .fadeIn(duration: 420.ms, curve: Curves.easeOutCubic)
-                    .slideY(begin: 0.10, end: 0, duration: 420.ms, curve: Curves.easeOutCubic),
+                children: List.generate(sections.length, (i) {
+                  final delayMs = (i * 35).clamp(0, 280);
+                  return sections[i]
+                      .animate(delay: delayMs.ms)
+                      .fadeIn(duration: 320.ms, curve: Curves.easeOutCubic)
+                      .slideY(begin: 0.10, end: 0, duration: 320.ms, curve: Curves.easeOutCubic);
+                }),
               ),
             ),
           ],

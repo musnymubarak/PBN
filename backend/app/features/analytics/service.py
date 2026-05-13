@@ -9,18 +9,15 @@ from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List
 from uuid import UUID
 
-from sqlalchemy import select, func, case, text, desc
+from sqlalchemy import select, func, case, text
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
-from app.core.exceptions import NotFoundException
 from app.core.redis import get_redis_client
 from app.models.user import User
-from app.models.referrals import Referral, ReferralStatus, ReferralStatusHistory
+from app.models.referrals import Referral, ReferralStatus
 from app.models.chapters import Chapter
 from app.models.memberships import ChapterMembership
-from app.models.businesses import Business
-from app.models.events import Event, EventAttendance, EventRSVP
+from app.models.events import Event, EventAttendance
 
 
 def _parse_decimal(obj):
@@ -290,53 +287,120 @@ async def get_leaderboard(chapter_id: UUID | None, period: str, db: AsyncSession
 
 
 async def get_analytics_roi(user_id: UUID, period: str, db: AsyncSession) -> List[Dict[str, Any]]:
-    now = datetime.now(timezone.utc)
-    months_go_back = 6
-    if period == "last_3_months":
-        months_go_back = 3
-    elif period == "last_year":
-        months_go_back = 12
-        
-    start_date = now - timedelta(days=30 * months_go_back)
+    """
+    Time-series ROI for the current user, bucketed by the natural granularity
+    of the requested period:
 
-    stmt = select(
-        func.date_trunc('month', Referral.created_at).label("mnth"),
+      last_1_month   → ~30 daily buckets
+      last_3_months  → ~12 weekly buckets
+      last_year      → 12 monthly buckets   (alias: last_12_months)
+      default        → 6 monthly buckets    (also covers explicit last_6_months)
+
+    Empty buckets are filled with zero values so the front-end can draw a
+    continuous line chart without gaps.
+    """
+    now = datetime.now(timezone.utc)
+
+    if period == "last_1_month":
+        start_date = now - timedelta(days=30)
+        bucket = 'day'
+        date_fmt = "%Y-%m-%d"
+        step = timedelta(days=1)
+    elif period == "last_3_months":
+        start_date = now - timedelta(days=90)
+        bucket = 'week'
+        date_fmt = "%Y-%m-%d"
+        step = timedelta(days=7)
+    elif period in ("last_year", "last_12_months"):
+        start_date = now - timedelta(days=365)
+        bucket = 'month'
+        date_fmt = "%Y-%m"
+        step = None  # month step handled separately (variable length)
+    else:
+        # Default / explicit last_6_months
+        start_date = now - timedelta(days=180)
+        bucket = 'month'
+        date_fmt = "%Y-%m"
+        step = None
+
+    # ── Sent referrals (value + counts) ─────────────────────────────────
+    sent_stmt = select(
+        func.date_trunc(bucket, Referral.created_at).label("ts"),
         func.count(1).label("sent"),
         func.count(1).filter(Referral.status == ReferralStatus.SUCCESS).label("converted"),
         func.coalesce(func.sum(Referral.actual_value), 0).label("val")
     ).where(Referral.from_member_id == user_id, Referral.created_at >= start_date)\
-     .group_by(text("mnth")).order_by(text("mnth"))
+     .group_by(text("ts")).order_by(text("ts"))
+    res_sent = (await db.execute(sent_stmt)).all()
 
-    res_sent = (await db.execute(stmt)).all()
-    
+    # ── Received referrals ──────────────────────────────────────────────
     recv_stmt = select(
-        func.date_trunc('month', Referral.created_at).label("mnth"),
+        func.date_trunc(bucket, Referral.created_at).label("ts"),
         func.count(1).label("received")
     ).where(Referral.to_member_id == user_id, Referral.created_at >= start_date)\
-     .group_by(text("mnth")).order_by(text("mnth"))
-     
+     .group_by(text("ts")).order_by(text("ts"))
     res_recv = (await db.execute(recv_stmt)).all()
-    
-    # Merge dicts
-    merged = {}
+
+    # ── Merge sent + received into a single map keyed by bucket label ──
+    merged: Dict[str, Dict[str, Any]] = {}
     for r in res_sent:
-        m_str = r.mnth.strftime("%Y-%m")
-        merged[m_str] = {
-            "month": m_str,
+        k = r.ts.strftime(date_fmt)
+        merged[k] = {
+            "period": k,
+            "month": k,  # back-compat alias for older clients
             "sent": r.sent,
             "received": 0,
             "converted": r.converted,
-            "value": float(r.val)
+            "value": float(r.val),
         }
-        
     for r in res_recv:
-        m_str = r.mnth.strftime("%Y-%m")
-        if m_str not in merged:
-            merged[m_str] = {"month": m_str, "sent": 0, "received": 0, "converted": 0, "value": 0.0}
-        merged[m_str]["received"] = r.received
+        k = r.ts.strftime(date_fmt)
+        if k not in merged:
+            merged[k] = {
+                "period": k,
+                "month": k,
+                "sent": 0,
+                "received": 0,
+                "converted": 0,
+                "value": 0.0,
+            }
+        merged[k]["received"] = r.received
 
-    sorted_list = [merged[k] for k in sorted(merged.keys())]
-    return sorted_list
+    # ── Fill empty buckets so the sparkline is continuous ───────────────
+    def _empty(label: str) -> Dict[str, Any]:
+        return {
+            "period": label,
+            "month": label,
+            "sent": 0,
+            "received": 0,
+            "converted": 0,
+            "value": 0.0,
+        }
+
+    filled: List[Dict[str, Any]] = []
+    if bucket == 'month':
+        # Walk forward by calendar month from start_date to now.
+        cur = start_date.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        end = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        while cur <= end:
+            k = cur.strftime(date_fmt)
+            filled.append(merged.get(k, _empty(k)))
+            cur = cur.replace(year=cur.year + 1, month=1) if cur.month == 12 \
+                else cur.replace(month=cur.month + 1)
+    else:
+        # day or week — step is a fixed timedelta.
+        if bucket == 'week':
+            # Align to week start (Monday, matching PostgreSQL date_trunc('week', ...)).
+            cur = (start_date - timedelta(days=start_date.weekday())) \
+                .replace(hour=0, minute=0, second=0, microsecond=0)
+        else:
+            cur = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
+        while cur <= now:
+            k = cur.strftime(date_fmt)
+            filled.append(merged.get(k, _empty(k)))
+            cur += step  # type: ignore[operator]
+
+    return filled
 
 
 async def get_admin_overview(db: AsyncSession) -> Dict[str, Any]:

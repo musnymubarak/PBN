@@ -49,6 +49,11 @@ class _DashboardPageState extends State<DashboardPage> {
   NextEvent? _fallbackVirtual;
   NextEvent? _fallbackPhysical;
 
+  // -- ROI chart state --
+  String _roiPeriod = '1M';
+  List<FlSpot> _roiSeries = [];
+  bool _loadingRoi = false;
+
   final _dashboardService = DashboardService();
   final _eventService = EventService();
 
@@ -100,6 +105,7 @@ class _DashboardPageState extends State<DashboardPage> {
         });
         _loadLeaderboard();
         _loadEventFallbacks();
+        _loadRoi(_roiPeriod);
         if (mounted) {
           final notifProvider = context.read<NotificationProvider>();
           notifProvider.startListening();
@@ -129,6 +135,62 @@ class _DashboardPageState extends State<DashboardPage> {
         });
       }
     } catch (_) {}
+  }
+
+  String _periodApiKey(String label) {
+    switch (label) {
+      case '1M':
+        return 'last_1_month';
+      case '3M':
+        return 'last_3_months';
+      case '1Y':
+        return 'last_12_months';
+      default:
+        return 'last_1_month';
+    }
+  }
+
+  Future<void> _loadRoi(String label) async {
+    if (!mounted) return;
+    setState(() {
+      _roiPeriod = label;
+      _loadingRoi = true;
+    });
+    try {
+      final raw = await _dashboardService.getRoi(period: _periodApiKey(label));
+      final values = <double>[];
+      for (final item in raw) {
+        double? v;
+        if (item is num) {
+          v = item.toDouble();
+        } else if (item is Map) {
+          final cand = item['value'] ??
+              item['amount'] ??
+              item['total'] ??
+              item['roi'] ??
+              item['roi_value'] ??
+              item['value_generated'];
+          if (cand is num) v = cand.toDouble();
+        }
+        if (v != null) values.add(v);
+      }
+      final spots = <FlSpot>[
+        for (var i = 0; i < values.length; i++) FlSpot(i.toDouble(), values[i]),
+      ];
+      if (mounted) {
+        setState(() {
+          _roiSeries = spots;
+          _loadingRoi = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _roiSeries = [];
+          _loadingRoi = false;
+        });
+      }
+    }
   }
 
   Future<void> _loadEventFallbacks() async {
@@ -477,43 +539,66 @@ class _DashboardPageState extends State<DashboardPage> {
       const SizedBox(height: 12),
       SizedBox(
         height: 168,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: _buildStatTile(
-                title: 'Business Sent',
-                value: '${_data?.referrals.sentTotal ?? 0}',
-                icon: TablerIcons.arrow_up_right,
-                accentColor: const Color(0xFF3B82F6),
-                deltaCount: _data?.referrals.sentThisMonth ?? 0,
+        child: Builder(builder: (ctx) {
+          final sentTotal = _data?.referrals.sentTotal ?? 0;
+          final sentMonth = _data?.referrals.sentThisMonth ?? 0;
+          final receivedTotal = _data?.referrals.receivedTotal ?? 0;
+          final receivedMonth = _data?.referrals.receivedThisMonth ?? 0;
+          final rate = (_data?.referrals.conversionRate ?? 0).toDouble();
+
+          double safeRatio(int part, int total) =>
+              total > 0 ? (part / total).clamp(0.0, 1.0) : 0.0;
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: _buildStatTile(
+                  title: 'Business Sent',
+                  value: '$sentTotal',
+                  icon: TablerIcons.arrow_up_right,
+                  accentColor: const Color(0xFF3B82F6),
+                  deltaCount: sentMonth,
+                  progress: safeRatio(sentMonth, sentTotal),
+                  progressCaption: sentTotal > 0
+                      ? '$sentMonth of $sentTotal this month'
+                      : 'No referrals yet',
+                ),
               ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _buildStatTile(
-                title: 'Ratio',
-                value:
-                    '${(_data?.referrals.conversionRate ?? 0).toStringAsFixed(0)}%',
-                icon: TablerIcons.chart_pie,
-                accentColor: const Color(0xFF10B981),
-                deltaLabel:
-                    (_data?.referrals.conversionRate ?? 0) >= 50 ? 'Healthy' : 'Active',
-                isPositive: (_data?.referrals.conversionRate ?? 0) >= 50,
+              const SizedBox(width: 10),
+              Expanded(
+                child: _buildStatTile(
+                  title: 'Ratio',
+                  value: '${rate.toStringAsFixed(0)}%',
+                  icon: TablerIcons.chart_pie,
+                  accentColor: const Color(0xFF10B981),
+                  deltaLabel: rate >= 50 ? 'Healthy' : 'Active',
+                  isPositive: rate >= 50,
+                  progress: (rate / 100).clamp(0.0, 1.0),
+                  progressCaption: rate >= 75
+                      ? 'Excellent conversion'
+                      : rate >= 50
+                          ? 'Above average'
+                          : 'Room to grow',
+                ),
               ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _buildStatTile(
-                title: 'Incoming',
-                value: '${_data?.referrals.receivedTotal ?? 0}',
-                icon: TablerIcons.arrow_down_left,
-                accentColor: const Color(0xFF8B5CF6),
-                deltaCount: _data?.referrals.receivedThisMonth ?? 0,
+              const SizedBox(width: 10),
+              Expanded(
+                child: _buildStatTile(
+                  title: 'Incoming',
+                  value: '$receivedTotal',
+                  icon: TablerIcons.arrow_down_left,
+                  accentColor: const Color(0xFF8B5CF6),
+                  deltaCount: receivedMonth,
+                  progress: safeRatio(receivedMonth, receivedTotal),
+                  progressCaption: receivedTotal > 0
+                      ? '$receivedMonth of $receivedTotal this month'
+                      : 'No leads yet',
+                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          );
+        }),
       ),
       const SizedBox(height: 14),
       _buildActivityPulse(),
@@ -551,8 +636,6 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
         ],
       ),
-      const SizedBox(height: 22),
-      _buildMembershipSpotlight(),
       const SizedBox(height: 32),
     ];
 
@@ -573,10 +656,15 @@ class _DashboardPageState extends State<DashboardPage> {
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               sliver: SliverList.list(
-                children: sections
-                    .animate(interval: 60.ms)
-                    .fadeIn(duration: 420.ms, curve: Curves.easeOutCubic)
-                    .slideY(begin: 0.12, end: 0, duration: 420.ms, curve: Curves.easeOutCubic),
+                children: List.generate(sections.length, (i) {
+                  // Cascade only above-the-fold items; cap delay so bottom
+                  // sections don't wait for the whole list to finish.
+                  final delayMs = (i * 35).clamp(0, 280);
+                  return sections[i]
+                      .animate(delay: delayMs.ms)
+                      .fadeIn(duration: 320.ms, curve: Curves.easeOutCubic)
+                      .slideY(begin: 0.10, end: 0, duration: 320.ms, curve: Curves.easeOutCubic);
+                }),
               ),
             ),
           ],
@@ -1005,206 +1093,6 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildMembershipSpotlight() {
-    final user = context.watch<AuthProvider>().user;
-    final level = (user?.verificationLevel ?? 'none').toLowerCase();
-    final hasTier = level != 'none';
-    final daysToExpiry = _data?.membership.daysUntilExpiry;
-
-    String memberSince = '';
-    try {
-      if (user?.createdAt.isNotEmpty == true) {
-        final dt = DateTime.parse(user!.createdAt).toLocal();
-        memberSince = DateFormat('MMM yyyy').format(dt);
-      }
-    } catch (_) {}
-
-    final tierColor = hasTier ? _tierColor(level) : AppColors.accent;
-    final title = hasTier ? '${level[0].toUpperCase()}${level.substring(1)} Member' : 'Verified Member';
-    final ctaLabel = hasTier ? 'VIEW BENEFITS' : 'GET VERIFIED';
-
-    return GestureDetector(
-      onTap: () => Navigator.pushNamed(context, '/rewards'),
-      child: Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFFFFFDF7), Colors.white],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(
-            color: AppColors.accent.withValues(alpha: 0.18),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.accent.withValues(alpha: 0.12),
-              blurRadius: 26,
-              offset: const Offset(0, 12),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(18),
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Positioned(
-                right: -30,
-                top: -30,
-                child: Container(
-                  width: 130,
-                  height: 130,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [
-                        AppColors.accent.withValues(alpha: 0.18),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              Row(
-                children: [
-                  Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        colors: [
-                          tierColor,
-                          tierColor.withValues(alpha: 0.7),
-                        ],
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: tierColor.withValues(alpha: 0.4),
-                          blurRadius: 14,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: const Icon(
-                      TablerIcons.discount_check_filled,
-                      color: Colors.white,
-                      size: 30,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'MEMBERSHIP',
-                          style: TextStyle(
-                            fontSize: 9.5,
-                            fontWeight: FontWeight.w900,
-                            color: tierColor,
-                            letterSpacing: 1.6,
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          title,
-                          style: GoogleFonts.dmSans(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.text,
-                            letterSpacing: -0.4,
-                            height: 1.1,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            if (memberSince.isNotEmpty)
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: AppColors.surfaceAlt,
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  'Since $memberSince',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.textSecondary,
-                                    letterSpacing: 0.2,
-                                  ),
-                                ),
-                              ),
-                            if (daysToExpiry != null && daysToExpiry > 0) ...[
-                              const SizedBox(width: 6),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: AppColors.success.withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  '$daysToExpiry days left',
-                                  style: const TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.success,
-                                    letterSpacing: 0.2,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: AppColors.goldGradient,
-                      ),
-                      borderRadius: BorderRadius.circular(10),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.accent.withValues(alpha: 0.35),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          ctaLabel,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 9.5,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 0.6,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        const Icon(TablerIcons.arrow_right, color: Colors.white, size: 12),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -1851,36 +1739,24 @@ class _DashboardPageState extends State<DashboardPage> {
             _NavItem(TablerIcons.user_circle, 'Me', 4),
           ];
 
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Colors.white,
-                AppColors.surfaceAlt.withValues(alpha: 0.4),
-              ],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
-            borderRadius: BorderRadius.circular(28),
-            border: Border.all(color: AppColors.border.withValues(alpha: 0.7)),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.shadowBase.withValues(alpha: 0.10),
-                blurRadius: 28,
-                offset: const Offset(0, 14),
-              ),
-              BoxShadow(
-                color: AppColors.shadowBase.withValues(alpha: 0.05),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              ),
-            ],
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          top: BorderSide(color: AppColors.border.withValues(alpha: 0.6), width: 1),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadowBase.withValues(alpha: 0.05),
+            blurRadius: 14,
+            offset: const Offset(0, -3),
           ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: navItems.map((item) {
@@ -1889,60 +1765,54 @@ class _DashboardPageState extends State<DashboardPage> {
                 child: GestureDetector(
                   onTap: () => setState(() => _currentIndex = item.index),
                   behavior: HitTestBehavior.opaque,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                    decoration: BoxDecoration(
-                      gradient: isActive
-                          ? LinearGradient(
-                              colors: [
-                                AppColors.accent.withValues(alpha: 0.18),
-                                AppColors.accent.withValues(alpha: 0.08),
-                              ],
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                            )
-                          : null,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: isActive
-                          ? [
-                              BoxShadow(
-                                color: AppColors.accent.withValues(alpha: 0.22),
-                                blurRadius: 12,
-                                offset: const Offset(0, 4),
-                              ),
-                            ]
-                          : null,
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          item.icon,
-                          color: isActive ? AppColors.accent : AppColors.textMuted,
-                          size: isActive ? 23 : 22,
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          item.label,
-                          style: TextStyle(
-                            fontSize: 9.5,
-                            fontWeight: isActive ? FontWeight.w900 : FontWeight.w600,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                      decoration: BoxDecoration(
+                        gradient: isActive
+                            ? LinearGradient(
+                                colors: [
+                                  AppColors.accent.withValues(alpha: 0.18),
+                                  AppColors.accent.withValues(alpha: 0.08),
+                                ],
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                              )
+                            : null,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            item.icon,
                             color: isActive ? AppColors.accent : AppColors.textMuted,
-                            letterSpacing: 0.3,
+                            size: isActive ? 23 : 22,
                           ),
-                        ),
-                        const SizedBox(height: 3),
-                        Container(
-                          width: isActive ? 16 : 0,
-                          height: 2.5,
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: AppColors.goldGradient,
+                          const SizedBox(height: 4),
+                          Text(
+                            item.label,
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: isActive ? FontWeight.w900 : FontWeight.w600,
+                              color: isActive ? AppColors.accent : AppColors.textMuted,
+                              letterSpacing: 0.3,
                             ),
-                            borderRadius: BorderRadius.circular(2),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 3),
+                          Container(
+                            width: isActive ? 18 : 0,
+                            height: 2.5,
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: AppColors.goldGradient,
+                              ),
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -2419,6 +2289,8 @@ class _DashboardPageState extends State<DashboardPage> {
     int? deltaCount,
     String? deltaLabel,
     bool isPositive = true,
+    double progress = 0,
+    String? progressCaption,
   }) {
     final hasDelta = deltaCount != null || deltaLabel != null;
     final deltaText = deltaCount != null
@@ -2426,6 +2298,7 @@ class _DashboardPageState extends State<DashboardPage> {
         : (deltaLabel ?? '');
     final deltaPositive = deltaCount != null ? deltaCount >= 0 : isPositive;
     final deltaColor = deltaPositive ? AppColors.success : AppColors.error;
+    final clampedProgress = progress.clamp(0.0, 1.0);
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -2521,65 +2394,34 @@ class _DashboardPageState extends State<DashboardPage> {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 10),
-          // Mini sparkline (fl_chart BarChart)
-          SizedBox(
-            height: 20,
-            child: BarChart(
-              BarChartData(
-                alignment: BarChartAlignment.spaceAround,
-                maxY: 1.0,
-                minY: 0,
-                gridData: const FlGridData(show: false),
-                titlesData: const FlTitlesData(show: false),
-                borderData: FlBorderData(show: false),
-                barTouchData: BarTouchData(enabled: false),
-                barGroups: _sparkValuesFor(title)
-                    .asMap()
-                    .entries
-                    .map(
-                      (e) => BarChartGroupData(
-                        x: e.key,
-                        barRods: [
-                          BarChartRodData(
-                            toY: e.value,
-                            width: 3,
-                            borderRadius: BorderRadius.circular(1.5),
-                            gradient: LinearGradient(
-                              colors: [
-                                accentColor.withValues(alpha: 0.9),
-                                accentColor.withValues(alpha: 0.3),
-                              ],
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                    .toList(),
-              ),
-              duration: const Duration(milliseconds: 600),
-              curve: Curves.easeOutCubic,
+          const SizedBox(height: 8),
+          // Real progress bar + caption (this month vs total / threshold)
+          ClipRRect(
+            borderRadius: BorderRadius.circular(3),
+            child: LinearProgressIndicator(
+              value: clampedProgress,
+              minHeight: 4,
+              backgroundColor: accentColor.withValues(alpha: 0.12),
+              valueColor: AlwaysStoppedAnimation(accentColor),
             ),
           ),
+          if (progressCaption != null) ...[
+            const SizedBox(height: 5),
+            Text(
+              progressCaption,
+              style: const TextStyle(
+                fontSize: 9.5,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textMuted,
+                letterSpacing: 0.2,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
         ],
       ),
     );
-  }
-
-  List<double> _sparkValuesFor(String title) {
-    // Small deterministic shapes per metric — visual rhythm cue, not data.
-    switch (title) {
-      case 'Business Sent':
-        return const [0.3, 0.5, 0.4, 0.65, 0.55, 0.78, 0.7, 0.92];
-      case 'Ratio':
-        return const [0.5, 0.55, 0.6, 0.58, 0.7, 0.68, 0.78, 0.82];
-      case 'Incoming':
-        return const [0.4, 0.35, 0.55, 0.5, 0.62, 0.6, 0.72, 0.85];
-      default:
-        return const [0.3, 0.5, 0.7, 0.6, 0.8, 0.7, 0.9, 0.8];
-    }
   }
 
   Widget _buildRoiHeroCard() {
@@ -2648,72 +2490,14 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
               ),
             ),
-            // Sparkline line+fill chart (fl_chart LineChart)
+            // Real ROI sparkline (fl_chart LineChart) — fed by _roiSeries
             Positioned(
               bottom: 18,
               right: 18,
               child: SizedBox(
                 width: 140,
                 height: 60,
-                child: LineChart(
-                  LineChartData(
-                    gridData: const FlGridData(show: false),
-                    titlesData: const FlTitlesData(show: false),
-                    borderData: FlBorderData(show: false),
-                    lineTouchData: const LineTouchData(enabled: false),
-                    minY: 0,
-                    maxY: 1.0,
-                    lineBarsData: [
-                      LineChartBarData(
-                        isCurved: true,
-                        curveSmoothness: 0.32,
-                        color: AppColors.accent,
-                        barWidth: 2,
-                        isStrokeCapRound: true,
-                        spots: const [
-                          FlSpot(0, 0.30),
-                          FlSpot(1, 0.42),
-                          FlSpot(2, 0.38),
-                          FlSpot(3, 0.55),
-                          FlSpot(4, 0.48),
-                          FlSpot(5, 0.62),
-                          FlSpot(6, 0.58),
-                          FlSpot(7, 0.72),
-                          FlSpot(8, 0.68),
-                          FlSpot(9, 0.84),
-                          FlSpot(10, 0.78),
-                          FlSpot(11, 0.95),
-                        ],
-                        dotData: FlDotData(
-                          show: true,
-                          checkToShowDot: (spot, bar) =>
-                              spot.x == bar.spots.last.x,
-                          getDotPainter: (spot, percent, bar, index) =>
-                              FlDotCirclePainter(
-                            radius: 3,
-                            color: AppColors.accent,
-                            strokeWidth: 4,
-                            strokeColor:
-                                AppColors.accent.withValues(alpha: 0.25),
-                          ),
-                        ),
-                        belowBarData: BarAreaData(
-                          show: true,
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              AppColors.accent.withValues(alpha: 0.42),
-                              AppColors.accent.withValues(alpha: 0.0),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  duration: const Duration(milliseconds: 900),
-                  curve: Curves.easeOutCubic,
-                ),
+                child: _buildRoiSparkline(),
               ),
             ),
             Padding(
@@ -2885,24 +2669,32 @@ class _DashboardPageState extends State<DashboardPage> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: ['1M', '3M', '1Y'].map((label) {
-          final active = label == '1M';
-          return Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              gradient: active
-                  ? const LinearGradient(colors: AppColors.goldGradient)
-                  : null,
+          final active = label == _roiPeriod;
+          return Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(7),
+            child: InkWell(
               borderRadius: BorderRadius.circular(7),
-            ),
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 9.5,
-                fontWeight: FontWeight.w900,
-                color: active
-                    ? Colors.white
-                    : Colors.white.withValues(alpha: 0.5),
-                letterSpacing: 0.4,
+              onTap: _loadingRoi || active ? null : () => _loadRoi(label),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                decoration: BoxDecoration(
+                  gradient: active
+                      ? const LinearGradient(colors: AppColors.goldGradient)
+                      : null,
+                  borderRadius: BorderRadius.circular(7),
+                ),
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w900,
+                    color: active
+                        ? Colors.white
+                        : Colors.white.withValues(alpha: 0.55),
+                    letterSpacing: 0.4,
+                  ),
+                ),
               ),
             ),
           );
@@ -2911,6 +2703,90 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
+  Widget _buildRoiSparkline() {
+    if (_loadingRoi) {
+      return Center(
+        child: SizedBox(
+          width: 18,
+          height: 18,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            valueColor: AlwaysStoppedAnimation(AppColors.accent.withValues(alpha: 0.7)),
+          ),
+        ),
+      );
+    }
+    if (_roiSeries.isEmpty) {
+      return Center(
+        child: Text(
+          'No data',
+          style: TextStyle(
+            fontSize: 10,
+            color: Colors.white.withValues(alpha: 0.4),
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.4,
+          ),
+        ),
+      );
+    }
+    // Compute min/max for auto-fit
+    double minY = _roiSeries.first.y;
+    double maxY = _roiSeries.first.y;
+    for (final s in _roiSeries) {
+      if (s.y < minY) minY = s.y;
+      if (s.y > maxY) maxY = s.y;
+    }
+    if ((maxY - minY).abs() < 0.0001) {
+      maxY = minY + 1; // avoid flat line edge case
+    }
+    final padding = (maxY - minY) * 0.12;
+    minY -= padding;
+    maxY += padding;
+
+    return LineChart(
+      LineChartData(
+        gridData: const FlGridData(show: false),
+        titlesData: const FlTitlesData(show: false),
+        borderData: FlBorderData(show: false),
+        lineTouchData: const LineTouchData(enabled: false),
+        minY: minY,
+        maxY: maxY,
+        lineBarsData: [
+          LineChartBarData(
+            isCurved: true,
+            curveSmoothness: 0.32,
+            color: AppColors.accent,
+            barWidth: 2,
+            isStrokeCapRound: true,
+            spots: _roiSeries,
+            dotData: FlDotData(
+              show: true,
+              checkToShowDot: (spot, bar) => spot.x == bar.spots.last.x,
+              getDotPainter: (spot, percent, bar, index) => FlDotCirclePainter(
+                radius: 3,
+                color: AppColors.accent,
+                strokeWidth: 4,
+                strokeColor: AppColors.accent.withValues(alpha: 0.25),
+              ),
+            ),
+            belowBarData: BarAreaData(
+              show: true,
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  AppColors.accent.withValues(alpha: 0.42),
+                  AppColors.accent.withValues(alpha: 0.0),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+      duration: const Duration(milliseconds: 600),
+      curve: Curves.easeOutCubic,
+    );
+  }
 }
 
 class _NavItem {
