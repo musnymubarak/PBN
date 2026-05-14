@@ -20,7 +20,8 @@ from app.features.analytics.service import (
     get_dashboard,
     get_leaderboard,
     get_analytics_roi,
-    get_admin_overview
+    get_admin_overview,
+    get_admin_timeseries,
 )
 
 router = APIRouter(tags=["Dashboard & Analytics"])
@@ -70,4 +71,15 @@ async def admin_overview_endpoint(
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
     results = await get_admin_overview(db)
+    return success_response(data=results)
+
+
+@router.get("/admin/analytics/timeseries", summary="Admin Growth Time-Series")
+async def admin_timeseries_endpoint(
+    metric: str = Query("members", description="One of: members, revenue, leads"),
+    days: int = Query(30, description="Window size in days (7, 30, or 90)"),
+    current_user: User = Depends(require_role([UserRole.SUPER_ADMIN])),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    results = await get_admin_timeseries(metric, days, db)
     return success_response(data=results)

@@ -38,6 +38,7 @@ async function apiFetch(path, options = {}) {
 
 export const api = {
   getAdminOverview: () => apiFetch('/admin/analytics/overview'),
+  getAdminTimeseries: (params = {}) => apiFetch(`/admin/analytics/timeseries?${new URLSearchParams(params)}`),
   getCurrentUser: () => apiFetch('/auth/me'),
   listUsers: (params = {}) => apiFetch(`/admin/users?${new URLSearchParams(params)}`),
   listIndustryCategories: () => apiFetch('/industry-categories'),

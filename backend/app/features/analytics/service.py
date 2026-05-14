@@ -405,31 +405,25 @@ async def get_analytics_roi(user_id: UUID, period: str, db: AsyncSession) -> Lis
 
 async def get_admin_overview(db: AsyncSession) -> Dict[str, Any]:
     from app.models.user import UserRole
-    total_members = (await db.execute(select(func.count(1)).where(User.role == UserRole.MEMBER))).scalar_one()
-    
+    from app.models.community import CommunityPost, PostType
+    from app.models.marketplace import MarketplaceInterest, InterestStatus
+
+    now = datetime.now(timezone.utc)
+    period_days = 30
+    cutoff = now - timedelta(days=period_days)
+
+    # ── Current cumulative values ───────────────────────────────────────────
+    total_members = (await db.execute(
+        select(func.count(1)).where(User.role == UserRole.MEMBER)
+    )).scalar_one()
+
     ref_stmt = select(
         func.count(1).label("total_ref"),
         func.count(1).filter(Referral.status == ReferralStatus.SUCCESS).label("won_ref"),
         func.coalesce(func.sum(Referral.actual_value), 0).label("tot_val")
     )
     ref_stats = (await db.execute(ref_stmt)).one()
-    
-    conversion_rate = 0.0
-    if ref_stats.total_ref > 0:
-        conversion_rate = (ref_stats.won_ref / ref_stats.total_ref) * 100.0
 
-    chap_stmt = select(
-        Chapter.name,
-        func.count(ChapterMembership.id).label("members")
-    ).outerjoin(ChapterMembership, ChapterMembership.chapter_id == Chapter.id)\
-     .group_by(Chapter.id, Chapter.name)
-     
-    members_by_chapter = [{"chapter": r.name, "count": r.members} for r in (await db.execute(chap_stmt)).all()]
-
-    # Economic Engine Admin Stats
-    from app.models.community import CommunityPost, PostType
-    from app.models.marketplace import MarketplaceInterest, InterestStatus
-    
     econ_stmt = select(
         func.count(case((CommunityPost.post_type == PostType.LEAD, 1))).label("total_leads"),
         func.count(case((CommunityPost.post_type == PostType.RFP, 1))).label("total_rfps"),
@@ -442,6 +436,50 @@ async def get_admin_overview(db: AsyncSession) -> Dict[str, Any]:
         .where(MarketplaceInterest.status == InterestStatus.DEAL_CONFIRMED)
     )).scalar_one()
 
+    # ── Previous-period values (cumulative state as of `cutoff`) ────────────
+    # Used by the admin dashboard for month-over-month trend chips.
+    prev_total_members = (await db.execute(
+        select(func.count(1)).where(
+            User.role == UserRole.MEMBER,
+            User.created_at <= cutoff,
+        )
+    )).scalar_one()
+
+    prev_ref_val = (await db.execute(
+        select(func.coalesce(func.sum(Referral.actual_value), 0))
+        .where(Referral.created_at <= cutoff)
+    )).scalar_one()
+
+    prev_econ_stmt = select(
+        func.count(case((CommunityPost.post_type == PostType.LEAD, 1))).label("prev_leads"),
+        func.count(case((CommunityPost.post_type == PostType.RFP, 1))).label("prev_rfps"),
+        func.coalesce(func.sum(CommunityPost.business_value), 0).label("prev_econ_val"),
+    ).where(CommunityPost.created_at <= cutoff)
+    prev_econ_stats = (await db.execute(prev_econ_stmt)).one()
+
+    prev_market_val = (await db.execute(
+        select(func.coalesce(func.sum(MarketplaceInterest.business_value), 0))
+        .where(
+            MarketplaceInterest.status == InterestStatus.DEAL_CONFIRMED,
+            MarketplaceInterest.created_at <= cutoff,
+        )
+    )).scalar_one()
+
+    # ── Members-by-chapter (existing) ───────────────────────────────────────
+    chap_stmt = select(
+        Chapter.name,
+        func.count(ChapterMembership.id).label("members"),
+    ).outerjoin(ChapterMembership, ChapterMembership.chapter_id == Chapter.id)\
+     .group_by(Chapter.id, Chapter.name)
+    members_by_chapter = [
+        {"chapter": r.name, "count": r.members}
+        for r in (await db.execute(chap_stmt)).all()
+    ]
+
+    conversion_rate = 0.0
+    if ref_stats.total_ref > 0:
+        conversion_rate = (ref_stats.won_ref / ref_stats.total_ref) * 100.0
+
     return {
         "total_members": total_members,
         "total_referrals": ref_stats.total_ref,
@@ -453,6 +491,93 @@ async def get_admin_overview(db: AsyncSession) -> Dict[str, Any]:
         "total_rfps": econ_stats.total_rfps,
         "conversion_rate": round(conversion_rate, 2),
         "members_by_chapter": members_by_chapter,
+
+        # ── Previous-period values (used by dashboard trend chips) ─────────
+        "period_days": period_days,
+        "previous_total_members": prev_total_members,
+        "previous_total_value": float(prev_ref_val) + float(prev_econ_stats.prev_econ_val) + float(prev_market_val),
+        "previous_total_leads": prev_econ_stats.prev_leads,
+        "previous_total_rfps": prev_econ_stats.prev_rfps,
+
         "referrals_by_month": [],  # Stub
-        "top_performing_chapters": [] # Stub
+        "top_performing_chapters": [],  # Stub
+    }
+
+
+async def get_admin_timeseries(metric: str, days: int, db: AsyncSession) -> Dict[str, Any]:
+    """
+    Daily/weekly buckets for one platform-wide metric, used by the admin
+    Analytics Hub growth chart.
+
+    Buckets are *new in period* (not cumulative). Use the dashboard
+    overview's `previous_total_*` values to get cumulative trend chips.
+
+      metric: 'members' | 'revenue' | 'leads'
+      days:   one of 7, 30, 90 (any other value is clamped)
+    """
+    from app.models.user import UserRole
+    from app.models.community import CommunityPost, PostType
+
+    if days not in (7, 30, 90):
+        days = 30
+    if metric not in ('members', 'revenue', 'leads'):
+        metric = 'members'
+
+    now = datetime.now(timezone.utc)
+    start = now - timedelta(days=days)
+
+    # ≤30 days → daily buckets; >30 days → weekly buckets.
+    if days <= 30:
+        bucket = 'day'
+        date_fmt = '%Y-%m-%d'
+        step = timedelta(days=1)
+    else:
+        bucket = 'week'
+        date_fmt = '%Y-%m-%d'
+        step = timedelta(days=7)
+
+    if metric == 'members':
+        stmt = select(
+            func.date_trunc(bucket, User.created_at).label("ts"),
+            func.count(1).label("v"),
+        ).where(
+            User.role == UserRole.MEMBER,
+            User.created_at >= start,
+        ).group_by(text("ts")).order_by(text("ts"))
+    elif metric == 'revenue':
+        stmt = select(
+            func.date_trunc(bucket, Referral.created_at).label("ts"),
+            func.coalesce(func.sum(Referral.actual_value), 0).label("v"),
+        ).where(Referral.created_at >= start)\
+         .group_by(text("ts")).order_by(text("ts"))
+    else:  # leads
+        stmt = select(
+            func.date_trunc(bucket, CommunityPost.created_at).label("ts"),
+            func.count(1).label("v"),
+        ).where(
+            CommunityPost.post_type == PostType.LEAD,
+            CommunityPost.created_at >= start,
+        ).group_by(text("ts")).order_by(text("ts"))
+
+    rows = (await db.execute(stmt)).all()
+    by_key = {r.ts.strftime(date_fmt): float(r.v) for r in rows}
+
+    # Fill empty buckets so the sparkline is continuous.
+    if bucket == 'week':
+        cur = start - timedelta(days=start.weekday())
+    else:
+        cur = start
+    cur = cur.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    buckets: List[Dict[str, Any]] = []
+    while cur <= now:
+        k = cur.strftime(date_fmt)
+        buckets.append({"date": k, "value": by_key.get(k, 0)})
+        cur += step
+
+    return {
+        "metric": metric,
+        "days": days,
+        "bucket": bucket,
+        "buckets": buckets,
     }

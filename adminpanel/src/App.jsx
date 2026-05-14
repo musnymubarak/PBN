@@ -41,6 +41,8 @@ import {
 } from '@tabler/icons-react';
 import { api, STATIC_BASE_URL } from './lib/api';
 import { useApi } from './hooks/useApi';
+import { AppShell } from './components/layout/AppShell';
+import * as Ds from './components/ui';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 
@@ -149,41 +151,7 @@ function LoginPage({ onLogin }) {
   );
 }
 
-const MENU_GROUPS = [
-  {
-    label: 'Main Dashboard',
-    links: [
-      { id: 'overview', icon: IconChartBar, label: 'Analytics Hub' },
-      { id: 'members', icon: IconUsers, label: 'Member Directory' },
-    ]
-  },
-  {
-    label: 'Operations',
-    links: [
-      { id: 'applications', icon: IconClipboardList, label: 'Applications' },
-      { id: 'referrals', icon: IconHierarchy2, label: 'Referral Pipeline' },
-      { id: 'events', icon: IconCalendarEvent, label: 'Event Management' },
-      { id: 'marketplace', icon: IconBuildingStore, label: 'Marketplace' },
-      { id: 'payments', icon: IconCoin, label: 'Payments' },
-      { id: 'revenue', icon: IconChartBar, label: 'Revenue & ROI' },
-    ]
-  },
-  {
-    label: 'Expansion',
-    links: [
-      { id: 'rewards', icon: IconBuildingStore, label: 'Rewards Hub' },
-      { id: 'chapters', icon: IconBuildingCommunity, label: 'Global Chapters' },
-      { id: 'clubs', icon: IconHierarchy2, label: 'Horizontal Clubs' },
-    ]
-  },
-  {
-    label: 'System & Security',
-    links: [
-      { id: 'settings', icon: IconSettings, label: 'Global Settings' },
-      { id: 'notifications', icon: IconBell, label: 'Security Logs' },
-    ]
-  }
-];
+// MENU_GROUPS extracted to ./components/layout/menuConfig.js
 
 const StatCard = ({ title, value, icon, trend, color }) => (
   <div className="modern-card">
@@ -208,6 +176,22 @@ const formatCurrency = (val) => {
   return `LKR ${val}`;
 };
 
+const formatRelativeTime = (dateStr) => {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return '';
+  const diffSec = Math.round((Date.now() - date.getTime()) / 1000);
+  if (diffSec < 60) return 'just now';
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `${diffHr}h ago`;
+  const diffDay = Math.floor(diffHr / 24);
+  if (diffDay === 1) return 'yesterday';
+  if (diffDay < 7) return `${diffDay}d ago`;
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+};
+
 // ── Status Helpers ──────────────────────────────────────────────────────────
 
 const STATUS_CONFIG = {
@@ -218,14 +202,40 @@ const STATUS_CONFIG = {
   waitlisted: { label: 'Waitlisted', class: 'pill-waitlisted', color: '#6b7280', bg: '#f9fafb' },
 };
 
+// Referral pipeline status → Ds.Badge variant + label
+function referralStatusVariant(status) {
+  switch (status) {
+    case 'closed_won': return 'success';
+    case 'closed_lost': return 'danger';
+    case 'in_progress':
+    case 'pending': return 'warning';
+    case 'qualified': return 'info';
+    default: return 'neutral';
+  }
+}
+
+function referralStatusLabel(status) {
+  if (!status) return 'Unknown';
+  return String(status).replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
 const getStatusConfig = (status) => STATUS_CONFIG[status] || { label: status, class: '', color: '#6b7280', bg: '#f9fafb' };
+
+const STATUS_BADGE_VARIANT = {
+  pending: 'warning',
+  fit_call_scheduled: 'info',
+  approved: 'success',
+  rejected: 'danger',
+  waitlisted: 'neutral',
+};
 
 const StatusPill = ({ status }) => {
   const cfg = getStatusConfig(status);
+  const variant = STATUS_BADGE_VARIANT[status] || 'neutral';
   return (
-    <span className="pill" style={{ background: cfg.bg, color: cfg.color }}>
+    <Ds.Badge dot variant={variant}>
       {cfg.label}
-    </span>
+    </Ds.Badge>
   );
 };
 
@@ -868,160 +878,144 @@ function ApplicationsPage() {
   ];
 
   return (
-    <section className="dashboard-body">
-      <div className="page-title-wrap">
-        <h1 className="page-title">Member Applications</h1>
-        <p style={{ color: 'var(--text-secondary)', marginTop: '0.4rem', fontWeight: 500 }}>
-          Review, approve, and manage membership applications across the network.
-        </p>
-      </div>
-
-      {/* Stats Row */}
-      <div className="stat-grid" style={{ marginBottom: '2rem' }}>
-        <StatCard title="TOTAL APPLICATIONS" value={total} icon={IconClipboardList} color="#2563eb" />
-        <StatCard title="PENDING REVIEW" value={apps.filter(a => a.status === 'pending').length} icon={IconClock} color="#f59e0b" />
-        <StatCard title="APPROVED" value={apps.filter(a => a.status === 'approved').length} icon={IconCheck} color="#059669" />
-        <StatCard title="REJECTED" value={apps.filter(a => a.status === 'rejected').length} icon={IconX} color="#dc2626" />
-      </div>
-
-      {/* Table */}
-      <div className="data-section">
-        <div className="section-head">
-          <div>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Application Queue</h3>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
-              Click on any application to view details and take action.
-            </p>
-          </div>
-          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-            {/* Status Filter Chips */}
-            <div className="filter-chips">
-              {statusFilters.map(f => (
-                <button
-                  key={f.value}
-                  className={`filter-chip ${statusFilter === f.value ? 'active' : ''}`}
-                  onClick={() => { setStatusFilter(f.value); setPage(1); }}
-                >
-                  {f.label}
-                </button>
-              ))}
-            </div>
-            <button
-              className="btn-primary"
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.25rem', background: '#10b981' }}
-              onClick={() => setShowCreateModal(true)}
-            >
-              <IconPlus size={16} />
-              Add Application
-            </button>
-            <button
-              className="btn-primary"
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.25rem' }}
+    <section className="ds-page">
+      <Ds.PageHeader
+        title="Member Applications"
+        description="Review, approve, and manage membership applications across the network."
+        actions={
+          <>
+            <Ds.Button
+              variant="secondary"
+              leftIcon={<IconRefresh size={14} />}
               onClick={fetchApps}
             >
-              <IconRefresh size={16} />
               Refresh
-            </button>
-          </div>
-        </div>
+            </Ds.Button>
+            <Ds.Button
+              variant="primary"
+              leftIcon={<IconPlus size={14} />}
+              onClick={() => setShowCreateModal(true)}
+            >
+              New Application
+            </Ds.Button>
+          </>
+        }
+      />
 
-        <table className="modern-table">
+      <div className="ds-stat-grid">
+        <Ds.StatCard
+          label="Total"
+          value={total}
+          icon={IconClipboardList}
+          iconColor="var(--brand-blue)"
+          iconBg="var(--brand-blue-50)"
+        />
+        <Ds.StatCard
+          label="Pending review"
+          value={apps.filter(a => a.status === 'pending').length}
+          icon={IconClock}
+          iconColor="var(--warning)"
+          iconBg="var(--warning-bg)"
+        />
+        <Ds.StatCard
+          label="Approved"
+          value={apps.filter(a => a.status === 'approved').length}
+          icon={IconCheck}
+          iconColor="var(--success)"
+          iconBg="var(--success-bg)"
+        />
+        <Ds.StatCard
+          label="Rejected"
+          value={apps.filter(a => a.status === 'rejected').length}
+          icon={IconX}
+          iconColor="var(--danger)"
+          iconBg="var(--danger-bg)"
+        />
+      </div>
+
+      <Ds.Section
+        title="Application Queue"
+        subtitle="Click any row to view details and take action."
+        flush
+        actions={
+          <Ds.ChipGroup
+            value={statusFilter}
+            onChange={val => { setStatusFilter(val); setPage(1); }}
+            options={statusFilters.map(f => ({ value: f.value, label: f.label }))}
+          />
+        }
+      >
+        <Ds.Table>
           <thead>
             <tr>
               <th>Applicant</th>
               <th>Business</th>
               <th>Contact</th>
-              <th>Targetted Chapter</th>
+              <th>Target chapter</th>
               <th>Status</th>
-              <th>Applied On</th>
-              <th>Actions</th>
+              <th>Applied</th>
+              <th className="ds-table__actions" />
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={7} style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
-                  <div style={{ width: 28, height: 28, border: '3px solid #e2e8f0', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-                  Loading applications...
-                </div>
-              </td></tr>
+              <Ds.Table.LoadingRow colSpan={7} label="Loading applications…" />
             ) : apps.length === 0 ? (
-              <tr><td colSpan={7} style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
-                <IconClipboardList size={40} stroke={1.2} color="#cbd5e1" style={{ marginBottom: '0.75rem' }} />
-                <p style={{ fontWeight: 600 }}>No applications found</p>
-                <p style={{ fontSize: '0.8rem', marginTop: '0.25rem' }}>Try changing the status filter above.</p>
-              </td></tr>
+              <Ds.Table.EmptyRow
+                colSpan={7}
+                icon={IconClipboardList}
+                title="No applications found"
+                description="Try changing the status filter above."
+              />
             ) : apps.map((app, idx) => (
-              <tr key={app.id || idx} className="table-row-clickable" onClick={() => setSelectedAppId(app.id)}>
+              <tr key={app.id || idx} className="is-clickable" onClick={() => setSelectedAppId(app.id)}>
                 <td>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <div className="avatar-sm" style={{ background: `hsl(${(app.full_name || '').charCodeAt(0) * 7 % 360}, 60%, 92%)`, color: `hsl(${(app.full_name || '').charCodeAt(0) * 7 % 360}, 60%, 35%)` }}>
-                      {(app.full_name || '?')[0]}
-                    </div>
-                    <span style={{ fontWeight: 700 }}>{app.full_name}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+                    <Ds.Avatar size="sm" name={app.full_name || '?'} />
+                    <span className="ds-table__primary">{app.full_name}</span>
                   </div>
                 </td>
-                <td style={{ fontWeight: 500 }}>{app.business_name}</td>
-                <td style={{ color: 'var(--text-secondary)' }}>{app.contact_number}</td>
-                <td style={{ color: 'var(--text-secondary)' }}>{app.chapter_name || '—'}</td>
+                <td className="ds-table__primary">{app.business_name}</td>
+                <td className="ds-table__muted">{app.contact_number}</td>
+                <td className="ds-table__muted">{app.chapter_name || '—'}</td>
                 <td><StatusPill status={app.status} /></td>
-                <td style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                <td className="ds-table__muted">
                   {new Date(app.created_at).toLocaleDateString()}
                 </td>
-                <td>
-                  <ApplicationActionMenu 
-                    app={app} 
-                    onView={() => { setSelectedAppId(app.id); }}
-                  />
+                <td className="ds-table__actions" onClick={e => e.stopPropagation()}>
+                  <ApplicationActionMenu app={app} onView={() => setSelectedAppId(app.id)} />
                 </td>
               </tr>
             ))}
           </tbody>
-        </table>
+        </Ds.Table>
 
-        {/* Pagination */}
-        <div style={{ padding: '1.25rem 2.5rem', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
-            {total > 0 ? `Showing page ${page} of ${pages} · ${total} total applications` : 'No records found'}
-          </p>
-          {pages > 1 && (
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button
-                className="pagination-btn"
-                disabled={page <= 1}
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-              >
-                <IconChevronLeft size={16} /> Prev
-              </button>
-              <button
-                className="pagination-btn"
-                disabled={page >= pages}
-                onClick={() => setPage(p => p + 1)}
-              >
-                Next <IconChevronRight size={16} />
-              </button>
-            </div>
-          )}
-        </div>
+        <Ds.Pagination
+          page={page}
+          totalPages={pages}
+          total={total}
+          pageLabel="applications"
+          onPageChange={p => setPage(Math.max(1, p))}
+        />
+      </Ds.Section>
 
-        {selectedAppId && (
-          <ApplicationDetailModal
-            appId={selectedAppId}
-            onClose={() => setSelectedAppId(null)}
-            onStatusUpdated={fetchApps}
-          />
-        )}
+      {selectedAppId && (
+        <ApplicationDetailModal
+          appId={selectedAppId}
+          onClose={() => setSelectedAppId(null)}
+          onStatusUpdated={fetchApps}
+        />
+      )}
 
-        {showCreateModal && (
-          <CreateApplicationModal
-            onClose={() => setShowCreateModal(false)}
-            onCreated={() => {
-              setShowCreateModal(false);
-              fetchApps();
-            }}
-          />
-        )}
-      </div>
+      {showCreateModal && (
+        <CreateApplicationModal
+          onClose={() => setShowCreateModal(false)}
+          onCreated={() => {
+            setShowCreateModal(false);
+            fetchApps();
+          }}
+        />
+      )}
     </section>
   );
 }
@@ -1299,155 +1293,155 @@ function MembersPage() {
     });
   }, []);
 
+  const roleOptions = [
+    { id: 'MEMBER', name: 'Members' },
+    { id: 'PROSPECT', name: 'Prospects' },
+    { id: 'CHAPTER_ADMIN', name: 'Chapter Admins' },
+    { id: 'PARTNER_ADMIN', name: 'Partner Admins' },
+  ];
+
   return (
-    <section className="dashboard-body">
-      <div className="page-title-wrap">
-        <h1 className="page-title">Member Directory</h1>
-        <p style={{ color: 'var(--text-secondary)', marginTop: '0.4rem', fontWeight: 500 }}>
-          Browse, filter, and search through all members and prospects in the network.
-        </p>
-      </div>
+    <section className="ds-page">
+      <Ds.PageHeader
+        title="Member Directory"
+        description="Browse, filter, and search every member and prospect across the network."
+        actions={
+          <Ds.Button
+            variant="secondary"
+            leftIcon={<IconRefresh size={14} />}
+            onClick={() => { setPage(1); fetchMembers(); }}
+          >
+            Refresh
+          </Ds.Button>
+        }
+      />
 
-      <div className="data-section">
-        <div className="section-head" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '1.5rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Network Registry</h3>
-            <button className="btn-primary" onClick={() => { setPage(1); fetchMembers(); }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <IconRefresh size={18} /> Refresh
-            </button>
-          </div>
-
-          <div className="directory-filters" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-            <div style={{ flex: 1, minWidth: '250px', position: 'relative' }}>
-              <IconSearch size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-              <input
-                type="text"
-                placeholder="Search by name, phone or chapter..."
-                className="filter-input v2"
-                style={{ paddingLeft: '40px', width: '100%', height: '48px' }}
-                value={search}
-                onChange={e => { setSearch(e.target.value); setPage(1); }}
-              />
-            </div>
-            <CustomSelect
-              label="All Chapters"
-              value={chapterFilter}
-              options={chapters}
-              onChange={(val) => { setChapterFilter(val); setPage(1); }}
-              style={{ width: '220px' }}
-            />
-
-            <CustomSelect
-              label="All Industries (Network)"
-              value={industryFilter}
-              options={industries}
-              onChange={(val) => { setIndustryFilter(val); setPage(1); }}
-              style={{ width: '240px' }}
-            />
-
-            <CustomSelect
-              label="All Roles"
-              value={roleFilter}
-              options={[
-                { id: 'MEMBER', name: 'Members' },
-                { id: 'PROSPECT', name: 'Prospects' },
-                { id: 'CHAPTER_ADMIN', name: 'Chapter Admins' },
-                { id: 'PARTNER_ADMIN', name: 'Partner Admins' }
-              ]}
-              onChange={(val) => { setRoleFilter(val); setPage(1); }}
-              style={{ width: '200px' }}
-            />
-          </div>
+      <Ds.Section
+        title="Network Registry"
+        subtitle={total > 0 ? `${total.toLocaleString()} people in the directory` : undefined}
+        flush
+      >
+        <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', padding: 'var(--space-5) var(--space-6)', borderBottom: '1px solid var(--border-subtle)' }}>
+          <Ds.Input
+            placeholder="Search by name, phone or chapter…"
+            value={search}
+            onChange={e => { setSearch(e.target.value); setPage(1); }}
+            leftIcon={<IconSearch size={14} />}
+            wrapClassName=""
+            style={{ flex: 1, minWidth: 240 }}
+          />
+          <Ds.Select
+            placeholder="All chapters"
+            value={chapterFilter}
+            options={chapters}
+            allowClear
+            onChange={val => { setChapterFilter(val); setPage(1); }}
+            style={{ width: 200 }}
+          />
+          <Ds.Select
+            placeholder="All industries"
+            value={industryFilter}
+            options={industries}
+            allowClear
+            onChange={val => { setIndustryFilter(val); setPage(1); }}
+            style={{ width: 220 }}
+          />
+          <Ds.Select
+            placeholder="All roles"
+            value={roleFilter}
+            options={roleOptions}
+            allowClear
+            onChange={val => { setRoleFilter(val); setPage(1); }}
+            style={{ width: 180 }}
+          />
         </div>
 
-        <table className="modern-table">
+        <Ds.Table>
           <thead>
             <tr>
-              <th>Member Name</th>
+              <th>Member</th>
               <th>Chapter</th>
-              <th>Network (Industry)</th>
+              <th>Industry</th>
               <th>Role</th>
               <th>Status</th>
-              <th>Joined Date</th>
-              <th style={{ textAlign: 'right' }}>Actions</th>
+              <th>Joined</th>
+              <th className="ds-table__actions" />
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={6} style={{ textAlign: 'center', padding: '3rem' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
-                  <div style={{ width: 28, height: 28, border: '3px solid #e2e8f0', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-                  Loading directory...
-                </div>
-              </td></tr>
+              <Ds.Table.LoadingRow colSpan={7} label="Loading directory…" />
             ) : users.length === 0 ? (
-              <tr><td colSpan={6} style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>No members found matching your criteria.</td></tr>
+              <Ds.Table.EmptyRow
+                colSpan={7}
+                icon={IconUsers}
+                title="No members found"
+                description="Try clearing filters or adjusting your search."
+              />
             ) : users.map(user => (
-              <tr key={user.id} className="table-row-clickable" onClick={() => setSelectedUser(user)}>
+              <tr key={user.id} className="is-clickable" onClick={() => setSelectedUser(user)}>
                 <td>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <div className="avatar-sm" style={{ background: '#f1f5f9', color: 'var(--primary)' }}>
-                      {user.full_name ? user.full_name[0] : '?'}
-                    </div>
-                    <div>
-                      <div style={{ fontWeight: 700 }}>{user.full_name || 'Unnamed User'}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{user.phone_number}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+                    <Ds.Avatar size="sm" name={user.full_name || '?'} />
+                    <div style={{ minWidth: 0 }}>
+                      <div className="ds-table__primary">{user.full_name || 'Unnamed User'}</div>
+                      <div style={{ fontSize: 'var(--text-xs)', color: 'var(--fg-muted)', fontWeight: 'var(--weight-medium)' }}>
+                        {user.phone_number}
+                      </div>
                     </div>
                   </div>
                 </td>
                 <td>
-                  {user.chapter_name ? (
-                    <span className="id-badge" style={{ background: '#e0f2fe', color: '#0369a1' }}>{user.chapter_name}</span>
-                  ) : <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>No Chapter</span>}
+                  {user.chapter_name
+                    ? <Ds.Badge variant="brand">{user.chapter_name}</Ds.Badge>
+                    : <span style={{ color: 'var(--fg-muted)', fontSize: 'var(--text-sm)' }}>No chapter</span>}
                 </td>
-                <td>{user.industry_name || '—'}</td>
+                <td className="ds-table__muted">{user.industry_name || '—'}</td>
                 <td>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 600, color: user.role === 'PROSPECT' ? '#f59e0b' : '#64748b' }}>
-                    {user.role}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{
+                      fontSize: 'var(--text-sm)',
+                      fontWeight: 'var(--weight-semibold)',
+                      color: user.role === 'PROSPECT' ? 'var(--brand-amber-600)' : 'var(--fg-secondary)',
+                    }}>
+                      {user.role}
+                    </span>
                     {user.membership_type && user.membership_type !== 'standard' && (
-                      <span style={{ marginLeft: '6px', fontSize: '0.7rem', background: '#fef3c7', color: '#92400e', padding: '2px 6px', borderRadius: '4px' }}>
-                        {user.membership_type.replace('_', ' ').toUpperCase()}
-                      </span>
+                      <Ds.Badge variant="accent">
+                        {user.membership_type.replace(/_/g, ' ').toUpperCase()}
+                      </Ds.Badge>
                     )}
-                  </span>
+                  </div>
                 </td>
                 <td>
-                  <span className={`pill ${user.is_active
-                      ? 'pill-approved'
-                      : user.role === 'PROSPECT'
-                        ? 'pill-awaiting-payment'
-                        : 'pill-rejected'
-                    }`}>
-                    {user.is_active ? 'Active' : user.role === 'PROSPECT' ? 'Awaiting Payment' : 'Inactive'}
-                  </span>
+                  <Ds.Badge
+                    dot
+                    variant={
+                      user.is_active ? 'success' : user.role === 'PROSPECT' ? 'warning' : 'danger'
+                    }
+                  >
+                    {user.is_active ? 'Active' : user.role === 'PROSPECT' ? 'Awaiting payment' : 'Inactive'}
+                  </Ds.Badge>
                 </td>
-                <td style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                <td className="ds-table__muted">
                   {user.created_at ? new Date(user.created_at).toLocaleDateString() : '—'}
                 </td>
-                <td style={{ textAlign: 'right' }}>
-                  <UserActionMenu 
-                    user={user}
-                    onEdit={() => setSelectedUser(user)}
-                  />
+                <td className="ds-table__actions" onClick={e => e.stopPropagation()}>
+                  <UserActionMenu user={user} onEdit={() => setSelectedUser(user)} />
                 </td>
               </tr>
             ))}
           </tbody>
-        </table>
+        </Ds.Table>
 
-        {/* Pagination */}
-        <div style={{ padding: '1.25rem 2.5rem', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
-            {total > 0 ? `Showing page ${page} of ${pages} · ${total} users` : 'No members found'}
-          </p>
-          {pages > 1 && (
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button className="pagination-btn" disabled={page <= 1} onClick={() => setPage(p => p - 1)}><IconChevronLeft size={16} /> Prev</button>
-              <button className="pagination-btn" disabled={page >= pages} onClick={() => setPage(p => p + 1)}>Next <IconChevronRight size={16} /></button>
-            </div>
-          )}
-        </div>
-      </div>
+        <Ds.Pagination
+          page={page}
+          totalPages={pages}
+          total={total}
+          pageLabel="members"
+          onPageChange={setPage}
+        />
+      </Ds.Section>
 
       {selectedUser && (
         <UserEditModal
@@ -1722,73 +1716,116 @@ function PaymentsPage() {
     api.listUsers({ limit: 1000 }).then(data => setUsers(data.users || []));
   }, [fetchPayments]);
 
+  const completedTotal = payments
+    .filter(p => p.status === 'completed')
+    .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+  const pendingCount = payments.filter(p => p.status === 'pending').length;
+
   return (
-    <section className="dashboard-body">
-      <div className="page-title-wrap" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h1 className="page-title">Payment Management</h1>
-          <p style={{ color: 'var(--text-secondary)', marginTop: '0.4rem', fontWeight: 500 }}>
-            Track and record all network transactions and membership fees.
-          </p>
-        </div>
-        <button className="btn-primary" onClick={() => setShowRecordModal(true)} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-          <IconCoin size={20} /> Record Direct Payment
-        </button>
+    <section className="ds-page">
+      <Ds.PageHeader
+        title="Payments"
+        description="Track and record all network transactions and membership fees."
+        actions={
+          <>
+            <Ds.Button
+              variant="secondary"
+              leftIcon={<IconRefresh size={14} />}
+              onClick={fetchPayments}
+            >
+              Refresh
+            </Ds.Button>
+            <Ds.Button
+              variant="primary"
+              leftIcon={<IconCoin size={14} />}
+              onClick={() => setShowRecordModal(true)}
+            >
+              Record payment
+            </Ds.Button>
+          </>
+        }
+      />
+
+      <div className="ds-stat-grid">
+        <Ds.StatCard
+          label="Transactions"
+          value={payments.length}
+          icon={IconCoin}
+          iconColor="var(--brand-blue)"
+          iconBg="var(--brand-blue-50)"
+        />
+        <Ds.StatCard
+          label="Completed value"
+          value={formatCurrency(completedTotal)}
+          icon={IconCheck}
+          iconColor="var(--success)"
+          iconBg="var(--success-bg)"
+        />
+        <Ds.StatCard
+          label="Pending"
+          value={pendingCount}
+          icon={IconClock}
+          iconColor="var(--warning)"
+          iconBg="var(--warning-bg)"
+        />
       </div>
 
-      <div className="data-section">
-        <div className="section-head">
-          <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Transaction History</h3>
-          <button className="view-detail-btn" onClick={fetchPayments}><IconRefresh size={18} /></button>
-        </div>
-
-        <table className="modern-table">
+      <Ds.Section title="Transaction History" flush>
+        <Ds.Table>
           <thead>
             <tr>
               <th>Date</th>
-              <th>User</th>
+              <th>Member</th>
               <th>Reason</th>
               <th>Type</th>
               <th>Amount</th>
               <th>Status</th>
-              <th>Actions</th>
+              <th className="ds-table__actions" />
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={7} style={{ textAlign: 'center', padding: '3rem' }}>Loading payments...</td></tr>
+              <Ds.Table.LoadingRow colSpan={7} label="Loading payments…" />
             ) : payments.length === 0 ? (
-              <tr><td colSpan={7} style={{ textAlign: 'center', padding: '3rem' }}>No payments found.</td></tr>
+              <Ds.Table.EmptyRow
+                colSpan={7}
+                icon={IconCoin}
+                title="No payments yet"
+                description="Recorded transactions will appear here."
+              />
             ) : payments.map(p => (
               <tr key={p.id}>
-                <td style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                <td className="ds-table__muted">
                   {new Date(p.created_at).toLocaleDateString()}
                 </td>
                 <td>
-                  <div style={{ fontWeight: 600 }}>{p.user_name || 'Unknown'}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{p.user_phone}</div>
+                  <div className="ds-table__primary">{p.user_name || 'Unknown'}</div>
+                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--fg-muted)', fontWeight: 'var(--weight-medium)' }}>
+                    {p.user_phone}
+                  </div>
                 </td>
-                <td style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <td style={{ maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} className="ds-table__muted">
                   {p.reason || '—'}
                 </td>
-                <td><span className="id-badge">{p.payment_type}</span></td>
-                <td style={{ fontWeight: 700 }}>{formatCurrency(p.amount)}</td>
                 <td>
-                  <span className={`pill ${p.status === 'completed' ? 'pill-approved' : 'pill-pending'}`}>
-                    {p.status}
-                  </span>
+                  <Ds.Badge variant="neutral">{p.payment_type}</Ds.Badge>
+                </td>
+                <td className="ds-table__primary" style={{ fontWeight: 'var(--weight-bold)' }}>
+                  {formatCurrency(p.amount)}
                 </td>
                 <td>
-                  <PaymentActionMenu 
-                    payment={p}
-                    onEdit={() => setEditingPayment(p)}
-                  />
+                  <Ds.Badge dot variant={p.status === 'completed' ? 'success' : p.status === 'failed' ? 'danger' : 'warning'}>
+                    {p.status}
+                  </Ds.Badge>
+                </td>
+                <td className="ds-table__actions">
+                  <PaymentActionMenu payment={p} onEdit={() => setEditingPayment(p)} />
                 </td>
               </tr>
             ))}
           </tbody>
-        </table>
-      </div>
+        </Ds.Table>
+      </Ds.Section>
 
       {showRecordModal && (
         <RecordPaymentModal
@@ -2672,101 +2709,110 @@ function PrivilegeCardsTab() {
   };
 
   return (
-    <div>
-      <div className="section-head">
-        <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Issued Cards</h3>
-        <button className="btn-primary" onClick={() => setShowIssueModal(true)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <IconPlus size={18} /> Issue Card
-        </button>
-      </div>
-
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', background: '#f8fafc', padding: '1rem', borderRadius: '12px' }}>
-        <div style={{ flex: 1, position: 'relative' }}>
-          <IconSearch size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-          <input 
-            type="text" 
-            placeholder="Search by card #, name, or email..." 
-            className="filter-input v2"
-            style={{ paddingLeft: '40px', marginBottom: 0 }}
+    <Ds.Section
+      title="Issued Cards"
+      subtitle={`${filteredCards.length} of ${cards.length} cards`}
+      flush
+      actions={
+        <>
+          <Ds.Input
+            placeholder="Search by card #, name or email…"
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
+            leftIcon={<IconSearch size={14} />}
+            size="sm"
+            style={{ width: 280 }}
           />
-        </div>
-        <select 
-          className="filter-input v2" 
-          style={{ width: '200px', marginBottom: 0 }}
-          value={statusFilter}
-          onChange={e => setStatusFilter(e.target.value)}
-        >
-          <option value="all">All Statuses</option>
-          <option value="active">Active Only</option>
-          <option value="suspended">Suspended</option>
-          <option value="replaced">Replaced</option>
-        </select>
-      </div>
-      
-      {loading ? (
-        <div style={{ padding: '4rem', textAlign: 'center' }}>Loading cards...</div>
-      ) : (
-        <table className="modern-table">
-          <thead>
-            <tr>
-              <th>Card Number</th>
-              <th>Member</th>
-              <th>Status</th>
-              <th>Physical Issued</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredCards.map(card => (
-              <tr key={card.id}>
-                <td style={{ fontWeight: 600 }}>{card.card_number}</td>
-                <td>
-                  <div style={{ fontWeight: 700 }}>{card.member_name}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{card.member_email}</div>
-                </td>
-                <td>
-                  <span className={`pill ${
-                    card.card_status === 'active' ? 'pill-completed' : 
-                    card.card_status === 'suspended' ? 'pill-awaiting-payment' : 
-                    'pill-rejected'
-                  }`}>
-                    {card.card_status.toUpperCase()}
+          <Ds.Select
+            value={statusFilter}
+            onChange={setStatusFilter}
+            options={[
+              { id: 'all', name: 'All statuses' },
+              { id: 'active', name: 'Active' },
+              { id: 'suspended', name: 'Suspended' },
+              { id: 'replaced', name: 'Replaced' },
+            ]}
+            style={{ width: 160 }}
+            size="sm"
+          />
+          <Ds.Button
+            variant="primary"
+            size="sm"
+            leftIcon={<IconPlus size={14} />}
+            onClick={() => setShowIssueModal(true)}
+          >
+            Issue card
+          </Ds.Button>
+        </>
+      }
+    >
+      <Ds.Table>
+        <thead>
+          <tr>
+            <th>Card #</th>
+            <th>Member</th>
+            <th>Status</th>
+            <th>Physical</th>
+            <th className="ds-table__actions" />
+          </tr>
+        </thead>
+        <tbody>
+          {loading ? (
+            <Ds.Table.LoadingRow colSpan={5} label="Loading cards…" />
+          ) : filteredCards.length === 0 ? (
+            <Ds.Table.EmptyRow
+              colSpan={5}
+              icon={IconGift}
+              title={searchTerm || statusFilter !== 'all' ? 'No matching cards' : 'No cards issued yet'}
+              description={searchTerm || statusFilter !== 'all' ? 'Adjust filters to see more.' : 'Issue your first privilege card to get started.'}
+            />
+          ) : filteredCards.map(card => (
+            <tr key={card.id}>
+              <td className="ds-table__primary" style={{ fontFamily: 'ui-monospace, monospace' }}>
+                {card.card_number}
+              </td>
+              <td>
+                <div className="ds-table__primary">{card.member_name}</div>
+                <div style={{ fontSize: 'var(--text-xs)', color: 'var(--fg-muted)' }}>{card.member_email}</div>
+              </td>
+              <td>
+                <Ds.Badge
+                  dot
+                  variant={card.card_status === 'active' ? 'success' : card.card_status === 'suspended' ? 'warning' : 'danger'}
+                >
+                  {card.card_status}
+                </Ds.Badge>
+              </td>
+              <td>
+                {card.physical_issued ? (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--success)', fontWeight: 'var(--weight-semibold)', fontSize: 'var(--text-sm)' }}>
+                    <IconCheck size={14} /> Yes
                   </span>
-                </td>
-                <td>
-                  {card.physical_issued ? (
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#10b981', fontWeight: 600 }}>
-                      <IconCheck size={18} /> Yes
-                    </span>
-                  ) : (
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-secondary)' }}>
-                      <IconX size={18} /> No
-                    </span>
-                  )}
-                </td>
-                <td>
-                  <CardActionMenu 
-                    card={card}
-                    onEdit={() => setEditingCard(card)}
-                    onHistory={() => setHistoryCard(card)}
-                    onSuspend={() => handleSuspend(card.id)}
-                    onReplace={() => handleReplace(card.id)}
-                    onActivate={() => handleActivate(card.id)}
-                  />
-                </td>
-              </tr>
-            ))}
-            {filteredCards.length === 0 && <tr><td colSpan="5" style={{ textAlign: 'center', padding: '2rem' }}>{searchTerm || statusFilter !== 'all' ? 'No matching cards found.' : 'No cards issued yet.'}</td></tr>}
-          </tbody>
-        </table>
-      )}
+                ) : (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--fg-muted)', fontSize: 'var(--text-sm)' }}>
+                    <IconX size={14} /> No
+                  </span>
+                )}
+              </td>
+              <td className="ds-table__actions">
+                <CardActionMenu
+                  card={card}
+                  onEdit={() => setEditingCard(card)}
+                  onHistory={() => setHistoryCard(card)}
+                  onSuspend={() => handleSuspend(card.id)}
+                  onReplace={() => handleReplace(card.id)}
+                  onActivate={() => handleActivate(card.id)}
+                />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </Ds.Table>
 
       {showIssueModal && <IssueCardModal onClose={() => setShowIssueModal(false)} onIssued={() => { setShowIssueModal(false); fetchCards(); }} />}
       {editingCard && <EditCardModal card={editingCard} onClose={() => setEditingCard(null)} onUpdated={() => { setEditingCard(null); fetchCards(); }} />}
       {historyCard && <CardHistoryModal card={historyCard} onClose={() => setHistoryCard(null)} />}
-    </div>
+    </Ds.Section>
   );
 }
 
@@ -2774,26 +2820,23 @@ function RewardsHubPage() {
   const [activeSubTab, setActiveSubTab] = useState('cards');
 
   return (
-    <section className="dashboard-body">
-      <div className="page-title-wrap">
-        <h1 className="page-title">Rewards Hub</h1>
-        <p style={{ color: 'var(--text-secondary)', marginTop: '0.4rem', fontWeight: 500 }}>
-          Manage privilege cards, partners, and exclusive member offers.
-        </p>
-      </div>
+    <section className="ds-page">
+      <Ds.PageHeader
+        title="Rewards Hub"
+        description="Manage privilege cards, partners, and exclusive member offers."
+        actions={
+          <Ds.ChipGroup
+            value={activeSubTab}
+            onChange={setActiveSubTab}
+            options={[
+              { value: 'cards', label: 'Privilege Cards' },
+              { value: 'partners', label: 'Partners & Offers' },
+            ]}
+          />
+        }
+      />
 
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', borderBottom: '2px solid #e2e8f0', paddingBottom: '1rem' }}>
-        <button onClick={() => setActiveSubTab('cards')} style={{ background: 'none', border: 'none', fontSize: '1.1rem', fontWeight: activeSubTab === 'cards' ? 800 : 500, color: activeSubTab === 'cards' ? 'var(--primary)' : 'var(--text-secondary)', cursor: 'pointer', borderBottom: activeSubTab === 'cards' ? '2px solid var(--primary)' : 'none', paddingBottom: '0.5rem', marginBottom: '-1rem' }}>
-          Privilege Cards
-        </button>
-        <button onClick={() => setActiveSubTab('partners')} style={{ background: 'none', border: 'none', fontSize: '1.1rem', fontWeight: activeSubTab === 'partners' ? 800 : 500, color: activeSubTab === 'partners' ? 'var(--primary)' : 'var(--text-secondary)', cursor: 'pointer', borderBottom: activeSubTab === 'partners' ? '2px solid var(--primary)' : 'none', paddingBottom: '0.5rem', marginBottom: '-1rem' }}>
-          Partners & Offers
-        </button>
-      </div>
-
-      <div className="data-section" style={{ padding: '2rem', background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-        {activeSubTab === 'cards' ? <PrivilegeCardsTab /> : <PartnersTab />}
-      </div>
+      {activeSubTab === 'cards' ? <PrivilegeCardsTab /> : <PartnersTab />}
     </section>
   );
 }
@@ -2821,60 +2864,118 @@ function PartnersTab() {
 
   return (
     <div>
-
-
-      <div className="stat-grid" style={{ marginBottom: '2rem' }}>
-        <StatCard title="TOTAL PARTNERS" value={partners.length} icon={IconBuildingStore} color="#2563eb" />
-        <StatCard title="ACTIVE OFFERS" value={partners.reduce((acc, p) => acc + (p.offers?.length || 0), 0)} icon={IconGift} color="#059669" />
-        <StatCard title="PARTNER REVENUE" value="LKR 4.2M" icon={IconCoin} color="#f59e0b" />
+      <div className="ds-stat-grid">
+        <Ds.StatCard
+          label="Total partners"
+          value={partners.length}
+          icon={IconBuildingStore}
+          iconColor="var(--brand-blue)"
+          iconBg="var(--brand-blue-50)"
+        />
+        <Ds.StatCard
+          label="Active offers"
+          value={partners.reduce((acc, p) => acc + (p.offers?.length || 0), 0)}
+          icon={IconGift}
+          iconColor="var(--success)"
+          iconBg="var(--success-bg)"
+        />
+        <Ds.StatCard
+          label="Partner revenue"
+          value="LKR 4.2M"
+          icon={IconCoin}
+          iconColor="var(--brand-amber-600)"
+          iconBg="var(--brand-amber-50)"
+        />
       </div>
 
-      <div className="data-section">
-        <div className="section-head">
-          <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Partner Directory</h3>
-          <button className="btn-primary" onClick={() => setShowAddPartner(true)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <IconPlus size={18} /> Add Partner
-          </button>
-        </div>
-
+      <Ds.Section
+        title="Partner Directory"
+        subtitle={`${partners.length} ${partners.length === 1 ? 'partner' : 'partners'}`}
+        actions={
+          <Ds.Button
+            variant="primary"
+            size="sm"
+            leftIcon={<IconPlus size={14} />}
+            onClick={() => setShowAddPartner(true)}
+          >
+            Add partner
+          </Ds.Button>
+        }
+      >
         {loading ? (
-          <div style={{ padding: '4rem', textAlign: 'center' }}>Loading partners...</div>
+          <Ds.LoadingRow label="Loading partners…" />
+        ) : partners.length === 0 ? (
+          <Ds.EmptyState
+            icon={IconBuildingStore}
+            title="No partners yet"
+            description="Add your first partner to start offering member rewards."
+          />
         ) : (
-          <div className="partners-list" style={{ padding: '0 1.5rem 1.5rem' }}>
-            {partners.length === 0 ? (
-              <div style={{ padding: '3rem', textAlign: 'center', color: '#94a3b8' }}>No partners registered yet.</div>
-            ) : partners.map(partner => (
-              <div key={partner.id} className="partner-card-row" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', padding: '1.5rem', border: '1px solid #e2e8f0', borderRadius: '12px', marginBottom: '1rem', background: 'white' }}>
-                <div style={{ width: 64, height: 64, borderRadius: '12px', background: 'white', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e2e8f0' }}>
-                  {partner.logo_url ? <img src={partner.logo_url.startsWith('http') ? partner.logo_url : `${STATIC_BASE_URL}${partner.logo_url}`} style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : <IconBuildingStore size={24} color="#94a3b8" />}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+            {partners.map(partner => (
+              <div
+                key={partner.id}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 'var(--space-4)',
+                  padding: 'var(--space-4)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: 'var(--radius-lg)',
+                  background: 'var(--bg-surface)',
+                  transition: 'border-color var(--duration-fast) var(--ease-out)',
+                }}
+                onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--border-default)'}
+                onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-subtle)'}
+              >
+                <div style={{
+                  width: 56, height: 56,
+                  borderRadius: 'var(--radius-md)',
+                  background: 'var(--bg-subtle)',
+                  overflow: 'hidden',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  flexShrink: 0,
+                }}>
+                  {partner.logo_url
+                    ? <img src={partner.logo_url.startsWith('http') ? partner.logo_url : `${STATIC_BASE_URL}${partner.logo_url}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                    : <IconBuildingStore size={22} color="var(--fg-muted)" />}
                 </div>
-                <div style={{ flex: 1 }}>
-                  <h4 style={{ fontSize: '1.1rem', fontWeight: 700 }}>{partner.name}</h4>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>{partner.offers?.length || 0} active rewards</p>
-                  {partner.website && <a href={partner.website} target="_blank" rel="noreferrer" style={{ fontSize: '0.8rem', color: 'var(--secondary)', textDecoration: 'none', marginTop: '0.25rem', display: 'inline-block' }}>{partner.website}</a>}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <h4 style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--weight-bold)', color: 'var(--fg-primary)' }}>
+                    {partner.name}
+                  </h4>
+                  <p style={{ fontSize: 'var(--text-sm)', color: 'var(--fg-secondary)', marginTop: 2 }}>
+                    {partner.offers?.length || 0} active reward{(partner.offers?.length || 0) === 1 ? '' : 's'}
+                  </p>
+                  {partner.website && (
+                    <a
+                      href={partner.website}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ fontSize: 'var(--text-xs)', color: 'var(--brand-blue)', textDecoration: 'none', marginTop: 2, display: 'inline-block' }}
+                    >
+                      {partner.website}
+                    </a>
+                  )}
                 </div>
-                <div style={{ display: 'flex', gap: '0.75rem' }}>
-                  <button
-                    className="view-detail-btn"
-                    title="Add New Reward"
-                    style={{ background: '#f0fdf4', color: '#059669', borderColor: '#bbf7d0' }}
+                <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+                  <Ds.Button
+                    variant="secondary"
+                    size="sm"
+                    leftIcon={<IconPlus size={14} />}
                     onClick={() => setAddingOfferTo(partner)}
                   >
-                    <IconPlus size={20} />
-                  </button>
-                  <button
-                    className="view-detail-btn"
-                    title="Edit Partner"
-                    onClick={() => setEditingPartner(partner)}
-                  >
-                    <IconSettings size={20} />
-                  </button>
+                    Add reward
+                  </Ds.Button>
+                  <Ds.IconButton aria-label="Edit partner" onClick={() => setEditingPartner(partner)}>
+                    <IconPencil size={16} />
+                  </Ds.IconButton>
                 </div>
               </div>
             ))}
           </div>
         )}
-      </div>
+      </Ds.Section>
 
       {showAddPartner && (
         <CreatePartnerModal
@@ -2968,110 +3069,112 @@ function ReferralsPage() {
   
   useEffect(() => { fetchReferrals(); }, [fetchReferrals]);
   
+  const statusOptions = [
+    { id: 'submitted', name: 'Submitted' },
+    { id: 'contacted', name: 'Contacted' },
+    { id: 'negotiation', name: 'Negotiation' },
+    { id: 'in_progress', name: 'In Progress' },
+    { id: 'success', name: 'Closed Won' },
+    { id: 'closed_lost', name: 'Closed Lost' },
+  ];
+
   return (
-    <section className="dashboard-body">
-      <div className="page-title-wrap">
-        <h1 className="page-title">Referral Pipeline</h1>
-        <p style={{ color: 'var(--text-secondary)', marginTop: '0.4rem', fontWeight: 500 }}>
-          Monitoring business exchanges and conversion velocity across the network.
-        </p>
-      </div>
+    <section className="ds-page">
+      <Ds.PageHeader
+        title="Referral Pipeline"
+        description="Monitor business exchanges and conversion velocity across the network."
+        actions={
+          <Ds.Button
+            variant="secondary"
+            leftIcon={<IconRefresh size={14} />}
+            onClick={() => { setPage(1); fetchReferrals(); }}
+          >
+            Refresh
+          </Ds.Button>
+        }
+      />
 
-      <div className="data-section">
-        <div className="section-head" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '1.5rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Global Referral Stream</h3>
-            <button className="btn-primary" onClick={() => { setPage(1); fetchReferrals(); }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <IconRefresh size={18} /> Refresh
-            </button>
-          </div>
-
-          <div className="directory-filters" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-            <div style={{ flex: 1, minWidth: '300px', position: 'relative' }}>
-              <IconSearch size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-              <input
-                type="text"
-                placeholder="Search lead name, description or member..."
-                className="filter-input v2"
-                style={{ paddingLeft: '40px', width: '100%', height: '48px' }}
-                value={search}
-                onChange={e => { setSearch(e.target.value); setPage(1); }}
-              />
-            </div>
-
-            <CustomSelect
-              label="All Statuses"
-              value={statusFilter}
-              options={[
-                { id: 'submitted', name: 'Submitted' },
-                { id: 'contacted', name: 'Contacted' },
-                { id: 'negotiation', name: 'Negotiation' },
-                { id: 'in_progress', name: 'In Progress' },
-                { id: 'success', name: 'Closed Won' },
-                { id: 'closed_lost', name: 'Closed Lost' }
-              ]}
-              onChange={(val) => { setStatusFilter(val); setPage(1); }}
-              style={{ width: '220px' }}
-            />
-          </div>
+      <Ds.Section
+        title="Global Referral Stream"
+        subtitle={total > 0 ? `${total.toLocaleString()} referrals tracked` : undefined}
+        flush
+      >
+        <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', padding: 'var(--space-5) var(--space-6)', borderBottom: '1px solid var(--border-subtle)' }}>
+          <Ds.Input
+            placeholder="Search lead, description or member…"
+            value={search}
+            onChange={e => { setSearch(e.target.value); setPage(1); }}
+            leftIcon={<IconSearch size={14} />}
+            style={{ flex: 1, minWidth: 280 }}
+          />
+          <Ds.Select
+            placeholder="All statuses"
+            value={statusFilter}
+            options={statusOptions}
+            allowClear
+            onChange={val => { setStatusFilter(val); setPage(1); }}
+            style={{ width: 220 }}
+          />
         </div>
 
-        <table className="modern-table">
+        <Ds.Table>
           <thead>
             <tr>
               <th>ID</th>
               <th>From</th>
               <th>To</th>
-              <th>Lead Name</th>
+              <th>Lead</th>
               <th>Value</th>
               <th>Status</th>
               <th>Date</th>
-              <th style={{ textAlign: 'right' }}>Actions</th>
+              <th className="ds-table__actions" />
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={7} style={{ textAlign: 'center', padding: '3rem' }}>Loading referrals...</td></tr>
+              <Ds.Table.LoadingRow colSpan={8} label="Loading referrals…" />
             ) : !referrals || referrals.length === 0 ? (
-              <tr><td colSpan={7} style={{ textAlign: 'center', padding: '3rem' }}>No referrals found.</td></tr>
+              <Ds.Table.EmptyRow
+                colSpan={8}
+                icon={IconHierarchy2}
+                title="No referrals found"
+                description="Adjust filters or search terms to see results."
+              />
             ) : referrals.map((ref, idx) => (
               <tr key={ref.id || idx}>
-                <td><span className="id-badge">REF-{String(ref.id || idx).slice(0, 4)}</span></td>
-                <td style={{ fontWeight: 600 }}>{ref.from_user?.full_name || '—'}</td>
-                <td>{ref.target_user?.full_name || '—'}</td>
-                <td style={{ fontWeight: 600 }}>{ref.lead_name || '—'}</td>
-                <td style={{ fontWeight: 700 }}>{ref.actual_value ? `LKR ${ref.actual_value.toLocaleString()}` : '—'}</td>
                 <td>
-                  <span className={`pill ${ref.status === 'success' ? 'pill-approved' : ref.status === 'closed_lost' ? 'pill-rejected' : 'pill-pending'}`}>
-                    {ref.status || 'pending'}
+                  <span style={{ color: 'var(--brand-blue)', fontWeight: 'var(--weight-bold)', fontSize: 'var(--text-sm)' }}>
+                    REF-{String(ref.id || idx).slice(0, 4)}
                   </span>
                 </td>
-                <td style={{ color: 'var(--text-secondary)' }}>{new Date(ref.created_at).toLocaleDateString()}</td>
-                <td style={{ textAlign: 'right' }}>
+                <td className="ds-table__primary">{ref.from_user?.full_name || '—'}</td>
+                <td className="ds-table__muted">{ref.target_user?.full_name || '—'}</td>
+                <td className="ds-table__primary">{ref.lead_name || '—'}</td>
+                <td className="ds-table__primary" style={{ fontWeight: 'var(--weight-bold)' }}>
+                  {ref.actual_value ? `LKR ${ref.actual_value.toLocaleString()}` : '—'}
+                </td>
+                <td>
+                  <Ds.Badge dot variant={referralStatusVariant(ref.status === 'success' ? 'closed_won' : ref.status)}>
+                    {referralStatusLabel(ref.status)}
+                  </Ds.Badge>
+                </td>
+                <td className="ds-table__muted">{new Date(ref.created_at).toLocaleDateString()}</td>
+                <td className="ds-table__actions">
                   <ReferralActionMenu referral={ref} />
                 </td>
               </tr>
             ))}
           </tbody>
-        </table>
+        </Ds.Table>
 
-        {/* Pagination */}
-        <div style={{ padding: '1.25rem 2.5rem', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
-            {total > 0 ? `Showing page ${page} of ${pages} · ${total} referrals` : 'No results matching criteria'}
-          </p>
-          {pages > 1 && (
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button className="pagination-btn" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
-                <IconChevronLeft size={16} /> Prev
-              </button>
-              <button className="pagination-btn" disabled={page >= pages} onClick={() => setPage(p => p + 1)}>
-                Next <IconChevronRight size={16} />
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
+        <Ds.Pagination
+          page={page}
+          totalPages={pages}
+          total={total}
+          pageLabel="referrals"
+          onPageChange={setPage}
+        />
+      </Ds.Section>
     </section>
   );
 }
@@ -3129,36 +3232,50 @@ function RevenuePage({ onNavigateToGovernance }) {
   const { data: overview } = useApi(api.getAdminOverview, []);
   const { data: payments, loading: paymentsLoading } = useApi(api.listPayments, []);
 
+  const recent = (Array.isArray(payments) ? payments : payments?.data || []).slice(0, 10);
+
   return (
-    <section className="dashboard-body">
-      <div className="page-title-wrap">
-        <h1 className="page-title">Revenue & ROI Analysis</h1>
-        <p style={{ color: 'var(--text-secondary)', marginTop: '0.4rem', fontWeight: 500 }}>
-          Financial health and network growth metrics.
-        </p>
+    <section className="ds-page">
+      <Ds.PageHeader
+        title="Revenue & ROI"
+        description="Financial health and network growth metrics."
+        actions={
+          <Ds.Button
+            variant="secondary"
+            leftIcon={<IconSettings size={14} />}
+            onClick={onNavigateToGovernance}
+          >
+            Manage fee schedules
+          </Ds.Button>
+        }
+      />
+
+      <div className="ds-stat-grid">
+        <Ds.StatCard
+          label="Total revenue"
+          value={formatCurrency(overview?.total_value)}
+          icon={IconCoin}
+          iconColor="var(--success)"
+          iconBg="var(--success-bg)"
+        />
+        <Ds.StatCard
+          label="Pending payments"
+          value={payments?.filter(p => p.status === 'pending').length || 0}
+          icon={IconClock}
+          iconColor="var(--warning)"
+          iconBg="var(--warning-bg)"
+        />
+        <Ds.StatCard
+          label="Avg conversion"
+          value={overview?.conversion_rate ? `${overview.conversion_rate}%` : '—'}
+          icon={IconChartBar}
+          iconColor="var(--brand-blue)"
+          iconBg="var(--brand-blue-50)"
+        />
       </div>
 
-      <div style={{ marginBottom: '2rem', padding: '1.5rem', background: '#f8fafc', borderRadius: '16px', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h3 style={{ fontWeight: 800, fontSize: '1rem' }}>Network Governance & Fees</h3>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '0.2rem' }}>Configure master rates for all membership tiers.</p>
-        </div>
-        <button className="btn-primary" onClick={onNavigateToGovernance} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.25rem', fontSize: '0.875rem' }}>
-          <IconSettings size={18} /> Manage Fee Schedules
-        </button>
-      </div>
-
-      <div className="stat-grid" style={{ marginBottom: '2rem' }}>
-        <StatCard title="TOTAL REVENUE" value={formatCurrency(overview?.total_value)} icon={IconCoin} color="#059669" />
-        <StatCard title="PENDING PAYMENTS" value={payments?.filter(p => p.status === 'pending').length || 0} icon={IconClock} color="#f59e0b" />
-        <StatCard title="AVG CONVERSION" value={overview?.conversion_rate ? `${overview.conversion_rate}%` : '—'} icon={IconChartBar} color="#2563eb" />
-      </div>
-
-      <div className="data-section">
-        <div className="section-head">
-          <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Recent Financial Activity</h3>
-        </div>
-        <table className="modern-table">
+      <Ds.Section title="Recent Financial Activity" flush>
+        <Ds.Table>
           <thead>
             <tr>
               <th>Date</th>
@@ -3170,19 +3287,31 @@ function RevenuePage({ onNavigateToGovernance }) {
           </thead>
           <tbody>
             {paymentsLoading ? (
-              <tr><td colSpan={5} style={{ textAlign: 'center', padding: '2rem' }}>Loading payments...</td></tr>
-            ) : (Array.isArray(payments) ? payments : payments?.data || []).slice(0, 10).map(p => (
+              <Ds.Table.LoadingRow colSpan={5} label="Loading payments…" />
+            ) : recent.length === 0 ? (
+              <Ds.Table.EmptyRow
+                colSpan={5}
+                icon={IconCoin}
+                title="No financial activity yet"
+              />
+            ) : recent.map(p => (
               <tr key={p.id}>
-                <td>{new Date(p.created_at).toLocaleDateString()}</td>
-                <td style={{ fontWeight: 600 }}>{p.user_name}</td>
-                <td>{p.payment_type}</td>
-                <td style={{ fontWeight: 700 }}>{formatCurrency(p.amount)}</td>
-                <td><span className={`pill ${p.status === 'completed' ? 'pill-approved' : 'pill-pending'}`}>{p.status}</span></td>
+                <td className="ds-table__muted">{new Date(p.created_at).toLocaleDateString()}</td>
+                <td className="ds-table__primary">{p.user_name}</td>
+                <td><Ds.Badge variant="neutral">{p.payment_type}</Ds.Badge></td>
+                <td className="ds-table__primary" style={{ fontWeight: 'var(--weight-bold)' }}>
+                  {formatCurrency(p.amount)}
+                </td>
+                <td>
+                  <Ds.Badge dot variant={p.status === 'completed' ? 'success' : p.status === 'failed' ? 'danger' : 'warning'}>
+                    {p.status}
+                  </Ds.Badge>
+                </td>
               </tr>
             ))}
           </tbody>
-        </table>
-      </div>
+        </Ds.Table>
+      </Ds.Section>
     </section>
   );
 }
@@ -3204,64 +3333,64 @@ function GovernancePage({ onBack }) {
   useEffect(() => { fetchFees(); }, [fetchFees]);
 
   return (
-    <section className="dashboard-body">
-      <div className="page-title-wrap" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div>
-          <button 
-            onClick={onBack}
-            style={{ border: 'none', background: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontWeight: 700, marginBottom: '0.75rem', cursor: 'pointer', padding: 0 }}
-          >
-            <IconChevronLeft size={18} /> Back to Revenue
-          </button>
-          <h1 className="page-title">Fee Governance</h1>
-          <p style={{ color: 'var(--text-secondary)', marginTop: '0.4rem', fontWeight: 500 }}>
-            Official master rates as per Bylaws Article 8.
-          </p>
-        </div>
+    <section className="ds-page">
+      <div style={{ marginBottom: 'var(--space-3)' }}>
+        <Ds.Button variant="ghost" size="sm" leftIcon={<IconChevronLeft size={14} />} onClick={onBack}>
+          Back to Revenue
+        </Ds.Button>
       </div>
+      <Ds.PageHeader
+        title="Fee Governance"
+        description="Official master rates as per Bylaws Article 8."
+      />
 
-      <div className="data-section">
-        <div className="section-head">
-          <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Master Rate Schedules</h3>
-        </div>
-        
+      <Ds.Section
+        title="Master Rate Schedules"
+        subtitle={`${fees.length} membership tiers configured`}
+      >
         {loading ? (
-          <div style={{ padding: '4rem', textAlign: 'center' }}>Loading governance data...</div>
+          <div className="ds-loading-row"><Ds.Spinner size="lg" /> Loading governance data…</div>
+        ) : fees.length === 0 ? (
+          <Ds.EmptyState icon={IconCoin} title="No fee schedules configured" />
         ) : (
-          <div style={{ padding: '0 1.5rem 1.5rem' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
-              {fees.map(f => (
-                <div key={f.membership_type} className="fee-card" style={{ padding: '1.5rem', border: '1px solid #e2e8f0', borderRadius: '20px', background: 'white', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
-                    <span className="id-badge" style={{ background: 'var(--primary)', color: 'white', fontWeight: 800, fontSize: '0.75rem', padding: '4px 10px' }}>
-                      {f.membership_type.toUpperCase()}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--space-4)' }}>
+            {fees.map(f => (
+              <Ds.Card key={f.membership_type} padded>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-4)' }}>
+                  <Ds.Badge variant="brand">{f.membership_type.toUpperCase()}</Ds.Badge>
+                  <Ds.IconButton aria-label="Edit fee" onClick={() => setEditingFee(f)}>
+                    <IconPencil size={16} />
+                  </Ds.IconButton>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+                  <div style={{ background: 'var(--bg-subtle)', padding: 'var(--space-4)', borderRadius: 'var(--radius-md)' }}>
+                    <span style={{ fontSize: 'var(--text-xs)', color: 'var(--fg-muted)', fontWeight: 'var(--weight-semibold)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-wide)' }}>
+                      Annual Membership
                     </span>
-                    <button onClick={() => setEditingFee(f)} className="view-detail-btn" style={{ borderRadius: '50%', width: 36, height: 36, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <IconPencil size={18} />
-                    </button>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                    <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '12px' }}>
-                      <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Annual Membership</span>
-                      <span style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--primary)', display: 'block', marginTop: '0.25rem' }}>{formatCurrency(f.annual_fee)}</span>
+                    <div style={{ fontSize: 'var(--text-2xl)', fontWeight: 'var(--weight-bold)', color: 'var(--brand-navy)', marginTop: 'var(--space-1)', letterSpacing: 'var(--tracking-tight)' }}>
+                      {formatCurrency(f.annual_fee)}
                     </div>
-                    <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '12px' }}>
-                      <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Per Forum Meeting</span>
-                      <span style={{ fontSize: '1.25rem', fontWeight: 800, display: 'block', marginTop: '0.25rem' }}>{formatCurrency(f.per_forum_fee)}</span>
+                  </div>
+                  <div style={{ background: 'var(--bg-subtle)', padding: 'var(--space-4)', borderRadius: 'var(--radius-md)' }}>
+                    <span style={{ fontSize: 'var(--text-xs)', color: 'var(--fg-muted)', fontWeight: 'var(--weight-semibold)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-wide)' }}>
+                      Per Forum Meeting
+                    </span>
+                    <div style={{ fontSize: 'var(--text-xl)', fontWeight: 'var(--weight-bold)', color: 'var(--fg-primary)', marginTop: 'var(--space-1)' }}>
+                      {formatCurrency(f.per_forum_fee)}
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
+              </Ds.Card>
+            ))}
           </div>
         )}
-      </div>
+      </Ds.Section>
 
       {editingFee && (
-        <EditFeeModal 
-          fee={editingFee} 
-          onClose={() => setEditingFee(null)} 
-          onUpdate={fetchFees} 
+        <EditFeeModal
+          fee={editingFee}
+          onClose={() => setEditingFee(null)}
+          onUpdate={fetchFees}
         />
       )}
     </section>
@@ -3434,76 +3563,80 @@ function SettingsPage({ adminUser, onShowChangePassword, showToast }) {
     showToast(`Preference updated for ${key}`);
   };
 
+  const notifRows = [
+    { key: 'applications', title: 'New Applications', desc: 'Notify when a potential member submits an application' },
+    { key: 'payments', title: 'Payment Alerts', desc: 'Real-time updates on membership and renewal fees' },
+    { key: 'reminders', title: 'Meeting Reminders', desc: 'Automated nudges for upcoming chapter fit-calls' },
+  ];
+
   return (
-    <section className="dashboard-body">
-      <div className="page-title-wrap">
-        <h1 className="page-title">Global Settings</h1>
-        <p style={{ color: 'var(--text-secondary)', marginTop: '0.4rem', fontWeight: 500 }}>
-          Manage your administrative profile and platform preferences.
-        </p>
-      </div>
+    <section className="ds-page">
+      <Ds.PageHeader
+        title="Settings"
+        description="Manage your administrative profile and platform preferences."
+      />
 
-      <div className="settings-grid">
-        <div className="settings-section" style={{ flex: 1 }}>
-          <div className="settings-header">
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <IconUser size={22} color="var(--secondary)" /> My Profile
-            </h3>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: 'var(--space-5)' }}>
+        <Ds.Section
+          title="My Profile"
+          subtitle="Personal account details"
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'var(--space-3)', padding: 'var(--space-4) 0', textAlign: 'center' }}>
+            <Ds.Avatar size="lg" name={adminUser?.full_name || 'AD'} variant="brand" ring />
+            <div>
+              <h4 style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--weight-bold)', color: 'var(--fg-primary)' }}>
+                {adminUser?.full_name}
+              </h4>
+              <p style={{ color: 'var(--fg-secondary)', fontSize: 'var(--text-sm)', marginTop: 4 }}>
+                {adminUser?.role} • {adminUser?.email}
+              </p>
+            </div>
           </div>
-          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-             <div style={{ width: 80, height: 80, borderRadius: 20, background: 'linear-gradient(135deg, var(--primary), #3b82f6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 800, fontSize: '1.5rem', margin: '0 auto 1rem', border: '4px solid white', boxShadow: 'var(--shadow)' }}>
-                {adminUser?.full_name ? adminUser.full_name.split(' ').map(n => n[0]).join('').toUpperCase() : 'AD'}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)', marginTop: 'var(--space-4)' }}>
+            <Ds.Button
+              variant="primary"
+              block
+              leftIcon={<IconLock size={14} />}
+              onClick={onShowChangePassword}
+            >
+              Change account password
+            </Ds.Button>
+            <Ds.Button
+              variant="secondary"
+              block
+              leftIcon={<IconMail size={14} />}
+            >
+              Update contact email
+            </Ds.Button>
+          </div>
+        </Ds.Section>
+
+        <Ds.Section
+          title="Notifications"
+          subtitle="Choose what you'd like to be notified about"
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+            {notifRows.map(row => (
+              <div
+                key={row.key}
+                className="ds-checkbox-row"
+                onClick={() => toggleNotif(row.key)}
+              >
+                <div className="ds-checkbox-row__meta">
+                  <div className="ds-checkbox-row__title">{row.title}</div>
+                  <div className="ds-checkbox-row__desc">{row.desc}</div>
+                </div>
+                <input
+                  type="checkbox"
+                  className="ds-checkbox"
+                  checked={notifPreferences[row.key]}
+                  onChange={() => toggleNotif(row.key)}
+                  onClick={e => e.stopPropagation()}
+                />
               </div>
-              <h4 style={{ fontSize: '1.25rem', fontWeight: 800 }}>{adminUser?.full_name}</h4>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>{adminUser?.role} • {adminUser?.email}</p>
+            ))}
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-             <button className="btn-primary" onClick={onShowChangePassword} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                <IconLock size={18} /> Change Account Password
-             </button>
-             <button className="btn-primary" style={{ background: '#f1f5f9', color: 'var(--text-primary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                <IconMail size={18} /> Update Contact Email
-             </button>
-          </div>
-        </div>
-
-        <div className="settings-section" style={{ flex: 1 }}>
-          <div className="settings-header">
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <IconBell size={22} color="var(--accent)" /> Notification Preferences
-            </h3>
-          </div>
-          <div className="settings-row">
-            <div>
-              <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>New Applications</div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Notify when a potential member submits application</div>
-            </div>
-            <label className="toggle-switch">
-              <input type="checkbox" checked={notifPreferences.applications} onChange={() => toggleNotif('applications')} />
-              <span className="slider"></span>
-            </label>
-          </div>
-          <div className="settings-row">
-            <div>
-              <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>Payment Alerts</div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Real-time updates on membership and renewal fees</div>
-            </div>
-            <label className="toggle-switch">
-              <input type="checkbox" checked={notifPreferences.payments} onChange={() => toggleNotif('payments')} />
-              <span className="slider"></span>
-            </label>
-          </div>
-          <div className="settings-row">
-            <div>
-              <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>Meeting Reminders</div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Automated nudges for upcoming chapter fit-calls</div>
-            </div>
-            <label className="toggle-switch">
-              <input type="checkbox" checked={notifPreferences.reminders} onChange={() => toggleNotif('reminders')} />
-              <span className="slider"></span>
-            </label>
-          </div>
-        </div>
+        </Ds.Section>
       </div>
     </section>
   );
@@ -3512,20 +3645,18 @@ function SettingsPage({ adminUser, onShowChangePassword, showToast }) {
 // ── Security Logs Page ────────────────────────────────────────────────────
 function SecurityLogsPage() {
   return (
-    <section className="dashboard-body">
-      <div className="page-title-wrap">
-        <h1 className="page-title">Security & Audit Logs</h1>
-        <p style={{ color: 'var(--text-secondary)', marginTop: '0.4rem', fontWeight: 500 }}>
-          Timeline of critical administrative actions and system events.
-        </p>
-      </div>
-      <div className="data-section">
-        <div style={{ padding: '4rem', textAlign: 'center' }}>
-          <IconLock size={48} color="#cbd5e1" style={{ marginBottom: '1rem' }} />
-          <h3 style={{ color: 'var(--text-secondary)' }}>Audit Logging Module</h3>
-          <p style={{ color: '#94a3b8', marginTop: '0.5rem' }}>Real-time audit logs are currently being initialized for the network.</p>
-        </div>
-      </div>
+    <section className="ds-page">
+      <Ds.PageHeader
+        title="Security & Audit"
+        description="Timeline of critical administrative actions and system events."
+      />
+      <Ds.Section>
+        <Ds.EmptyState
+          icon={IconLock}
+          title="Audit logging module"
+          description="Real-time audit logs are currently being initialized for the network."
+        />
+      </Ds.Section>
     </section>
   );
 }
@@ -4218,133 +4349,163 @@ function EventsPage() {
     api.listChapters().then(data => setChapters(data || []));
   }, [fetchEvents]);
 
-  return (
-    <section className="dashboard-body">
-      <div className="page-title-wrap" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h1 className="page-title">Event Management</h1>
-          <p style={{ color: 'var(--text-secondary)', marginTop: '0.4rem', fontWeight: 500 }}>
-            Schedule and manage chapter meetings, micro-meetups, and virtual sessions.
-          </p>
-        </div>
-        <button className="btn-primary" onClick={() => setShowAddModal(true)} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-          <IconPlus size={20} /> Create New Event
-        </button>
-      </div>
+  const filteredEvents = events.filter(ev => {
+    const isPast = new Date(ev.end_at) < new Date();
+    if (timeFilter === 'upcoming') return !isPast;
+    if (timeFilter === 'finished') return isPast;
+    return true;
+  });
 
-      <div className="data-section">
-        <div className="section-head">
-          <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Event Calendar</h3>
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <CustomSelect
-              label="Filter by Chapter"
+  return (
+    <section className="ds-page">
+      <Ds.PageHeader
+        title="Event Management"
+        description="Schedule and manage chapter meetings, micro-meetups, and virtual sessions."
+        actions={
+          <>
+            <Ds.Button
+              variant="secondary"
+              leftIcon={<IconRefresh size={14} />}
+              onClick={fetchEvents}
+            >
+              Refresh
+            </Ds.Button>
+            <Ds.Button
+              variant="primary"
+              leftIcon={<IconPlus size={14} />}
+              onClick={() => setShowAddModal(true)}
+            >
+              New event
+            </Ds.Button>
+          </>
+        }
+      />
+
+      <Ds.Section
+        title="Event Calendar"
+        subtitle={`${filteredEvents.length} event${filteredEvents.length === 1 ? '' : 's'}`}
+        flush
+        actions={
+          <>
+            <Ds.Select
+              placeholder="All chapters"
               value={chapterFilter}
               options={chapters}
+              allowClear
               onChange={setChapterFilter}
-              style={{ width: '220px' }}
+              style={{ width: 200 }}
+              size="sm"
             />
-            <CustomSelect
-              label="All Events"
+            <Ds.ChipGroup
               value={timeFilter}
-              options={[
-                { id: 'all', name: 'All Events' },
-                { id: 'upcoming', name: 'Upcoming Only' },
-                { id: 'finished', name: 'Finished / Past' }
-              ]}
               onChange={setTimeFilter}
-              style={{ width: '180px' }}
+              options={[
+                { value: 'upcoming', label: 'Upcoming' },
+                { value: 'finished', label: 'Past' },
+                { value: 'all', label: 'All' },
+              ]}
             />
-            <button className="view-detail-btn" onClick={fetchEvents}><IconRefresh size={18} /></button>
-          </div>
-        </div>
-
-        <table className="modern-table">
+          </>
+        }
+      >
+        <Ds.Table>
           <thead>
             <tr>
-              <th>Event Title</th>
+              <th>Event</th>
               <th>Type</th>
-              <th>Date & Time</th>
-              <th>Location / Link</th>
+              <th>Date</th>
+              <th>Location</th>
               <th>Fee</th>
               <th>RSVPs</th>
-              <th>Actions</th>
+              <th className="ds-table__actions" />
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={7} style={{ textAlign: 'center', padding: '3rem' }}>Loading events...</td></tr>
-            ) : (() => {
-              const filtered = events.filter(ev => {
-                const isPast = new Date(ev.end_at) < new Date();
-                if (timeFilter === 'upcoming') return !isPast;
-                if (timeFilter === 'finished') return isPast;
-                return true;
-              });
-              
-              if (filtered.length === 0) {
-                return <tr><td colSpan={7} style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>No {timeFilter !== 'all' ? timeFilter : ''} events found.</td></tr>;
-              }
-
-              return filtered.map(ev => {
-                const isPast = new Date(ev.end_at) < new Date();
-                return (
-                  <tr key={ev.id} style={{ background: isPast ? '#f8fafc' : 'white', opacity: isPast ? 0.8 : 1 }}>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <div style={{ width: 44, height: 44, borderRadius: '8px', background: '#f8fafc', overflow: 'hidden', border: '1px solid #e2e8f0', flexShrink: 0, position: 'relative' }}>
-                           {ev.image_url ? (
-                             <img src={ev.image_url.startsWith('http') ? ev.image_url : `${STATIC_BASE_URL}${ev.image_url}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                           ) : (
-                             <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <IconCalendarEvent size={18} color="#94a3b8" />
-                             </div>
-                           )}
-                           {isPast && <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.5rem', fontWeight: 900, color: '#475569' }}>PAST</div>}
+              <Ds.Table.LoadingRow colSpan={7} label="Loading events…" />
+            ) : filteredEvents.length === 0 ? (
+              <Ds.Table.EmptyRow
+                colSpan={7}
+                icon={IconCalendarEvent}
+                title={`No ${timeFilter !== 'all' ? timeFilter : ''} events`}
+                description="Create one to get started."
+              />
+            ) : filteredEvents.map(ev => {
+              const isPast = new Date(ev.end_at) < new Date();
+              return (
+                <tr key={ev.id} style={{ opacity: isPast ? 0.7 : 1 }}>
+                  <td>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+                      <div style={{
+                        width: 40, height: 40,
+                        borderRadius: 'var(--radius-md)',
+                        background: 'var(--bg-subtle)',
+                        overflow: 'hidden',
+                        border: '1px solid var(--border-subtle)',
+                        flexShrink: 0,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        {ev.image_url ? (
+                          <img
+                            src={ev.image_url.startsWith('http') ? ev.image_url : `${STATIC_BASE_URL}${ev.image_url}`}
+                            alt=""
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          />
+                        ) : (
+                          <IconCalendarEvent size={16} color="var(--fg-muted)" />
+                        )}
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span className="ds-table__primary">{ev.title}</span>
+                          <Ds.Badge dot variant={isPast ? 'neutral' : 'success'}>
+                            {isPast ? 'Past' : 'Live'}
+                          </Ds.Badge>
                         </div>
-                        <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <div style={{ fontWeight: 700 }}>{ev.title}</div>
-                            {isPast ? (
-                              <span style={{ fontSize: '0.6rem', background: '#e2e8f0', color: '#64748b', padding: '2px 4px', borderRadius: '3px', fontWeight: 800 }}>PAST</span>
-                            ) : (
-                              <span style={{ fontSize: '0.6rem', background: '#dcfce7', color: '#15803d', padding: '2px 4px', borderRadius: '3px', fontWeight: 800 }}>LIVE</span>
-                            )}
-                          </div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>ID: {ev.id.slice(0, 8)}</div>
+                        <div style={{ fontSize: 'var(--text-xs)', color: 'var(--fg-muted)', fontWeight: 'var(--weight-medium)' }}>
+                          ID: {ev.id.slice(0, 8)}
                         </div>
                       </div>
-                    </td>
-                    <td>
-                      <span className={`pill ${ev.event_type === 'flagship' ? 'pill-approved' : 'pill-waitlisted'}`} style={{ textTransform: 'uppercase', fontSize: '0.7rem' }}>
-                        {ev.event_type}
+                    </div>
+                  </td>
+                  <td>
+                    <Ds.Badge variant={ev.event_type === 'flagship' ? 'accent' : 'neutral'}>
+                      {ev.event_type}
+                    </Ds.Badge>
+                  </td>
+                  <td>
+                    <div className="ds-table__primary">{new Date(ev.start_at).toLocaleDateString()}</div>
+                    <div style={{ fontSize: 'var(--text-xs)', color: 'var(--fg-muted)' }}>
+                      {new Date(ev.start_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                  </td>
+                  <td className="ds-table__muted" style={{ maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {ev.location || ev.meeting_link || '—'}
+                  </td>
+                  <td className="ds-table__primary" style={{ fontWeight: 'var(--weight-bold)' }}>
+                    {ev.fee > 0 ? formatCurrency(ev.fee) : 'Free'}
+                  </td>
+                  <td>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+                      <span style={{ fontWeight: 'var(--weight-bold)', fontSize: 'var(--text-base)' }}>
+                        {ev.rsvps?.filter(r => r.status === 'going').length || 0}
                       </span>
-                    </td>
-                    <td style={{ fontSize: '0.85rem' }}>
-                      <div style={{ fontWeight: 600 }}>{new Date(ev.start_at).toLocaleDateString()}</div>
-                      <div style={{ color: 'var(--text-secondary)' }}>{new Date(ev.start_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-                    </td>
-                    <td style={{ fontSize: '0.85rem', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {ev.location || ev.meeting_link || '—'}
-                    </td>
-                    <td style={{ fontWeight: 700 }}>{ev.fee > 0 ? formatCurrency(ev.fee) : 'Free'}</td>
-                    <td style={{ textAlign: 'center' }}>
-                      <div style={{ fontWeight: 700 }}>{ev.rsvps?.filter(r => r.status === 'going').length || 0}</div>
-                      <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Going</div>
-                    </td>
-                    <td>
-                      <EventActionMenu 
-                        event={ev}
-                        onManageRsvps={() => setManagingRsvpsEvent(ev)}
-                        onEdit={() => setEditingEvent(ev)}
-                      />
-                    </td>
-                  </tr>
-                );
-              })
-            })()}
+                      <span style={{ fontSize: 'var(--text-xs)', color: 'var(--fg-muted)' }}>going</span>
+                    </div>
+                  </td>
+                  <td className="ds-table__actions">
+                    <EventActionMenu
+                      event={ev}
+                      onManageRsvps={() => setManagingRsvpsEvent(ev)}
+                      onEdit={() => setEditingEvent(ev)}
+                    />
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
-        </table>
-      </div>
+        </Ds.Table>
+      </Ds.Section>
 
       {showAddModal && (
         <AddEventModal
@@ -4603,61 +4764,77 @@ function ClubsPage() {
   useEffect(() => { fetchClubs(); }, [fetchClubs]);
 
   return (
-    <section className="dashboard-body">
-      <div className="page-title-wrap" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h1 className="page-title">Horizontal Clubs</h1>
-          <p style={{ color: 'var(--text-secondary)', marginTop: '0.4rem', fontWeight: 500 }}>
-            Cross-chapter industry verticals for targeted business collaboration.
-          </p>
-        </div>
-        <button className="btn-primary" onClick={() => setShowAddModal(true)} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-          <IconPlus size={20} /> Establish New Club
-        </button>
-      </div>
+    <section className="ds-page">
+      <Ds.PageHeader
+        title="Horizontal Clubs"
+        description="Cross-chapter industry verticals for targeted business collaboration."
+        actions={
+          <>
+            <Ds.Button
+              variant="secondary"
+              leftIcon={<IconRefresh size={14} />}
+              onClick={fetchClubs}
+            >
+              Refresh
+            </Ds.Button>
+            <Ds.Button
+              variant="primary"
+              leftIcon={<IconPlus size={14} />}
+              onClick={() => setShowAddModal(true)}
+            >
+              New club
+            </Ds.Button>
+          </>
+        }
+      />
 
-      <div className="data-section">
-        <div className="section-head">
-          <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Active Verticals</h3>
-          <button className="view-detail-btn" onClick={fetchClubs}><IconRefresh size={18} /></button>
-        </div>
-
-        <table className="modern-table">
+      <Ds.Section title="Active Verticals" flush>
+        <Ds.Table>
           <thead>
             <tr>
-              <th>Club Name</th>
-              <th>Industry Vertical</th>
+              <th>Club</th>
+              <th>Industry verticals</th>
               <th>Requirement</th>
               <th>Status</th>
               <th>Description</th>
+              <th className="ds-table__actions" />
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={5} style={{ textAlign: 'center', padding: '3rem' }}>Loading clubs...</td></tr>
+              <Ds.Table.LoadingRow colSpan={6} label="Loading clubs…" />
             ) : clubs.length === 0 ? (
-              <tr><td colSpan={5} style={{ textAlign: 'center', padding: '3rem' }}>No clubs established.</td></tr>
+              <Ds.Table.EmptyRow
+                colSpan={6}
+                icon={IconHierarchy2}
+                title="No clubs established"
+                description="Create the first horizontal club to enable cross-chapter collaboration."
+              />
             ) : clubs.map(club => (
               <tr key={club.id}>
-                <td style={{ fontWeight: 700, color: 'var(--primary)' }}>{club.name}</td>
+                <td style={{ fontWeight: 'var(--weight-bold)', color: 'var(--brand-navy)' }}>
+                  {club.name}
+                </td>
                 <td>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem' }}>
-                    {club.industries?.map(ind => (
-                      <span key={ind} className="pill" style={{ background: '#f1f5f9', color: '#475569', fontWeight: 700, fontSize: '0.65rem', padding: '0.2rem 0.5rem' }}>
-                        {ind}
-                      </span>
-                    )) || '—'}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                    {club.industries?.length
+                      ? club.industries.map(ind => (
+                          <Ds.Badge key={ind} variant="neutral">{ind}</Ds.Badge>
+                        ))
+                      : '—'}
                   </div>
                 </td>
-                <td style={{ fontWeight: 600 }}>{club.min_members}+ Members</td>
+                <td className="ds-table__primary">{club.min_members}+ members</td>
                 <td>
-                  <StatusPill status={club.is_active ? 'approved' : 'rejected'} />
+                  <Ds.Badge dot variant={club.is_active ? 'success' : 'danger'}>
+                    {club.is_active ? 'Active' : 'Inactive'}
+                  </Ds.Badge>
                 </td>
-                <td style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', maxWidth: '300px' }}>
+                <td className="ds-table__muted" style={{ maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {club.description || '—'}
                 </td>
-                <td style={{ textAlign: 'right' }}>
-                  <ClubActionMenu 
+                <td className="ds-table__actions">
+                  <ClubActionMenu
                     club={club}
                     onEdit={() => { setEditingClub(club); setShowAddModal(true); }}
                     onDelete={async () => {
@@ -4671,8 +4848,8 @@ function ClubsPage() {
               </tr>
             ))}
           </tbody>
-        </table>
-      </div>
+        </Ds.Table>
+      </Ds.Section>
 
       {showAddModal && (
         <AddClubModal
@@ -4846,112 +5023,144 @@ function MarketplacePage() {
   };
 
   return (
-    <section className="dashboard-body">
-      <div className="page-title-wrap">
-        <h1 className="page-title">Marketplace</h1>
-        <p style={{ color: 'var(--text-secondary)', marginTop: '0.4rem', fontWeight: 500 }}>
-          Manage member listings, feature premium deals, and monitor marketplace activity.
-        </p>
-      </div>
+    <section className="ds-page">
+      <Ds.PageHeader
+        title="Marketplace"
+        description="Manage member listings, feature premium deals, and monitor marketplace activity."
+        actions={
+          <Ds.Button
+            variant="secondary"
+            leftIcon={<IconRefresh size={14} />}
+            onClick={fetchListings}
+          >
+            Refresh
+          </Ds.Button>
+        }
+      />
 
-      <div className="data-section">
-        <div className="section-head">
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Global Listings</h3>
-            <select 
-              className="filter-input v2" 
-              value={statusFilter} 
-              onChange={e => setStatusFilter(e.target.value)}
-              style={{ width: '150px', padding: '0.5rem' }}
-            >
-              <option value="">All Status</option>
-              <option value="active">Active</option>
-              <option value="paused">Paused</option>
-              <option value="sold">Sold</option>
-            </select>
-            <select 
-              className="filter-input v2" 
-              value={approvalFilter} 
-              onChange={e => setApprovalFilter(e.target.value)}
-              style={{ width: '180px', padding: '0.5rem' }}
-            >
-              <option value="">All Approval Status</option>
-              <option value="pending">Pending Approval</option>
-              <option value="approved">Approved Only</option>
-            </select>
-          </div>
-          <button className="view-detail-btn" onClick={fetchListings}><IconRefresh size={18} /></button>
-        </div>
-
-        <table className="modern-table">
+      <Ds.Section
+        title="Global Listings"
+        subtitle={`${listings.length} ${listings.length === 1 ? 'listing' : 'listings'}`}
+        flush
+        actions={
+          <>
+            <Ds.Select
+              placeholder="All status"
+              value={statusFilter}
+              options={[
+                { id: 'active', name: 'Active' },
+                { id: 'paused', name: 'Paused' },
+                { id: 'sold', name: 'Sold' },
+              ]}
+              allowClear
+              onChange={setStatusFilter}
+              style={{ width: 160 }}
+              size="sm"
+            />
+            <Ds.ChipGroup
+              value={approvalFilter}
+              onChange={setApprovalFilter}
+              options={[
+                { value: 'pending', label: 'Pending' },
+                { value: 'approved', label: 'Approved' },
+                { value: '', label: 'All' },
+              ]}
+            />
+          </>
+        }
+      >
+        <Ds.Table>
           <thead>
             <tr>
-              <th>Featured</th>
-              <th>Listing Detail</th>
-              <th>Seller (Member)</th>
+              <th style={{ width: 40 }} />
+              <th>Listing</th>
+              <th>Seller</th>
               <th>Category</th>
               <th>Approval</th>
+              <th>Price</th>
               <th>Status</th>
-              <th style={{ textAlign: 'right' }}>Actions</th>
+              <th className="ds-table__actions" />
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={7} style={{ textAlign: 'center', padding: '3rem' }}>Loading marketplace data...</td></tr>
+              <Ds.Table.LoadingRow colSpan={8} label="Loading marketplace…" />
             ) : listings.length === 0 ? (
-              <tr><td colSpan={7} style={{ textAlign: 'center', padding: '3rem' }}>No listings found.</td></tr>
+              <Ds.Table.EmptyRow
+                colSpan={8}
+                icon={IconBuildingStore}
+                title="No listings found"
+                description="Adjust filters to see more listings."
+              />
             ) : listings.map(l => (
               <tr key={l.id}>
                 <td>
-                  <button 
+                  <Ds.IconButton
+                    aria-label={l.is_featured ? 'Unfeature' : 'Feature'}
                     onClick={() => toggleFeatured(l.id, l.is_featured)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: l.is_featured ? '#f59e0b' : '#cbd5e1' }}
+                    style={{ color: l.is_featured ? 'var(--brand-amber)' : 'var(--neutral-300)' }}
                   >
-                    {l.is_featured ? <IconStarFilled size={22} /> : <IconStar size={22} />}
-                  </button>
+                    {l.is_featured ? <IconStarFilled size={18} /> : <IconStar size={18} />}
+                  </Ds.IconButton>
                 </td>
                 <td>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <div style={{ width: 48, height: 48, borderRadius: '8px', background: '#f8fafc', overflow: 'hidden', border: '1px solid #e2e8f0', flexShrink: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+                    <div style={{
+                      width: 44, height: 44,
+                      borderRadius: 'var(--radius-md)',
+                      background: 'var(--bg-subtle)',
+                      overflow: 'hidden',
+                      border: '1px solid var(--border-subtle)',
+                      flexShrink: 0,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
                       {l.image_urls && l.image_urls.length > 0 ? (
-                        <img src={l.image_urls[0].startsWith('http') ? l.image_urls[0] : `${STATIC_BASE_URL}${l.image_urls[0]}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <img
+                          src={l.image_urls[0].startsWith('http') ? l.image_urls[0] : `${STATIC_BASE_URL}${l.image_urls[0]}`}
+                          alt=""
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
                       ) : (
-                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
-                          <IconBuildingStore size={20} />
-                        </div>
+                        <IconBuildingStore size={18} color="var(--fg-muted)" />
                       )}
                     </div>
-                    <div>
-                      <div style={{ fontWeight: 700 }}>{l.title}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>ID: {String(l.id).slice(0, 8)}</div>
+                    <div style={{ minWidth: 0 }}>
+                      <div className="ds-table__primary">{l.title}</div>
+                      <div style={{ fontSize: 'var(--text-xs)', color: 'var(--fg-muted)', fontWeight: 'var(--weight-medium)' }}>
+                        ID: {String(l.id).slice(0, 8)}
+                      </div>
                     </div>
                   </div>
                 </td>
                 <td>
-                  <div style={{ fontWeight: 600 }}>{l.seller?.full_name || 'Unknown'}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{l.seller?.business_name || '—'}</div>
+                  <div className="ds-table__primary">{l.seller?.full_name || 'Unknown'}</div>
+                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--fg-muted)' }}>
+                    {l.seller?.business_name || '—'}
+                  </div>
                 </td>
                 <td>
-                  <span className="pill" style={{ background: '#f1f5f9', color: '#475569', fontSize: '0.7rem' }}>
-                    {l.category || 'General'}
-                  </span>
+                  <Ds.Badge variant="neutral">{l.category || 'General'}</Ds.Badge>
                 </td>
                 <td>
-                  <span className={`pill ${l.is_approved ? 'pill-completed' : 'pill-pending'}`} style={{ fontSize: '0.7rem' }}>
+                  <Ds.Badge dot variant={l.is_approved ? 'success' : 'warning'}>
                     {l.is_approved ? 'Verified' : 'Pending'}
-                  </span>
-                  {l.rejection_reason && <div style={{ fontSize: '0.65rem', color: '#ef4444', marginTop: '4px', maxWidth: '120px' }}>Reason: {l.rejection_reason}</div>}
+                  </Ds.Badge>
+                  {l.rejection_reason && (
+                    <div style={{ fontSize: 'var(--text-xs)', color: 'var(--danger)', marginTop: 4, maxWidth: 140 }}>
+                      Reason: {l.rejection_reason}
+                    </div>
+                  )}
+                </td>
+                <td className="ds-table__primary" style={{ fontWeight: 'var(--weight-bold)' }}>
+                  {formatCurrency(l.price)}
                 </td>
                 <td>
-                  <div style={{ fontWeight: 700 }}>{formatCurrency(l.price)}</div>
-                </td>
-                <td>
-                  <span className={`pill ${l.status === 'active' ? 'pill-approved' : l.status === 'paused' ? 'pill-pending' : 'pill-rejected'}`}>
+                  <Ds.Badge dot variant={l.status === 'active' ? 'success' : l.status === 'paused' ? 'warning' : 'danger'}>
                     {l.status}
-                  </span>
+                  </Ds.Badge>
                 </td>
-                <td style={{ textAlign: 'right' }}>
-                  <ListingActionMenu 
+                <td className="ds-table__actions">
+                  <ListingActionMenu
                     listing={l}
                     onViewInterests={() => viewInterests(l)}
                     onPreview={() => setSelectedListing(l)}
@@ -4964,165 +5173,175 @@ function MarketplacePage() {
               </tr>
             ))}
           </tbody>
-        </table>
-      </div>
+        </Ds.Table>
+      </Ds.Section>
 
       {selectedListing && !showInterestsModal && !showRejectModal && (
-        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setSelectedListing(null)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 750 }}>
-            <div className="modal-header">
+        <Ds.Modal open size="lg" onClose={() => setSelectedListing(null)}>
+          <Ds.Modal.Header
+            title="Listing Preview"
+            subtitle="Review all details before approval"
+            onClose={() => setSelectedListing(null)}
+          />
+          <Ds.Modal.Body>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-6)' }}>
               <div>
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Listing Preview</h2>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Review all details before approval</p>
-              </div>
-              <button type="button" className="modal-close-btn" onClick={() => setSelectedListing(null)}>
-                <IconX size={20} />
-              </button>
-            </div>
-            
-            <div style={{ padding: '2rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-              {/* Left: Images */}
-              <div>
-                <div style={{ width: '100%', aspectRatio: '1/1', borderRadius: '12px', overflow: 'hidden', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                <div style={{
+                  width: '100%', aspectRatio: '1/1',
+                  borderRadius: 'var(--radius-lg)',
+                  overflow: 'hidden',
+                  background: 'var(--bg-subtle)',
+                  border: '1px solid var(--border-subtle)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
                   {selectedListing.image_urls && selectedListing.image_urls.length > 0 ? (
-                    <img 
-                      src={selectedListing.image_urls[0].startsWith('http') ? selectedListing.image_urls[0] : `${STATIC_BASE_URL}${selectedListing.image_urls[0]}`} 
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                    <img
+                      src={selectedListing.image_urls[0].startsWith('http') ? selectedListing.image_urls[0] : `${STATIC_BASE_URL}${selectedListing.image_urls[0]}`}
+                      alt=""
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
                   ) : (
-                    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#cbd5e1' }}>
-                      <IconBuildingStore size={48} />
-                    </div>
+                    <IconBuildingStore size={40} color="var(--neutral-300)" />
                   )}
                 </div>
-                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem', overflowX: 'auto' }}>
-                  {selectedListing.image_urls?.map((url, i) => (
-                    <div key={i} style={{ width: 60, height: 60, borderRadius: '8px', overflow: 'hidden', border: '1px solid #e2e8f0', flexShrink: 0 }}>
-                      <img src={url.startsWith('http') ? url : `${STATIC_BASE_URL}${url}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    </div>
-                  ))}
-                </div>
+                {selectedListing.image_urls?.length > 1 && (
+                  <div style={{ display: 'flex', gap: 'var(--space-2)', marginTop: 'var(--space-3)', overflowX: 'auto' }}>
+                    {selectedListing.image_urls.map((url, i) => (
+                      <div key={i} style={{
+                        width: 56, height: 56,
+                        borderRadius: 'var(--radius-sm)',
+                        overflow: 'hidden',
+                        border: '1px solid var(--border-subtle)',
+                        flexShrink: 0,
+                      }}>
+                        <img
+                          src={url.startsWith('http') ? url : `${STATIC_BASE_URL}${url}`}
+                          alt=""
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              {/* Right: Info */}
               <div>
-                <div style={{ marginBottom: '1.5rem' }}>
-                  <span className="pill" style={{ marginBottom: '0.5rem', background: '#f1f5f9' }}>{selectedListing.category}</span>
-                  <h3 style={{ fontSize: '1.5rem', fontWeight: 800 }}>{selectedListing.title}</h3>
-                  <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: '0.5rem', lineHeight: 1.6 }}>{selectedListing.description}</p>
-                </div>
+                <Ds.Badge variant="neutral">{selectedListing.category}</Ds.Badge>
+                <h3 style={{ fontSize: 'var(--text-2xl)', fontWeight: 'var(--weight-bold)', marginTop: 'var(--space-2)', letterSpacing: 'var(--tracking-tight)' }}>
+                  {selectedListing.title}
+                </h3>
+                <p style={{ fontSize: 'var(--text-base)', color: 'var(--fg-secondary)', marginTop: 'var(--space-2)', lineHeight: 'var(--leading-relaxed)' }}>
+                  {selectedListing.description}
+                </p>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
-                  <div style={{ padding: '1rem', background: '#f8fafc', borderRadius: '12px' }}>
-                    <p style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Regular Price</p>
-                    <p style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)' }}>{formatCurrency(selectedListing.price)}</p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)', marginTop: 'var(--space-5)' }}>
+                  <div style={{ padding: 'var(--space-3) var(--space-4)', background: 'var(--bg-subtle)', borderRadius: 'var(--radius-md)' }}>
+                    <p style={{ fontSize: 'var(--text-xs)', color: 'var(--fg-muted)', fontWeight: 'var(--weight-semibold)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-wide)' }}>
+                      Regular price
+                    </p>
+                    <p style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--weight-bold)', color: 'var(--fg-primary)', marginTop: 4 }}>
+                      {formatCurrency(selectedListing.price)}
+                    </p>
                   </div>
-                  <div style={{ padding: '1rem', background: '#ecfdf5', borderRadius: '12px' }}>
-                    <p style={{ fontSize: '0.75rem', color: '#059669', fontWeight: 700, textTransform: 'uppercase' }}>Member Price</p>
-                    <p style={{ fontSize: '1.25rem', fontWeight: 800, color: '#059669' }}>{selectedListing.member_price ? formatCurrency(selectedListing.member_price) : 'N/A'}</p>
+                  <div style={{ padding: 'var(--space-3) var(--space-4)', background: 'var(--success-bg)', borderRadius: 'var(--radius-md)' }}>
+                    <p style={{ fontSize: 'var(--text-xs)', color: 'var(--success)', fontWeight: 'var(--weight-semibold)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-wide)' }}>
+                      Member price
+                    </p>
+                    <p style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--weight-bold)', color: 'var(--success)', marginTop: 4 }}>
+                      {selectedListing.member_price ? formatCurrency(selectedListing.member_price) : 'N/A'}
+                    </p>
                   </div>
                 </div>
 
-                <div style={{ padding: '1rem', background: '#f1f5f9', borderRadius: '12px', marginBottom: '2rem' }}>
-                  <p style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem' }}>Seller Information</p>
-                  <p style={{ fontWeight: 700 }}>{selectedListing.seller?.full_name}</p>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{selectedListing.seller?.business_name}</p>
-                </div>
-
-                <div style={{ display: 'flex', gap: '1rem' }}>
-                  {!selectedListing.is_approved ? (
-                    <button 
-                      className="btn-primary" 
-                      style={{ flex: 1, background: '#059669' }} 
-                      onClick={() => { handleApprove(selectedListing.id); setSelectedListing(null); }}
-                    >
-                      <IconCheck size={18} /> Approve Listing
-                    </button>
-                  ) : (
-                    <button 
-                      className="btn-primary" 
-                      style={{ flex: 1, background: '#ef4444' }} 
-                      onClick={() => { setShowRejectModal(true); }}
-                    >
-                      <IconX size={18} /> Reject Listing
-                    </button>
-                  )}
+                <div style={{ padding: 'var(--space-4)', background: 'var(--bg-subtle)', borderRadius: 'var(--radius-md)', marginTop: 'var(--space-4)' }}>
+                  <p style={{ fontSize: 'var(--text-xs)', color: 'var(--fg-muted)', fontWeight: 'var(--weight-semibold)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-wide)', marginBottom: 'var(--space-1)' }}>
+                    Seller
+                  </p>
+                  <p className="ds-table__primary">{selectedListing.seller?.full_name}</p>
+                  <p style={{ fontSize: 'var(--text-sm)', color: 'var(--fg-secondary)' }}>{selectedListing.seller?.business_name}</p>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
+          </Ds.Modal.Body>
+          <Ds.Modal.Footer>
+            <Ds.Button variant="ghost" onClick={() => setSelectedListing(null)}>Close</Ds.Button>
+            {!selectedListing.is_approved ? (
+              <Ds.Button
+                variant="success"
+                leftIcon={<IconCheck size={14} />}
+                onClick={() => { handleApprove(selectedListing.id); setSelectedListing(null); }}
+              >
+                Approve listing
+              </Ds.Button>
+            ) : (
+              <Ds.Button
+                variant="danger-outline"
+                leftIcon={<IconX size={14} />}
+                onClick={() => setShowRejectModal(true)}
+              >
+                Reject listing
+              </Ds.Button>
+            )}
+          </Ds.Modal.Footer>
+        </Ds.Modal>
       )}
 
       {showInterestsModal && (
-        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setShowInterestsModal(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 650 }}>
-            <div className="modal-header">
-              <div>
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Lead Generation Activity</h2>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Members interested in: {selectedListing?.title}</p>
-              </div>
-              <button type="button" className="modal-close-btn" onClick={() => setShowInterestsModal(false)}>
-                <IconX size={20} />
-              </button>
-            </div>
-            <div style={{ padding: '1.5rem' }}>
-              {loadingInterests ? (
-                <div style={{ padding: '2rem', textAlign: 'center' }}>Loading interests...</div>
-              ) : interests.length === 0 ? (
-                <div style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8' }}>No interest registered yet.</div>
-              ) : (
-                <table className="modern-table">
-                  <thead>
-                    <tr>
-                      <th>Interested Member</th>
-                      <th>Chapter</th>
-                      <th>Method</th>
-                      <th>Date</th>
+        <Ds.Modal open size="lg" onClose={() => setShowInterestsModal(false)}>
+          <Ds.Modal.Header
+            title="Lead Activity"
+            subtitle={`Members interested in: ${selectedListing?.title}`}
+            onClose={() => setShowInterestsModal(false)}
+          />
+          <Ds.Modal.Body>
+            {loadingInterests ? (
+              <Ds.LoadingRow label="Loading interests…" />
+            ) : interests.length === 0 ? (
+              <Ds.EmptyState icon={IconUsers} title="No interest yet" description="Members will appear here when they react to this listing." />
+            ) : (
+              <Ds.Table>
+                <thead>
+                  <tr>
+                    <th>Member</th>
+                    <th>Chapter</th>
+                    <th>Method</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {interests.map(i => (
+                    <tr key={i.id}>
+                      <td className="ds-table__primary">{i.user?.full_name}</td>
+                      <td className="ds-table__muted">{i.user?.chapter?.name || '—'}</td>
+                      <td style={{ textTransform: 'capitalize' }} className="ds-table__muted">{i.contact_method}</td>
+                      <td className="ds-table__muted">{new Date(i.created_at).toLocaleDateString()}</td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {interests.map(i => (
-                      <tr key={i.id}>
-                        <td style={{ fontWeight: 600 }}>{i.user?.full_name}</td>
-                        <td>{i.user?.chapter?.name || '—'}</td>
-                        <td style={{ textTransform: 'capitalize' }}>{i.contact_method}</td>
-                        <td style={{ fontSize: '0.8rem' }}>{new Date(i.created_at).toLocaleDateString()}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </div>
-        </div>
+                  ))}
+                </tbody>
+              </Ds.Table>
+            )}
+          </Ds.Modal.Body>
+        </Ds.Modal>
       )}
 
       {showRejectModal && (
-        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setShowRejectModal(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 450 }}>
-            <div className="modal-header">
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Reject Marketplace Listing</h2>
-              <button type="button" className="modal-close-btn" onClick={() => setShowRejectModal(false)}>
-                <IconX size={20} />
-              </button>
-            </div>
-            <div style={{ padding: '1.5rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.75rem', fontWeight: 600 }}>Reason for Rejection</label>
-              <textarea 
-                className="filter-input v2"
-                style={{ width: '100%', height: '120px', padding: '1rem', resize: 'none' }}
-                placeholder="e.g. Image is not clear, title is too short..."
+        <Ds.Modal open size="sm" onClose={() => setShowRejectModal(false)}>
+          <Ds.Modal.Header title="Reject listing" onClose={() => setShowRejectModal(false)} />
+          <Ds.Modal.Body>
+            <Ds.Field label="Reason for rejection" required>
+              <Ds.Textarea
+                placeholder="e.g. Image is not clear, title is too short…"
                 value={rejectionReason}
                 onChange={e => setRejectionReason(e.target.value)}
+                rows={5}
               />
-              <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
-                <button className="btn-primary" style={{ flex: 1, background: '#f1f5f9', color: '#475569' }} onClick={() => setShowRejectModal(false)}>Cancel</button>
-                <button className="btn-primary" style={{ flex: 1, background: '#ef4444' }} onClick={handleReject}>Confirm Reject</button>
-              </div>
-            </div>
-          </div>
-        </div>
+            </Ds.Field>
+          </Ds.Modal.Body>
+          <Ds.Modal.Footer>
+            <Ds.Button variant="ghost" onClick={() => setShowRejectModal(false)}>Cancel</Ds.Button>
+            <Ds.Button variant="danger" onClick={handleReject}>Confirm reject</Ds.Button>
+          </Ds.Modal.Footer>
+        </Ds.Modal>
       )}
     </section>
   );
@@ -5206,54 +5425,63 @@ function ChaptersPage() {
   };
 
   return (
-    <section className="dashboard-body">
-      <div className="page-title-wrap">
-        <div>
-          <h1 className="page-title">Global Chapters</h1>
-          <p style={{ color: 'var(--text-secondary)', marginTop: '0.4rem', fontWeight: 500 }}>
-            Manage geographical chapters and their regional operations.
-          </p>
-        </div>
-        <button className="btn-primary" onClick={() => { setEditingChapter(null); setShowModal(true); }}>
-          <IconPlus size={18} /> Add New Chapter
-        </button>
-      </div>
+    <section className="ds-page">
+      <Ds.PageHeader
+        title="Global Chapters"
+        description="Manage geographical chapters and their regional operations."
+        actions={
+          <Ds.Button
+            variant="primary"
+            leftIcon={<IconPlus size={14} />}
+            onClick={() => { setEditingChapter(null); setShowModal(true); }}
+          >
+            New chapter
+          </Ds.Button>
+        }
+      />
 
-      <div className="data-section">
-        <table className="modern-table">
+      <Ds.Section
+        title="Chapters"
+        subtitle={`${chapters.length} active across the network`}
+        flush
+      >
+        <Ds.Table>
           <thead>
             <tr>
-              <th>Chapter Name</th>
+              <th>Chapter</th>
               <th>District</th>
-              <th>Meeting Schedule</th>
+              <th>Meeting schedule</th>
               <th>Status</th>
-              <th style={{ textAlign: 'right' }}>Actions</th>
+              <th className="ds-table__actions" />
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={5} style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>Loading chapters...</td></tr>
+              <Ds.Table.LoadingRow colSpan={5} label="Loading chapters…" />
             ) : chapters.length === 0 ? (
-              <tr><td colSpan={5} style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>No chapters found.</td></tr>
+              <Ds.Table.EmptyRow
+                colSpan={5}
+                icon={IconBuildingCommunity}
+                title="No chapters yet"
+                description="Add the first chapter to get started."
+              />
             ) : chapters.map(c => (
               <tr key={c.id}>
+                <td className="ds-table__primary">{c.name}</td>
                 <td>
-                  <div style={{ fontWeight: 700 }}>{c.name}</div>
-                </td>
-                <td>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <IconMapPin size={16} color="var(--primary)" />
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--fg-secondary)', fontSize: 'var(--text-sm)' }}>
+                    <IconMapPin size={14} color="var(--brand-blue)" />
                     {c.district}
-                  </div>
-                </td>
-                <td>{c.meeting_schedule || '—'}</td>
-                <td>
-                  <span className={`pill ${c.is_active ? 'pill-approved' : 'pill-rejected'}`}>
-                    {c.is_active ? 'Active' : 'Inactive'}
                   </span>
                 </td>
-                <td style={{ textAlign: 'right' }}>
-                  <ChapterActionMenu 
+                <td className="ds-table__muted">{c.meeting_schedule || '—'}</td>
+                <td>
+                  <Ds.Badge dot variant={c.is_active ? 'success' : 'danger'}>
+                    {c.is_active ? 'Active' : 'Inactive'}
+                  </Ds.Badge>
+                </td>
+                <td className="ds-table__actions">
+                  <ChapterActionMenu
                     chapter={c}
                     onEdit={() => { setEditingChapter(c); setShowModal(true); }}
                     onDelete={() => handleDelete(c.id)}
@@ -5262,15 +5490,15 @@ function ChaptersPage() {
               </tr>
             ))}
           </tbody>
-        </table>
-      </div>
+        </Ds.Table>
+      </Ds.Section>
 
       {showModal && (
-        <ChapterFormModal 
-          chapter={editingChapter} 
+        <ChapterFormModal
+          chapter={editingChapter}
           districts={SRI_LANKA_DISTRICTS}
-          onClose={() => setShowModal(false)} 
-          onSave={handleSave} 
+          onClose={() => setShowModal(false)}
+          onSave={handleSave}
         />
       )}
     </section>
@@ -5366,14 +5594,529 @@ function ChapterFormModal({ chapter, districts, onClose, onSave }) {
 }
 
 
+// ── Analytics Hub (Overview landing page) ───────────────────────────────────
+
+function AnalyticsHubPage({ overview, overviewLoading, overviewError, onChangeTab, showToast }) {
+  const [events, setEvents] = useState([]);
+  const [chapters, setChapters] = useState([]);
+  const [pendingAppsCount, setPendingAppsCount] = useState(0);
+  const [pendingListingsCount, setPendingListingsCount] = useState(0);
+  const [activity, setActivity] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Growth chart state
+  const [chartMetric, setChartMetric] = useState('members');
+  const [chartData, setChartData] = useState({ metric: 'members', days: 30, buckets: [] });
+  const [chartLoading, setChartLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    setChartLoading(true);
+    api.getAdminTimeseries({ metric: chartMetric, days: 30 })
+      .then(data => {
+        if (cancelled) return;
+        setChartData(data || { metric: chartMetric, days: 30, buckets: [] });
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setChartData({ metric: chartMetric, days: 30, buckets: [] });
+      })
+      .finally(() => { if (!cancelled) setChartLoading(false); });
+    return () => { cancelled = true; };
+  }, [chartMetric]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+
+    Promise.allSettled([
+      api.listEvents({ published_only: false }),
+      api.listChapters(),
+      api.listApplications({ status: 'pending', page: 1, limit: 8 }),
+      api.adminListMarketplaceListings({ is_approved: false }),
+      api.listPayments({ limit: 5 }),
+      api.listAllReferrals({ page: 1, limit: 5 }),
+    ]).then(results => {
+      if (cancelled) return;
+
+      const [evRes, chRes, appsRes, listingsRes, paysRes, refsRes] = results;
+
+      const evList = evRes.status === 'fulfilled' ? (evRes.value || []) : [];
+      const chList = chRes.status === 'fulfilled' ? (chRes.value || []) : [];
+      const appsPayload = appsRes.status === 'fulfilled' ? (appsRes.value || {}) : {};
+      const appsData = appsPayload.data || [];
+      const appsTotal = appsPayload.total ?? appsData.length;
+      const listingsPayload = listingsRes.status === 'fulfilled' ? (listingsRes.value || {}) : {};
+      const listingsArr = listingsPayload.listings || [];
+      const paysPayload = paysRes.status === 'fulfilled' ? paysRes.value : null;
+      const paysArr = Array.isArray(paysPayload) ? paysPayload : (paysPayload?.data || []);
+      const refsPayload = refsRes.status === 'fulfilled' ? refsRes.value : null;
+      const refsArr = Array.isArray(refsPayload) ? refsPayload : (refsPayload?.referrals || []);
+
+      const acts = [];
+      appsData.slice(0, 5).forEach(a => acts.push({
+        type: 'application',
+        title: `${a.full_name || 'Someone'} applied to join`,
+        subtitle: a.business_name || a.chapter_name || '—',
+        time: a.created_at,
+        tab: 'applications',
+      }));
+      paysArr.slice(0, 5).forEach(p => acts.push({
+        type: 'payment',
+        title: `Payment received from ${p.user_name || 'a member'}`,
+        subtitle: `${formatCurrency(p.amount)} · ${p.payment_type || 'payment'}`,
+        time: p.created_at,
+        tab: 'payments',
+      }));
+      refsArr.slice(0, 5).forEach(r => acts.push({
+        type: 'referral',
+        title: `${r.from_user?.full_name || 'A member'} sent a referral`,
+        subtitle: r.lead_name || r.target_user?.full_name || '—',
+        time: r.created_at,
+        tab: 'referrals',
+      }));
+      acts.sort((a, b) => new Date(b.time || 0) - new Date(a.time || 0));
+
+      setEvents(evList);
+      setChapters(chList);
+      setPendingAppsCount(appsTotal);
+      setPendingListingsCount(listingsArr.length);
+      setActivity(acts.slice(0, 8));
+      setLoading(false);
+    });
+
+    return () => { cancelled = true; };
+  }, []);
+
+  const handleExportReports = async () => {
+    try {
+      const data = await api.exportData();
+      if (data instanceof Blob) {
+        const url = window.URL.createObjectURL(data);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `PBN_Report_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        showToast('Data report downloaded');
+      } else {
+        const csvContent =
+          'data:text/csv;charset=utf-8,' +
+          Object.keys(data).join(',') + '\n' +
+          Object.values(data).join(',');
+        const link = document.createElement('a');
+        link.setAttribute('href', encodeURI(csvContent));
+        link.setAttribute('download', 'platform_summary.csv');
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        showToast('Platform summary downloaded');
+      }
+    } catch (e) {
+      showToast('Export failed: ' + e.message, 'error');
+    }
+  };
+
+  const now = Date.now();
+  const nextEvent = events
+    .filter(e => e.end_at && new Date(e.end_at).getTime() >= now)
+    .sort((a, b) => new Date(a.start_at) - new Date(b.start_at))[0];
+
+  const topChapters = [...chapters]
+    .sort((a, b) => (b.member_count || 0) - (a.member_count || 0))
+    .slice(0, 5);
+
+  const openTasksTotal = pendingAppsCount + pendingListingsCount;
+
+  // Compute trend chip text for a KPI given current and previous values.
+  // `period_days` from the overview tells us the lookback window (default 30).
+  const pctTrend = (current, previous) => {
+    if (current == null || previous == null) return null;
+    if (previous === 0) {
+      return current === 0 ? null : { text: 'New', direction: 'up' };
+    }
+    const pct = ((current - previous) / previous) * 100;
+    if (Math.abs(pct) < 0.5) return null;
+    return {
+      text: `${pct >= 0 ? '+' : ''}${pct.toFixed(1)}%`,
+      direction: pct >= 0 ? 'up' : 'down',
+    };
+  };
+
+  const trendRevenue = pctTrend(overview?.total_value, overview?.previous_total_value);
+  const trendMembers = pctTrend(overview?.total_members, overview?.previous_total_members);
+  const trendLeads = pctTrend(overview?.total_leads, overview?.previous_total_leads);
+
+  // Sparkline derived values
+  const chartPoints = (chartData.buckets || []).map(b => Number(b.value) || 0);
+  const chartTotal = chartPoints.reduce((s, v) => s + v, 0);
+  const chartTotalLabel = chartMetric === 'revenue'
+    ? formatCurrency(chartTotal)
+    : chartTotal.toLocaleString();
+  const chartColor = chartMetric === 'revenue'
+    ? 'var(--success)'
+    : chartMetric === 'leads'
+      ? 'var(--brand-amber-600)'
+      : 'var(--brand-blue)';
+
+  const activityVisuals = {
+    application: { icon: IconClipboardList, color: 'var(--brand-blue)',       bg: 'var(--brand-blue-50)' },
+    payment:     { icon: IconCoin,          color: 'var(--success)',          bg: 'var(--success-bg)' },
+    referral:    { icon: IconHierarchy2,    color: 'var(--brand-amber-600)',  bg: 'var(--brand-amber-50)' },
+  };
+
+  return (
+    <section className="ds-page">
+      <Ds.PageHeader
+        title="Analytics Hub"
+        description="Network growth, recent activity, and what needs your attention today."
+        actions={
+          <Ds.Button
+            variant="primary"
+            leftIcon={<IconFileExport size={14} />}
+            onClick={handleExportReports}
+          >
+            Export
+          </Ds.Button>
+        }
+      />
+
+      {/* KPI cards */}
+      {overviewError ? (
+        <Ds.Card padded>
+          <Ds.EmptyState
+            icon={IconAlertCircle}
+            title="Failed to load analytics"
+            description="Check the backend connection and try again."
+          />
+        </Ds.Card>
+      ) : (
+        <div className="ds-stat-grid">
+          <Ds.StatCard
+            label="Total Revenue (ROI)"
+            value={overviewLoading ? '—' : formatCurrency(overview?.total_value)}
+            icon={IconCoin}
+            iconColor="var(--success)"
+            iconBg="var(--success-bg)"
+            trend={trendRevenue?.text}
+            trendDirection={trendRevenue?.direction}
+          />
+          <Ds.StatCard
+            label="Active Members"
+            value={overview?.total_members?.toLocaleString() ?? '—'}
+            icon={IconUsers}
+            iconColor="var(--brand-blue)"
+            iconBg="var(--brand-blue-50)"
+            trend={trendMembers?.text}
+            trendDirection={trendMembers?.direction}
+          />
+          <Ds.StatCard
+            label="Total Leads"
+            value={overview?.total_leads?.toLocaleString() ?? '—'}
+            icon={IconStackPop}
+            iconColor="var(--brand-amber-600)"
+            iconBg="var(--brand-amber-50)"
+            trend={trendLeads?.text}
+            trendDirection={trendLeads?.direction}
+          />
+          <Ds.StatCard
+            label="Open Tasks"
+            value={loading ? '—' : openTasksTotal.toLocaleString()}
+            icon={IconBell}
+            iconColor="var(--brand-navy)"
+            iconBg="rgba(10, 37, 64, 0.08)"
+          />
+        </div>
+      )}
+
+      {/* Two-column dashboard */}
+      <div className="ds-dashboard-grid">
+        {/* LEFT column */}
+        <div className="ds-dashboard-grid__col">
+          <Ds.Section
+            title="Network Growth"
+            subtitle={`Last ${chartData.days || 30} days`}
+            actions={
+              <Ds.ChipGroup
+                value={chartMetric}
+                onChange={setChartMetric}
+                options={[
+                  { value: 'members', label: 'Members' },
+                  { value: 'revenue', label: 'Revenue' },
+                  { value: 'leads', label: 'Leads' },
+                ]}
+              />
+            }
+          >
+            {chartLoading ? (
+              <Ds.LoadingRow label="Loading chart…" />
+            ) : chartPoints.length === 0 || chartPoints.every(v => v === 0) ? (
+              <Ds.EmptyState
+                icon={IconChartBar}
+                title="No data in this window"
+                description={`No new ${chartMetric} recorded in the last ${chartData.days || 30} days.`}
+              />
+            ) : (
+              <>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 'var(--space-2)', marginBottom: 'var(--space-4)' }}>
+                  <span style={{
+                    fontSize: 'var(--text-3xl)',
+                    fontWeight: 'var(--weight-bold)',
+                    color: 'var(--fg-primary)',
+                    letterSpacing: 'var(--tracking-tight)',
+                    lineHeight: 1,
+                  }}>
+                    {chartTotalLabel}
+                  </span>
+                  <span style={{
+                    fontSize: 'var(--text-sm)',
+                    color: 'var(--fg-muted)',
+                    fontWeight: 'var(--weight-medium)',
+                  }}>
+                    new {chartMetric} in the last {chartData.days || 30} days
+                  </span>
+                </div>
+                <Ds.Sparkline
+                  points={chartPoints}
+                  color={chartColor}
+                  height={120}
+                  ariaLabel={`${chartMetric} new per ${chartData.bucket || 'day'}`}
+                />
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  marginTop: 'var(--space-2)',
+                  fontSize: 'var(--text-xs)',
+                  color: 'var(--fg-muted)',
+                  fontWeight: 'var(--weight-medium)',
+                }}>
+                  <span>
+                    {chartData.buckets?.[0]?.date
+                      ? new Date(chartData.buckets[0].date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+                      : ''}
+                  </span>
+                  <span>
+                    {chartData.buckets?.[chartData.buckets.length - 1]?.date
+                      ? new Date(chartData.buckets[chartData.buckets.length - 1].date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+                      : ''}
+                  </span>
+                </div>
+              </>
+            )}
+          </Ds.Section>
+
+          <Ds.Section
+            title="Recent Activity"
+            subtitle="Latest applications, payments, and referrals"
+            flush
+          >
+            {loading ? (
+              <Ds.LoadingRow label="Loading activity…" />
+            ) : activity.length === 0 ? (
+              <Ds.EmptyState
+                icon={IconBell}
+                title="No recent activity"
+                description="As members apply, pay, or send referrals, you'll see them here."
+              />
+            ) : (
+              <div className="ds-activity-list" style={{ padding: '0 var(--space-4)' }}>
+                {activity.map((act, i) => {
+                  const v = activityVisuals[act.type];
+                  const Icon = v.icon;
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      className="ds-activity-item"
+                      onClick={() => onChangeTab(act.tab)}
+                    >
+                      <span className="ds-activity-item__icon" style={{ background: v.bg, color: v.color }}>
+                        <Icon size={16} />
+                      </span>
+                      <div className="ds-activity-item__body">
+                        <div className="ds-activity-item__title">{act.title}</div>
+                        <div className="ds-activity-item__subtitle">{act.subtitle}</div>
+                      </div>
+                      <span className="ds-activity-item__time">{formatRelativeTime(act.time)}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </Ds.Section>
+        </div>
+
+        {/* RIGHT column */}
+        <div className="ds-dashboard-grid__col">
+          <Ds.Section
+            title="Upcoming Event"
+            actions={
+              <Ds.Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onChangeTab('events')}
+                rightIcon={<IconChevronRight size={14} />}
+              >
+                View all
+              </Ds.Button>
+            }
+          >
+            {loading ? (
+              <Ds.LoadingRow label="Loading…" />
+            ) : !nextEvent ? (
+              <Ds.EmptyState
+                icon={IconCalendarEvent}
+                title="No upcoming events"
+                description="Schedule a chapter meeting to see it here."
+              />
+            ) : (
+              <div className="ds-event-card">
+                <div className="ds-event-card__date">
+                  <span className="ds-event-card__month">
+                    {new Date(nextEvent.start_at).toLocaleString(undefined, { month: 'short' })}
+                  </span>
+                  <span className="ds-event-card__day">
+                    {new Date(nextEvent.start_at).getDate()}
+                  </span>
+                </div>
+                <div className="ds-event-card__body">
+                  <div className="ds-event-card__title">{nextEvent.title}</div>
+                  <div className="ds-event-card__meta">
+                    <span>
+                      {new Date(nextEvent.start_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {nextEvent.location ? ` · ${nextEvent.location}` : ''}
+                    </span>
+                    <span>
+                      {(nextEvent.rsvps?.filter(r => r.status === 'going').length || 0)} going
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </Ds.Section>
+
+          <Ds.Section
+            title="Top Chapters"
+            subtitle="Ranked by member count"
+            actions={
+              <Ds.Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onChangeTab('chapters')}
+                rightIcon={<IconChevronRight size={14} />}
+              >
+                View all
+              </Ds.Button>
+            }
+          >
+            {loading ? (
+              <Ds.LoadingRow label="Loading…" />
+            ) : topChapters.length === 0 ? (
+              <Ds.EmptyState
+                icon={IconBuildingCommunity}
+                title="No chapters yet"
+              />
+            ) : (
+              <div className="ds-rank-list">
+                {topChapters.map((c, i) => (
+                  <div
+                    key={c.id}
+                    className={Ds.cx('ds-rank-list__item', i === 0 && 'ds-rank-list__item--top')}
+                  >
+                    <span className="ds-rank-list__rank">{i + 1}</span>
+                    <div className="ds-rank-list__body">
+                      <div className="ds-rank-list__title">{c.name}</div>
+                      <div className="ds-rank-list__sub">{c.district || '—'}</div>
+                    </div>
+                    <span className="ds-rank-list__value">
+                      {(c.member_count ?? 0).toLocaleString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Ds.Section>
+
+          <Ds.Section title="Open Tasks" subtitle="Items that need your attention">
+            <div className="ds-task-list">
+              <button
+                type="button"
+                className="ds-task-item"
+                onClick={() => onChangeTab('applications')}
+              >
+                <span
+                  className="ds-task-item__icon"
+                  style={{ background: 'var(--brand-blue-50)', color: 'var(--brand-blue)' }}
+                >
+                  <IconClipboardList size={16} />
+                </span>
+                <div className="ds-task-item__body">
+                  <div className="ds-task-item__title">Pending applications</div>
+                  <div className="ds-task-item__desc">Review and approve membership requests</div>
+                </div>
+                <span
+                  className={Ds.cx('ds-task-item__count', !pendingAppsCount && 'ds-task-item__count--zero')}
+                >
+                  {pendingAppsCount}
+                </span>
+                <IconChevronRight size={16} className="ds-task-item__chevron" />
+              </button>
+
+              <button
+                type="button"
+                className="ds-task-item"
+                onClick={() => onChangeTab('marketplace')}
+              >
+                <span
+                  className="ds-task-item__icon"
+                  style={{ background: 'var(--brand-amber-50)', color: 'var(--brand-amber-600)' }}
+                >
+                  <IconBuildingStore size={16} />
+                </span>
+                <div className="ds-task-item__body">
+                  <div className="ds-task-item__title">Marketplace approvals</div>
+                  <div className="ds-task-item__desc">Listings awaiting moderation</div>
+                </div>
+                <span
+                  className={Ds.cx('ds-task-item__count', !pendingListingsCount && 'ds-task-item__count--zero')}
+                >
+                  {pendingListingsCount}
+                </span>
+                <IconChevronRight size={16} className="ds-task-item__chevron" />
+              </button>
+
+              <button
+                type="button"
+                className="ds-task-item"
+                onClick={() => onChangeTab('rewards')}
+              >
+                <span
+                  className="ds-task-item__icon"
+                  style={{ background: 'var(--success-bg)', color: 'var(--success)' }}
+                >
+                  <IconGift size={16} />
+                </span>
+                <div className="ds-task-item__body">
+                  <div className="ds-task-item__title">Privilege cards</div>
+                  <div className="ds-task-item__desc">Manage member rewards and benefits</div>
+                </div>
+                <IconChevronRight size={16} className="ds-task-item__chevron" />
+              </button>
+            </div>
+          </Ds.Section>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => !!localStorage.getItem('access_token'));
   const [adminUser, setAdminUser] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
-  const [dashboardSearch, setDashboardSearch] = useState('');
   const { toasts, showToast } = useToast();
   
   // Notification State
@@ -5408,11 +6151,6 @@ export default function App() {
 
   const { data: overview, loading: overviewLoading, error: overviewError } = useApi(
     isAuthenticated ? api.getAdminOverview : () => Promise.resolve(null),
-    [isAuthenticated]
-  );
-  
-  const { data: referrals, loading: referralsLoading } = useApi(
-    isAuthenticated ? api.listAllReferrals : () => Promise.resolve(null),
     [isAuthenticated]
   );
 
@@ -5473,253 +6211,40 @@ export default function App() {
     if (activeTab === 'settings') return <SettingsPage {...commonProps} />;
     if (activeTab === 'notifications') return <SecurityLogsPage />;
 
-    // Default: Overview dashboard
+    // Default: Analytics Hub
     return (
-      <section className="dashboard-body">
-        <div className="page-title-wrap">
-          <h1 className="page-title">Performance Overview</h1>
-          <p style={{ color: 'var(--text-secondary)', marginTop: '0.4rem', fontWeight: 500 }}>
-            Tracking business movement across the Prime Business Network in real-time.
-          </p>
-        </div>
-
-        {overviewError ? (
-          <div style={{ padding: '2rem', textAlign: 'center', color: '#ef4444', fontWeight: 600 }}>
-            Failed to load analytics. Check backend connection.
-          </div>
-        ) : (
-          <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-            <StatCard 
-              title="TOTAL REVENUE (ROI)" 
-              value={formatCurrency(overview?.total_value)} 
-              icon={IconCoin} 
-              color="#059669" 
-              trend={null}
-            />
-            <StatCard title="ACTIVE MEMBER BASE" value={overview?.total_members?.toLocaleString() ?? '—'} icon={IconUsers} color="#2563eb" />
-            <StatCard title="TOTAL LEADS (ECONOMY)" value={overview?.total_leads?.toLocaleString() ?? '—'} icon={IconStackPop} color="#f59e0b" />
-            <StatCard title="TOTAL RFPs" value={overview?.total_rfps?.toLocaleString() ?? '—'} icon={IconClipboardList} color="#7c3aed" />
-          </div>
-        )}
-
-        <div className="data-section">
-          <div className="section-head">
-            <div>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Referral Interaction Pipeline</h3>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>Insights into the latest cross-chapter business exchanges.</p>
-            </div>
-            <div style={{ display: 'flex', gap: '1rem' }}>
-              <div style={{ position: 'relative' }}>
-                <IconSearch size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-                <input 
-                  type="text" 
-                  placeholder="Filter interactions..." 
-                  className="filter-input v2" 
-                  style={{ paddingLeft: '40px', height: '48px', width: '240px', background: 'white' }}
-                  value={dashboardSearch}
-                  onChange={(e) => setDashboardSearch(e.target.value)}
-                />
-              </div>
-              <button 
-                className="btn-primary" 
-                style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}
-                onClick={async () => {
-                  try {
-                    const data = await api.exportData();
-                    if (data instanceof Blob) {
-                      const url = window.URL.createObjectURL(data);
-                      const link = document.createElement('a');
-                      link.href = url;
-                      link.setAttribute('download', `PBN_Report_${new Date().toISOString().split('T')[0]}.csv`);
-                      document.body.appendChild(link);
-                      link.click();
-                      link.remove();
-                      showToast('Data report downloaded');
-                    } else {
-                      // If it's JSON aggregate data, convert to a simple CSV for now
-                      const csvContent = "data:text/csv;charset=utf-8," 
-                        + Object.keys(data).join(",") + "\n"
-                        + Object.values(data).join(",");
-                      const encodedUri = encodeURI(csvContent);
-                      const link = document.createElement("a");
-                      link.setAttribute("href", encodedUri);
-                      link.setAttribute("download", "platform_summary.csv");
-                      document.body.appendChild(link);
-                      link.click();
-                      link.remove();
-                      showToast('Platform summary downloaded');
-                    }
-                  } catch (e) {
-                    showToast('Export failed: ' + e.message, 'error');
-                  }
-                }}
-              >
-                <IconFileExport size={18} />
-                Export Data Reports
-              </button>
-            </div>
-          </div>
-
-          <table className="modern-table">
-            <thead>
-              <tr>
-                <th>Referral ID</th>
-                <th>Primary Source</th>
-                <th>Network Target</th>
-                <th>Market Value</th>
-                <th>Live Status</th>
-                <th>Time Elapsed</th>
-                <th>Options</th>
-              </tr>
-            </thead>
-            <tbody>
-              {referralsLoading ? (
-                <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>Loading referrals...</td></tr>
-              ) : (!referrals || (Array.isArray(referrals) ? referrals.length === 0 : !referrals.referrals || referrals.referrals.length === 0)) ? (
-                <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>No referral data available</td></tr>
-              ) : (Array.isArray(referrals) ? referrals : referrals?.referrals || [])
-                .filter(ref => 
-                  !dashboardSearch || 
-                  ref.from_user?.full_name?.toLowerCase().includes(dashboardSearch.toLowerCase()) ||
-                  ref.target_user?.full_name?.toLowerCase().includes(dashboardSearch.toLowerCase()) ||
-                  ref.lead_name?.toLowerCase().includes(dashboardSearch.toLowerCase()) ||
-                  ref.status?.toLowerCase().includes(dashboardSearch.toLowerCase())
-                )
-                .slice(0, 8).map((ref, idx) => (
-                <tr key={ref.id || idx}>
-                  <td><span className="id-badge">{ref.id ? `REF-${String(ref.id).slice(0, 4)}` : `REF-${idx}`}</span></td>
-                  <td style={{ fontWeight: 600 }}>{ref.from_user?.full_name || '—'}</td>
-                  <td>{ref.target_user?.full_name || '—'}</td>
-                  <td style={{ fontWeight: 700 }}>{ref.actual_value ? formatCurrency(ref.actual_value) : '—'}</td>
-                  <td>
-                    <span className={`pill ${ref.status === 'closed_won' ? 'pill-completed' : 'pill-pending'}`}>
-                      {ref.status || 'Unknown'}
-                    </span>
-                  </td>
-                  <td>{ref.created_at ? new Date(ref.created_at).toLocaleDateString() : '—'}</td>
-                  <td><IconDotsVertical size={20} color="#94a3b8" style={{ cursor: 'pointer' }} /></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          <div style={{ padding: '1.5rem 2.5rem', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
-              {(Array.isArray(referrals) ? referrals?.length : referrals?.referrals?.length) > 0 ? `Showing latest entries` : 'No records available'}
-            </p>
-            <button
-              onClick={() => setActiveTab('referrals')}
-              style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', cursor: 'pointer', color: 'var(--secondary)', fontWeight: 700, fontSize: '0.875rem', background: 'none', border: 'none', fontFamily: 'inherit' }}
-            >
-              See Full Global Timeline <IconChevronRight size={18} />
-            </button>
-          </div>
-        </div>
-      </section>
+      <AnalyticsHubPage
+        overview={overview}
+        overviewLoading={overviewLoading}
+        overviewError={overviewError}
+        onChangeTab={setActiveTab}
+        showToast={showToast}
+      />
     );
   };
 
   return (
-    <div className="app-wrapper" onClick={() => { setShowNotifications(false); setShowProfileMenu(false); }}>
+    <>
       <ToastContainer toasts={toasts} />
-      {showChangePassword && <ChangePasswordModal onClose={() => setShowChangePassword(false)} showToast={showToast} />}
-
-      {/* Premium Sidebar */}
-      <aside className="sidebar">
-        <div className="logo-section">
-          <span className="logo-text">Prime <span style={{ color: 'var(--accent)', WebkitTextFillColor: 'var(--accent)' }}>Business</span> Network</span>
-        </div>
-
-        <nav className="nav-container">
-          {MENU_GROUPS.map((group, i) => (
-            <div key={i} className="nav-group">
-              <ul className="nav-list">
-                {group.links.map(link => (
-                  <li
-                    key={link.id}
-                    data-label={link.label}
-                    className={`nav-item ${activeTab === link.id ? 'active' : ''}`}
-                    onClick={() => setActiveTab(link.id)}
-                  >
-                    <link.icon className="nav-icon" />
-                    <span>{link.label}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </nav>
-
-
-      </aside>
-
-      {/* Main Experience */}
-      <main className="main-content">
-        <header className="top-header">
-          <div className="search-nav">
-            <IconSearch size={20} color="#94a3b8" />
-            <input type="text" placeholder="Quick search members, referrals or chapters..." />
-          </div>
-
-          <div className="header-actions">
-            <div className="profile-dropdown-container">
-              <div 
-                className="action-btn" 
-                onClick={(e) => { e.stopPropagation(); setShowNotifications(!showNotifications); setShowProfileMenu(false); }}
-                style={{ position: 'relative' }}
-              >
-                <IconBell size={20} />
-                {unreadCount > 0 && <span className="notification-badge">{unreadCount}</span>}
-              </div>
-              {showNotifications && (
-                <NotificationPanel 
-                  notifications={notifications} 
-                  onDismiss={dismissNotification}
-                  onMarkAllRead={markAllRead}
-                  onClose={() => setShowNotifications(false)}
-                />
-              )}
-            </div>
-
-            <div className="action-btn" onClick={() => setActiveTab('settings')}><IconSettings size={20} /></div>
-            
-            <div style={{ width: '1px', height: '24px', background: '#e2e8f0', margin: '0 0.5rem' }}></div>
-            
-            <div className="profile-dropdown-container">
-              <div 
-                className="header-profile" 
-                onClick={(e) => { e.stopPropagation(); setShowProfileMenu(!showProfileMenu); setShowNotifications(false); }}
-                style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}
-              >
-                <div style={{ textAlign: 'right' }}>
-                  <p style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>{adminUser?.full_name || 'Admin User'}</p>
-                  <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>{adminUser?.role || 'Administrator'}</p>
-                </div>
-                <div style={{ width: 42, height: 42, borderRadius: 12, background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 800, fontSize: '0.9rem', border: '2px solid white', boxShadow: 'var(--shadow)' }}>
-                  {adminUser?.full_name ? adminUser.full_name.split(' ').map(n => n[0]).join('').toUpperCase() : 'AD'}
-                </div>
-              </div>
-
-              {showProfileMenu && (
-                <div className="profile-menu" onClick={e => e.stopPropagation()}>
-                  <div className="profile-menu-item" onClick={() => { setActiveTab('settings'); setShowProfileMenu(false); }}>
-                    <IconUser size={18} /> My Profile
-                  </div>
-                  <div className="profile-menu-item" onClick={() => { setShowChangePassword(true); setShowProfileMenu(false); }}>
-                    <IconLock size={18} /> Change Password
-                  </div>
-                  <div style={{ height: '1px', background: 'var(--border)', margin: '0.5rem 0' }}></div>
-                  <div className="profile-menu-item danger" onClick={handleLogout}>
-                    <IconLogout size={18} /> Sign Out
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </header>
-
+      {showChangePassword && (
+        <ChangePasswordModal
+          onClose={() => setShowChangePassword(false)}
+          showToast={showToast}
+        />
+      )}
+      <AppShell
+        activeTab={activeTab}
+        onChangeTab={setActiveTab}
+        adminUser={adminUser}
+        notifications={notifications}
+        unreadCount={unreadCount}
+        onDismissNotification={dismissNotification}
+        onMarkAllRead={markAllRead}
+        onChangePassword={() => setShowChangePassword(true)}
+        onLogout={handleLogout}
+      >
         {renderContent()}
-      </main>
-    </div>
+      </AppShell>
+    </>
   );
 }

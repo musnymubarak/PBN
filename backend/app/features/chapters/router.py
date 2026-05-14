@@ -11,6 +11,8 @@ from fastapi import APIRouter, Depends, Query
 from fastapi.responses import ORJSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from sqlalchemy import select, func
+
 from app.core.dependencies import get_db
 from app.core.response import success_response
 from app.features.auth.dependencies import get_current_user, require_role
@@ -23,6 +25,7 @@ from app.features.chapters.service import (
     remove_member,
     get_occupied_industry_ids,
 )
+from app.models.memberships import ChapterMembership
 from app.models.user import User, UserRole
 
 router = APIRouter(tags=["Chapters"])
@@ -54,6 +57,20 @@ async def list_chapters_endpoint(
 ) -> ORJSONResponse:
     from app.features.chapters.service import list_chapters
     chapters = await list_chapters(db, district=district, active_only=active_only)
+
+    # Lookup active member counts per chapter in a single grouped query —
+    # used by the admin Analytics Hub "Top Chapters" widget.
+    counts_stmt = (
+        select(
+            ChapterMembership.chapter_id,
+            func.count(1).label("members"),
+        )
+        .where(ChapterMembership.is_active.is_(True))
+        .group_by(ChapterMembership.chapter_id)
+    )
+    counts_rows = (await db.execute(counts_stmt)).all()
+    counts_by_chapter = {str(r.chapter_id): int(r.members) for r in counts_rows}
+
     return success_response(
         data=[
             {
@@ -63,6 +80,7 @@ async def list_chapters_endpoint(
                 "description": c.description,
                 "meeting_schedule": c.meeting_schedule,
                 "is_active": c.is_active,
+                "member_count": counts_by_chapter.get(str(c.id), 0),
             }
             for c in chapters
         ]
