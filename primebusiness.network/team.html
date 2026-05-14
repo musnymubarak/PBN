@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Operations Team — Prime Business Network</title>
+  <link rel="preconnect" href="https://fonts.bunny.net">
+  <link href="https://fonts.bunny.net/css?family=playfair-display:400,600,700,900|dm-sans:300,400,500,600&display=swap"
+    rel="stylesheet">
+  <link rel="icon" type="image/svg+xml"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230a0f25'/%3E%3Ctext x='50' y='68' font-family='system-ui, -apple-system, sans-serif' font-size='46' font-weight='900' text-anchor='middle'%3E%3Ctspan fill='%23ffffff'%3EP%3C/tspan%3E%3Ctspan fill='%23c9a84c'%3EB%3C/tspan%3E%3Ctspan fill='%23ffffff'%3EN%3C/tspan%3E%3C/text%3E%3C/svg%3E">
+  <style>
+    :root {
+      --navy: #080d24;
+      --navy-mid: #0e1535;
+      --navy-light: #162050;
+      --white: #ffffff;
+      --gold: #c9a84c;
+      --gold-light: #e8c97a;
+      --text-muted: #7a85b0;
+      --border: rgba(255, 255, 255, 0.07);
+      --font-display: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
+      --font-body: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background: #080d24;
+      color: #ffffff;
+      overflow-x: hidden;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button {
+      font-family: var(--font-body);
+      cursor: pointer;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 60px;
+      background: rgba(8, 13, 36, 0.92);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+      transition: padding 0.3s;
+    }
+
+    .nav-logo {
+      font-family: var(--font-body);
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .nav-logo span {
+      color: #c9a84c;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 28px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: #7a85b0;
+      font-size: 0.875rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover {
+      color: #ffffff;
+    }
+
+    .nav-cta {
+      background: #c9a84c;
+      color: #080d24;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 4px;
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 0.875rem;
+      letter-spacing: 0.04em;
+      transition: background 0.2s, transform 0.15s;
+      display: inline-block;
+    }
+
+    .nav-cta:hover {
+      background: #e8c97a;
+      transform: translateY(-1px);
+      color: #080d24;
+    }
+
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      cursor: pointer;
+    }
+
+    .hamburger span {
+      display: block;
+      width: 24px;
+      height: 2px;
+      background: #ffffff;
+      border-radius: 2px;
+    }
+
+    /* ── MOBILE MENU ── */
+    .mobile-menu {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #080d24;
+      z-index: 99;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 28px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+
+    .mobile-menu.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .mobile-menu a {
+      font-family: var(--font-body);
+      font-size: 1.8rem;
+      color: #ffffff;
+      transition: color 0.2s;
+    }
+
+    .mobile-menu a:hover {
+      color: #c9a84c;
+    }
+
+    .mobile-close {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      font-size: 1.5rem;
+      color: #7a85b0;
+      background: none;
+      border: none;
+    }
+
+    /* ── HERO ── */
+    #hero {
+      min-height: 60vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 120px 60px 80px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      background-image:
+        linear-gradient(to bottom, rgba(8, 13, 36, 0.9) 0%, rgba(8, 13, 36, 0.95) 100%),
+        url('hero-promo.png');
+      background-size: cover;
+      background-position: center 30%;
+    }
+
+    .hero-grid {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      background-image: linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+      background-size: 64px 64px;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      max-width: 800px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid #c9a84c;
+      color: #c9a84c;
+      padding: 6px 18px;
+      border-radius: 100px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 32px;
+      opacity: 0;
+      animation: fadeUp 0.7s 0.2s forwards;
+    }
+
+    .hero-title {
+      font-family: var(--font-body);
+      font-size: clamp(2.5rem, 4.5vw, 4.5rem);
+      font-weight: 900;
+      line-height: 1.1;
+      color: #ffffff;
+      margin-bottom: 28px;
+      opacity: 0;
+      animation: fadeUp 0.7s 0.35s forwards;
+    }
+
+    .hero-sub {
+      font-size: 1.1rem;
+      color: #7a85b0;
+      line-height: 1.75;
+      max-width: 600px;
+      margin: 0 auto 48px;
+      opacity: 0;
+      animation: fadeUp 0.7s 0.5s forwards;
+    }
+
+    /* ── SECTION BASE ── */
+    section {
+      padding: 100px 60px;
+    }
+
+    .section-light {
+      background: #ffffff !important;
+      color: #0e1535 !important;
+    }
+
+    .section-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: #c9a84c;
+      margin-bottom: 14px;
+      text-align: center;
+    }
+
+    .section-title {
+      font-family: var(--font-body);
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 700;
+      line-height: 1.15;
+      color: #080d24;
+      text-align: center;
+    }
+
+    .section-sub {
+      color: #4a5580;
+      font-size: 1.05rem;
+      line-height: 1.75;
+      margin: 16px auto 0;
+      max-width: 600px;
+      text-align: center;
+    }
+
+    /* ── TEAM GRID ── */
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 40px;
+      margin-top: 60px;
+      max-width: 1200px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .team-card {
+      background: #f8f9fc;
+      border: 1px solid #dde1f0;
+      border-radius: 16px;
+      padding: 40px 24px;
+      text-align: center;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .team-card:hover {
+      border-color: #c9a84c;
+      transform: translateY(-8px);
+      background: #ffffff;
+      box-shadow: 0 24px 48px rgba(8, 13, 36, 0.08);
+    }
+
+    .team-image {
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      margin: 0 auto 28px;
+      overflow: hidden;
+      border: 4px solid #c9a84c;
+      box-shadow: 0 0 25px rgba(201, 168, 76, 0.2);
+      background: #080d24;
+    }
+
+    .team-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Specific Alignment Fixes */
+    .img-kaushan {
+      transform: scale(1.65);
+      transform-origin: 50% 18%;
+    }
+
+    .img-anuradha {
+      transform: scale(1.15); /* Zoomed out more to match head proportions */
+      transform-origin: 50% 15%;
+    }
+
+    .img-ilham {
+      transform: scale(1.15);
+      transform-origin: 50% 15%;
+    }
+
+    .team-card:hover .img-kaushan {
+      transform: scale(1.75);
+    }
+
+    .team-card:hover .img-anuradha {
+      transform: scale(1.25);
+    }
+
+    .team-card:hover .img-ilham {
+      transform: scale(1.25);
+    }
+
+    .team-name {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #080d24;
+      margin-bottom: 10px;
+      white-space: nowrap;
+    }
+
+    .team-role {
+      color: #c9a84c;
+      font-weight: 700;
+      font-size: 0.85rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+    }
+
+    .team-bio {
+      color: #4a5580;
+      font-size: 0.88rem;
+      line-height: 1.6;
+      margin-bottom: 24px;
+      min-height: 80px; /* Helps keep cards uniform */
+    }
+
+    .linkedin-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+      background: #0e1535;
+      color: #ffffff;
+      border-radius: 50%;
+      transition: all 0.2s;
+      border: none;
+    }
+
+    .linkedin-btn:hover {
+      background: #0077b5;
+      transform: translateY(-3px);
+      color: #ffffff;
+    }
+
+    .linkedin-btn svg {
+      fill: currentColor;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      padding: 80px 60px;
+      background: #050914;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 40px;
+      flex-wrap: wrap;
+    }
+
+    .footer-brand {
+      font-family: var(--font-body);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .footer-brand span {
+      color: #c9a84c;
+    }
+
+    .footer-copy {
+      color: #7a85b0;
+      font-size: 0.78rem;
+      margin-top: 6px;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 28px;
+      flex-wrap: wrap;
+    }
+
+    .footer-links a {
+      color: #7a85b0;
+      font-size: 0.85rem;
+      transition: color 0.2s;
+    }
+
+    .footer-links a:hover {
+      color: #ffffff;
+    }
+
+    .footer-social {
+      display: flex;
+      gap: 12px;
+    }
+
+    .footer-social a {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.05);
+      color: #7a85b0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .footer-social a:hover {
+      background: #c9a84c;
+      color: #080d24;
+      transform: translateY(-3px);
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(28px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(32px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── MOBILE ── */
+    @media (max-width: 960px) {
+      nav { padding: 16px 24px; }
+      .nav-links, .nav-cta { display: none; }
+      .hamburger { display: flex; }
+      section { padding: 72px 24px; }
+      #hero { padding: 100px 24px 72px; }
+      .team-grid { grid-template-columns: 1fr; gap: 32px; }
+      footer { flex-direction: column; text-align: center; }
+      .footer-links, .footer-social { justify-content: center; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- NAV -->
+  <nav id="mainNav">
+    <a class="nav-logo" href="index.html#hero">Prime <span>Business</span> Network</a>
+    <ul class="nav-links">
+      <li><a href="index.html#how">How It Works</a></li>
+      <li><a href="index.html#platform">Platform</a></li>
+      <li><a href="index.html#benefits">Benefits</a></li>
+      <li><a href="index.html#clubs">Clubs</a></li>
+      <li><a href="index.html#chapters">Chapters</a></li>
+      <li><a href="team.html">Operations</a></li>
+      <li><a href="index.html#pricing">Pricing</a></li>
+    </ul>
+    <a href="index.html#cta" class="nav-cta">Secure Your Seat</a>
+    <div class="hamburger" id="hamburger" onclick="openMenu()">
+      <span></span><span></span><span></span>
+    </div>
+  </nav>
+
+  <!-- MOBILE MENU -->
+  <div class="mobile-menu" id="mobileMenu">
+    <button class="mobile-close" onclick="closeMenu()">✕</button>
+    <a href="index.html#how" onclick="closeMenu()">How It Works</a>
+    <a href="index.html#platform" onclick="closeMenu()">Platform</a>
+    <a href="index.html#benefits" onclick="closeMenu()">Benefits</a>
+    <a href="index.html#clubs" onclick="closeMenu()">Clubs</a>
+    <a href="index.html#chapters" onclick="closeMenu()">Chapters</a>
+    <a href="team.html" onclick="closeMenu()">Operations</a>
+    <a href="index.html#pricing" onclick="closeMenu()">Pricing</a>
+    <a href="index.html#cta" onclick="closeMenu()">Secure Your Seat →</a>
+  </div>
+
+  <!-- HERO -->
+  <section id="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-grid"></div>
+    <div class="hero-content">
+      <div class="hero-badge">PBN Operations</div>
+      <h1 class="hero-title">The People Behind<br />The Ecosystem</h1>
+      <p class="hero-sub">Our operations team ensures that the Prime Business Network ecosystem runs smoothly, efficiently, and delivers maximum value to every member.</p>
+    </div>
+  </section>
+
+  <!-- TEAM SECTION -->
+  <section id="team" class="section-light">
+    <div class="reveal">
+      <div class="section-label">Core Team</div>
+      <h2 class="section-title">Network Operations</h2>
+      <p class="section-sub">Meet the dedicated professionals driving Sri Lanka's first AI-powered business growth ecosystem forward.</p>
+    </div>
+
+    <div class="team-grid reveal">
+      <!-- Kaushan Manawadu -->
+      <div class="team-card">
+        <div class="team-image">
+          <img src="team-assets/kaushan.jpeg" alt="Kaushan Manawadu" class="img-kaushan">
+        </div>
+        <div class="team-info">
+          <h3 class="team-name">Kaushan Manawadu</h3>
+          <p class="team-role">VP of Growth</p>
+          <p class="team-bio">Business Consultant | Financial Consultant | Life & Executive Coach | Helping you grow personally, Professionally & Financially</p>
+          <a href="https://lk.linkedin.com/in/kaushan-manawadu" target="_blank" class="linkedin-btn" aria-label="LinkedIn Profile">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+              <path
+                d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
+            </svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- Anuradha Chandrawansha -->
+      <div class="team-card">
+        <div class="team-image">
+          <img src="team-assets/anuradha_extended.png" alt="Anuradha Chandrawansha" class="img-anuradha">
+        </div>
+        <div class="team-info">
+          <h3 class="team-name">Anuradha Chandrawansha</h3>
+          <p class="team-role">VP of Communications</p>
+          <p class="team-bio">CEO | Executive Director - Global Contriver | Management Consultant | HR & Finance Strategist | Corporate Trainer | Business Lecturer |</p>
+          <a href="https://lk.linkedin.com/in/anuradha-chandrawansha-152586137" target="_blank" class="linkedin-btn" aria-label="LinkedIn Profile">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+              <path
+                d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
+            </svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- Ilham Safeek -->
+      <div class="team-card">
+        <div class="team-image">
+          <img src="team-assets/ilham_hd.png" alt="Ilham Safeek" class="img-ilham">
+        </div>
+        <div class="team-info">
+          <h3 class="team-name">Ilham Safeek</h3>
+          <p class="team-role">VP of Operations</p>
+          <p class="team-bio">Founder, Managing Director, CEO & Chief Architect - Hashnate Software Engineering, Technology stack Researcher, Mentor, Senior Lecturer in the field of Cyber Security.</p>
+          <a href="https://www.linkedin.com/in/ilhamsafeek/" target="_blank" class="linkedin-btn" aria-label="LinkedIn Profile">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+              <path
+                d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
+            </svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div>
+      <div class="footer-brand">Prime <span>Business</span> Network</div>
+      <div class="footer-copy">© 2026 Prime Business Network (Pvt) Ltd · Sri Lanka · All rights reserved.</div>
+      <div class="footer-copy" style="margin-top:4px;">Registered in Sri Lanka under the Companies Act No. 7 of 2007</div>
+    </div>
+    <div class="footer-social">
+      <a href="https://www.facebook.com/profile.php?id=61589257288388" target="_blank" aria-label="Facebook">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M7 10v4h3v7h4v-7h3l1 -4h-4v-2a1 1 0 0 1 1 -1h3v-4h-3a5 5 0 0 0 -5 5v2h-3" />
+        </svg>
+      </a>
+      <a href="https://linkedin.com/company/prime-business-network" target="_blank" aria-label="LinkedIn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 4m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" />
+          <path d="M8 11l0 5" />
+          <path d="M8 8l0 .01" />
+          <path d="M12 16l0 -5" />
+          <path d="M16 16v-3a2 2 0 0 0 -4 0" />
+        </svg>
+      </a>
+      <a href="https://www.youtube.com/channel/UCJHWSU9Zag3Y0yBM3DG60Hg" target="_blank" aria-label="YouTube">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 8a4 4 0 0 1 4 -4h12a4 4 0 0 1 4 4v8a4 4 0 0 1 -4 4h-12a4 4 0 0 1 -4 -4v-8z" />
+          <path d="M10 9l5 3l-5 3z" />
+        </svg>
+      </a>
+    </div>
+    <div class="footer-links">
+      <a href="index.html#how">How It Works</a>
+      <a href="index.html#platform">Platform</a>
+      <a href="index.html#benefits">Benefits</a>
+      <a href="index.html#clubs">Clubs</a>
+      <a href="team.html">Operations</a>
+      <a href="index.html#pricing">Pricing</a>
+      <a href="index.html#cta">Apply</a>
+      <a href="privacy-policy.html" target="_blank">Privacy Policy</a>
+      <a href="mailto:info@primebusiness.network">Contact</a>
+    </div>
+  </footer>
+
+  <script>
+    // Scroll reveal
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e, i) => { if (e.isIntersecting) setTimeout(() => e.target.classList.add('visible'), i * 80); });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(r => io.observe(r));
+
+    // Nav compact on scroll
+    window.addEventListener('scroll', () => {
+      const nav = document.getElementById('mainNav');
+      const mob = window.innerWidth <= 960;
+      nav.style.padding = window.scrollY > 40 ? (mob ? '10px 24px' : '12px 60px') : (mob ? '16px 24px' : '20px 60px');
+    });
+
+    function openMenu() { document.getElementById('mobileMenu').classList.add('open'); }
+    function closeMenu() { document.getElementById('mobileMenu').classList.remove('open'); }
+  </script>
+</body>
+
+</html>
