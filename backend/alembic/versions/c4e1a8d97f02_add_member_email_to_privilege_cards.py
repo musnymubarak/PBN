@@ -26,10 +26,8 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.add_column(
-        'privilege_cards',
-        sa.Column('member_email', sa.String(length=255), nullable=True),
-    )
+    # Use raw SQL with IF NOT EXISTS to prevent DuplicateColumnError if already present on server
+    op.execute('ALTER TABLE privilege_cards ADD COLUMN IF NOT EXISTS member_email VARCHAR(255)')
 
 
 def downgrade() -> None:
