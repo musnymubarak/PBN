@@ -36,28 +36,78 @@ class _MatchmakingDashboardPageState extends State<MatchmakingDashboardPage> wit
         headerSliverBuilder: (context, innerBoxIsScrolled) => [
           SliverAppBar(
             backgroundColor: Colors.white,
+            surfaceTintColor: Colors.white,
             elevation: 0,
             scrolledUnderElevation: 0,
             toolbarHeight: 60,
             floating: true,
             snap: true,
             title: const Text(
-              'Opportunities', 
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: -0.5)
+              'Opportunities',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+                color: AppColors.text,
+                letterSpacing: -0.5,
+              ),
             ),
-            actions: const [
-              PbnAppBarActions(),
-            ],
-            bottom: TabBar(
-              controller: _tabController,
-              labelColor: AppColors.primary,
-              unselectedLabelColor: Colors.grey,
-              indicatorColor: AppColors.primary,
-              labelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
-              tabs: const [
-                Tab(text: 'AI MATCHES', icon: Icon(TablerIcons.sparkles, size: 20)),
-                Tab(text: 'REFERRALS', icon: Icon(TablerIcons.arrows_exchange, size: 20)),
-              ],
+            actions: const [PbnAppBarActions()],
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(73),
+              child: Container(
+                color: Colors.white,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TabBar(
+                      controller: _tabController,
+                      labelColor: AppColors.text,
+                      unselectedLabelColor: AppColors.textMuted,
+                      indicatorSize: TabBarIndicatorSize.label,
+                      indicator: const UnderlineTabIndicator(
+                        borderSide: BorderSide(color: AppColors.accent, width: 3),
+                        borderRadius: BorderRadius.all(Radius.circular(2)),
+                        insets: EdgeInsets.symmetric(horizontal: 12),
+                      ),
+                      dividerColor: Colors.transparent,
+                      labelStyle: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                        letterSpacing: 0.5,
+                      ),
+                      unselectedLabelStyle: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        letterSpacing: 0.5,
+                      ),
+                      overlayColor: WidgetStateProperty.resolveWith<Color?>(
+                        (states) {
+                          if (states.contains(WidgetState.pressed)) {
+                            return AppColors.accent.withValues(alpha: 0.06);
+                          }
+                          if (states.contains(WidgetState.hovered)) {
+                            return AppColors.accent.withValues(alpha: 0.04);
+                          }
+                          return null;
+                        },
+                      ),
+                      tabs: const [
+                        Tab(
+                          icon: Icon(TablerIcons.sparkles, size: 18),
+                          text: 'AI MATCHES',
+                          iconMargin: EdgeInsets.only(bottom: 4),
+                        ),
+                        Tab(
+                          icon: Icon(TablerIcons.arrows_exchange, size: 18),
+                          text: 'REFERRALS',
+                          iconMargin: EdgeInsets.only(bottom: 4),
+                        ),
+                      ],
+                    ),
+                    Container(height: 1, color: AppColors.borderLight),
+                  ],
+                ),
+              ),
             ),
           ),
         ],
