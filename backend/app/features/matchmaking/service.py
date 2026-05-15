@@ -222,6 +222,20 @@ class MatchmakingService:
         industry_score = 0.2  # Base neutral score
         other_industry_id = m2.industry_category_id
 
+        # Detect target-sector match first — used both as a reason and as a
+        # score fallback when no predefined industry_relationship row exists.
+        target_sector_match = False
+        if p1 and p1.target_sectors and other_industry_id:
+            other_industry_name = industry_name_map.get(other_industry_id, "")
+            if other_industry_name:
+                name_lower = other_industry_name.lower()
+                if any(
+                    name_lower in str(s).lower() or str(s).lower() in name_lower
+                    for s in p1.target_sectors if s
+                ):
+                    target_sector_match = True
+                    r_target_sector = "In your target sectors"
+
         if m1.industry_category_id == m2.industry_category_id:
             industry_score = 0.0  # Competitors in same industry
             r_industry = "Same industry (competitors)"
@@ -233,21 +247,13 @@ class MatchmakingService:
             elif rel.relationship_type == IndustryRelationshipType.ADJACENT:
                 industry_score = 0.6 * rel.strength
                 r_industry = "Adjacent industry sectors"
+        elif target_sector_match:
+            # No predefined relationship row, but the user explicitly listed this
+            # industry as a target — treat as a user-overridable adjacent signal.
+            industry_score = 0.6
 
         score += industry_score * W_INDUSTRY
         breakdown["industry"] = industry_score
-
-        # 1b. Target-sector match: does u1's stated target list mention u2's industry?
-        # Explanation-only signal — the industry weight already covers the score side.
-        if p1 and p1.target_sectors and other_industry_id:
-            other_industry_name = industry_name_map.get(other_industry_id, "")
-            if other_industry_name:
-                name_lower = other_industry_name.lower()
-                if any(
-                    name_lower in str(s).lower() or str(s).lower() in name_lower
-                    for s in p1.target_sectors if s
-                ):
-                    r_target_sector = "In your target sectors"
 
         # 2. Chapter / Network Gap (cross-chapter is the higher-value case)
         chapter_score = 1.0
