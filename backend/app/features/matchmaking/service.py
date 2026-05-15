@@ -1,6 +1,6 @@
 import uuid
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional, Dict, Any
 from decimal import Decimal
 
@@ -118,14 +118,22 @@ class MatchmakingService:
             rel_map[other_id] = r
         logger.info(f"Loaded {len(rel_map)} industry relationships")
 
+        # 3b. Bulk-load industry names so target-sector reason matching can
+        # compare u2's industry against u1's target_sectors free-text list.
+        industry_names_result = await self.db.execute(
+            select(IndustryCategory.id, IndustryCategory.name)
+        )
+        industry_name_map = {iid: name for iid, name in industry_names_result.all()}
+
         # 4. Score each potential match
         suggestions = []
         for other_user, other_membership in others:
             try:
                 score, breakdown, reasons = await self._calculate_score(
-                    user, user_membership, 
+                    user, user_membership,
                     other_user, other_membership,
-                    rel_map
+                    rel_map,
+                    industry_name_map,
                 )
                 
                 if score > 0.3: # Minimum threshold
@@ -179,89 +187,173 @@ class MatchmakingService:
         await self.db.commit()
         return saved_suggestions
 
-    async def _calculate_score(self, u1, m1, u2, m2, rel_map):
-        """Weighted scoring algorithm."""
+    async def _calculate_score(self, u1, m1, u2, m2, rel_map, industry_name_map):
+        """Weighted scoring algorithm.
+
+        Returns (score, breakdown, ordered_reasons). The caller joins the first
+        three entries from `ordered_reasons` into the suggestion's `explanation`
+        field — so reason ordering matters: highest-signal pushers go first,
+        and `r_chapter` goes last because it fires for almost every pair and
+        is the least-informative reason when it stands alone.
+        """
         score = 0.0
         breakdown = {}
-        reasons = []
 
         # Weights
         W_INDUSTRY = 0.4
         W_CHAPTER = 0.2
         W_VERIFICATION = 0.1
-        W_CLUBS = 0.1
+        W_CLUBS = 0.1  # Reserved for future shared-horizontal-club bonus
         W_PROFILE = 0.2
 
-        # 1. Industry Complementarity (The most important)
-        industry_score = 0.2 # Base neutral score
+        # Reason buckets — merged in priority order at the bottom of the function.
+        r_industry: Optional[str] = None
+        r_target_sector: Optional[str] = None
+        r_profile: Optional[str] = None
+        r_verification: Optional[str] = None
+        r_quality: Optional[str] = None
+        r_tenure: Optional[str] = None
+        r_chapter: Optional[str] = None
+
+        p1 = u1.matching_profile
+        p2 = u2.matching_profile
+
+        # 1. Industry Complementarity (the strongest signal when it fires)
+        industry_score = 0.2  # Base neutral score
         other_industry_id = m2.industry_category_id
-        
+
         if m1.industry_category_id == m2.industry_category_id:
-            industry_score = 0.0 # Competitors in same industry
-            reasons.append("Same industry (competitors)")
+            industry_score = 0.0  # Competitors in same industry
+            r_industry = "Same industry (competitors)"
         elif other_industry_id in rel_map:
             rel = rel_map[other_industry_id]
             if rel.relationship_type == IndustryRelationshipType.COMPLEMENTARY:
                 industry_score = 1.0 * rel.strength
-                reasons.append("High industry complementarity")
+                r_industry = "High industry complementarity"
             elif rel.relationship_type == IndustryRelationshipType.ADJACENT:
                 industry_score = 0.6 * rel.strength
-                reasons.append("Adjacent industry sectors")
-        
+                r_industry = "Adjacent industry sectors"
+
         score += industry_score * W_INDUSTRY
         breakdown["industry"] = industry_score
 
-        # 2. Chapter / Network Gap (Priority for different chapters)
+        # 1b. Target-sector match: does u1's stated target list mention u2's industry?
+        # Explanation-only signal — the industry weight already covers the score side.
+        if p1 and p1.target_sectors and other_industry_id:
+            other_industry_name = industry_name_map.get(other_industry_id, "")
+            if other_industry_name:
+                name_lower = other_industry_name.lower()
+                if any(
+                    name_lower in str(s).lower() or str(s).lower() in name_lower
+                    for s in p1.target_sectors if s
+                ):
+                    r_target_sector = "In your target sectors"
+
+        # 2. Chapter / Network Gap (cross-chapter is the higher-value case)
         chapter_score = 1.0
         if m1.chapter_id == m2.chapter_id:
-            chapter_score = 0.3 # Already in same chapter, low priority
-            reasons.append("Same chapter member")
+            chapter_score = 0.3  # Already in same chapter, lower marginal value
+            r_chapter = "Same chapter member"
         else:
-            reasons.append("Cross-chapter opportunity")
-        
+            r_chapter = "Cross-chapter opportunity"
+
         score += chapter_score * W_CHAPTER
         breakdown["chapter"] = chapter_score
 
-        # 3. Verification & Trust
+        # 3. Verification & Trust — graded so verified+ users always earn a reason
         v_map = {
             VerificationLevel.NONE: 0.1,
             VerificationLevel.VERIFIED: 0.5,
             VerificationLevel.SILVER: 0.7,
             VerificationLevel.GOLD: 0.9,
-            VerificationLevel.PLATINUM: 1.0
+            VerificationLevel.PLATINUM: 1.0,
         }
         v_score = v_map.get(u2.verification_level, 0.1)
         score += v_score * W_VERIFICATION
         breakdown["verification"] = v_score
-        if v_score >= 0.7:
-            reasons.append(f"Highly verified {u2.verification_level.value} creator")
 
-        # 4. Profile & Needs (Basic keyword matching)
+        v_value = u2.verification_level.value if u2.verification_level else None
+        if v_score >= 0.9 and v_value:
+            r_verification = f"Top-tier {v_value} member"
+        elif v_score >= 0.7 and v_value:
+            r_verification = f"Verified {v_value} member"
+        elif v_score >= 0.5:
+            r_verification = "Verified member"
+
+        # 4. Profile & Needs — bi-directional keyword matching
         profile_score = 0.2
-        p1 = u1.matching_profile
-        p2 = u2.matching_profile
-        
         if p1 and p2:
-            # Check if B offers what A is looking for
-            matches_count = 0
-            for need in p1.looking_for:
-                for offer in p2.services_offered:
-                    if need.lower() in offer.lower() or offer.lower() in need.lower():
-                        matches_count += 1
-            
-            if matches_count > 0:
-                profile_score = min(1.0, 0.4 + (matches_count * 0.2))
-                reasons.append("Matches your stated needs")
-            
-            # Target sector overlap
-            for sector in p1.target_sectors:
-                # This would need industry name check
-                pass
+            a_to_b = sum(
+                1
+                for need in (p1.looking_for or [])
+                for offer in (p2.services_offered or [])
+                if need and offer and (
+                    need.lower() in offer.lower() or offer.lower() in need.lower()
+                )
+            )
+            b_to_a = sum(
+                1
+                for need in (p2.looking_for or [])
+                for offer in (p1.services_offered or [])
+                if need and offer and (
+                    need.lower() in offer.lower() or offer.lower() in need.lower()
+                )
+            )
+            total = a_to_b + b_to_a
+            if total > 0:
+                profile_score = min(1.0, 0.4 + (total * 0.2))
+
+            if a_to_b > 0 and b_to_a > 0:
+                r_profile = "Mutual service fit"
+            elif a_to_b > 0:
+                r_profile = "Matches your stated needs"
+            elif b_to_a > 0:
+                r_profile = "You offer what they need"
 
         score += profile_score * W_PROFILE
         breakdown["profile"] = profile_score
 
-        return min(1.0, score), breakdown, reasons
+        # 5. Profile quality (explanation-only — no score impact, signals depth)
+        if p2:
+            has_description = bool(
+                p2.business_description
+                and len(p2.business_description.strip()) > 50
+            )
+            service_count = len(p2.services_offered or [])
+            if has_description:
+                r_quality = "Detailed business profile"
+            elif service_count >= 4:
+                r_quality = "Diversified service offering"
+
+        # 6. Tenure signal (explanation-only, best-effort)
+        try:
+            if u2.created_at:
+                created = u2.created_at
+                if created.tzinfo is None:
+                    created = created.replace(tzinfo=timezone.utc)
+                age = datetime.now(timezone.utc) - created
+                if age > timedelta(days=365):
+                    r_tenure = "Senior network member"
+                elif age < timedelta(days=30):
+                    r_tenure = "New to the network"
+        except Exception:
+            pass  # Never block a match for a date arithmetic edge case
+
+        # Merge reasons in priority order — caller takes [:3].
+        ordered = [
+            r for r in [
+                r_industry,
+                r_target_sector,
+                r_profile,
+                r_verification,
+                r_quality,
+                r_tenure,
+                r_chapter,
+            ]
+            if r
+        ]
+
+        return min(1.0, score), breakdown, ordered
 
     async def get_partnership_strategy(self, match_id: uuid.UUID) -> str:
         """Generate AI partnership strategy using Gemini."""
