@@ -173,7 +173,7 @@ class _QrRedeemScreenState extends State<QrRedeemScreen>
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                  colors: [Color(0xFF0A2540), Color(0xFF1E3A8A)]),
+                  colors: AppColors.primaryGradient),
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(

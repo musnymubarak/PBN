@@ -64,7 +64,7 @@ class _AiMatchesViewState extends State<AiMatchesView> {
     return RefreshIndicator(
       onRefresh: _loadMatches,
       child: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
         children: [
           _buildHeroCard(),
           const SizedBox(height: 24),
@@ -95,7 +95,7 @@ class _AiMatchesViewState extends State<AiMatchesView> {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [AppColors.primary, Color(0xFF1E3A8A)],
+          colors: AppColors.primaryGradient,
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),

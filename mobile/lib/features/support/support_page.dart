@@ -63,7 +63,7 @@ class SupportPage extends StatelessWidget {
                   padding: const EdgeInsets.all(24),
                   width: double.infinity,
                   decoration: const BoxDecoration(
-                    gradient: LinearGradient(colors: [Color(0xFF0A2540), Color(0xFF1E3A8A)]),
+                    gradient: LinearGradient(colors: AppColors.primaryGradient),
                     borderRadius: BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20)),
                   ),
                   child: Column(

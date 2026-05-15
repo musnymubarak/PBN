@@ -182,7 +182,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
                 )
               else
                 SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 100),
                   sliver: SliverGrid(
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
@@ -199,8 +199,6 @@ class _MarketplacePageState extends State<MarketplacePage> {
                     ),
                   ),
                 ),
-              
-              const SliverToBoxAdapter(child: SizedBox(height: 100)),
             ],
           ],
         ),

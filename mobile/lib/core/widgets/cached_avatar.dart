@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:pbn/core/constants/api_config.dart';
+import 'package:pbn/core/constants/app_colors.dart';
 
 /// A reusable, cached network avatar widget.
 ///
@@ -34,8 +35,8 @@ class CachedAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bgColor = backgroundColor ?? const Color(0xFF1E3A8A).withValues(alpha: 0.1);
-    final fgColor = textColor ?? const Color(0xFF1E3A8A);
+    final bgColor = backgroundColor ?? AppColors.primary.withValues(alpha: 0.1);
+    final fgColor = textColor ?? AppColors.primary;
     final fSize = fontSize ?? (size * 0.32);
 
     return Container(
