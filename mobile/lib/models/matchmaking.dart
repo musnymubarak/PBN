@@ -41,8 +41,10 @@ class MatchSuggestion {
   @JsonKey(name: 'score_breakdown')
   final Map<String, double> scoreBreakdown;
   final String? explanation;
+  // Mutable so a freshly-loaded strategy can be cached on the in-memory
+  // object — avoids re-hitting the backend (and Gemini) on sheet reopen.
   @JsonKey(name: 'partnership_strategy')
-  final String? partnershipStrategy;
+  String? partnershipStrategy;
   final String status;
   
   @JsonKey(name: 'matched_user_name')

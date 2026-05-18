@@ -1053,6 +1053,20 @@ class _MatchDetailSheet extends StatefulWidget {
 }
 
 class _MatchDetailSheetState extends State<_MatchDetailSheet> {
+  // The backend returns these sentinels for failure cases (see
+  // `get_partnership_strategy` in backend/.../matchmaking/service.py).
+  // We must NOT cache them on the in-memory match — otherwise reopens would
+  // surface the stale error forever instead of giving Gemini another chance.
+  static const _errorSentinels = <String>[
+    'The AI is busy right now',
+    'Failed to generate AI strategy',
+    'AI strategy generation is currently disabled',
+    'No strategy could be generated',
+    // Legacy sentinel kept for backwards compat with rows generated before
+    // the message was reworded.
+    'AI quota temporarily exceeded',
+  ];
+
   String? _strategy;
   bool _loading = false;
 
@@ -1060,7 +1074,16 @@ class _MatchDetailSheetState extends State<_MatchDetailSheet> {
   void initState() {
     super.initState();
     _strategy = widget.match.partnershipStrategy;
+    // Only fetch if we don't already have a real strategy. If a prior tap
+    // cached one on the in-memory match, this skips the round-trip entirely.
     if (_strategy == null) _loadStrategy();
+  }
+
+  bool _isErrorPayload(String s) {
+    for (final prefix in _errorSentinels) {
+      if (s.startsWith(prefix)) return true;
+    }
+    return false;
   }
 
   Future<void> _loadStrategy() async {
@@ -1069,12 +1092,19 @@ class _MatchDetailSheetState extends State<_MatchDetailSheet> {
     });
     try {
       final strategy = await widget.service.getAiStrategy(widget.match.id);
-      if (mounted) {
-        setState(() {
-          _strategy = strategy;
-          _loading = false;
-        });
+      if (!mounted) return;
+
+      // Cache on the parent match object so a later reopen reuses it instead
+      // of round-tripping to the backend. Skip caching for error payloads so
+      // the user can retry.
+      if (!_isErrorPayload(strategy)) {
+        widget.match.partnershipStrategy = strategy;
       }
+
+      setState(() {
+        _strategy = strategy;
+        _loading = false;
+      });
     } catch (e) {
       debugPrint('Error loading AI strategy: $e');
       if (mounted) {

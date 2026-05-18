@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:skeletonizer/skeletonizer.dart' as sk;
@@ -1968,7 +1969,10 @@ class _DashboardPageState extends State<DashboardPage> {
         _sectionHeader(
           title: 'Top Performers',
           trailing: GestureDetector(
-            onTap: () => Navigator.pushNamed(context, '/leaderboard'),
+            onTap: () {
+              HapticFeedback.selectionClick();
+              Navigator.pushNamed(context, '/leaderboard');
+            },
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: const [
@@ -1982,89 +1986,221 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                 ),
                 SizedBox(width: 2),
-                Icon(TablerIcons.chevron_right, size: 14, color: AppColors.accent),
+                Icon(TablerIcons.chevron_right,
+                    size: 14, color: AppColors.accent),
               ],
             ),
           ),
         ),
-        GestureDetector(
-          onTap: () => Navigator.pushNamed(context, '/leaderboard'),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
-            clipBehavior: Clip.antiAlias,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFFFFDF7), Colors.white],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(
-                color: AppColors.accent.withValues(alpha: 0.12),
-                width: 1,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.accent.withValues(alpha: 0.08),
-                  blurRadius: 28,
-                  offset: const Offset(0, 12),
-                ),
-              ],
-            ),
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Positioned(
-                  top: -40,
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: Container(
-                      width: 220,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        gradient: RadialGradient(
-                          colors: [
-                            AppColors.accent.withValues(alpha: 0.15),
-                            Colors.transparent,
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    if (_leaderboard.length >= 2)
-                      _buildMiniPodium(
-                        _leaderboard[1],
-                        2,
-                        const Color(0xFF94A3B8),
-                      ),
-                    if (_leaderboard.isNotEmpty)
-                      _buildMiniPodium(_leaderboard[0], 1, AppColors.accent),
-                    if (_leaderboard.length >= 3)
-                      _buildMiniPodium(
-                        _leaderboard[2],
-                        3,
-                        const Color(0xFFB45309),
-                      ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
+        _buildAnimatedPodiumCard(),
       ],
     );
   }
 
+  Widget _buildAnimatedPodiumCard() {
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(28),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(28),
+        onTap: () {
+          HapticFeedback.selectionClick();
+          Navigator.pushNamed(context, '/leaderboard');
+        },
+        splashColor: AppColors.accent.withValues(alpha: 0.06),
+        highlightColor: AppColors.accent.withValues(alpha: 0.04),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(14, 26, 14, 18),
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFFFFFDF7), Colors.white],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(
+              color: AppColors.accent.withValues(alpha: 0.18),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.accent.withValues(alpha: 0.12),
+                blurRadius: 32,
+                offset: const Offset(0, 14),
+              ),
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // ── Layer 1: ambient gold radial halo at top
+              Positioned(
+                top: -60,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Container(
+                    width: 260,
+                    height: 140,
+                    decoration: BoxDecoration(
+                      gradient: RadialGradient(
+                        colors: [
+                          AppColors.accent.withValues(alpha: 0.22),
+                          AppColors.accent.withValues(alpha: 0.05),
+                          Colors.transparent,
+                        ],
+                        stops: const [0.0, 0.5, 1.0],
+                      ),
+                    ),
+                  ),
+                )
+                    .animate(
+                        onPlay: (c) => c.repeat(reverse: true))
+                    .fadeIn(duration: 1800.ms, curve: Curves.easeInOut)
+                    .then()
+                    .fadeOut(duration: 1800.ms, curve: Curves.easeInOut),
+              ),
+
+              // ── Layer 2: decorative sparkles
+              _sparkle(top: 14, left: 28, size: 8, delay: 0),
+              _sparkle(top: 30, right: 36, size: 6, delay: 400),
+              _sparkle(top: 70, left: 14, size: 5, delay: 800),
+              _sparkle(top: 8, right: 80, size: 10, delay: 1200),
+              _sparkle(top: 56, right: 18, size: 7, delay: 1600),
+
+              // ── Layer 3: the podium
+              Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      if (_leaderboard.length >= 2)
+                        _buildMiniPodium(
+                            _leaderboard[1], 2, AppColors.textMuted)
+                      else
+                        const SizedBox(width: 80),
+                      if (_leaderboard.isNotEmpty)
+                        _buildMiniPodium(
+                            _leaderboard[0], 1, AppColors.accent)
+                      else
+                        const SizedBox(width: 80),
+                      if (_leaderboard.length >= 3)
+                        _buildMiniPodium(
+                            _leaderboard[2], 3, AppColors.warning)
+                      else
+                        const SizedBox(width: 80),
+                    ],
+                  ),
+                  const SizedBox(height: 22),
+                  // Bottom CTA pill
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.accent.withValues(alpha: 0.18),
+                          AppColors.accent.withValues(alpha: 0.06),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                          color: AppColors.accent.withValues(alpha: 0.32)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(TablerIcons.trophy,
+                            size: 12, color: AppColors.accent),
+                        SizedBox(width: 6),
+                        Text(
+                          'VIEW FULL RANKINGS',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.accent,
+                            letterSpacing: 1.1,
+                          ),
+                        ),
+                        SizedBox(width: 4),
+                        Icon(TablerIcons.chevron_right,
+                            size: 12, color: AppColors.accent),
+                      ],
+                    ),
+                  )
+                      .animate()
+                      .fadeIn(
+                          delay: 600.ms,
+                          duration: 400.ms,
+                          curve: Curves.easeOutCubic)
+                      .slideY(
+                          begin: 0.3,
+                          end: 0,
+                          duration: 400.ms,
+                          curve: Curves.easeOutCubic),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ────────────────────────────────────────────────────────────
+  // SPARKLE — small decorative dot with looping pulse
+  // ────────────────────────────────────────────────────────────
+  Widget _sparkle({
+    double? top,
+    double? left,
+    double? right,
+    required double size,
+    required int delay,
+  }) {
+    return Positioned(
+      top: top,
+      left: left,
+      right: right,
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: RadialGradient(
+            colors: [
+              AppColors.accent.withValues(alpha: 0.55),
+              AppColors.accent.withValues(alpha: 0.0),
+            ],
+          ),
+        ),
+      )
+          .animate(onPlay: (c) => c.repeat(reverse: true))
+          .fadeIn(
+              delay: delay.ms,
+              duration: 1200.ms,
+              curve: Curves.easeInOut)
+          .scaleXY(
+              begin: 0.6,
+              end: 1.2,
+              duration: 1200.ms,
+              curve: Curves.easeInOut),
+    );
+  }
+
+  // ────────────────────────────────────────────────────────────
+  // MINI PODIUM — single podium tile with animations
+  // ────────────────────────────────────────────────────────────
   Widget _buildMiniPodium(dynamic res, int rank, Color color) {
     final name = (res['full_name'] ?? 'Member').toString().split(' ').first;
     final count = res['sent_count'] ?? 0;
-    final double size = rank == 1 ? 80 : 58;
+    final double size = rank == 1 ? 78 : 56;
     final String? profilePhoto = res['profile_photo'];
 
     String initials = '?';
@@ -2082,42 +2218,79 @@ class _DashboardPageState extends State<DashboardPage> {
       }
     }
 
-    return Column(
+    // Entrance stagger: rank 2 first (left), then rank 1 (center, slight delay),
+    // then rank 3 (right). The center is the "drumroll" payoff.
+    final entranceDelay =
+        rank == 2 ? 0 : (rank == 1 ? 180 : 360);
+
+    final body = Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        // Floating crown for rank 1 only
         if (rank == 1)
           const Padding(
-            padding: EdgeInsets.only(bottom: 8),
-            child: Icon(TablerIcons.crown, color: AppColors.accent, size: 26),
-          ),
+            padding: EdgeInsets.only(bottom: 6),
+            child: Icon(TablerIcons.crown,
+                color: AppColors.accent, size: 26),
+          )
+              .animate(onPlay: (c) => c.repeat(reverse: true))
+              .moveY(
+                begin: -3,
+                end: 3,
+                duration: 1800.ms,
+                curve: Curves.easeInOut,
+              ),
+
+        // Avatar with halo
         Stack(
           alignment: Alignment.bottomCenter,
           clipBehavior: Clip.none,
           children: [
+            // Pulsing halo (rank 1 only — the spotlight)
             if (rank == 1)
               Container(
-                width: size + 20,
-                height: size + 20,
+                width: size + 28,
+                height: size + 28,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: color.withValues(alpha: 0.25),
-                      blurRadius: 24,
-                      spreadRadius: 4,
-                    ),
-                  ],
+                  gradient: RadialGradient(
+                    colors: [
+                      AppColors.accent.withValues(alpha: 0.28),
+                      AppColors.accent.withValues(alpha: 0.0),
+                    ],
+                  ),
                 ),
-              ),
+              )
+                  .animate(onPlay: (c) => c.repeat(reverse: true))
+                  .scaleXY(
+                      begin: 0.85,
+                      end: 1.10,
+                      duration: 1600.ms,
+                      curve: Curves.easeInOut),
+            // Outer gold ring (rank 1 uses full goldGradient)
             Container(
-              padding: const EdgeInsets.all(3),
+              padding: EdgeInsets.all(rank == 1 ? 3 : 2.5),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [color, color.withValues(alpha: 0.6)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                gradient: rank == 1
+                    ? const LinearGradient(
+                        colors: AppColors.goldGradient,
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      )
+                    : LinearGradient(
+                        colors: [color, color.withValues(alpha: 0.65)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                boxShadow: [
+                  BoxShadow(
+                    color: color.withValues(alpha: 0.35),
+                    blurRadius: rank == 1 ? 22 : 14,
+                    spreadRadius: rank == 1 ? 2 : 0,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
               ),
               child: CachedAvatar(
                 imageUrl: profilePhoto,
@@ -2128,54 +2301,127 @@ class _DashboardPageState extends State<DashboardPage> {
                 fontSize: rank == 1 ? 26 : 20,
               ),
             ),
+            // Rank badge
             Positioned(
-              bottom: -4,
+              bottom: -6,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: color,
+                  gradient: LinearGradient(
+                    colors: [color, color.withValues(alpha: 0.78)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: Colors.white, width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withValues(alpha: 0.32),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: Text(
                   '#$rank',
-                  style: const TextStyle(
+                  style: GoogleFonts.dmSans(
                     color: Colors.white,
-                    fontSize: 9,
+                    fontSize: 9.5,
                     fontWeight: FontWeight.w900,
+                    letterSpacing: 0.4,
                   ),
                 ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 18),
         Text(
           name,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: GoogleFonts.dmSans(
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
+            fontSize: rank == 1 ? 14 : 13,
+            fontWeight: FontWeight.w800,
             color: AppColors.text,
+            letterSpacing: -0.2,
           ),
         ),
         const SizedBox(height: 6),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          padding:
+              const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.12),
+            gradient: rank == 1
+                ? const LinearGradient(colors: AppColors.goldGradient)
+                : LinearGradient(
+                    colors: [
+                      color.withValues(alpha: 0.20),
+                      color.withValues(alpha: 0.08),
+                    ],
+                  ),
             borderRadius: BorderRadius.circular(20),
+            boxShadow: rank == 1
+                ? [
+                    BoxShadow(
+                      color: AppColors.accent.withValues(alpha: 0.30),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ]
+                : null,
+            border: rank == 1
+                ? null
+                : Border.all(color: color.withValues(alpha: 0.28)),
           ),
-          child: Text(
-            '$count Sent',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-              color: color,
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                TablerIcons.send,
+                size: 10,
+                color: rank == 1 ? Colors.white : color,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                '$count SENT',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                  color: rank == 1 ? Colors.white : color,
+                  letterSpacing: 0.6,
+                ),
+              ),
+            ],
           ),
-        ),
+        )
+            .animate()
+            .fadeIn(
+                delay: (entranceDelay + 280).ms,
+                duration: 320.ms,
+                curve: Curves.easeOutCubic)
+            .scaleXY(
+                begin: 0.7,
+                end: 1,
+                delay: (entranceDelay + 280).ms,
+                duration: 320.ms,
+                curve: Curves.easeOutCubic),
       ],
     );
+
+    return body
+        .animate()
+        .fadeIn(
+            delay: entranceDelay.ms,
+            duration: 380.ms,
+            curve: Curves.easeOutCubic)
+        .slideY(
+            begin: 0.25,
+            end: 0,
+            delay: entranceDelay.ms,
+            duration: 380.ms,
+            curve: Curves.easeOutCubic);
   }
 
   Widget _buildClubsQuickLink() {

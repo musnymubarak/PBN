@@ -176,12 +176,11 @@ class MatchmakingService:
                 obj = MatchSuggestion(**match)
                 self.db.add(obj)
             
-            # Generate Gemini Strategy if possible
-            if settings.GEMINI_API_KEY:
-                # We do this asynchronously or in background usually, but for now we do it here
-                # Better to do it on demand when user views the match to save tokens
-                pass 
-                
+            # IMPORTANT: do NOT generate Gemini strategies here.
+            # Strategies are generated lazily in `get_partnership_strategy()`
+            # the first time the user opens the match — then cached on the row
+            # so subsequent views never hit Gemini again. This keeps free-tier
+            # quota usage proportional to user engagement, not match volume.
             saved_suggestions.append(obj)
 
         await self.db.commit()
@@ -361,6 +360,28 @@ class MatchmakingService:
 
         return min(1.0, score), breakdown, ordered
 
+    # Strings that look like stored strategies but are actually error fallbacks
+    # from earlier failed Gemini calls. If we find any of these in the DB they
+    # must be treated as unset so we retry generation instead of serving the
+    # stale error forever.
+    _STRATEGY_ERROR_SENTINELS = (
+        "AI quota temporarily exceeded",
+        "The AI is busy right now",
+        "Failed to generate AI strategy",
+        "AI strategy generation is currently disabled",
+        "No strategy could be generated",
+        "Error loading strategy",
+    )
+
+    @classmethod
+    def _is_stored_error(cls, text: str | None) -> bool:
+        if not text:
+            return False
+        for sentinel in cls._STRATEGY_ERROR_SENTINELS:
+            if text.startswith(sentinel):
+                return True
+        return False
+
     async def get_partnership_strategy(self, match_id: uuid.UUID) -> str:
         """Generate AI partnership strategy using Gemini."""
         import asyncio
@@ -381,8 +402,20 @@ class MatchmakingService:
         if not match:
             logger.warning(f"Match {match_id} not found")
             return ""
-        if match.partnership_strategy:
+
+        # Cache hit — but only if it's a real strategy, not an old error
+        # message that an earlier code path mistakenly persisted.
+        if match.partnership_strategy and not self._is_stored_error(match.partnership_strategy):
             return match.partnership_strategy
+
+        # Self-heal: stale error text in the column. Clear it so a successful
+        # regeneration below can overwrite it cleanly.
+        if self._is_stored_error(match.partnership_strategy):
+            logger.info(
+                f"Clearing stale error sentinel from match {match_id} before regenerating"
+            )
+            match.partnership_strategy = None
+            await self.db.commit()
 
         u1 = match.user
         u2 = match.matched_user
@@ -442,6 +475,14 @@ Format: Return only the suggestion text."""
         except Exception as e:
             error_str = str(e)
             logger.error(f"Gemini API Error for match {match_id}: {type(e).__name__}: {e}")
+            # Important: do NOT save the error text to match.partnership_strategy.
+            # Returning the message lets the user retry — the next tap will hit
+            # Gemini again and the success result will be cached on the row.
             if "429" in error_str or "RESOURCE_EXHAUSTED" in error_str:
-                return "AI quota temporarily exceeded. Please wait a minute and try again."
+                # Free-tier `gemini-2.0-flash` is throttled at 15 RPM. Most 429s
+                # here are per-minute bursts, not the daily cap.
+                return (
+                    "The AI is busy right now (rate-limited). "
+                    "Please wait about a minute and try again."
+                )
             return "Failed to generate AI strategy. Please try again later."
