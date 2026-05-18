@@ -52,7 +52,9 @@ class _LoginPageState extends State<LoginPage> {
     final auth = context.watch<AuthProvider>();
     return Scaffold(
       backgroundColor: AppColors.background,
+      resizeToAvoidBottomInset: false,
       body: Stack(
+        clipBehavior: Clip.none,
         children: [
           // ── DECORATIVE SOFT ACCENTS ──────────────────────────
           Positioned(
@@ -88,7 +90,9 @@ class _LoginPageState extends State<LoginPage> {
 
           // ── MAIN CONTENT ─────────────────────────────
           SafeArea(
+            bottom: false,
             child: SingleChildScrollView(
+              clipBehavior: Clip.none,
               padding: const EdgeInsets.symmetric(horizontal: 28),
               child: Column(
                 children: [

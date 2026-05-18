@@ -77,8 +77,10 @@ class _ForceChangePasswordPageState extends State<ForceChangePasswordPage> {
       canPop: false, // Prevent going back
       child: Scaffold(
         backgroundColor: Colors.white,
+        resizeToAvoidBottomInset: false,
         body: SafeArea(
           child: SingleChildScrollView(
+            clipBehavior: Clip.none,
             padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
