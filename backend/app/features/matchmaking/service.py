@@ -363,7 +363,7 @@ class MatchmakingService:
     # Strings that look like stored strategies but are actually error fallbacks
     # from earlier failed Gemini calls. If we find any of these in the DB they
     # must be treated as unset so we retry generation instead of serving the
-    # stale error forever.
+    # stale error forever. The success path below overwrites them in place.
     _STRATEGY_ERROR_SENTINELS = (
         "AI quota temporarily exceeded",
         "The AI is busy right now",
@@ -374,7 +374,7 @@ class MatchmakingService:
     )
 
     @classmethod
-    def _is_stored_error(cls, text: str | None) -> bool:
+    def _is_stored_error(cls, text: Optional[str]) -> bool:
         if not text:
             return False
         for sentinel in cls._STRATEGY_ERROR_SENTINELS:
@@ -404,18 +404,15 @@ class MatchmakingService:
             return ""
 
         # Cache hit — but only if it's a real strategy, not an old error
-        # message that an earlier code path mistakenly persisted.
+        # message that an earlier code path mistakenly persisted. Poisoned
+        # rows fall through to regeneration below; the success-path commit
+        # overwrites them with the new strategy.
         if match.partnership_strategy and not self._is_stored_error(match.partnership_strategy):
             return match.partnership_strategy
-
-        # Self-heal: stale error text in the column. Clear it so a successful
-        # regeneration below can overwrite it cleanly.
         if self._is_stored_error(match.partnership_strategy):
             logger.info(
-                f"Clearing stale error sentinel from match {match_id} before regenerating"
+                f"Match {match_id} has stale error text in partnership_strategy; regenerating"
             )
-            match.partnership_strategy = None
-            await self.db.commit()
 
         u1 = match.user
         u2 = match.matched_user
