@@ -12,6 +12,7 @@ import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/providers/member_provider.dart';
 import 'package:pbn/core/services/marketplace_service.dart';
 import 'package:pbn/core/widgets/cached_avatar.dart';
+import 'package:pbn/core/widgets/pbn_bottom_sheet.dart';
 import 'package:pbn/features/marketplace/create_listing_page.dart';
 import 'package:pbn/models/marketplace.dart';
 import 'package:pbn/models/member.dart';
@@ -450,43 +451,11 @@ class _MyMarketplacePageState extends State<MyMarketplacePage>
       }
     }
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+    showPbnBottomSheet(
+      context,
       builder: (ctx) {
-        return Container(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.88,
-          ),
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
-            borderRadius:
-                BorderRadius.vertical(top: Radius.circular(28)),
-          ),
+        return PbnBottomSheet(
           child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 12),
-              Center(
-                child: Container(
-                  width: 38,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.border,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              Flexible(
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.fromLTRB(
-                    20,
-                    18,
-                    20,
-                    20 + MediaQuery.of(context).padding.bottom,
-                  ),
-                  child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -524,10 +493,6 @@ class _MyMarketplacePageState extends State<MyMarketplacePage>
                       const SizedBox(height: 22),
                       _interestActionBar(interest),
                     ],
-                  ),
-                ),
-              ),
-            ],
           ),
         );
       },

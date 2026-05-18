@@ -11,6 +11,7 @@ import 'package:pbn/core/constants/districts.dart';
 import 'package:pbn/core/providers/auth_provider.dart';
 import 'package:pbn/core/services/chapter_service.dart';
 import 'package:pbn/core/widgets/pbn_app_bar_actions.dart';
+import 'package:pbn/core/widgets/pbn_bottom_sheet.dart';
 import 'package:pbn/features/members/members_page.dart';
 import 'package:pbn/models/chapter.dart';
 
@@ -169,31 +170,14 @@ class _ChaptersPageState extends State<ChaptersPage> {
       toolbarHeight: 60,
       floating: true,
       snap: true,
-      title: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'Global Presence',
-            style: GoogleFonts.dmSans(
-              fontSize: 20,
-              fontWeight: FontWeight.w900,
-              color: AppColors.text,
-              letterSpacing: -0.5,
-              height: 1.1,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            'The PBN chapter network',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary,
-              letterSpacing: 0.1,
-            ),
-          ),
-        ],
+      title: Text(
+        'Global Presence',
+        style: GoogleFonts.dmSans(
+          fontSize: 20,
+          fontWeight: FontWeight.w900,
+          color: AppColors.text,
+          letterSpacing: -0.5,
+        ),
       ),
       actions: const [PbnAppBarActions()],
     );
@@ -1162,33 +1146,14 @@ class _ChaptersPageState extends State<ChaptersPage> {
     // sense for prospects with no chapter yet.
     final canApply = user?.chapterId == null && c.isActive;
 
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
+    showPbnBottomSheet(
+      context,
       builder: (ctx) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
-            borderRadius:
-                BorderRadius.vertical(top: Radius.circular(28)),
-          ),
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+        return PbnBottomSheet(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Center(
-                child: Container(
-                  width: 38,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.border,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 18),
               // Header card
               Container(
                 padding: const EdgeInsets.all(18),

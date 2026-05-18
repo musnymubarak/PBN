@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:skeletonizer/skeletonizer.dart' as sk;
 
 import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/services/referral_service.dart';
@@ -11,8 +12,7 @@ import 'package:pbn/features/referrals/my_referrals_page.dart';
 import 'package:pbn/models/referral.dart';
 
 class ReferralDashboardPage extends StatefulWidget {
-  final bool isEmbedded;
-  const ReferralDashboardPage({super.key, this.isEmbedded = false});
+  const ReferralDashboardPage({super.key});
 
   @override
   State<ReferralDashboardPage> createState() => _ReferralDashboardPageState();
@@ -21,8 +21,21 @@ class ReferralDashboardPage extends StatefulWidget {
 class _ReferralDashboardPageState extends State<ReferralDashboardPage> {
   final _service = ReferralService();
   bool _loading = true;
+  bool _loadError = false;
   List<Referral> _received = [];
   List<Referral> _given = [];
+
+  // Own ScrollController — the tab sibling (AiMatchesView) lives under
+  // the same NestedScrollView, so sharing the inherited
+  // PrimaryScrollController during tab swap can leave the desktop
+  // Scrollbar tracking two positions at once.
+  final _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   static const String _invitationText = '''Hi 👋, I'd like to introduce you to Prime Business Network (PBN) — a modern, technology-driven business growth ecosystem that helps entrepreneurs grow through structured, measurable results. It offers industry exclusivity (one member per category) and a digital system to track business opportunities and real business results.
 
@@ -42,19 +55,28 @@ By joining, you become part of a strong ecosystem built on reliable partnerships
   }
 
   Future<void> _loadStats() async {
+    setState(() {
+      _loading = true;
+      _loadError = false;
+    });
+
     List<Referral> received = [];
     List<Referral> given = [];
+    bool receivedFailed = false;
+    bool givenFailed = false;
 
     try {
       received = await _service.getReceivedReferrals();
     } catch (e) {
       debugPrint('Error loading received referrals: $e');
+      receivedFailed = true;
     }
 
     try {
       given = await _service.getGivenReferrals();
     } catch (e) {
       debugPrint('Error loading given referrals: $e');
+      givenFailed = true;
     }
 
     if (mounted) {
@@ -62,6 +84,9 @@ By joining, you become part of a strong ecosystem built on reliable partnerships
         _received = received;
         _given = given;
         _loading = false;
+        // Surface a retry banner only when BOTH calls failed — partial
+        // success is silently acceptable (one direction's count just reads 0).
+        _loadError = receivedFailed && givenFailed;
       });
     }
   }
@@ -79,14 +104,11 @@ By joining, you become part of a strong ecosystem built on reliable partnerships
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) {
-      return const Scaffold(
-        backgroundColor: AppColors.background,
-        body: Center(child: CircularProgressIndicator(color: AppColors.primary)),
-      );
-    }
-
     final sections = <Widget>[
+      if (_loadError) ...[
+        _buildErrorBanner(),
+        const SizedBox(height: 14),
+      ],
       _buildHeroCard(),
       const SizedBox(height: 14),
       _buildStatStrip(),
@@ -104,30 +126,139 @@ By joining, you become part of a strong ecosystem built on reliable partnerships
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: RefreshIndicator(
-        onRefresh: _loadStats,
-        color: AppColors.primary,
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 100),
-              sliver: SliverList.list(
-                children: List.generate(sections.length, (i) {
-                  final delayMs = (i * 35).clamp(0, 280);
-                  return sections[i]
-                      .animate(delay: delayMs.ms)
-                      .fadeIn(duration: 320.ms, curve: Curves.easeOutCubic)
-                      .slideY(
-                          begin: 0.10,
-                          end: 0,
-                          duration: 320.ms,
-                          curve: Curves.easeOutCubic);
-                }),
+      body: sk.Skeletonizer(
+        enabled: _loading,
+        enableSwitchAnimation: true,
+        effect: sk.ShimmerEffect(
+          baseColor: AppColors.surfaceAlt,
+          highlightColor: Colors.white.withValues(alpha: 0.9),
+          duration: const Duration(milliseconds: 1400),
+        ),
+        child: RefreshIndicator(
+          onRefresh: _loadStats,
+          color: AppColors.primary,
+          child: CustomScrollView(
+            controller: _scrollController,
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
+                sliver: SliverList.list(
+                  children: List.generate(sections.length, (i) {
+                    final delayMs = (i * 35).clamp(0, 280);
+                    return sections[i]
+                        .animate(delay: delayMs.ms)
+                        .fadeIn(duration: 320.ms, curve: Curves.easeOutCubic)
+                        .slideY(
+                            begin: 0.10,
+                            end: 0,
+                            duration: 320.ms,
+                            curve: Curves.easeOutCubic);
+                  }),
+                ),
               ),
-            ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ──────────────────────────────────────────────────────────
+  // ERROR BANNER (F-23) — non-blocking, with retry
+  // Shown only when both received + given calls fail. Partial failures
+  // silently degrade to "0" — they're indistinguishable from real zeros
+  // for the user, and the next refresh fixes them.
+  // ──────────────────────────────────────────────────────────
+  Widget _buildErrorBanner() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppColors.warning.withValues(alpha: 0.10),
+            AppColors.warning.withValues(alpha: 0.04),
           ],
         ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.warning.withValues(alpha: 0.30)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.warning.withValues(alpha: 0.18),
+                  AppColors.warning.withValues(alpha: 0.06),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.warning.withValues(alpha: 0.22)),
+            ),
+            child: const Icon(TablerIcons.alert_triangle,
+                color: AppColors.warning, size: 18),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  "Couldn't load your activity",
+                  style: GoogleFonts.dmSans(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.text,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  'Pull down to refresh or tap retry.',
+                  style: GoogleFonts.dmSans(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(10),
+              onTap: () {
+                HapticFeedback.selectionClick();
+                _loadStats();
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 10, vertical: 7),
+                decoration: BoxDecoration(
+                  color: AppColors.warning.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                      color: AppColors.warning.withValues(alpha: 0.30)),
+                ),
+                child: Text(
+                  'RETRY',
+                  style: GoogleFonts.dmSans(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.warning,
+                    letterSpacing: 1,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -528,7 +659,7 @@ By joining, you become part of a strong ecosystem built on reliable partnerships
               icon: TablerIcons.inbox,
               iconColor: AppColors.success,
               title: 'Received Opportunities',
-              subtitle: 'Track business growth',
+              subtitle: 'Leads shared with you',
               count: _receivedCount,
               onTap: () => Navigator.push(
                 context,
@@ -541,7 +672,7 @@ By joining, you become part of a strong ecosystem built on reliable partnerships
               icon: TablerIcons.send,
               iconColor: AppColors.accentBlue,
               title: 'Given Opportunities',
-              subtitle: 'Track business growth',
+              subtitle: 'Leads you’ve sent out',
               count: _sentCount,
               onTap: () => Navigator.push(
                 context,
@@ -684,35 +815,28 @@ By joining, you become part of a strong ecosystem built on reliable partnerships
                     ],
                   ),
                   borderRadius: BorderRadius.circular(14),
-                  border:
-                      Border.all(color: AppColors.accent.withValues(alpha: 0.22)),
+                  border: Border.all(
+                      color: AppColors.accent.withValues(alpha: 0.22)),
                 ),
                 child: const Icon(TablerIcons.user_plus,
                     color: AppColors.accent, size: 20),
               ),
-              const SizedBox(width: 12),
-              Text(
-                'GROW YOUR NETWORK',
-                style: GoogleFonts.dmSans(
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.accent,
-                  fontSize: 10,
-                  letterSpacing: 1.5,
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  'Invite Quality Professionals',
+                  style: GoogleFonts.dmSans(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.text,
+                    letterSpacing: -0.3,
+                    height: 1.2,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 14),
-          Text(
-            'Invite Quality Professionals',
-            style: GoogleFonts.dmSans(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: AppColors.text,
-              letterSpacing: -0.3,
-            ),
-          ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Text(
             'Copy our professional template to invite business owners in your network to join PBN.',
             style: GoogleFonts.dmSans(
@@ -780,11 +904,36 @@ By joining, you become part of a strong ecosystem built on reliable partnerships
   }
 
   // ──────────────────────────────────────────────────────────
-  // HOW IT WORKS — retokenized
+  // HOW IT WORKS — three-step numbered list (P-4 row pattern)
+  // Replaces the prior flat paragraph. Three rows make the flow legible
+  // at a glance and let each step earn its own line in the eye's path.
   // ──────────────────────────────────────────────────────────
   Widget _buildInstructionCard() {
+    final steps = <_HowItWorksStep>[
+      _HowItWorksStep(
+        icon: TablerIcons.bulb,
+        tint: AppColors.accent,
+        title: 'Share a business opportunity',
+        body: 'Tap New Opportunity and fill in the lead so the right '
+            'member can act on it.',
+      ),
+      _HowItWorksStep(
+        icon: TablerIcons.progress,
+        tint: AppColors.accentBlue,
+        title: 'Track it through the stages',
+        body: 'Both sides update progress so the pipeline stays honest '
+            'and current.',
+      ),
+      _HowItWorksStep(
+        icon: TablerIcons.trophy,
+        tint: AppColors.success,
+        title: 'Log the ROI when it closes',
+        body: 'Recording value generated climbs the leaderboard and '
+            'unlocks premium rewards.',
+      ),
+    ];
+
     return Container(
-      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: AppColors.surfaceGradient,
@@ -796,9 +945,24 @@ By joining, you become part of a strong ecosystem built on reliable partnerships
         boxShadow: AppColors.shadowMd,
       ),
       child: Column(
+        children: [
+          for (var i = 0; i < steps.length; i++) ...[
+            _instructionRow(steps[i], number: i + 1),
+            if (i < steps.length - 1) _hairlineDivider(),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _instructionRow(_HowItWorksStep s, {required int number}) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Stack(
+            clipBehavior: Clip.none,
             children: [
               Container(
                 width: 40,
@@ -806,41 +970,88 @@ By joining, you become part of a strong ecosystem built on reliable partnerships
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      AppColors.accentBlue.withValues(alpha: 0.18),
-                      AppColors.accentBlue.withValues(alpha: 0.06),
+                      s.tint.withValues(alpha: 0.18),
+                      s.tint.withValues(alpha: 0.06),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                      color: AppColors.accentBlue.withValues(alpha: 0.22)),
+                  border: Border.all(color: s.tint.withValues(alpha: 0.22)),
                 ),
-                child: const Icon(TablerIcons.info_circle,
-                    color: AppColors.accentBlue, size: 20),
+                child: Icon(s.icon, color: s.tint, size: 20),
               ),
-              const SizedBox(width: 12),
-              Text(
-                'How it works',
-                style: GoogleFonts.dmSans(
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.text,
-                  fontSize: 14,
-                  letterSpacing: -0.2,
+              Positioned(
+                top: -4,
+                right: -4,
+                child: Container(
+                  width: 18,
+                  height: 18,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: AppColors.goldGradient,
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.surface, width: 2),
+                  ),
+                  child: Text(
+                    '$number',
+                    style: GoogleFonts.dmSans(
+                      color: Colors.white,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w900,
+                      height: 1,
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 14),
-          Text(
-            'High business creation flow helps you climb the leaderboard and unlock premium rewards. Always update the ROI once an opportunity is closed successfully.',
-            style: GoogleFonts.dmSans(
-              fontSize: 13,
-              height: 1.5,
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w500,
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  s.title,
+                  style: GoogleFonts.dmSans(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.text,
+                    letterSpacing: -0.2,
+                    height: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  s.body,
+                  style: GoogleFonts.dmSans(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textSecondary,
+                    height: 1.45,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
       ),
     );
   }
+}
+
+class _HowItWorksStep {
+  final IconData icon;
+  final Color tint;
+  final String title;
+  final String body;
+  const _HowItWorksStep({
+    required this.icon,
+    required this.tint,
+    required this.title,
+    required this.body,
+  });
 }

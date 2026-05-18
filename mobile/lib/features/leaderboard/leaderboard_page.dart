@@ -158,31 +158,14 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
       toolbarHeight: 60,
       floating: true,
       snap: true,
-      title: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'Leaderboard',
-            style: GoogleFonts.dmSans(
-              fontSize: 20,
-              fontWeight: FontWeight.w900,
-              color: AppColors.text,
-              letterSpacing: -0.5,
-              height: 1.1,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            'Top referrers in your network',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary,
-              letterSpacing: 0.1,
-            ),
-          ),
-        ],
+      title: Text(
+        'Leaderboard',
+        style: GoogleFonts.dmSans(
+          fontSize: 20,
+          fontWeight: FontWeight.w900,
+          color: AppColors.text,
+          letterSpacing: -0.5,
+        ),
       ),
       actions: const [PbnAppBarActions()],
     );

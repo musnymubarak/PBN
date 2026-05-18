@@ -261,7 +261,7 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
         ),
-        showDragHandle: true,
+        showDragHandle: false,
         dragHandleColor: AppColors.border,
       ),
       tabBarTheme: TabBarThemeData(

@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/services/referral_service.dart';
 import 'package:pbn/core/widgets/pbn_app_bar_actions.dart';
+import 'package:pbn/core/widgets/pbn_bottom_sheet.dart';
 import 'package:pbn/features/referrals/create_referral_page.dart';
 import 'package:pbn/features/referrals/widgets/referral_status_style.dart';
 import 'package:pbn/models/referral.dart';
@@ -360,16 +361,9 @@ class _MyReferralsPageState extends State<MyReferralsPage> {
   }
 
   void _showDetails(Referral ref) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      isScrollControlled: true,
-      showDragHandle: false,
-      backgroundColor: AppColors.surface,
-      clipBehavior: Clip.antiAlias,
-      builder: (context) => _ReferralDetailsSheet(
+    showPbnBottomSheet(
+      context,
+      builder: (_) => _ReferralDetailsSheet(
         referral: ref,
         isReceived: widget.isReceived,
         onUpdate: _loadData,
@@ -453,176 +447,148 @@ class _ReferralDetailsSheetState extends State<_ReferralDetailsSheet> {
   @override
   Widget build(BuildContext context) {
     final ref = widget.referral;
-    final safeBottom = MediaQuery.of(context).padding.bottom;
-    final keyboardInset = MediaQuery.of(context).viewInsets.bottom;
-    final maxH = MediaQuery.of(context).size.height * 0.9;
 
-    return ConstrainedBox(
-      constraints: BoxConstraints(maxHeight: maxH),
-      child: Container(
-        decoration: const BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        padding: EdgeInsets.only(bottom: keyboardInset),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildHeader(ref),
-            Flexible(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.fromLTRB(20, 20, 20, 24 + safeBottom),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildLeadInfoCard(ref),
-                    const SizedBox(height: 24),
-                    _sectionHeader('Opportunity Description'),
-                    const SizedBox(height: 12),
-                    _buildDescriptionCard(ref),
-                    if (widget.isReceived) ...[
-                      const SizedBox(height: 24),
-                      _sectionHeader('Update Business Status'),
-                      const SizedBox(height: 12),
-                      _buildStatusGrid(),
-                      const SizedBox(height: 14),
-                      _buildIconInput(
-                        controller: _roiController,
-                        icon: TablerIcons.coin,
-                        tint: AppColors.accent,
-                        hint: 'LKR amount',
-                        keyboardType: TextInputType.number,
-                      ),
-                      const SizedBox(height: 10),
-                      _buildIconInput(
-                        controller: _descriptionController,
-                        icon: TablerIcons.edit,
-                        tint: AppColors.accentBlue,
-                        hint: 'Internal update notes…',
-                        maxLines: 3,
-                      ),
-                    ],
-                    if (ref.history.isNotEmpty) ...[
-                      const SizedBox(height: 24),
-                      _sectionHeader('History'),
-                      const SizedBox(height: 12),
-                      _buildHistoryTimeline(ref.history),
-                    ],
-                    if (widget.isReceived) ...[
-                      const SizedBox(height: 24),
-                      _buildSaveButton(),
-                    ],
-                  ],
-                ),
-              ),
+    return PbnBottomSheet(
+      resizeForKeyboard: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildHeader(ref),
+          const SizedBox(height: 18),
+          _buildLeadInfoCard(ref),
+          const SizedBox(height: 24),
+          _sectionHeader('Opportunity Description'),
+          const SizedBox(height: 12),
+          _buildDescriptionCard(ref),
+          if (widget.isReceived) ...[
+            const SizedBox(height: 24),
+            _sectionHeader('Update Business Status'),
+            const SizedBox(height: 12),
+            _buildStatusGrid(),
+            const SizedBox(height: 14),
+            _buildIconInput(
+              controller: _roiController,
+              icon: TablerIcons.coin,
+              tint: AppColors.accent,
+              hint: 'LKR amount',
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 10),
+            _buildIconInput(
+              controller: _descriptionController,
+              icon: TablerIcons.edit,
+              tint: AppColors.accentBlue,
+              hint: 'Internal update notes…',
+              maxLines: 3,
             ),
           ],
-        ),
+          if (ref.history.isNotEmpty) ...[
+            const SizedBox(height: 24),
+            _sectionHeader('History'),
+            const SizedBox(height: 12),
+            _buildHistoryTimeline(ref.history),
+          ],
+          if (widget.isReceived) ...[
+            const SizedBox(height: 24),
+            _buildSaveButton(),
+          ],
+        ],
       ),
     );
   }
 
   // ──────────────────────────────────────────────────────────
-  // P-2 SHEET HEADER — primaryGradient + gold ambient blob + drag handle
+  // HERO CARD — primaryGradient + gold ambient blob (inset, scrolls
+  // with the rest of the sheet to match the canonical pattern in
+  // members_page._buildDetailHero).
   // ──────────────────────────────────────────────────────────
   Widget _buildHeader(Referral ref) {
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      child: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: AppColors.primaryGradient,
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        gradient: const LinearGradient(
+          colors: AppColors.primaryGradient,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.22),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+          ),
+          BoxShadow(
+            color: AppColors.accent.withValues(alpha: 0.10),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(22),
         child: Stack(
           children: [
             Positioned(
-              top: -30,
-              right: -30,
+              top: -50,
+              right: -50,
               child: Container(
-                width: 120,
-                height: 120,
+                width: 170,
+                height: 170,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      AppColors.accent.withValues(alpha: 0.18),
-                      AppColors.accent.withValues(alpha: 0.0),
+                      AppColors.accent.withValues(alpha: 0.22),
+                      Colors.transparent,
                     ],
                   ),
                 ),
               ),
             ),
-            Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Center(
-                    child: Container(
-                      width: 36,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.30),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'LEAD DETAILS',
+                          style: GoogleFonts.dmSans(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.accent,
+                            letterSpacing: 1.4,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          ref.leadName,
+                          style: GoogleFonts.dmSans(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            letterSpacing: -0.5,
+                            height: 1.15,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black.withValues(alpha: 0.25),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 22),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'LEAD DETAILS',
-                              style: GoogleFonts.dmSans(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.accent,
-                                letterSpacing: 1.4,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              ref.leadName,
-                              style: GoogleFonts.dmSans(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                                letterSpacing: -0.4,
-                                height: 1.15,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      GestureDetector(
-                        onTap: () => Navigator.pop(context),
-                        child: Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.10),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            TablerIcons.x,
-                            size: 18,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),

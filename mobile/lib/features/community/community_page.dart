@@ -1,17 +1,22 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:skeletonizer/skeletonizer.dart' as sk;
+
 import 'package:pbn/core/constants/app_colors.dart';
-import 'package:pbn/core/widgets/cached_avatar.dart';
 import 'package:pbn/core/providers/auth_provider.dart';
 import 'package:pbn/core/services/community_service.dart';
-import 'package:pbn/models/community.dart';
-import 'package:pbn/features/community/create_post_page.dart';
 import 'package:pbn/core/services/push_notification_service.dart';
-
+import 'package:pbn/core/widgets/cached_avatar.dart';
 import 'package:pbn/core/widgets/pbn_app_bar_actions.dart';
+import 'package:pbn/core/widgets/pbn_bottom_sheet.dart';
+import 'package:pbn/features/community/create_post_page.dart';
+import 'package:pbn/models/community.dart';
 
 class CommunityPage extends StatefulWidget {
   const CommunityPage({super.key});
@@ -20,13 +25,15 @@ class CommunityPage extends StatefulWidget {
   State<CommunityPage> createState() => _CommunityPageState();
 }
 
-class _CommunityPageState extends State<CommunityPage> with WidgetsBindingObserver {
+class _CommunityPageState extends State<CommunityPage>
+    with WidgetsBindingObserver {
   final _service = CommunityService();
   final _searchController = TextEditingController();
+  final _searchFocus = FocusNode();
   Timer? _debounce;
   Timer? _liveTimer;
   StreamSubscription? _notifSubscription;
-  
+
   List<CommunityPost> _posts = [];
   bool _loading = true;
   String? _error;
@@ -49,18 +56,19 @@ class _CommunityPageState extends State<CommunityPage> with WidgetsBindingObserv
     _stopLiveUpdates();
     _notifSubscription?.cancel();
     _searchController.dispose();
+    _searchFocus.dispose();
     _debounce?.cancel();
     super.dispose();
   }
 
   void _listenToNotifications() {
-    _notifSubscription = PushNotificationService.onMessageStream.listen((message) {
+    _notifSubscription =
+        PushNotificationService.onMessageStream.listen((message) {
       final type = message.data['type']?.toString().toLowerCase();
-      final notificationType = message.data['notification_type']?.toString().toLowerCase();
-      
-      // Matches both the 'type' field and the 'notification_type' sent by backend
-      if (type == 'community' || 
-          type == 'community_post' || 
+      final notificationType =
+          message.data['notification_type']?.toString().toLowerCase();
+      if (type == 'community' ||
+          type == 'community_post' ||
           notificationType?.contains('community') == true) {
         _loadFeed(isSilent: true);
       }
@@ -93,17 +101,12 @@ class _CommunityPageState extends State<CommunityPage> with WidgetsBindingObserv
   void _onSearchChanged(String query) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     _debounce = Timer(const Duration(milliseconds: 500), () {
-      setState(() {
-        _searchQuery = query;
-      });
+      setState(() => _searchQuery = query);
       _loadFeed();
     });
   }
 
   Future<void> _loadFeed({bool isSilent = false}) async {
-    if (isSilent) {
-      // Background refresh without logging
-    }
     if (!isSilent) {
       setState(() {
         _loading = true;
@@ -133,28 +136,43 @@ class _CommunityPageState extends State<CommunityPage> with WidgetsBindingObserv
     }
   }
 
+  // ──────────────────────────────────────────────────────────
+  // BUILD
+  // ──────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         toolbarHeight: 60,
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        elevation: 0,
+        scrolledUnderElevation: 0,
         title: Row(
           children: [
-            const Text('Chapter Feed',
-                style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.text,
-                    letterSpacing: -0.5)),
+            Text(
+              'Chapter Feed',
+              style: GoogleFonts.dmSans(
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+                color: AppColors.text,
+                letterSpacing: -0.5,
+              ),
+            ),
             const SizedBox(width: 8),
             Container(
-              width: 8,
-              height: 8,
-              decoration: const BoxDecoration(
+              width: 7,
+              height: 7,
+              decoration: BoxDecoration(
                 color: AppColors.success,
                 shape: BoxShape.circle,
-                boxShadow: [BoxShadow(color: AppColors.success, blurRadius: 4)],
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.success.withValues(alpha: 0.5),
+                    blurRadius: 5,
+                  ),
+                ],
               ),
             ),
           ],
@@ -163,118 +181,74 @@ class _CommunityPageState extends State<CommunityPage> with WidgetsBindingObserv
       ),
       body: Column(
         children: [
-          // Scope Toggle (moved from AppBar)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
-            child: Container(
-              height: 40,
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: AppColors.surfaceAlt,
-                borderRadius: BorderRadius.circular(12),
+          _buildStickyHeader(),
+          Expanded(
+            child: sk.Skeletonizer(
+              enabled: _loading && _posts.isEmpty,
+              enableSwitchAnimation: true,
+              effect: sk.ShimmerEffect(
+                baseColor: AppColors.surfaceAlt,
+                highlightColor: Colors.white.withValues(alpha: 0.9),
+                duration: const Duration(milliseconds: 1400),
               ),
-              child: Row(
-                children: [
-                  _buildScopeTab('My Chapter', false),
-                  _buildScopeTab('Network', true),
-                ],
+              child: RefreshIndicator(
+                onRefresh: _loadFeed,
+                color: AppColors.primary,
+                child: _buildBody(),
               ),
             ),
-          ),
-          _buildSearchAndFilter(),
-          Expanded(
-            child: _loading
-                ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-                : _error != null
-                    ? _buildErrorState()
-                    : RefreshIndicator(
-                        onRefresh: _loadFeed,
-                        color: AppColors.primary,
-                        child: _posts.isEmpty
-                            ? _buildEmptyState()
-                            : ListView.builder(
-                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                                itemCount: _posts.length,
-                                itemBuilder: (context, i) => _PostCard(
-                                  post: _posts[i],
-                                  onRefresh: _loadFeed,
-                                ),
-                              ),
-                      ),
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const CreatePostPage()),
-          ).then((result) {
-            if (result is CommunityPost) {
-              setState(() {
-                _posts.insert(0, result);
-              });
-            } else if (result == true) {
-              _loadFeed();
-            }
-          });
-        },
-        backgroundColor: AppColors.primary,
-        child: const Icon(TablerIcons.square_plus, color: Colors.white, size: 28),
-      ),
+      floatingActionButton: _buildFab(),
     );
   }
 
-  Widget _buildSearchAndFilter() {
+  // ──────────────────────────────────────────────────────────
+  // STICKY HEADER — scope toggle + search + filter chips
+  // ──────────────────────────────────────────────────────────
+  Widget _buildStickyHeader() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
-      ),
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 14),
       child: Column(
         children: [
-          // Search Bar
+          // Scope toggle: pill segmented control with gold underline.
           Container(
+            height: 40,
+            padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
               color: AppColors.surfaceAlt,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.borderLight),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                  color: AppColors.border.withValues(alpha: 0.6)),
             ),
-            child: TextField(
-              controller: _searchController,
-              onChanged: _onSearchChanged,
-              decoration: InputDecoration(
-                hintText: 'Search posts...',
-                hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14, fontWeight: FontWeight.w600),
-                prefixIcon: const Icon(TablerIcons.search, color: AppColors.primary, size: 20),
-                suffixIcon: _searchController.text.isNotEmpty 
-                  ? IconButton(
-                      icon: const Icon(TablerIcons.x, size: 18),
-                      onPressed: () {
-                        _searchController.clear();
-                        _onSearchChanged('');
-                      },
-                    )
-                  : null,
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: 14),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          // Filter Chips
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
             child: Row(
               children: [
-                _buildFilterChip('All Posts', 'all', TablerIcons.layout_list),
+                _scopeTab('My Chapter', TablerIcons.users, false),
+                _scopeTab('Network', TablerIcons.world, true),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Search bar
+          _buildSearchField(),
+          const SizedBox(height: 12),
+          // Filter chips
+          SizedBox(
+            height: 36,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.zero,
+              physics: const BouncingScrollPhysics(),
+              children: [
+                _filterChip('All Posts', 'all', TablerIcons.layout_list),
                 const SizedBox(width: 8),
-                _buildFilterChip('Leads', 'lead', TablerIcons.flame),
+                _filterChip('Leads', 'lead', TablerIcons.flame),
                 const SizedBox(width: 8),
-                _buildFilterChip('RFPs', 'rfp', TablerIcons.clipboard_list),
+                _filterChip('RFPs', 'rfp', TablerIcons.clipboard_list),
                 const SizedBox(width: 8),
-                _buildFilterChip('My Posts', 'my_posts', TablerIcons.user),
+                _filterChip('My Posts', 'my_posts', TablerIcons.user),
               ],
             ),
           ),
@@ -283,65 +257,157 @@ class _CommunityPageState extends State<CommunityPage> with WidgetsBindingObserv
     );
   }
 
-  Widget _buildScopeTab(String label, bool isNetwork) {
-    final isSelected = _networkWide == isNetwork;
+  Widget _scopeTab(String label, IconData icon, bool isNetwork) {
+    final selected = _networkWide == isNetwork;
     return Expanded(
       child: GestureDetector(
         onTap: () {
+          HapticFeedback.selectionClick();
           setState(() {
             _networkWide = isNetwork;
-            _activeFilter = 'all'; // Reset filter when switching scope
+            _activeFilter = 'all';
           });
           _loadFeed();
         },
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: isSelected ? Colors.white : Colors.transparent,
+            color: selected ? AppColors.surface : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
-            boxShadow: isSelected ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4)] : [],
+            boxShadow: selected ? AppColors.shadowSm : null,
           ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-              color: isSelected ? AppColors.primary : Colors.grey.shade600,
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 14,
+                color:
+                    selected ? AppColors.accent : AppColors.textMuted,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: GoogleFonts.dmSans(
+                  fontSize: 12.5,
+                  fontWeight: selected
+                      ? FontWeight.w900
+                      : FontWeight.w700,
+                  color: selected
+                      ? AppColors.text
+                      : AppColors.textMuted,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildFilterChip(String label, String value, IconData icon) {
-    final isSelected = _activeFilter == value;
+  Widget _buildSearchField() {
+    final hasFocus = _searchFocus.hasFocus;
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surfaceAlt,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: hasFocus
+              ? AppColors.accent.withValues(alpha: 0.5)
+              : AppColors.border.withValues(alpha: 0.7),
+          width: hasFocus ? 1.4 : 1,
+        ),
+      ),
+      child: TextField(
+        controller: _searchController,
+        focusNode: _searchFocus,
+        onChanged: _onSearchChanged,
+        onTap: () => setState(() {}),
+        onSubmitted: (_) => setState(() {}),
+        style: GoogleFonts.dmSans(
+          fontSize: 13.5,
+          fontWeight: FontWeight.w600,
+          color: AppColors.text,
+        ),
+        decoration: InputDecoration(
+          hintText: 'Search posts, leads, or RFPs…',
+          hintStyle: GoogleFonts.dmSans(
+            color: AppColors.textMuted,
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+          ),
+          prefixIcon: const Icon(TablerIcons.search,
+              color: AppColors.textSecondary, size: 18),
+          suffixIcon: _searchController.text.isNotEmpty
+              ? IconButton(
+                  icon: const Icon(TablerIcons.x,
+                      size: 16, color: AppColors.textMuted),
+                  onPressed: () {
+                    _searchController.clear();
+                    _onSearchChanged('');
+                  },
+                )
+              : null,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(vertical: 12),
+        ),
+      ),
+    );
+  }
+
+  Widget _filterChip(String label, String value, IconData icon) {
+    final selected = _activeFilter == value;
     return GestureDetector(
       onTap: () {
-        setState(() {
-          _activeFilter = value;
-        });
+        HapticFeedback.selectionClick();
+        setState(() => _activeFilter = value);
         _loadFeed();
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        curve: Curves.easeOutCubic,
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.white,
+          gradient: selected
+              ? const LinearGradient(colors: AppColors.goldGradient)
+              : null,
+          color: selected ? null : AppColors.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: isSelected ? AppColors.primary : AppColors.border),
-          boxShadow: isSelected ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4))] : [],
+          border: Border.all(
+            color: selected
+                ? Colors.transparent
+                : AppColors.border.withValues(alpha: 0.7),
+          ),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: AppColors.accent.withValues(alpha: 0.30),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
         ),
         child: Row(
           children: [
-            Icon(icon, size: 16, color: isSelected ? Colors.white : AppColors.textSecondary),
-            const SizedBox(width: 8),
-            Text(label, 
-              style: TextStyle(
-                fontSize: 12, 
-                fontWeight: FontWeight.w700, 
-                color: isSelected ? Colors.white : AppColors.textSecondary
+            Icon(
+              icon,
+              size: 14,
+              color: selected ? Colors.white : AppColors.textSecondary,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: GoogleFonts.dmSans(
+                fontSize: 11.5,
+                fontWeight: selected ? FontWeight.w900 : FontWeight.w800,
+                color:
+                    selected ? Colors.white : AppColors.textSecondary,
+                letterSpacing: 0.4,
               ),
             ),
           ],
@@ -350,54 +416,183 @@ class _CommunityPageState extends State<CommunityPage> with WidgetsBindingObserv
     );
   }
 
-  Widget _buildEmptyState() {
-    String message = 'Be the first to post something!';
-    IconData icon = TablerIcons.messages;
-
-    if (_searchQuery.isNotEmpty) {
-      message = 'No results found for "$_searchQuery"';
-      icon = TablerIcons.search_off;
-    } else if (_activeFilter == 'pinned') {
-      message = 'No pinned posts yet';
-      icon = TablerIcons.pin;
-    } else if (_activeFilter == 'my_posts') {
-      message = 'You haven\'t posted anything yet';
-      icon = TablerIcons.user_minus;
+  // ──────────────────────────────────────────────────────────
+  // BODY
+  // ──────────────────────────────────────────────────────────
+  Widget _buildBody() {
+    if (_error != null && _posts.isEmpty) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(20, 24, 20, 100),
+        children: [_buildErrorState()],
+      );
     }
 
-    return Center(
+    if (_loading && _posts.isEmpty) {
+      // Skeletonizer wraps the list — generate fake posts as placeholders.
+      return ListView.builder(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+        physics: const AlwaysScrollableScrollPhysics(),
+        itemCount: 3,
+        itemBuilder: (ctx, i) => _PostCard(
+          post: _skeletonPost(),
+          onRefresh: _loadFeed,
+        ),
+      );
+    }
+
+    if (_posts.isEmpty) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(20, 24, 20, 100),
+        children: [_buildEmptyState()],
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+      physics: const AlwaysScrollableScrollPhysics(),
+      itemCount: _posts.length + (_error != null ? 1 : 0),
+      itemBuilder: (context, i) {
+        // Inline error banner above the list when a non-empty list also
+        // hit a transient failure on its last refresh.
+        if (_error != null && i == 0) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 14),
+            child: _inlineErrorBanner(),
+          );
+        }
+        final idx = _error != null ? i - 1 : i;
+        return _PostCard(
+          post: _posts[idx],
+          onRefresh: _loadFeed,
+        );
+      },
+    );
+  }
+
+  CommunityPost _skeletonPost() {
+    return CommunityPost(
+      id: 'skeleton',
+      chapterId: 'sk',
+      content:
+          'Quick update from the chapter — closing in on the quarterly '
+          'target and looking for two more intros into hospitality.',
+      isPinned: false,
+      createdAt: DateTime.now().subtract(const Duration(minutes: 12)),
+      author: PostAuthor(
+        id: 'sk',
+        fullName: 'Member Name',
+        role: 'CHAPTER_MEMBER',
+      ),
+      likesCount: 12,
+      commentsCount: 3,
+      isLikedByMe: false,
+      postType: 'general',
+      visibility: 'chapter',
+    );
+  }
+
+  // ──────────────────────────────────────────────────────────
+  // EMPTY STATE
+  // ──────────────────────────────────────────────────────────
+  Widget _buildEmptyState() {
+    String title;
+    String message;
+    IconData icon;
+
+    if (_searchQuery.isNotEmpty) {
+      title = 'No matches';
+      message = 'Nothing came back for "$_searchQuery". Try a different keyword.';
+      icon = TablerIcons.search_off;
+    } else if (_activeFilter == 'lead') {
+      title = 'No leads right now';
+      message = 'Open leads from your chapter and network will appear here.';
+      icon = TablerIcons.flame;
+    } else if (_activeFilter == 'rfp') {
+      title = 'No RFPs right now';
+      message = 'Requests for proposals will appear here as members post them.';
+      icon = TablerIcons.clipboard_list;
+    } else if (_activeFilter == 'my_posts') {
+      title = "You haven't posted yet";
+      message = 'Share an update, a lead, or an RFP to start the conversation.';
+      icon = TablerIcons.user;
+    } else {
+      title = 'Be the first to post';
+      message =
+          'The feed is quiet. Drop in with an update — your chapter is watching.';
+      icon = TablerIcons.messages;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: AppColors.surfaceGradient,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.7)),
+        boxShadow: AppColors.shadowSm,
+      ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 64, color: Colors.grey.shade300),
-          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.accent.withValues(alpha: 0.18),
+                  AppColors.accent.withValues(alpha: 0.06),
+                ],
+              ),
+              shape: BoxShape.circle,
+              border:
+                  Border.all(color: AppColors.accent.withValues(alpha: 0.25)),
+            ),
+            child: Icon(icon, size: 36, color: AppColors.accent),
+          ),
+          const SizedBox(height: 18),
+          Text(
+            title,
+            style: GoogleFonts.dmSans(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: AppColors.text,
+              letterSpacing: -0.2,
+            ),
+          ),
+          const SizedBox(height: 6),
           Text(
             message,
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.w700, fontSize: 16),
+            style: GoogleFonts.dmSans(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textSecondary,
+              height: 1.5,
+            ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 22),
           if (_searchQuery.isEmpty && _activeFilter == 'all')
-            ElevatedButton(
-              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CreatePostPage())).then((v) {
-                if (v == true) _loadFeed();
-              }),
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-              child: const Text('New Post', style: TextStyle(color: Colors.white)),
+            _goldPillCta(
+              icon: TablerIcons.plus,
+              label: 'NEW POST',
+              onTap: _openCreate,
             )
           else
-            TextButton.icon(
-              onPressed: () {
+            _ghostPillCta(
+              icon: TablerIcons.refresh,
+              label: 'CLEAR FILTERS',
+              onTap: () {
+                _searchController.clear();
                 setState(() {
-                  _searchController.clear();
                   _searchQuery = '';
                   _activeFilter = 'all';
                 });
                 _loadFeed();
               },
-              icon: const Icon(TablerIcons.refresh, size: 18),
-              label: const Text('Clear Filters', style: TextStyle(fontWeight: FontWeight.w800)),
-              style: TextButton.styleFrom(foregroundColor: AppColors.primary),
             ),
         ],
       ),
@@ -405,25 +600,292 @@ class _CommunityPageState extends State<CommunityPage> with WidgetsBindingObserv
   }
 
   Widget _buildErrorState() {
-    return Center(
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: AppColors.surfaceGradient,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.7)),
+        boxShadow: AppColors.shadowSm,
+      ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(TablerIcons.alert_triangle, size: 48, color: Colors.amber.shade300),
-          const SizedBox(height: 16),
-          Text(_error ?? 'An unexpected error occurred', style: const TextStyle(fontWeight: FontWeight.w700)),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: _loadFeed,
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-            child: const Text('RETRY', style: TextStyle(color: Colors.white)),
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.warning.withValues(alpha: 0.18),
+                  AppColors.warning.withValues(alpha: 0.06),
+                ],
+              ),
+              shape: BoxShape.circle,
+              border:
+                  Border.all(color: AppColors.warning.withValues(alpha: 0.30)),
+            ),
+            child: const Icon(TablerIcons.alert_triangle,
+                size: 36, color: AppColors.warning),
+          ),
+          const SizedBox(height: 18),
+          Text(
+            "Couldn't load the feed",
+            style: GoogleFonts.dmSans(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: AppColors.text,
+              letterSpacing: -0.2,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            _error ?? 'Check your connection and try again.',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.dmSans(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textSecondary,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 22),
+          _goldPillCta(
+            icon: TablerIcons.refresh,
+            label: 'RETRY',
+            onTap: _loadFeed,
           ),
         ],
       ),
     );
   }
+
+  Widget _inlineErrorBanner() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppColors.warning.withValues(alpha: 0.10),
+            AppColors.warning.withValues(alpha: 0.04),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border:
+            Border.all(color: AppColors.warning.withValues(alpha: 0.30)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.warning.withValues(alpha: 0.18),
+                  AppColors.warning.withValues(alpha: 0.06),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                  color: AppColors.warning.withValues(alpha: 0.22)),
+            ),
+            child: const Icon(TablerIcons.alert_triangle,
+                color: AppColors.warning, size: 18),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              _error ?? 'A refresh failed.',
+              style: GoogleFonts.dmSans(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+                color: AppColors.text,
+              ),
+            ),
+          ),
+          Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(10),
+              onTap: () {
+                HapticFeedback.selectionClick();
+                _loadFeed();
+              },
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                decoration: BoxDecoration(
+                  color: AppColors.warning.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                      color: AppColors.warning.withValues(alpha: 0.30)),
+                ),
+                child: Text(
+                  'RETRY',
+                  style: GoogleFonts.dmSans(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.warning,
+                    letterSpacing: 1,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _goldPillCta({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(colors: AppColors.goldGradient),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.accent.withValues(alpha: 0.35),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: Colors.white, size: 14),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: GoogleFonts.dmSans(
+                  color: Colors.white,
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.8,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _ghostPillCta({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+                color: AppColors.border.withValues(alpha: 0.7), width: 1),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: AppColors.textSecondary, size: 14),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: GoogleFonts.dmSans(
+                  color: AppColors.textSecondary,
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.8,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ──────────────────────────────────────────────────────────
+  // FAB — gold gradient with goldGlow
+  // ──────────────────────────────────────────────────────────
+  Widget _buildFab() {
+    return Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.accent.withValues(alpha: 0.40),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        shape: const CircleBorder(),
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: () {
+            HapticFeedback.selectionClick();
+            _openCreate();
+          },
+          child: Container(
+            width: 56,
+            height: 56,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: AppColors.goldGradient,
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(TablerIcons.feather,
+                color: Colors.white, size: 24),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openCreate() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const CreatePostPage()),
+    ).then((result) {
+      if (result is CommunityPost) {
+        setState(() => _posts.insert(0, result));
+      } else if (result == true) {
+        _loadFeed();
+      }
+    });
+  }
 }
 
+// ──────────────────────────────────────────────────────────────
+// POST CARD
+// ──────────────────────────────────────────────────────────────
 class _PostCard extends StatefulWidget {
   final CommunityPost post;
   final VoidCallback onRefresh;
@@ -460,21 +922,19 @@ class _PostCardState extends State<_PostCard> {
         _isLiked = widget.post.isLikedByMe;
         _likesCount = widget.post.likesCount;
       }
-      if (!_pinning) {
-        _isPinned = widget.post.isPinned;
-      }
-      // Only sync comment count if not currently in comments sheet or if data changed
+      if (!_pinning) _isPinned = widget.post.isPinned;
       _commentsCount = widget.post.commentsCount;
     } else {
-       _isLiked = widget.post.isLikedByMe;
-       _likesCount = widget.post.likesCount;
-       _isPinned = widget.post.isPinned;
-       _commentsCount = widget.post.commentsCount;
+      _isLiked = widget.post.isLikedByMe;
+      _likesCount = widget.post.likesCount;
+      _isPinned = widget.post.isPinned;
+      _commentsCount = widget.post.commentsCount;
     }
   }
 
   Future<void> _toggleLike() async {
     if (_liking) return;
+    HapticFeedback.selectionClick();
     setState(() {
       _liking = true;
       if (_isLiked) {
@@ -499,7 +959,6 @@ class _PostCardState extends State<_PostCard> {
       if (mounted) {
         setState(() {
           _liking = false;
-          // Rollback on error
           if (_isLiked) {
             _likesCount--;
             _isLiked = false;
@@ -514,6 +973,7 @@ class _PostCardState extends State<_PostCard> {
 
   Future<void> _togglePin() async {
     if (_pinning) return;
+    HapticFeedback.selectionClick();
     setState(() {
       _pinning = true;
       _isPinned = !_isPinned;
@@ -531,7 +991,7 @@ class _PostCardState extends State<_PostCard> {
       if (mounted) {
         setState(() {
           _pinning = false;
-          _isPinned = !_isPinned; // Rollback
+          _isPinned = !_isPinned;
         });
       }
     }
@@ -540,353 +1000,1160 @@ class _PostCardState extends State<_PostCard> {
   @override
   Widget build(BuildContext context) {
     final auth = context.read<AuthProvider>();
-    final canDelete = auth.user?.id == widget.post.author.id || 
-                      auth.user?.role == 'SUPER_ADMIN' || 
-                      auth.user?.role == 'CHAPTER_ADMIN';
+    final canDelete = auth.user?.id == widget.post.author.id ||
+        auth.user?.role == 'SUPER_ADMIN' ||
+        auth.user?.role == 'CHAPTER_ADMIN';
 
     final isLead = widget.post.postType == 'lead';
     final isRFP = widget.post.postType == 'rfp';
     final hasBusinessDetails = isLead || isRFP;
 
+    // Top accent strip tints leads gold (premium opportunity) and RFPs
+    // blue (informational). General posts have no strip.
+    final Color? accentStrip = isLead
+        ? AppColors.accent
+        : (isRFP ? AppColors.accentBlue : null);
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 20),
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        gradient: const LinearGradient(
+          colors: AppColors.surfaceGradient,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(20),
-        border: hasBusinessDetails 
-          ? Border(left: BorderSide(color: isLead ? AppColors.accent : AppColors.accentBlue, width: 4))
-          : null,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.7)),
+        boxShadow: AppColors.shadowMd,
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (accentStrip != null)
+              Container(
+                height: 3,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      accentStrip,
+                      accentStrip.withValues(alpha: 0.4),
+                    ],
+                  ),
+                ),
+              ),
+
+            // Header: avatar + name + meta + type pill + actions
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 14, 8, 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  _goldRingedAvatar(),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                widget.post.author.fullName,
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                                style: GoogleFonts.dmSans(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 14.5,
+                                  color: AppColors.text,
+                                  letterSpacing: -0.2,
+                                  height: 1.15,
+                                ),
+                              ),
+                            ),
+                            if (widget.post.visibility == 'network') ...[
+                              const SizedBox(width: 6),
+                              const Icon(TablerIcons.world,
+                                  size: 13,
+                                  color: AppColors.accentBlue),
+                            ],
+                            if (_isPinned) ...[
+                              const SizedBox(width: 6),
+                              const Icon(TablerIcons.pinned_filled,
+                                  size: 13, color: AppColors.accent),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '${_prettyRole(widget.post.author.role)} • ${_formatTime(widget.post.createdAt)}',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                          style: GoogleFonts.dmSans(
+                            fontSize: 10.5,
+                            color: AppColors.textMuted,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (hasBusinessDetails) ...[
+                    const SizedBox(width: 6),
+                    _typePill(isLead: isLead),
+                  ],
+                  _menuButton(canDelete: canDelete),
+                ],
+              ),
+            ),
+
+            // Business details (Lead / RFP)
+            if (hasBusinessDetails) _buildBusinessDetails(isLead: isLead),
+
+            // Content
+            if (widget.post.content.trim().isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 6, 16, 12),
+                child: Text(
+                  widget.post.content,
+                  style: GoogleFonts.dmSans(
+                    fontSize: 14,
+                    color: AppColors.text,
+                    height: 1.55,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: -0.1,
+                  ),
+                ),
+              ),
+
+            // Image
+            if (widget.post.imageUrl != null)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: 320),
+                    child: Image.network(
+                      widget.post.imageUrl!,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (ctx, err, st) => const SizedBox.shrink(),
+                    ),
+                  ),
+                ),
+              ),
+
+            // Action bar
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 12, 8, 10),
+              child: Row(
+                children: [
+                  _actionButton(
+                    icon: _isLiked
+                        ? TablerIcons.heart_filled
+                        : TablerIcons.heart,
+                    label: '$_likesCount',
+                    tint: _isLiked ? AppColors.error : AppColors.textSecondary,
+                    onTap: _toggleLike,
+                  ),
+                  _actionButton(
+                    icon: TablerIcons.message_circle,
+                    label: '$_commentsCount',
+                    tint: AppColors.textSecondary,
+                    onTap: _showComments,
+                  ),
+                  if (hasBusinessDetails &&
+                      context.read<AuthProvider>().user?.id ==
+                          widget.post.author.id)
+                    _actionButton(
+                      icon: TablerIcons.adjustments,
+                      label: 'MANAGE',
+                      tint: AppColors.accent,
+                      onTap: _showLeadManagementSheet,
+                    ),
+                  const Spacer(),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Header helpers ────────────────────────────────────────
+  Widget _goldRingedAvatar() {
+    return Container(
+      padding: const EdgeInsets.all(2),
+      decoration: const BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          colors: AppColors.goldSoftGradient,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: CachedAvatar(
+        imageUrl: widget.post.author.profilePhoto,
+        initials: widget.post.author.fullName.isNotEmpty
+            ? widget.post.author.fullName.substring(0, 1).toUpperCase()
+            : '?',
+        size: 38,
+        backgroundColor: AppColors.surface,
+        textColor: AppColors.primary,
+        fontSize: 14,
+      ),
+    );
+  }
+
+  Widget _typePill({required bool isLead}) {
+    final tint = isLead ? AppColors.accent : AppColors.accentBlue;
+    final label = isLead ? 'LEAD' : 'RFP';
+    final icon = isLead ? TablerIcons.flame : TablerIcons.clipboard_list;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: tint.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(7),
+        border: Border.all(color: tint.withValues(alpha: 0.32), width: 0.8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 10, color: tint),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: GoogleFonts.dmSans(
+              color: tint,
+              fontSize: 9.5,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.8,
+            ),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Padding(
-            padding: const EdgeInsets.all(16),
+    );
+  }
+
+  Widget _menuButton({required bool canDelete}) {
+    return PopupMenuButton<String>(
+      tooltip: '',
+      icon: const Icon(TablerIcons.dots_vertical,
+          size: 18, color: AppColors.textMuted),
+      color: AppColors.surface,
+      surfaceTintColor: AppColors.surface,
+      elevation: 8,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(color: AppColors.border.withValues(alpha: 0.7)),
+      ),
+      onSelected: (v) {
+        if (v == 'pin') _togglePin();
+        if (v == 'delete') _showDeleteDialog();
+      },
+      itemBuilder: (_) => [
+        PopupMenuItem(
+          value: 'pin',
+          child: Row(
+            children: [
+              Icon(
+                _isPinned ? TablerIcons.pinned_off : TablerIcons.pin,
+                size: 16,
+                color: AppColors.accent,
+              ),
+              const SizedBox(width: 10),
+              Text(
+                _isPinned ? 'Unpin Post' : 'Pin to Top',
+                style: GoogleFonts.dmSans(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                  color: AppColors.text,
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (canDelete)
+          PopupMenuItem(
+            value: 'delete',
             child: Row(
               children: [
-                _buildAvatar(widget.post.author),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                const Icon(TablerIcons.trash,
+                    size: 16, color: AppColors.error),
+                const SizedBox(width: 10),
+                Text(
+                  'Delete Post',
+                  style: GoogleFonts.dmSans(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    color: AppColors.error,
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  // ── Business details (Lead/RFP) ───────────────────────────
+  Widget _buildBusinessDetails({required bool isLead}) {
+    final tint = isLead ? AppColors.accent : AppColors.accentBlue;
+    final status = (widget.post.leadStatus ?? 'open');
+    final statusInfo = _statusInfo(status);
+
+    final rows = <Widget>[];
+
+    if (widget.post.budgetRange != null &&
+        widget.post.budgetRange!.isNotEmpty) {
+      rows.add(_detailRow(
+        icon: TablerIcons.coin,
+        tint: AppColors.accent,
+        label: 'BUDGET',
+        value: widget.post.budgetRange!,
+      ));
+    }
+    if (widget.post.deadline != null) {
+      rows.add(_detailRow(
+        icon: TablerIcons.calendar_event,
+        tint: AppColors.accentBlue,
+        label: 'DEADLINE',
+        value: DateFormat('MMM d, yyyy').format(widget.post.deadline!),
+      ));
+    }
+    if (widget.post.targetIndustryName != null) {
+      rows.add(_detailRow(
+        icon: TablerIcons.briefcase,
+        tint: AppColors.accentBlue,
+        label: 'INDUSTRY',
+        value: widget.post.targetIndustryName!,
+      ));
+    }
+    if (widget.post.targetClubName != null) {
+      rows.add(_detailRow(
+        icon: TablerIcons.users_group,
+        tint: AppColors.accent,
+        label: 'CLUB',
+        value: widget.post.targetClubName!,
+      ));
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 4, 14, 10),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+        decoration: BoxDecoration(
+          color: tint.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: tint.withValues(alpha: 0.18)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Status pill at the top of the details
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: statusInfo.tint.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(7),
+                    border: Border.all(
+                      color: statusInfo.tint.withValues(alpha: 0.32),
+                      width: 0.8,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Flexible(
-                            child: Text(
-                              widget.post.author.fullName,
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppColors.text),
-                            ),
-                          ),
-                          if (widget.post.visibility == 'network') ...[
-                            const SizedBox(width: 6),
-                            const Icon(TablerIcons.world, size: 14, color: AppColors.accentBlue),
-                          ],
-                        ],
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: statusInfo.tint,
+                          shape: BoxShape.circle,
+                        ),
                       ),
+                      const SizedBox(width: 5),
                       Text(
-                        '${widget.post.author.role.toUpperCase()} • ${_formatTime(widget.post.createdAt)}',
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                        style: TextStyle(fontSize: 10, color: Colors.grey.shade500, fontWeight: FontWeight.w700),
+                        statusInfo.label,
+                        style: GoogleFonts.dmSans(
+                          color: statusInfo.tint,
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.8,
+                        ),
                       ),
                     ],
                   ),
                 ),
-                if (hasBusinessDetails)
+                if (widget.post.businessValue != null) ...[
+                  const SizedBox(width: 6),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: (isLead ? AppColors.accent : AppColors.accentBlue).withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
+                      gradient: const LinearGradient(
+                          colors: AppColors.goldGradient),
+                      borderRadius: BorderRadius.circular(7),
                     ),
-                    child: Text(
-                      widget.post.postType.toUpperCase(),
-                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: isLead ? AppColors.accent : AppColors.accentBlue),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(TablerIcons.trophy,
+                            size: 10, color: Colors.white),
+                        const SizedBox(width: 4),
+                        Text(
+                          'LKR ${NumberFormat('#,##0').format(widget.post.businessValue!)}',
+                          style: GoogleFonts.dmSans(
+                            color: Colors.white,
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                IconButton(
-                  icon: Icon(
-                    _isPinned ? TablerIcons.pinned : TablerIcons.pin, 
-                    size: 18, 
-                    color: _isPinned ? AppColors.primary : Colors.grey.shade400
-                  ),
-                  onPressed: _togglePin,
-                ),
-                if (canDelete)
-                  IconButton(
-                    icon: Icon(TablerIcons.trash, size: 18, color: Colors.grey.shade400),
-                    onPressed: _showDeleteDialog,
-                  ),
-              ],
-            ),
-          ),
-
-          // Business Details Section (If Lead/RFP)
-          if (hasBusinessDetails)
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade50,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                children: [
-                  if (widget.post.budgetRange != null && widget.post.budgetRange!.isNotEmpty)
-                    _buildDetailRow(TablerIcons.coin, 'Budget', widget.post.budgetRange!),
-                  if (widget.post.deadline != null)
-                    _buildDetailRow(TablerIcons.calendar_event, 'Deadline', DateFormat('MMM dd, yyyy').format(widget.post.deadline!)),
-                  if (widget.post.targetIndustryName != null)
-                    _buildDetailRow(TablerIcons.briefcase, 'Industry', widget.post.targetIndustryName!),
-                  if (widget.post.targetClubName != null)
-                    _buildDetailRow(TablerIcons.users_group, 'Club', widget.post.targetClubName!),
-                  _buildDetailRow(TablerIcons.target, 'Status', (widget.post.leadStatus ?? 'OPEN').replaceAll('_', ' ').toUpperCase()),
-                ],
-              ),
-            ),
-
-          // Content
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Text(
-              widget.post.content,
-              style: const TextStyle(fontSize: 14, color: AppColors.text, height: 1.5, fontWeight: FontWeight.w500),
-            ),
-          ),
-
-          // Image (if any)
-          if (widget.post.imageUrl != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(0)),
-                child: Image.network(
-                  widget.post.imageUrl!,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => const SizedBox.shrink(),
-                ),
-              ),
-            ),
-
-          // Actions
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              border: Border(top: BorderSide(color: Colors.grey.shade100)),
-            ),
-            child: Row(
-              children: [
-                _buildActionButton(
-                  icon: _isLiked ? TablerIcons.heart_filled : TablerIcons.heart,
-                  label: '$_likesCount',
-                  color: _isLiked ? AppColors.error : AppColors.textSecondary,
-                  onTap: _toggleLike,
-                ),
-                const SizedBox(width: 24),
-                _buildActionButton(
-                  icon: TablerIcons.message_circle,
-                  label: '$_commentsCount',
-                  color: Colors.grey.shade600,
-                  onTap: _showComments,
-                ),
-                if ((widget.post.postType == 'lead' || widget.post.postType == 'rfp') && 
-                    context.read<AuthProvider>().user?.id == widget.post.author.id) ...[
-                  const SizedBox(width: 24),
-                  _buildActionButton(
-                    icon: TablerIcons.adjustments,
-                    label: 'MANAGE',
-                    color: AppColors.primary,
-                    onTap: _showLeadManagementSheet,
                   ),
                 ],
-                const Spacer(),
               ],
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showLeadManagementSheet() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Manage Opportunity', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
-            const SizedBox(height: 24),
-            _buildStatusItem('Open', 'open', TablerIcons.circle),
-            _buildStatusItem('In Progress', 'in_progress', TablerIcons.player_play),
-            _buildStatusItem('Closed Won (TYFB)', 'closed_won', TablerIcons.trophy),
-            _buildStatusItem('Closed Lost', 'closed_lost', TablerIcons.x),
-            const SizedBox(height: 24),
+            if (rows.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              ...rows,
+            ],
           ],
         ),
       ),
     );
   }
 
-  Widget _buildStatusItem(String label, String status, IconData icon) {
-    final isCurrent = widget.post.leadStatus == status;
-    return ListTile(
-      leading: Icon(icon, color: isCurrent ? AppColors.primary : Colors.grey),
-      title: Text(label, style: TextStyle(fontWeight: isCurrent ? FontWeight.w800 : FontWeight.w600, color: isCurrent ? AppColors.primary : AppColors.text)),
-      trailing: isCurrent ? const Icon(TablerIcons.check, color: AppColors.primary) : null,
-      onTap: () async {
-        Navigator.pop(context);
-        if (status == 'closed_won') {
-          _showTYFBDialog();
-        } else {
-          try {
-            await _service.updateLeadStatus(widget.post.id, status);
-            widget.onRefresh();
-          } catch (_) {}
-        }
-      },
-    );
-  }
-
-  void _showTYFBDialog() {
-    final controller = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Record Business Success'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Congratulations! How much business was closed? (LKR)'),
-            const SizedBox(height: 16),
-            TextField(
-              controller: controller,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(hintText: 'Enter amount', prefixText: 'LKR '),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCEL')),
-          ElevatedButton(
-            onPressed: () async {
-              final val = double.tryParse(controller.text) ?? 0;
-              if (val > 0) {
-                Navigator.pop(context);
-                try {
-                  await _service.recordTYFB(widget.post.id, val);
-                  widget.onRefresh();
-                  // Show celebration
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('🎉 Thank You For Business recorded! Network ROI updated.')),
-                    );
-                  }
-                } catch (_) {}
-              }
-            },
-            child: const Text('RECORD & CLOSE'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAvatar(PostAuthor author) {
-    return CachedAvatar(
-      imageUrl: author.profilePhoto,
-      initials: author.fullName.substring(0, 1).toUpperCase(),
-      size: 40,
-    );
-  }
-
-  Widget _buildDetailRow(IconData icon, String label, String value) {
+  Widget _detailRow({
+    required IconData icon,
+    required Color tint,
+    required String label,
+    required String value,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          Icon(icon, size: 14, color: Colors.grey.shade400),
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  tint.withValues(alpha: 0.18),
+                  tint.withValues(alpha: 0.06),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: tint.withValues(alpha: 0.22)),
+            ),
+            child: Icon(icon, size: 12, color: tint),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 9.5,
+              fontWeight: FontWeight.w900,
+              color: AppColors.textMuted,
+              letterSpacing: 1.1,
+            ),
+          ),
           const SizedBox(width: 8),
-          Text('$label:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.grey.shade600)),
-          const SizedBox(width: 4),
-          Expanded(child: Text(value, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.text))),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionButton({required IconData icon, required String label, required Color color, required VoidCallback onTap}) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        child: Row(
-          children: [
-            Icon(icon, color: color, size: 20),
-            const SizedBox(width: 8),
-            Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w800, fontSize: 13)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  String _formatTime(DateTime date) {
-    final now = DateTime.now();
-    final diff = now.difference(date);
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
-    return DateFormat('MMM d').format(date);
-  }
-
-  void _showDeleteDialog() {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Delete Post'),
-        content: const Text('Are you sure you want to remove this post?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCEL')),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              try {
-                await _service.deletePost(widget.post.id);
-                widget.onRefresh();
-              } catch (_) {}
-            },
-            child: const Text('DELETE', style: TextStyle(color: Colors.redAccent)),
+          Expanded(
+            child: Text(
+              value,
+              style: GoogleFonts.dmSans(
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: AppColors.text,
+                letterSpacing: -0.1,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ],
       ),
     );
   }
 
-  void _showComments() {
-    showModalBottomSheet(
+  _StatusInfo _statusInfo(String status) {
+    switch (status) {
+      case 'in_progress':
+        return _StatusInfo('IN PROGRESS', AppColors.warning);
+      case 'closed_won':
+        return _StatusInfo('CLOSED WON', AppColors.success);
+      case 'closed_lost':
+        return _StatusInfo('CLOSED LOST', AppColors.textMuted);
+      case 'open':
+      default:
+        return _StatusInfo('OPEN', AppColors.accentBlue);
+    }
+  }
+
+  // ── Action bar button ────────────────────────────────────
+  Widget _actionButton({
+    required IconData icon,
+    required String label,
+    required Color tint,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        splashColor: tint.withValues(alpha: 0.06),
+        highlightColor: tint.withValues(alpha: 0.04),
+        onTap: onTap,
+        child: Padding(
+          padding:
+              const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          child: Row(
+            children: [
+              Icon(icon, color: tint, size: 18),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: GoogleFonts.dmSans(
+                  color: tint,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 12.5,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ──────────────────────────────────────────────────────────
+  // LEAD MANAGEMENT SHEET (preserved — already palette-aligned)
+  // ──────────────────────────────────────────────────────────
+  void _showLeadManagementSheet() {
+    showPbnBottomSheet(
+      context,
+      builder: (_) => PbnBottomSheet(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 3,
+                  height: 18,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: AppColors.goldGradient,
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  'Manage Opportunity',
+                  style: GoogleFonts.dmSans(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.text,
+                    letterSpacing: -0.3,
+                    height: 1.1,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            _statusItem(
+                label: 'Open',
+                status: 'open',
+                icon: TablerIcons.circle,
+                tint: AppColors.accentBlue),
+            const SizedBox(height: 10),
+            _statusItem(
+                label: 'In Progress',
+                status: 'in_progress',
+                icon: TablerIcons.player_play,
+                tint: AppColors.warning),
+            const SizedBox(height: 10),
+            _statusItem(
+                label: 'Closed Won (TYFB)',
+                status: 'closed_won',
+                icon: TablerIcons.trophy,
+                tint: AppColors.success),
+            const SizedBox(height: 10),
+            _statusItem(
+                label: 'Closed Lost',
+                status: 'closed_lost',
+                icon: TablerIcons.x,
+                tint: AppColors.textMuted),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _statusItem({
+    required String label,
+    required String status,
+    required IconData icon,
+    required Color tint,
+  }) {
+    final isCurrent = widget.post.leadStatus == status;
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        splashColor: tint.withValues(alpha: 0.06),
+        highlightColor: tint.withValues(alpha: 0.04),
+        onTap: () async {
+          Navigator.pop(context);
+          if (status == 'closed_won') {
+            _showTYFBDialog();
+          } else {
+            try {
+              await _service.updateLeadStatus(widget.post.id, status);
+              widget.onRefresh();
+            } catch (_) {}
+          }
+        },
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: AppColors.surfaceGradient,
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: isCurrent
+                  ? tint.withValues(alpha: 0.40)
+                  : AppColors.border.withValues(alpha: 0.6),
+              width: isCurrent ? 1.4 : 1,
+            ),
+            boxShadow: AppColors.shadowSm,
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(9),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      tint.withValues(alpha: 0.18),
+                      tint.withValues(alpha: 0.06),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(11),
+                  border: Border.all(color: tint.withValues(alpha: 0.22)),
+                ),
+                child: Icon(icon, size: 18, color: tint),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  label,
+                  style: GoogleFonts.dmSans(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
+                    color: AppColors.text,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+              ),
+              if (isCurrent)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: tint.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(7),
+                    border: Border.all(
+                        color: tint.withValues(alpha: 0.32), width: 0.8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(TablerIcons.check, size: 10, color: tint),
+                      const SizedBox(width: 4),
+                      Text(
+                        'CURRENT',
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w900,
+                          color: tint,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ──────────────────────────────────────────────────────────
+  // TYFB DIALOG — palette-aligned premium dialog (was raw)
+  // ──────────────────────────────────────────────────────────
+  void _showTYFBDialog() {
+    final controller = TextEditingController();
+    bool submitting = false;
+
+    showDialog(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) => Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 28),
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(22),
+              boxShadow: AppColors.shadowLg,
+              border:
+                  Border.all(color: AppColors.border.withValues(alpha: 0.7)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Navy header with gold trophy
+                Container(
+                  width: double.infinity,
+                  padding:
+                      const EdgeInsets.fromLTRB(20, 22, 20, 22),
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: AppColors.primaryGradient,
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(22)),
+                  ),
+                  child: Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                              colors: AppColors.goldGradient),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.accent
+                                  .withValues(alpha: 0.40),
+                              blurRadius: 14,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(TablerIcons.trophy,
+                            color: Colors.white, size: 22),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Record Business Success',
+                        style: GoogleFonts.dmSans(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          letterSpacing: -0.3,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Thank You For Business',
+                        style: GoogleFonts.dmSans(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.accent,
+                          letterSpacing: 1.4,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Body
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      Text(
+                        'Congratulations! How much business was '
+                        'closed on this opportunity?',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.dmSans(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.textSecondary,
+                          height: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceAlt,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: AppColors.accent
+                                .withValues(alpha: 0.30),
+                            width: 1,
+                          ),
+                        ),
+                        child: TextField(
+                          controller: controller,
+                          autofocus: true,
+                          keyboardType: TextInputType.number,
+                          style: GoogleFonts.dmSans(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.text,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: '0',
+                            hintStyle: GoogleFonts.dmSans(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.textMuted,
+                            ),
+                            prefixText: 'LKR  ',
+                            prefixStyle: GoogleFonts.dmSans(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.accent,
+                              letterSpacing: 0.4,
+                            ),
+                            contentPadding:
+                                const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 14),
+                            border: InputBorder.none,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _dialogGhostButton(
+                          label: 'CANCEL',
+                          onTap: submitting
+                              ? null
+                              : () => Navigator.pop(ctx),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        flex: 2,
+                        child: _dialogGoldButton(
+                          label: submitting
+                              ? 'RECORDING…'
+                              : 'RECORD & CLOSE',
+                          icon: TablerIcons.discount_check,
+                          onTap: submitting
+                              ? null
+                              : () async {
+                                  final val = double.tryParse(
+                                          controller.text) ??
+                                      0;
+                                  if (val <= 0) return;
+                                  // Capture the messenger before any
+                                  // await so we don't reach across the
+                                  // gap with the outer `context`.
+                                  final messenger =
+                                      ScaffoldMessenger.of(context);
+                                  final navigator = Navigator.of(ctx);
+                                  setLocal(() => submitting = true);
+                                  try {
+                                    await _service.recordTYFB(
+                                        widget.post.id, val);
+                                    widget.onRefresh();
+                                    if (!mounted) return;
+                                    navigator.pop();
+                                    messenger.showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Thank You For Business recorded! '
+                                          'Network ROI updated.',
+                                          style: GoogleFonts.dmSans(
+                                            color: Colors.white,
+                                            fontWeight:
+                                                FontWeight.w700,
+                                          ),
+                                        ),
+                                        backgroundColor:
+                                            AppColors.success,
+                                        behavior:
+                                            SnackBarBehavior.floating,
+                                      ),
+                                    );
+                                  } catch (_) {
+                                    if (!mounted) return;
+                                    setLocal(() =>
+                                        submitting = false);
+                                  }
+                                },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ──────────────────────────────────────────────────────────
+  // DELETE DIALOG — palette-aligned destructive confirmation
+  // ──────────────────────────────────────────────────────────
+  void _showDeleteDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Container(
+          padding: const EdgeInsets.all(22),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(22),
+            border:
+                Border.all(color: AppColors.border.withValues(alpha: 0.7)),
+            boxShadow: AppColors.shadowLg,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.error.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                      color: AppColors.error.withValues(alpha: 0.28)),
+                ),
+                child: const Icon(TablerIcons.trash,
+                    color: AppColors.error, size: 22),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                'Delete this post?',
+                style: GoogleFonts.dmSans(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.text,
+                  letterSpacing: -0.3,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'This action cannot be undone.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.dmSans(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textSecondary,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: _dialogGhostButton(
+                      label: 'CANCEL',
+                      onTap: () => Navigator.pop(ctx),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Material(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: () async {
+                          Navigator.pop(ctx);
+                          try {
+                            await _service.deletePost(widget.post.id);
+                            widget.onRefresh();
+                          } catch (_) {}
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 12),
+                          decoration: BoxDecoration(
+                            color: AppColors.error,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.error
+                                    .withValues(alpha: 0.30),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment:
+                                MainAxisAlignment.center,
+                            children: [
+                              const Icon(TablerIcons.trash,
+                                  color: Colors.white, size: 14),
+                              const SizedBox(width: 6),
+                              Text(
+                                'DELETE',
+                                style: GoogleFonts.dmSans(
+                                  color: Colors.white,
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 0.8,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _dialogGhostButton({
+    required String label,
+    required VoidCallback? onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppColors.border.withValues(alpha: 0.7),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                label,
+                style: GoogleFonts.dmSans(
+                  color: AppColors.textSecondary,
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.8,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _dialogGoldButton({
+    required String label,
+    required IconData icon,
+    required VoidCallback? onTap,
+  }) {
+    final enabled = onTap != null;
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            gradient: enabled
+                ? const LinearGradient(colors: AppColors.goldGradient)
+                : LinearGradient(colors: [
+                    AppColors.textMuted.withValues(alpha: 0.5),
+                    AppColors.textMuted.withValues(alpha: 0.3),
+                  ]),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: enabled
+                ? [
+                    BoxShadow(
+                      color: AppColors.accent.withValues(alpha: 0.35),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: Colors.white, size: 14),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: GoogleFonts.dmSans(
+                  color: Colors.white,
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.8,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ──────────────────────────────────────────────────────────
+  // COMMENTS — preserves existing redesigned sheet
+  // ──────────────────────────────────────────────────────────
+  void _showComments() {
+    showPbnBottomSheet(
+      context,
       builder: (_) => _CommentSheet(
-        post: widget.post, 
+        post: widget.post,
         service: _service,
         onCommentAdded: () {
           if (mounted) setState(() => _commentsCount++);
@@ -896,11 +2163,48 @@ class _PostCardState extends State<_PostCard> {
   }
 }
 
+class _StatusInfo {
+  final String label;
+  final Color tint;
+  _StatusInfo(this.label, this.tint);
+}
+
+// ──────────────────────────────────────────────────────────────
+// Helpers shared by the post card
+// ──────────────────────────────────────────────────────────────
+String _prettyRole(String role) {
+  if (role.isEmpty) return '';
+  return role
+      .replaceAll('_', ' ')
+      .toLowerCase()
+      .split(' ')
+      .map((w) => w.isEmpty
+          ? w
+          : '${w[0].toUpperCase()}${w.substring(1)}')
+      .join(' ');
+}
+
+String _formatTime(DateTime date) {
+  final now = DateTime.now();
+  final diff = now.difference(date);
+  if (diff.inMinutes < 1) return 'just now';
+  if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+  if (diff.inHours < 24) return '${diff.inHours}h ago';
+  if (diff.inDays < 7) return '${diff.inDays}d ago';
+  return DateFormat('MMM d').format(date);
+}
+
+// ──────────────────────────────────────────────────────────────
+// COMMENT SHEET — preserved from prior redesign
+// ──────────────────────────────────────────────────────────────
 class _CommentSheet extends StatefulWidget {
   final CommunityPost post;
   final CommunityService service;
   final VoidCallback onCommentAdded;
-  const _CommentSheet({required this.post, required this.service, required this.onCommentAdded});
+  const _CommentSheet(
+      {required this.post,
+      required this.service,
+      required this.onCommentAdded});
 
   @override
   State<_CommentSheet> createState() => _CommentSheetState();
@@ -921,9 +2225,14 @@ class _CommentSheetState extends State<_CommentSheet> {
   Future<void> _loadComments() async {
     try {
       final comments = await widget.service.getComments(widget.post.id);
-      if (mounted) setState(() { _comments = comments; _loading = false; });
+      if (mounted) {
+        setState(() {
+          _comments = comments;
+          _loading = false;
+        });
+      }
     } catch (_) {
-      if (mounted) setState(() { _loading = false; });
+      if (mounted) setState(() => _loading = false);
     }
   }
 
@@ -934,8 +2243,8 @@ class _CommentSheetState extends State<_CommentSheet> {
     final auth = context.read<AuthProvider>();
     if (auth.user == null) return;
 
-    // Create Optimistic Comment
-    final tempId = DateTime.now().millisecondsSinceEpoch.toString();
+    final tempId =
+        DateTime.now().millisecondsSinceEpoch.toString();
     final optimisticComment = PostComment(
       id: tempId,
       postId: widget.post.id,
@@ -950,7 +2259,7 @@ class _CommentSheetState extends State<_CommentSheet> {
     );
 
     setState(() {
-      _comments.insert(0, optimisticComment); // Show at top
+      _comments.insert(0, optimisticComment);
       _commentController.clear();
       _submitting = true;
     });
@@ -958,15 +2267,14 @@ class _CommentSheetState extends State<_CommentSheet> {
     try {
       await widget.service.addComment(widget.post.id, text);
       widget.onCommentAdded();
-      // Wait a bit then refresh to get the real ID from server
       await _loadComments();
     } catch (_) {
-      // Rollback on failure
       if (mounted) {
         setState(() {
           _comments.removeWhere((c) => c.id == tempId);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to post comment. Please try again.')),
+            const SnackBar(
+                content: Text('Failed to post comment. Please try again.')),
           );
         });
       }
@@ -977,41 +2285,79 @@ class _CommentSheetState extends State<_CommentSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.85,
-      decoration: const BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-      ),
+    return PbnBottomSheet(
+      scrollable: false,
+      maxHeightFraction: 0.88,
       child: Column(
         children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 20),
-            child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
-          ),
-          const Text('Comments', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.text)),
-          const SizedBox(height: 20),
-
-          // Comments List
-          Expanded(
-            child: _loading 
-              ? const Center(child: CircularProgressIndicator()) 
-              : _comments.isEmpty 
-                  ? Center(child: Text('No comments yet', style: TextStyle(color: Colors.grey.shade400, fontWeight: FontWeight.w700)))
-                  : ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      itemCount: _comments.length,
-                      itemBuilder: (context, i) => _buildCommentItem(_comments[i]),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
+            child: Row(
+              children: [
+                Container(
+                  width: 3,
+                  height: 18,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: AppColors.goldGradient,
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
                     ),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  'Comments',
+                  style: GoogleFonts.dmSans(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.text,
+                    letterSpacing: -0.3,
+                    height: 1.1,
+                  ),
+                ),
+              ],
+            ),
           ),
-
-          // Input
+          Container(height: 1, color: AppColors.border.withValues(alpha: 0.5)),
+          Expanded(
+            child: _loading
+                ? const Center(
+                    child:
+                        CircularProgressIndicator(color: AppColors.primary))
+                : _comments.isEmpty
+                    ? Center(
+                        child: Text(
+                          'No comments yet',
+                          style: GoogleFonts.dmSans(
+                            color: AppColors.textMuted,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13.5,
+                          ),
+                        ),
+                      )
+                    : ListView.builder(
+                        padding:
+                            const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                        itemCount: _comments.length,
+                        itemBuilder: (context, i) =>
+                            _buildCommentItem(_comments[i]),
+                      ),
+          ),
           Container(
-            padding: EdgeInsets.fromLTRB(20, 16, 20, 16 + MediaQuery.of(context).viewInsets.bottom),
+            padding: EdgeInsets.fromLTRB(
+              20,
+              12,
+              20,
+              12 + MediaQuery.of(context).viewInsets.bottom,
+            ),
             decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, -4))],
+              color: AppColors.surface,
+              border: Border(
+                top: BorderSide(
+                    color: AppColors.border.withValues(alpha: 0.5)),
+              ),
             ),
             child: Row(
               children: [
@@ -1019,20 +2365,56 @@ class _CommentSheetState extends State<_CommentSheet> {
                   child: TextField(
                     controller: _commentController,
                     decoration: InputDecoration(
-                      hintText: 'Add a comment...',
-                      hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
-                      filled: true, fillColor: Colors.grey.shade50,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      hintText: 'Add a comment…',
+                      hintStyle: const TextStyle(
+                          color: AppColors.textMuted, fontSize: 13),
+                      filled: true,
+                      fillColor: AppColors.surfaceAlt,
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide.none,
+                      ),
                     ),
                     maxLines: null,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                    style: GoogleFonts.dmSans(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.text,
+                    ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                IconButton(
-                  onPressed: _submitComment,
-                  icon: Icon(_submitting ? TablerIcons.loader : TablerIcons.send, color: AppColors.primary),
+                const SizedBox(width: 10),
+                Material(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: _submitting ? null : _submitComment,
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                            colors: AppColors.goldGradient),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color:
+                                AppColors.accent.withValues(alpha: 0.30),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        _submitting ? TablerIcons.loader : TablerIcons.send,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -1044,15 +2426,22 @@ class _CommentSheetState extends State<_CommentSheet> {
 
   Widget _buildCommentItem(PostComment comment) {
     final auth = context.read<AuthProvider>();
-    final canDelete = auth.user?.id == comment.author.id || 
-                      auth.user?.role == 'SUPER_ADMIN';
+    final canDelete = auth.user?.id == comment.author.id ||
+        auth.user?.role == 'SUPER_ADMIN';
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 24),
+      padding: const EdgeInsets.only(bottom: 18),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildTinyAvatar(comment.author),
+          CachedAvatar(
+            imageUrl: comment.author.profilePhoto,
+            initials: comment.author.fullName.isNotEmpty
+                ? comment.author.fullName.substring(0, 1).toUpperCase()
+                : '?',
+            size: 32,
+            fontSize: 11,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -1061,41 +2450,53 @@ class _CommentSheetState extends State<_CommentSheet> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(comment.author.fullName, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: AppColors.text)),
-                    Text(_formatTime(comment.createdAt), style: TextStyle(fontSize: 9, color: Colors.grey.shade400, fontWeight: FontWeight.w600)),
+                    Flexible(
+                      child: Text(
+                        comment.author.fullName,
+                        style: GoogleFonts.dmSans(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13,
+                          color: AppColors.text,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Text(
+                      _formatTime(comment.createdAt),
+                      style: GoogleFonts.dmSans(
+                        fontSize: 9.5,
+                        color: AppColors.textMuted,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 4),
-                Text(comment.content, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.4, fontWeight: FontWeight.w500)),
+                Text(
+                  comment.content,
+                  style: GoogleFonts.dmSans(
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                    height: 1.45,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ],
             ),
           ),
           if (canDelete)
-            IconButton(icon: Icon(TablerIcons.trash, size: 14, color: Colors.grey.shade300), onPressed: () async {
-              try {
-                await widget.service.deleteComment(comment.id);
-                _loadComments();
-              } catch (_) {}
-            }),
+            IconButton(
+              icon: const Icon(TablerIcons.trash,
+                  size: 13, color: AppColors.textMuted),
+              onPressed: () async {
+                try {
+                  await widget.service.deleteComment(comment.id);
+                  _loadComments();
+                } catch (_) {}
+              },
+            ),
         ],
       ),
     );
-  }
-
-  Widget _buildTinyAvatar(PostAuthor author) {
-    return CachedAvatar(
-      imageUrl: author.profilePhoto,
-      initials: author.fullName.substring(0, 1).toUpperCase(),
-      size: 32,
-      fontSize: 10,
-    );
-  }
-
-  String _formatTime(DateTime date) {
-    final now = DateTime.now();
-    final diff = now.difference(date);
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m';
-    if (diff.inHours < 24) return '${diff.inHours}h';
-    return DateFormat('MMM d').format(date);
   }
 }

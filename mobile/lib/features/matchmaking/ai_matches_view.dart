@@ -11,8 +11,10 @@ import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/providers/member_provider.dart';
 import 'package:pbn/core/services/matchmaking_service.dart';
 import 'package:pbn/core/widgets/cached_avatar.dart';
+import 'package:pbn/core/widgets/pbn_bottom_sheet.dart';
 import 'package:pbn/features/matchmaking/business_matching_profile_page.dart';
 import 'package:pbn/models/matchmaking.dart';
+import 'package:pbn/models/member.dart';
 
 class AiMatchesView extends StatefulWidget {
   const AiMatchesView({super.key});
@@ -27,10 +29,22 @@ class _AiMatchesViewState extends State<AiMatchesView> {
   bool _loading = true;
   String? _error;
 
+  // Own ScrollController — see referral_dashboard_page for the rationale.
+  // Each tab in MatchmakingDashboardPage's TabBarView owns its own
+  // scroll position so the desktop Scrollbar never sees two positions
+  // bound to the same PrimaryScrollController during a tab swap.
+  final _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
     _loadMatches();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadMatches() async {
@@ -120,6 +134,7 @@ class _AiMatchesViewState extends State<AiMatchesView> {
       onRefresh: _loadMatches,
       color: AppColors.primary,
       child: ListView(
+        controller: _scrollController,
         padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
         physics: const AlwaysScrollableScrollPhysics(),
         children: List.generate(sections.length, (i) {
@@ -928,10 +943,8 @@ class _AiMatchesViewState extends State<AiMatchesView> {
   // MATCH DETAIL SHEET launcher + preserved CONNECT flow
   // ──────────────────────────────────────────────────────────
   void _showMatchDetails(MatchSuggestion match) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+    showPbnBottomSheet(
+      context,
       builder: (sheetCtx) => _MatchDetailSheet(
         match: match,
         service: _service,
@@ -956,79 +969,397 @@ class _AiMatchesViewState extends State<AiMatchesView> {
       return;
     }
 
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
-      builder: (context) => SingleChildScrollView(
-        child: Container(
-          padding: EdgeInsets.fromLTRB(
-              30, 30, 30, 30 + MediaQuery.of(context).padding.bottom),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+    showPbnBottomSheet(
+      context,
+      builder: (_) => _ConnectContactSheet(member: member),
+    );
+  }
+}
+
+// ──────────────────────────────────────────────────────────────
+// CONNECT CONTACT SHEET
+// Same shape as members_page._showMemberDetailBottomSheet: navy hero
+// with the matched member's identity, gold-bar section header,
+// contact info card, then the three tinted action buttons (Call /
+// WhatsApp / Email). Replaces the prior bespoke layout that used raw
+// Colors.blue / .green / .red — off-palette and inconsistent with
+// every other sheet in the app.
+// ──────────────────────────────────────────────────────────────
+class _ConnectContactSheet extends StatelessWidget {
+  final Member member;
+  const _ConnectContactSheet({required this.member});
+
+  @override
+  Widget build(BuildContext context) {
+    final hasPhone =
+        member.phoneNumber != null && member.phoneNumber!.isNotEmpty;
+    final hasEmail = member.email != null && member.email!.isNotEmpty;
+
+    return PbnBottomSheet(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _hero(member),
+          const SizedBox(height: 18),
+          _sectionLabel('Contact'),
+          const SizedBox(height: 8),
+          _infoCard([
+            _infoRow(
+              icon: TablerIcons.phone,
+              tint: AppColors.accentBlue,
+              label: 'PHONE',
+              value: hasPhone ? member.phoneNumber! : 'Not shared',
+            ),
+            _hairline(),
+            _infoRow(
+              icon: TablerIcons.mail,
+              tint: const Color(0xFF8B5CF6),
+              label: 'EMAIL',
+              value: hasEmail ? member.email! : 'Not shared',
+            ),
+          ]),
+          const SizedBox(height: 18),
+          Row(
             children: [
-              CachedAvatar(
-                  imageUrl: member.profilePhoto,
-                  initials: member.initials,
-                  size: 80),
-              const SizedBox(height: 16),
-              Text(member.fullName,
-                  style: const TextStyle(
-                      fontSize: 20, fontWeight: FontWeight.w900)),
-              Text(member.company,
-                  style: const TextStyle(
-                      color: AppColors.primary, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 30),
-              Row(
-                children: [
-                  _contactCircle(TablerIcons.phone, 'Call', Colors.blue, () {
-                    if (member.phoneNumber != null) {
-                      launchUrl(Uri.parse('tel:${member.phoneNumber}'));
-                    }
-                  }),
-                  _contactCircle(
-                      TablerIcons.brand_whatsapp, 'WhatsApp', Colors.green, () {
-                    if (member.phoneNumber != null) {
-                      final phone =
-                          member.phoneNumber!.replaceAll(RegExp(r'\D'), '');
-                      launchUrl(Uri.parse('https://wa.me/$phone'),
-                          mode: LaunchMode.externalApplication);
-                    }
-                  }),
-                  _contactCircle(TablerIcons.mail, 'Email', Colors.red, () {
-                    if (member.email != null) {
-                      launchUrl(Uri.parse('mailto:${member.email}'));
-                    }
-                  }),
-                ],
+              Expanded(
+                child: _action(
+                  icon: TablerIcons.phone,
+                  label: 'CALL',
+                  tint: AppColors.accentBlue,
+                  onTap: !hasPhone
+                      ? null
+                      : () {
+                          HapticFeedback.selectionClick();
+                          launchUrl(
+                              Uri.parse('tel:${member.phoneNumber}'));
+                        },
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _action(
+                  icon: TablerIcons.brand_whatsapp,
+                  label: 'WHATSAPP',
+                  tint: AppColors.success,
+                  onTap: !hasPhone
+                      ? null
+                      : () {
+                          HapticFeedback.selectionClick();
+                          final phone = member.phoneNumber!
+                              .replaceAll(RegExp(r'\D'), '');
+                          launchUrl(
+                            Uri.parse('https://wa.me/$phone'),
+                            mode: LaunchMode.externalApplication,
+                          );
+                        },
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _action(
+                  icon: TablerIcons.mail,
+                  label: 'EMAIL',
+                  tint: AppColors.accent,
+                  onTap: !hasEmail
+                      ? null
+                      : () {
+                          HapticFeedback.selectionClick();
+                          launchUrl(Uri.parse('mailto:${member.email}'));
+                        },
+                ),
               ),
             ],
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _hero(Member member) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        gradient: const LinearGradient(
+          colors: AppColors.primaryGradient,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.22),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+          ),
+          BoxShadow(
+            color: AppColors.accent.withValues(alpha: 0.10),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(22),
+        child: Stack(
+          children: [
+            Positioned(
+              top: -50,
+              right: -50,
+              child: Container(
+                width: 170,
+                height: 170,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      AppColors.accent.withValues(alpha: 0.22),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: const LinearGradient(
+                        colors: AppColors.goldGradient,
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      boxShadow: AppColors.goldGlow,
+                    ),
+                    child: CachedAvatar(
+                      imageUrl: member.profilePhoto,
+                      initials: member.initials,
+                      size: 72,
+                      backgroundColor: AppColors.surface,
+                      textColor: AppColors.primary,
+                      fontSize: 26,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          member.fullName,
+                          style: GoogleFonts.dmSans(
+                            color: Colors.white,
+                            fontSize: 19,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.5,
+                            height: 1.15,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black.withValues(alpha: 0.25),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          member.company,
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.78),
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _contactCircle(
-      IconData icon, String label, Color color, VoidCallback onTap) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
-              child: Icon(icon, color: color, size: 28),
+  Widget _sectionLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4),
+      child: Row(
+        children: [
+          Container(
+            width: 3,
+            height: 14,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: AppColors.goldGradient,
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+              borderRadius: BorderRadius.circular(2),
             ),
-            const SizedBox(height: 8),
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 12, fontWeight: FontWeight.w700)),
-          ],
+          ),
+          const SizedBox(width: 8),
+          Text(
+            text,
+            style: GoogleFonts.dmSans(
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+              color: AppColors.text,
+              letterSpacing: -0.2,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _infoCard(List<Widget> children) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: AppColors.surfaceGradient,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.7)),
+        boxShadow: AppColors.shadowSm,
+      ),
+      child: Column(children: children),
+    );
+  }
+
+  Widget _hairline() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      child: Container(
+        height: 1,
+        color: AppColors.border.withValues(alpha: 0.5),
+      ),
+    );
+  }
+
+  Widget _infoRow({
+    required IconData icon,
+    required Color tint,
+    required String label,
+    required String value,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.all(14),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  tint.withValues(alpha: 0.18),
+                  tint.withValues(alpha: 0.06),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: tint.withValues(alpha: 0.22)),
+            ),
+            child: Icon(icon, size: 15, color: tint),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.textMuted,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  value,
+                  style: GoogleFonts.dmSans(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.text,
+                    letterSpacing: -0.2,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _action({
+    required IconData icon,
+    required String label,
+    required Color tint,
+    required VoidCallback? onTap,
+  }) {
+    final enabled = onTap != null;
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            gradient: enabled
+                ? LinearGradient(
+                    colors: [
+                      tint.withValues(alpha: 0.22),
+                      tint.withValues(alpha: 0.08),
+                    ],
+                  )
+                : LinearGradient(
+                    colors: [
+                      AppColors.textMuted.withValues(alpha: 0.10),
+                      AppColors.textMuted.withValues(alpha: 0.04),
+                    ],
+                  ),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: enabled
+                  ? tint.withValues(alpha: 0.32)
+                  : AppColors.border.withValues(alpha: 0.6),
+            ),
+          ),
+          child: Column(
+            children: [
+              Icon(icon,
+                  color: enabled ? tint : AppColors.textMuted, size: 22),
+              const SizedBox(height: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  color: enabled ? tint : AppColors.textMuted,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.8,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -1118,57 +1449,56 @@ class _MatchDetailSheetState extends State<_MatchDetailSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.7,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-      ),
-      padding: const EdgeInsets.all(32),
+    return PbnBottomSheet(
+      maxHeightFraction: 0.82,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          const Row(children: [
-            Icon(TablerIcons.sparkles, color: AppColors.accent, size: 24),
-            SizedBox(width: 12),
-            Text('Partnership Strategy',
-                style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.text)),
-          ]),
-          const SizedBox(height: 24),
-          Text('HOW TO CREATE BUSINESS TOGETHER:',
-              style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.grey.shade500,
-                  letterSpacing: 1.5)),
-          const SizedBox(height: 16),
-          Expanded(
-            child: _loading
-                ? const Center(
-                    child:
-                        CircularProgressIndicator(color: AppColors.primary))
-                : SingleChildScrollView(
-                    child: _StrategyMarkdown(
-                      text: _strategy ?? 'No strategy generated yet.',
-                    ),
+          // Gold-bar section header replaces the prior "Partnership
+          // Strategy" + "HOW TO CREATE BUSINESS TOGETHER" double-title.
+          // One header per section, palette-aligned.
+          Row(
+            children: [
+              Container(
+                width: 3,
+                height: 18,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: AppColors.goldGradient,
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
                   ),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                'Partnership Strategy',
+                style: GoogleFonts.dmSans(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.text,
+                  letterSpacing: -0.3,
+                  height: 1.1,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 24),
-          // Bottom button row: Close (text) + Connect (gold)
+          const SizedBox(height: 14),
+          if (_loading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 60),
+              child: Center(
+                child:
+                    CircularProgressIndicator(color: AppColors.primary),
+              ),
+            )
+          else
+            _StrategyMarkdown(
+              text: _strategy ?? 'No strategy generated yet.',
+            ),
+          const SizedBox(height: 22),
           Row(
             children: [
               Expanded(
@@ -1213,8 +1543,8 @@ class _MatchDetailSheetState extends State<_MatchDetailSheet> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       decoration: BoxDecoration(
-                        gradient:
-                            const LinearGradient(colors: AppColors.goldGradient),
+                        gradient: const LinearGradient(
+                            colors: AppColors.goldGradient),
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(

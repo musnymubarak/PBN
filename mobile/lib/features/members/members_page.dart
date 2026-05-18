@@ -11,6 +11,7 @@ import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/providers/member_provider.dart';
 import 'package:pbn/core/widgets/cached_avatar.dart';
 import 'package:pbn/core/widgets/pbn_app_bar_actions.dart';
+import 'package:pbn/core/widgets/pbn_bottom_sheet.dart';
 import 'package:pbn/features/members/member_card.dart';
 import 'package:pbn/models/member.dart';
 
@@ -194,31 +195,14 @@ class _MembersPageState extends State<MembersPage> {
       toolbarHeight: 60,
       floating: true,
       snap: true,
-      title: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'Network Directory',
-            style: GoogleFonts.dmSans(
-              fontSize: 20,
-              fontWeight: FontWeight.w900,
-              color: AppColors.text,
-              letterSpacing: -0.5,
-              height: 1.1,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            'Members across the PBN network',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary,
-              letterSpacing: 0.1,
-            ),
-          ),
-        ],
+      title: Text(
+        'Network Directory',
+        style: GoogleFonts.dmSans(
+          fontSize: 20,
+          fontWeight: FontWeight.w900,
+          color: AppColors.text,
+          letterSpacing: -0.5,
+        ),
       ),
       actions: const [PbnAppBarActions()],
     );
@@ -983,43 +967,11 @@ class _MembersPageState extends State<MembersPage> {
   // MEMBER DETAIL BOTTOM SHEET (premium navy hero + tinted rows)
   // ──────────────────────────────────────────────────────────
   void _showMemberDetailBottomSheet(Member member) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+    showPbnBottomSheet(
+      context,
       builder: (ctx) {
-        return Container(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.88,
-          ),
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
-            borderRadius:
-                BorderRadius.vertical(top: Radius.circular(28)),
-          ),
+        return PbnBottomSheet(
           child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 12),
-              Center(
-                child: Container(
-                  width: 38,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.border,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              Flexible(
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.fromLTRB(
-                    20,
-                    18,
-                    20,
-                    20 + MediaQuery.of(context).padding.bottom,
-                  ),
-                  child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       _buildDetailHero(member),
@@ -1163,10 +1115,6 @@ class _MembersPageState extends State<MembersPage> {
                       ],
                     ],
                   ),
-                ),
-              ),
-            ],
-          ),
         );
       },
     );

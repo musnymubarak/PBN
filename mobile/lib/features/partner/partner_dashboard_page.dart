@@ -73,12 +73,14 @@ class _PartnerDashboardPageState extends State<PartnerDashboardPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Partner Portal', style: TextStyle(fontSize: 14, fontWeight: FontWeight.normal)),
-            Text(_stats?.partnerName ?? '', style: const TextStyle(fontWeight: FontWeight.w800)),
-          ],
+        title: const Text(
+          'Partner Portal',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w900,
+            color: AppColors.text,
+            letterSpacing: -0.5,
+          ),
         ),
         actions: [
           IconButton(

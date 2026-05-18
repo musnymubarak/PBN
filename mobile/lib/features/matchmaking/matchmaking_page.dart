@@ -115,7 +115,7 @@ class _MatchmakingDashboardPageState extends State<MatchmakingDashboardPage> wit
           controller: _tabController,
           children: const [
             AiMatchesView(),
-            ReferralDashboardPage(isEmbedded: true),
+            ReferralDashboardPage(),
           ],
         ),
       ),

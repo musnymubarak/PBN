@@ -215,31 +215,14 @@ class _MarketplacePageState extends State<MarketplacePage> {
       toolbarHeight: 60,
       floating: true,
       snap: true,
-      title: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'Marketplace',
-            style: GoogleFonts.dmSans(
-              fontSize: 20,
-              fontWeight: FontWeight.w900,
-              color: AppColors.text,
-              letterSpacing: -0.5,
-              height: 1.1,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            'Members-only deals from verified sellers',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary,
-              letterSpacing: 0.1,
-            ),
-          ),
-        ],
+      title: Text(
+        'Marketplace',
+        style: GoogleFonts.dmSans(
+          fontSize: 20,
+          fontWeight: FontWeight.w900,
+          color: AppColors.text,
+          letterSpacing: -0.5,
+        ),
       ),
       actions: const [PbnAppBarActions()],
     );
