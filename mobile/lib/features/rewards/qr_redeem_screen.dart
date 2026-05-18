@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/services/reward_service.dart';
@@ -141,11 +142,22 @@ class _QrRedeemScreenState extends State<QrRedeemScreen>
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Redemption',
-            style: TextStyle(fontWeight: FontWeight.w900)),
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        title: Text(
+          'Redemption',
+          style: GoogleFonts.dmSans(
+            fontWeight: FontWeight.w900,
+            fontSize: 18,
+            color: AppColors.text,
+            letterSpacing: -0.4,
+          ),
+        ),
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(TablerIcons.x),
+          icon: const Icon(TablerIcons.x, color: AppColors.text),
           onPressed: () => Navigator.pop(context, _confirmed),
         ),
       ),
@@ -167,124 +179,215 @@ class _QrRedeemScreenState extends State<QrRedeemScreen>
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
-          // Partner & Offer Info Split Card Header
+          // Partner & Offer Info — navy gradient with ambient gold glow
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                  colors: AppColors.primaryGradient),
               borderRadius: BorderRadius.circular(24),
+              gradient: const LinearGradient(
+                colors: AppColors.primaryGradient,
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
               boxShadow: [
                 BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.25),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10)),
+                  color: AppColors.primary.withValues(alpha: 0.25),
+                  blurRadius: 32,
+                  offset: const Offset(0, 14),
+                ),
+                BoxShadow(
+                  color: AppColors.accent.withValues(alpha: 0.10),
+                  blurRadius: 18,
+                  offset: const Offset(0, 6),
+                ),
               ],
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _tokenResult!.partnerName.toUpperCase(),
-                  style: const TextStyle(
-                      color: Colors.blueAccent,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 2),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  _tokenResult!.offerTitle,
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -0.5),
-                ),
-              ],
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: Stack(
+                children: [
+                  Positioned(
+                    top: -60,
+                    right: -60,
+                    child: Container(
+                      width: 180,
+                      height: 180,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            AppColors.accent.withValues(alpha: 0.22),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(22),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    AppColors.accent.withValues(alpha: 0.28),
+                                    AppColors.accent.withValues(alpha: 0.10),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                  color: AppColors.accent
+                                      .withValues(alpha: 0.55),
+                                  width: 0.8,
+                                ),
+                              ),
+                              child: Text(
+                                _tokenResult!.partnerName.toUpperCase(),
+                                style: const TextStyle(
+                                  color: AppColors.accent,
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1.4,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        Text(
+                          _tokenResult!.offerTitle,
+                          style: GoogleFonts.dmSans(
+                            color: Colors.white,
+                            fontSize: 21,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.6,
+                            height: 1.15,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black.withValues(alpha: 0.25),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
 
           const SizedBox(height: 24),
 
-          // QR Code Card
+          // QR Code Card — premium surface gradient
           Container(
-            padding: const EdgeInsets.all(32),
+            padding: const EdgeInsets.all(28),
             decoration: BoxDecoration(
-              color: Colors.white,
+              gradient: const LinearGradient(
+                colors: AppColors.surfaceGradient,
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: Colors.grey.shade100),
-              boxShadow: [
-                BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8)),
-              ],
+              border:
+                  Border.all(color: AppColors.border.withValues(alpha: 0.7)),
+              boxShadow: AppColors.shadowMd,
             ),
             child: Column(
               children: [
-                const Text(
-                  'Store Redemption QR',
-                  style: TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 18,
-                      color: AppColors.text,
-                      letterSpacing: -0.5),
-                ),
-                const SizedBox(height: 8),
                 Text(
+                  'Store Redemption QR',
+                  style: GoogleFonts.dmSans(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 17,
+                    color: AppColors.text,
+                    letterSpacing: -0.4,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
                   'Present this to the partner for scanning',
                   style: TextStyle(
-                      fontSize: 13, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
+                    fontSize: 12.5,
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 28),
+                // Gold-ringed QR
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(3),
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.grey.shade50),
-                  ),
-                  child: QrImageView(
-                    data: _tokenResult!.qrUrl,
-                    version: QrVersions.auto,
-                    size: 200,
-                    backgroundColor: Colors.white,
-                    eyeStyle: const QrEyeStyle(
-                      eyeShape: QrEyeShape.square,
-                      color: Color(0xFF0A2540),
+                    gradient: const LinearGradient(
+                      colors: AppColors.goldSoftGradient,
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                    dataModuleStyle: const QrDataModuleStyle(
-                      dataModuleShape: QrDataModuleShape.square,
-                      color: Color(0xFF0A2540),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: QrImageView(
+                      data: _tokenResult!.qrUrl,
+                      version: QrVersions.auto,
+                      size: 200,
+                      backgroundColor: Colors.white,
+                      eyeStyle: const QrEyeStyle(
+                        eyeShape: QrEyeShape.square,
+                        color: AppColors.primary,
+                      ),
+                      dataModuleStyle: const QrDataModuleStyle(
+                        dataModuleShape: QrDataModuleShape.square,
+                        color: AppColors.primary,
+                      ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 28),
 
-                // Countdown
+                // Countdown — gold-tinted
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 20, vertical: 12),
+                      horizontal: 18, vertical: 11),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFEF3C7),
-                    borderRadius: BorderRadius.circular(14),
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.accent.withValues(alpha: 0.18),
+                        AppColors.accent.withValues(alpha: 0.06),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppColors.accent.withValues(alpha: 0.28),
+                    ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Icon(TablerIcons.clock,
-                          size: 18, color: Color(0xFF92400E)),
-                      const SizedBox(width: 10),
+                          size: 15, color: AppColors.accent),
+                      const SizedBox(width: 8),
                       Text(
                         'Expires in ${_formatDuration(_remaining)}',
                         style: const TextStyle(
-                            color: Color(0xFF92400E),
-                            fontWeight: FontWeight.w900,
-                            fontSize: 13,
-                            letterSpacing: 0.2),
+                          color: AppColors.accent,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 12.5,
+                          letterSpacing: 0.4,
+                        ),
                       ),
                     ],
                   ),
@@ -296,24 +399,40 @@ class _QrRedeemScreenState extends State<QrRedeemScreen>
           const SizedBox(height: 20),
 
           // Polling indicator
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              SizedBox(
-                width: 14,
-                height: 14,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: AppColors.primary.withValues(alpha: 0.3),
+          Align(
+            alignment: Alignment.center,
+            child: Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(12),
+              border:
+                  Border.all(color: AppColors.border.withValues(alpha: 0.7)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 13,
+                  height: 13,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.accent.withValues(alpha: 0.7),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'Awaiting partner verification...',
-                style: TextStyle(
-                    fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w600),
-              ),
-            ],
+                const SizedBox(width: 10),
+                const Text(
+                  'Awaiting partner verification…',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            ),
           ),
         ],
       ),
