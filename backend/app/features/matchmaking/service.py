@@ -452,11 +452,17 @@ Keep the response professional, encouraging, and under 60 words.
 Format: Return only the suggestion text."""
 
         try:
-            # Use the new google-genai SDK with gemini-2.0-flash
+            # Use the new google-genai SDK with gemini-2.5-flash.
+            # gemini-2.0-flash was removed from the free tier (free-tier limit
+            # is hard-coded to 0 for that model on most projects). 2.5-flash
+            # still has a non-zero free-tier allocation and is the recommended
+            # successor. If this also returns 429 with `limit: 0`, fall back
+            # to "gemini-2.5-flash-lite" or "gemini-1.5-flash" — or enable
+            # billing on the project to unlock paid quota (~$0.0001/strategy).
             def _call_gemini():
                 client = genai.Client(api_key=settings.GEMINI_API_KEY)
                 response = client.models.generate_content(
-                    model="gemini-2.0-flash",
+                    model="gemini-2.5-flash",
                     contents=prompt
                 )
                 if not response.text:
