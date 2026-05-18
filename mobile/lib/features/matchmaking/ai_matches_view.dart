@@ -1162,13 +1162,8 @@ class _MatchDetailSheetState extends State<_MatchDetailSheet> {
                     child:
                         CircularProgressIndicator(color: AppColors.primary))
                 : SingleChildScrollView(
-                    child: Text(
-                      _strategy ?? 'No strategy generated yet.',
-                      style: const TextStyle(
-                          fontSize: 16,
-                          height: 1.6,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.text),
+                    child: _StrategyMarkdown(
+                      text: _strategy ?? 'No strategy generated yet.',
                     ),
                   ),
           ),
@@ -1254,6 +1249,135 @@ class _MatchDetailSheetState extends State<_MatchDetailSheet> {
           ),
         ],
       ),
+    );
+  }
+}
+
+// ──────────────────────────────────────────────────────────────
+// STRATEGY MARKDOWN
+// Renders Gemini's partnership-strategy output: handles **bold** inline
+// spans and numbered list items ("1. ", "2. "…) as styled rows with a
+// gold-gradient number badge. Plain paragraphs render as flowing text.
+// ──────────────────────────────────────────────────────────────
+class _StrategyMarkdown extends StatelessWidget {
+  final String text;
+  const _StrategyMarkdown({required this.text});
+
+  static final _listItemRegex = RegExp(r'^\s*(\d+)\.\s+(.*)$');
+  static final _boldRegex = RegExp(r'\*\*(.+?)\*\*');
+
+  List<TextSpan> _parseInline(String input, {required TextStyle base}) {
+    final spans = <TextSpan>[];
+    int cursor = 0;
+    for (final m in _boldRegex.allMatches(input)) {
+      if (m.start > cursor) {
+        spans.add(TextSpan(text: input.substring(cursor, m.start), style: base));
+      }
+      spans.add(TextSpan(
+        text: m.group(1),
+        style: base.copyWith(
+          fontWeight: FontWeight.w800,
+          color: AppColors.text,
+        ),
+      ));
+      cursor = m.end;
+    }
+    if (cursor < input.length) {
+      spans.add(TextSpan(text: input.substring(cursor), style: base));
+    }
+    return spans;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final baseStyle = GoogleFonts.dmSans(
+      fontSize: 14.5,
+      height: 1.55,
+      fontWeight: FontWeight.w500,
+      color: AppColors.textSecondary,
+      letterSpacing: -0.1,
+    );
+
+    final lines = text.split('\n');
+    final children = <Widget>[];
+
+    for (var i = 0; i < lines.length; i++) {
+      final raw = lines[i];
+      final trimmed = raw.trim();
+      if (trimmed.isEmpty) {
+        if (children.isNotEmpty) {
+          children.add(const SizedBox(height: 8));
+        }
+        continue;
+      }
+
+      final m = _listItemRegex.firstMatch(trimmed);
+      if (m != null) {
+        final number = m.group(1)!;
+        final body = m.group(2)!;
+        children.add(Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 26,
+                height: 26,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: AppColors.goldGradient,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.accent.withValues(alpha: 0.3),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  number,
+                  style: GoogleFonts.dmSans(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                    height: 1,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 3),
+                  child: RichText(
+                    text: TextSpan(
+                      children: _parseInline(body, base: baseStyle),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ));
+      } else {
+        children.add(Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: RichText(
+            text: TextSpan(
+              children: _parseInline(trimmed, base: baseStyle),
+            ),
+          ),
+        ));
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: children,
     );
   }
 }
