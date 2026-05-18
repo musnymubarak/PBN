@@ -1,12 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
-import 'package:pbn/core/widgets/cached_avatar.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:skeletonizer/skeletonizer.dart' as sk;
+import 'package:url_launcher/url_launcher.dart';
+
 import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/providers/member_provider.dart';
-import 'package:pbn/models/member.dart';
+import 'package:pbn/core/widgets/cached_avatar.dart';
 import 'package:pbn/core/widgets/pbn_app_bar_actions.dart';
+import 'package:pbn/features/members/member_card.dart';
+import 'package:pbn/models/member.dart';
+
+enum _MemberScope { myChapter, global }
 
 class MembersPage extends StatefulWidget {
   const MembersPage({super.key});
@@ -18,7 +26,8 @@ class MembersPage extends StatefulWidget {
 class _MembersPageState extends State<MembersPage> {
   String _search = '';
   String? _selectedIndustry;
-  String? _selectedChapter;
+  _MemberScope _scope = _MemberScope.myChapter;
+  final _searchCtrl = TextEditingController();
 
   @override
   void initState() {
@@ -33,247 +42,432 @@ class _MembersPageState extends State<MembersPage> {
     });
   }
 
-  List<Member> _getFilteredMembers(List<Member> members) {
-    return members.where((m) {
-      // Search Filter
-      final matchesSearch = _search.isEmpty || 
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  // ──────────────────────────────────────────────────────────
+  // DATA HELPERS
+  // ──────────────────────────────────────────────────────────
+  List<Member> _scoped(List<Member> all) {
+    return _scope == _MemberScope.myChapter
+        ? all.where((m) => m.isSameChapter).toList()
+        : all.where((m) => !m.isSameChapter).toList();
+  }
+
+  List<Member> _filtered(List<Member> source) {
+    return source.where((m) {
+      final matchesSearch = _search.isEmpty ||
           m.fullName.toLowerCase().contains(_search.toLowerCase()) ||
           m.industry.toLowerCase().contains(_search.toLowerCase()) ||
           m.company.toLowerCase().contains(_search.toLowerCase());
-
-      // Industry Filter
-      final matchesIndustry = _selectedIndustry == null || m.industry == _selectedIndustry;
-
-      // Chapter Filter
-      final matchesChapter = _selectedChapter == null || m.chapterName == _selectedChapter;
-
-      return matchesSearch && matchesIndustry && matchesChapter;
+      final matchesIndustry =
+          _selectedIndustry == null || m.industry == _selectedIndustry;
+      return matchesSearch && matchesIndustry;
     }).toList();
   }
 
-  void _onSearchChanged(String query) {
-    setState(() => _search = query);
+  bool get _hasActiveFilters => _selectedIndustry != null || _search.isNotEmpty;
+
+  void _clearFilters() {
+    _searchCtrl.clear();
+    setState(() {
+      _selectedIndustry = null;
+      _search = '';
+    });
   }
 
+  // ──────────────────────────────────────────────────────────
+  // BUILD
+  // ──────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<MemberProvider>();
-    final members = provider.members;
-    
-    final myChapterMembers = members.where((m) => m.isSameChapter).toList();
-    final globalMembers = members.where((m) => !m.isSameChapter).toList();
+    final allMembers = provider.members;
+    final myChapter = allMembers.where((m) => m.isSameChapter).toList();
+    final globalMembers = allMembers.where((m) => !m.isSameChapter).toList();
+    final scoped = _scoped(allMembers);
+    final visible = _filtered(scoped);
 
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        body: NestedScrollView(
-          floatHeaderSlivers: true,
-          headerSliverBuilder: (context, innerBoxIsScrolled) => [
-            SliverAppBar(
-              backgroundColor: Colors.white,
-              elevation: 0,
-              scrolledUnderElevation: 0,
-              toolbarHeight: 60,
-              floating: true,
-              snap: true,
-              title: const Text(
-                'Network Directory',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: -0.5),
-              ),
-              actions: const [
-                PbnAppBarActions(),
-              ],
-              bottom: PreferredSize(
-                preferredSize: const Size.fromHeight(48),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border(bottom: BorderSide(color: Colors.grey.shade100, width: 1)),
-                  ),
-                  child: const TabBar(
-                    tabs: [
-                      Tab(text: 'My Chapter'),
-                      Tab(text: 'Global'),
-                    ],
-                    labelStyle: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: 0.2),
-                    unselectedLabelStyle: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
-                    indicatorColor: AppColors.primary,
-                    labelColor: AppColors.primary,
-                    unselectedLabelColor: Color(0xFF94A3B8),
-                    indicatorWeight: 3,
-                    indicatorSize: TabBarIndicatorSize.tab,
-                  ),
+    // Industries are sourced from the **current scope** so the chip set
+    // matches what the user is actually browsing.
+    final industries = scoped.map((m) => m.industry).toSet().toList()..sort();
+
+    final verifiedCount =
+        allMembers.where((m) => m.verificationLevel != 'none').length;
+    final chapterCount = allMembers
+        .where((m) => m.chapterName != null && m.chapterName!.isNotEmpty)
+        .map((m) => m.chapterName!)
+        .toSet()
+        .length;
+
+    final loading = provider.loading && allMembers.isEmpty;
+
+    final sections = <Widget>[
+      _buildHero(myChapterCount: myChapter.length, globalCount: globalMembers.length),
+      const SizedBox(height: 14),
+      _buildStatStrip(
+        myChapterCount: myChapter.length,
+        chapterCount: chapterCount,
+        verifiedCount: verifiedCount,
+      ),
+      const SizedBox(height: 22),
+      _buildScopeToggle(
+          myChapterCount: myChapter.length, globalCount: globalMembers.length),
+      const SizedBox(height: 16),
+      _buildSearchBar(),
+      if (industries.isNotEmpty) ...[
+        const SizedBox(height: 10),
+        _buildIndustryChips(industries),
+      ],
+      const SizedBox(height: 18),
+      _sectionHeader(
+        _scope == _MemberScope.myChapter
+            ? 'Members In Your Chapter'
+            : 'Global Directory',
+        trailing: '${visible.length}',
+      ),
+      if (provider.error != null && allMembers.isEmpty)
+        _buildErrorState(provider.error!)
+      else if (visible.isEmpty && !loading)
+        _buildEmptyState()
+      else
+        ...visible.map(
+          (m) => MemberCard(
+            member: m,
+            onTap: () => _showMemberDetailBottomSheet(m),
+          ),
+        ),
+      const SizedBox(height: 100),
+    ];
+
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: sk.Skeletonizer(
+        enabled: loading,
+        enableSwitchAnimation: true,
+        effect: sk.ShimmerEffect(
+          baseColor: AppColors.surfaceAlt,
+          highlightColor: Colors.white.withValues(alpha: 0.9),
+          duration: const Duration(milliseconds: 1400),
+        ),
+        child: RefreshIndicator(
+          onRefresh: () => provider.fetchMembers(),
+          color: AppColors.accent,
+          child: CustomScrollView(
+            slivers: [
+              _buildAppBar(),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                sliver: SliverList.list(
+                  children: List.generate(sections.length, (i) {
+                    final delayMs = (i * 35).clamp(0, 280);
+                    return sections[i]
+                        .animate(delay: delayMs.ms)
+                        .fadeIn(duration: 320.ms, curve: Curves.easeOutCubic)
+                        .slideY(
+                            begin: 0.10,
+                            end: 0,
+                            duration: 320.ms,
+                            curve: Curves.easeOutCubic);
+                  }),
                 ),
               ),
-            ),
-          ],
-          body: Column(
-            children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    onChanged: _onSearchChanged,
-                    decoration: InputDecoration(
-                      hintText: 'Search by name...',
-                      prefixIcon: const Icon(TablerIcons.search, size: 20, color: AppColors.primary),
-                      filled: true,
-                      fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.all(20),
-                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
-                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                InkWell(
-                  onTap: () => _showFilterBottomSheet(members),
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: (_selectedIndustry != null || _selectedChapter != null) ? AppColors.primary : Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.grey.shade100),
-                    ),
-                    child: Icon(
-                      TablerIcons.adjustments_horizontal, 
-                      color: (_selectedIndustry != null || _selectedChapter != null) ? Colors.white : AppColors.textSecondary,
-                      size: 24,
-                    ),
-                  ),
-                ),
-              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ──────────────────────────────────────────────────────────
+  // APP BAR (P-13)
+  // ──────────────────────────────────────────────────────────
+  Widget _buildAppBar() {
+    return SliverAppBar(
+      backgroundColor: Colors.white,
+      surfaceTintColor: Colors.white,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      toolbarHeight: 60,
+      floating: true,
+      snap: true,
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'Network Directory',
+            style: GoogleFonts.dmSans(
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+              color: AppColors.text,
+              letterSpacing: -0.5,
+              height: 1.1,
             ),
           ),
-          if (_selectedIndustry != null || _selectedChapter != null)
-            _buildActiveFiltersRow(),
-          Expanded(
-            child: TabBarView(
-              children: [
-                _buildMemberList(provider, myChapterMembers),
-                _buildMemberList(provider, globalMembers),
-              ],
+          const SizedBox(height: 2),
+          Text(
+            'Members across the PBN network',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textSecondary,
+              letterSpacing: 0.1,
             ),
           ),
         ],
       ),
-    ),
-  ),
-);
-}
+      actions: const [PbnAppBarActions()],
+    );
+  }
 
-  Widget _buildMemberList(MemberProvider provider, List<Member> members) {
-    final displayList = _getFilteredMembers(members);
-
-    if (provider.loading && members.isEmpty) {
-      return const Center(child: CircularProgressIndicator(color: AppColors.primary));
-    }
-    if (provider.error != null && members.isEmpty) {
-      return _buildErrorState(provider.error!);
-    }
-    if (displayList.isEmpty) {
-      return _buildEmptyState();
-    }
-    return RefreshIndicator(
-      onRefresh: () => provider.fetchMembers(),
-      child: ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        itemCount: displayList.length,
-        itemBuilder: (context, i) => _buildModernMemberCard(displayList[i]),
+  // ──────────────────────────────────────────────────────────
+  // SECTION HEADER (P-1)
+  // ──────────────────────────────────────────────────────────
+  Widget _sectionHeader(String title, {String? trailing}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          Container(
+            width: 3,
+            height: 18,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: AppColors.goldGradient,
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              title,
+              style: GoogleFonts.dmSans(
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+                color: AppColors.text,
+                letterSpacing: -0.3,
+                height: 1.1,
+              ),
+            ),
+          ),
+          if (trailing != null)
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.accent.withValues(alpha: 0.18),
+                    AppColors.accent.withValues(alpha: 0.06),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                    color: AppColors.accent.withValues(alpha: 0.28)),
+              ),
+              child: Text(
+                trailing,
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.accent,
+                  letterSpacing: 0.6,
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
 
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center, 
-        children: [
-          Icon(TablerIcons.users_group, size: 64, color: Colors.grey.shade300),
-          const SizedBox(height: 16),
-          Text(
-            _search.isEmpty ? 'No members found' : 'No results for "$_search"', 
-            style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.w700)
-          ),
-        ]
-      )
-    );
-  }
+  // ──────────────────────────────────────────────────────────
+  // HERO CARD (P-2)
+  // ──────────────────────────────────────────────────────────
+  Widget _buildHero({required int myChapterCount, required int globalCount}) {
+    final activeCount = _scope == _MemberScope.myChapter
+        ? myChapterCount
+        : globalCount;
 
-  Widget _buildModernMemberCard(Member member) {
-    return GestureDetector(
-      onTap: () => _showMemberDetailBottomSheet(member),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
-            ),
-          ],
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        gradient: const LinearGradient(
+          colors: AppColors.primaryGradient,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.25),
+            blurRadius: 32,
+            offset: const Offset(0, 14),
+          ),
+          BoxShadow(
+            color: AppColors.accent.withValues(alpha: 0.10),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Stack(
           children: [
-            // Avatar
-            CachedAvatar(
-              imageUrl: member.profilePhoto,
-              initials: member.initials,
-              size: 70,
+            Positioned(
+              top: -60,
+              right: -60,
+              child: Container(
+                width: 200,
+                height: 200,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      AppColors.accent.withValues(alpha: 0.22),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
             ),
-            const SizedBox(width: 18),
-            // Info
-            Expanded(
+            Positioned(
+              bottom: -50,
+              left: -50,
+              child: Container(
+                width: 160,
+                height: 160,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      AppColors.accentBlue.withValues(alpha: 0.14),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(22, 22, 22, 22),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      Expanded(
-                        child: Text(member.fullName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Color(0xFF0F172A), letterSpacing: -0.5)),
-                      ),
-                      if (member.verificationLevel != 'none')
-                        Container(
-                          margin: const EdgeInsets.only(left: 8),
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(color: _getVerificationColor(member.verificationLevel).withValues(alpha: 0.1), shape: BoxShape.circle),
-                          child: Icon(TablerIcons.discount_check_filled, color: _getVerificationColor(member.verificationLevel), size: 16),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                              colors: AppColors.goldGradient),
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: AppColors.goldGlow,
                         ),
+                        child: const Icon(TablerIcons.users_group,
+                            color: Colors.white, size: 16),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        'YOUR NETWORK',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.85),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.6,
+                        ),
+                      ),
                     ],
                   ),
-                  const SizedBox(height: 4),
-                  Text(member.company,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.grey.shade500)),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      _buildChip(
-                        member.industry, 
-                        const Color(0xFFE0F2FE), 
-                        const Color(0xFF0369A1)
-                      ),
-                      if (member.chapterName != null && member.chapterName!.isNotEmpty)
-                        _buildChip(
-                          member.chapterName!.toUpperCase(), 
-                          const Color(0xFFFEF9C3), 
-                          const Color(0xFF854D0E)
+                  const SizedBox(height: 16),
+                  Text(
+                    _scope == _MemberScope.myChapter
+                        ? '$activeCount in your chapter'
+                        : '$activeCount across the network',
+                    style: GoogleFonts.dmSans(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.6,
+                      height: 1.15,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black.withValues(alpha: 0.25),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
                         ),
-                    ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    _scope == _MemberScope.myChapter
+                        ? 'Members of your home chapter you can connect with directly.'
+                        : 'Members from other chapters across PBN.',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.75),
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w500,
+                      height: 1.45,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Material(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          setState(() {
+                            _scope = _scope == _MemberScope.myChapter
+                                ? _MemberScope.global
+                                : _MemberScope.myChapter;
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 10),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                                colors: AppColors.goldGradient),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: AppColors.goldGlow,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                _scope == _MemberScope.myChapter
+                                    ? TablerIcons.world
+                                    : TablerIcons.building_community,
+                                color: Colors.white,
+                                size: 14,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                _scope == _MemberScope.myChapter
+                                    ? 'BROWSE GLOBAL'
+                                    : 'BACK TO MY CHAPTER',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -284,331 +478,829 @@ class _MembersPageState extends State<MembersPage> {
     );
   }
 
-  Widget _buildChip(String label, Color bgColor, Color textColor) {
+  // ──────────────────────────────────────────────────────────
+  // STAT STRIP (P-3)
+  // ──────────────────────────────────────────────────────────
+  Widget _buildStatStrip({
+    required int myChapterCount,
+    required int chapterCount,
+    required int verifiedCount,
+  }) {
+    Widget chip(IconData icon, Color color, String value, String label) {
+      return Expanded(
+        child: Container(
+          padding:
+              const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: AppColors.surfaceGradient,
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.border.withValues(alpha: 0.7)),
+            boxShadow: AppColors.shadowSm,
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      color.withValues(alpha: 0.18),
+                      color.withValues(alpha: 0.06),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(9),
+                  border: Border.all(color: color.withValues(alpha: 0.22)),
+                ),
+                child: Icon(icon, color: color, size: 13),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      value,
+                      style: GoogleFonts.dmSans(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.text,
+                        letterSpacing: -0.3,
+                        height: 1.1,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      label.toUpperCase(),
+                      style: const TextStyle(
+                        fontSize: 8.5,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textMuted,
+                        letterSpacing: 0.5,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Row(
+      children: [
+        chip(TablerIcons.user_circle, AppColors.accentBlue,
+            '$myChapterCount', 'My Chapter'),
+        const SizedBox(width: 8),
+        chip(TablerIcons.building_community, AppColors.accent,
+            '$chapterCount', 'Chapters'),
+        const SizedBox(width: 8),
+        chip(TablerIcons.discount_check, AppColors.success,
+            '$verifiedCount', 'Verified'),
+      ],
+    );
+  }
+
+  // ──────────────────────────────────────────────────────────
+  // SCOPE TOGGLE (gold underline tabs — P-9, inline variant)
+  // ──────────────────────────────────────────────────────────
+  Widget _buildScopeToggle({
+    required int myChapterCount,
+    required int globalCount,
+  }) {
+    Widget tab(_MemberScope scope, String label, int count) {
+      final isActive = _scope == scope;
+      return Expanded(
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              setState(() => _scope = scope);
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        label,
+                        style: GoogleFonts.dmSans(
+                          fontSize: 13,
+                          fontWeight: isActive
+                              ? FontWeight.w800
+                              : FontWeight.w700,
+                          color: isActive
+                              ? AppColors.text
+                              : AppColors.textMuted,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: isActive
+                              ? AppColors.accent.withValues(alpha: 0.18)
+                              : AppColors.surfaceAlt,
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: Text(
+                          '$count',
+                          style: TextStyle(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w900,
+                            color: isActive
+                                ? AppColors.accent
+                                : AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 220),
+                    curve: Curves.easeOutCubic,
+                    height: 2,
+                    width: isActive ? 52 : 0,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: AppColors.goldGradient,
+                      ),
+                      borderRadius: BorderRadius.circular(1),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(10),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.7)),
+        boxShadow: AppColors.shadowSm,
       ),
-      child: Text(
-        label,
-        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: textColor, letterSpacing: 0.3),
+      child: Row(
+        children: [
+          tab(_MemberScope.myChapter, 'My Chapter', myChapterCount),
+          tab(_MemberScope.global, 'Global', globalCount),
+        ],
       ),
     );
   }
 
-  void _showFilterBottomSheet(List<Member> members) {
-    final industries = members.map((m) => m.industry).toSet().toList()..sort();
-    final chapters = members.where((m) => m.chapterName != null).map((m) => m.chapterName!).toSet().toList()..sort();
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.7,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+  // ──────────────────────────────────────────────────────────
+  // SEARCH BAR (P-6)
+  // ──────────────────────────────────────────────────────────
+  Widget _buildSearchBar() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: AppColors.surfaceGradient,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        padding: const EdgeInsets.all(30),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Filters', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: AppColors.text)),
-                TextButton(
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.7)),
+        boxShadow: AppColors.shadowSm,
+      ),
+      child: TextField(
+        controller: _searchCtrl,
+        onChanged: (v) => setState(() => _search = v),
+        decoration: InputDecoration(
+          hintText: 'Search by name, industry or company…',
+          hintStyle: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: AppColors.textMuted,
+          ),
+          prefixIcon: const Icon(TablerIcons.search,
+              color: AppColors.textMuted, size: 18),
+          suffixIcon: _search.isEmpty
+              ? null
+              : IconButton(
+                  icon: const Icon(TablerIcons.x,
+                      color: AppColors.textMuted, size: 16),
                   onPressed: () {
-                    setState(() {
-                      _selectedIndustry = null;
-                      _selectedChapter = null;
-                    });
-                    Navigator.pop(context);
+                    _searchCtrl.clear();
+                    setState(() => _search = '');
                   },
-                  child: const Text('Reset All', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w700)),
-                )
-              ],
+                ),
+          border: InputBorder.none,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        ),
+        style: GoogleFonts.dmSans(
+          fontSize: 13.5,
+          fontWeight: FontWeight.w600,
+          color: AppColors.text,
+        ),
+      ),
+    );
+  }
+
+  // ──────────────────────────────────────────────────────────
+  // INDUSTRY CHIPS (P-7)
+  // ──────────────────────────────────────────────────────────
+  Widget _buildIndustryChips(List<String> industries) {
+    return SizedBox(
+      height: 36,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        children: [
+          _chip(null, 'All'),
+          ...industries.map((i) => _chip(i, i)),
+        ],
+      ),
+    );
+  }
+
+  Widget _chip(String? value, String label) {
+    final isSelected = _selectedIndustry == value;
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(11),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(11),
+          onTap: () {
+            HapticFeedback.selectionClick();
+            setState(() => _selectedIndustry = value);
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              gradient: isSelected
+                  ? const LinearGradient(colors: AppColors.goldGradient)
+                  : const LinearGradient(
+                      colors: AppColors.surfaceGradient,
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+              borderRadius: BorderRadius.circular(11),
+              border: Border.all(
+                color: isSelected
+                    ? AppColors.accent.withValues(alpha: 0.55)
+                    : AppColors.border.withValues(alpha: 0.7),
+                width: isSelected ? 1.2 : 1,
+              ),
+              boxShadow: isSelected
+                  ? AppColors.goldGlow
+                  : AppColors.shadowSm,
             ),
-            const SizedBox(height: 30),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _sectionTitle('Industry'),
-                    const SizedBox(height: 12),
-                    _buildFilterList(industries, _selectedIndustry, (val) {
-                      setState(() => _selectedIndustry = val);
-                    }),
-                    const SizedBox(height: 30),
-                    if (chapters.isNotEmpty) ...[
-                      _sectionTitle('Chapter'),
-                      const SizedBox(height: 12),
-                      _buildFilterList(chapters, _selectedChapter, (val) {
-                        setState(() => _selectedChapter = val);
-                      }),
+            child: Text(
+              label,
+              style: GoogleFonts.dmSans(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w900 : FontWeight.w700,
+                color: isSelected ? Colors.white : AppColors.text,
+                letterSpacing: -0.1,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ──────────────────────────────────────────────────────────
+  // EMPTY STATE (P-10)
+  // ──────────────────────────────────────────────────────────
+  Widget _buildEmptyState() {
+    final hasFilters = _hasActiveFilters;
+    return Container(
+      margin: const EdgeInsets.only(top: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: AppColors.surfaceGradient,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.7)),
+        boxShadow: AppColors.shadowSm,
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.accent.withValues(alpha: 0.18),
+                  AppColors.accent.withValues(alpha: 0.06),
+                ],
+              ),
+              shape: BoxShape.circle,
+              border: Border.all(
+                  color: AppColors.accent.withValues(alpha: 0.25)),
+            ),
+            child: const Icon(TablerIcons.user_search,
+                size: 32, color: AppColors.accent),
+          ),
+          const SizedBox(height: 18),
+          Text(
+            hasFilters ? 'No matches in this view' : 'No members yet',
+            style: GoogleFonts.dmSans(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              color: AppColors.text,
+              letterSpacing: -0.2,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            hasFilters
+                ? 'Try removing a filter or switching to the other tab.'
+                : 'Members will appear here as the network grows.',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textSecondary,
+              height: 1.5,
+            ),
+          ),
+          if (hasFilters) ...[
+            const SizedBox(height: 18),
+            Material(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: _clearFilters,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                        colors: AppColors.goldGradient),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: AppColors.goldGlow,
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(TablerIcons.refresh,
+                          color: Colors.white, size: 14),
+                      SizedBox(width: 8),
+                      Text(
+                        'CLEAR FILTERS',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1,
+                        ),
+                      ),
                     ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // ──────────────────────────────────────────────────────────
+  // ERROR STATE
+  // ──────────────────────────────────────────────────────────
+  Widget _buildErrorState(String error) {
+    return Container(
+      margin: const EdgeInsets.only(top: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: AppColors.surfaceGradient,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.7)),
+        boxShadow: AppColors.shadowSm,
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.error.withValues(alpha: 0.10),
+              shape: BoxShape.circle,
+              border: Border.all(
+                  color: AppColors.error.withValues(alpha: 0.22)),
+            ),
+            child: const Icon(TablerIcons.alert_triangle,
+                size: 28, color: AppColors.error),
+          ),
+          const SizedBox(height: 18),
+          Text(
+            "Couldn't load members",
+            style: GoogleFonts.dmSans(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              color: AppColors.text,
+              letterSpacing: -0.2,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Check your connection and try again.',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textSecondary,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 18),
+          Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () => context.read<MemberProvider>().fetchMembers(),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                      colors: AppColors.goldGradient),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: AppColors.goldGlow,
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(TablerIcons.refresh,
+                        color: Colors.white, size: 14),
+                    SizedBox(width: 8),
+                    Text(
+                      'TRY AGAIN',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1,
+                      ),
+                    ),
                   ],
                 ),
               ),
             ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  padding: const EdgeInsets.symmetric(vertical: 18),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                ),
-                child: const Text('Apply Filters', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Colors.white)),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _sectionTitle(String title) {
-    return Text(title.toUpperCase(), 
-      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1.5)
-    );
-  }
-
-  Widget _buildFilterList(List<String> items, String? selected, Function(String?) onSelect) {
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
-      children: items.map((item) {
-        final isSelected = selected == item;
-        return InkWell(
-          onTap: () => onSelect(isSelected ? null : item),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              color: isSelected ? AppColors.primary.withValues(alpha: 0.1) : Colors.grey.shade50,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: isSelected ? AppColors.primary : Colors.grey.shade100, width: 1.5),
-            ),
-            child: Text(
-              item,
-              style: TextStyle(
-                fontSize: 13, 
-                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                color: isSelected ? AppColors.primary : AppColors.textSecondary
-              ),
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildActiveFiltersRow() {
-    return Container(
-      height: 50,
-      margin: const EdgeInsets.only(bottom: 10, left: 20),
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        children: [
-          if (_selectedIndustry != null)
-            _filterChip(_selectedIndustry!, () {
-              setState(() => _selectedIndustry = null);
-            }),
-          if (_selectedChapter != null)
-            _filterChip(_selectedChapter!, () {
-              setState(() => _selectedChapter = null);
-            }),
-        ],
-      ),
-    );
-  }
-
-  Widget _filterChip(String label, VoidCallback onRemove) {
-    return Container(
-      margin: const EdgeInsets.only(right: 12, bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.2), blurRadius: 8, offset: const Offset(0, 4))],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(label, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w800)),
-          const SizedBox(width: 8),
-          InkWell(
-            onTap: onRemove,
-            child: const Icon(TablerIcons.x, color: Colors.white, size: 14),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildErrorState(String error) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(40),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center, 
-          children: [
-            const Icon(TablerIcons.alert_circle, size: 64, color: Colors.redAccent),
-            const SizedBox(height: 16),
-            Text(
-              error,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w600)
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () => context.read<MemberProvider>().fetchMembers(),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              ),
-              child: const Text('Try Again'),
-            )
-          ],
-        ),
-      ),
-    );
-  }
-
+  // ──────────────────────────────────────────────────────────
+  // MEMBER DETAIL BOTTOM SHEET (premium navy hero + tinted rows)
+  // ──────────────────────────────────────────────────────────
   void _showMemberDetailBottomSheet(Member member) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.85,
-        ),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 12),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
-            ),
-            Flexible(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.fromLTRB(30, 24, 30, 24 + MediaQuery.of(context).padding.bottom),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Profile Photo
-                    CachedAvatar(
-                      imageUrl: member.profilePhoto,
-                      initials: member.initials,
-                      size: 120,
-                      fontSize: 40,
-                    ),
-                    const SizedBox(height: 32),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(member.fullName, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.text)),
-                        if (member.verificationLevel != 'none') ...[
-                          const SizedBox(width: 8),
-                          Icon(TablerIcons.discount_check_filled, color: _getVerificationColor(member.verificationLevel), size: 20),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(member.company, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.primary)),
-                    const SizedBox(height: 24),
-                    
-                    Row(
-                      children: [
-                        Expanded(child: _detailRow(TablerIcons.building_store, 'Chapter', member.chapterName ?? 'Unknown')),
-                        const SizedBox(width: 12),
-                        Expanded(child: _detailRow(TablerIcons.category, 'Industry', member.industry)),
-                      ],
-                    ),
-                    
-                    if (member.isSameChapter) ...[
-                      const Divider(height: 30),
-                      const Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text('CONTACT DETAILS', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1.5)),
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(child: _detailRow(TablerIcons.mail, 'Email', member.email ?? '-')),
-                          const SizedBox(width: 12),
-                          Expanded(child: _detailRow(TablerIcons.phone, 'Phone', member.phoneNumber ?? '-')),
-                        ],
-                      ),
-                      
-                      const SizedBox(height: 24),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _contactButton(TablerIcons.phone, 'Call', () {
-                              if (member.phoneNumber != null) {
-                                launchUrl(Uri.parse('tel:${member.phoneNumber}'));
-                              }
-                            }),
+      builder: (ctx) {
+        return Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.88,
+          ),
+          decoration: const BoxDecoration(
+            color: AppColors.surface,
+            borderRadius:
+                BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              Center(
+                child: Container(
+                  width: 38,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.fromLTRB(
+                    20,
+                    18,
+                    20,
+                    20 + MediaQuery.of(context).padding.bottom,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildDetailHero(member),
+                      const SizedBox(height: 18),
+                      _detailLabel('About'),
+                      const SizedBox(height: 8),
+                      _detailInfoCard([
+                        _premiumInfoRow(
+                          icon: TablerIcons.building_community,
+                          iconColor: AppColors.accent,
+                          label: 'CHAPTER',
+                          value: member.chapterName ?? 'Unknown',
+                        ),
+                        _hairlineDivider(),
+                        _premiumInfoRow(
+                          icon: TablerIcons.briefcase,
+                          iconColor: AppColors.accentBlue,
+                          label: 'INDUSTRY',
+                          value: member.industry,
+                        ),
+                        _hairlineDivider(),
+                        _premiumInfoRow(
+                          icon: TablerIcons.building_store,
+                          iconColor: AppColors.accent,
+                          label: 'COMPANY',
+                          value: member.company,
+                        ),
+                      ]),
+                      if (member.isSameChapter) ...[
+                        const SizedBox(height: 18),
+                        _detailLabel('Contact'),
+                        const SizedBox(height: 8),
+                        _detailInfoCard([
+                          _premiumInfoRow(
+                            icon: TablerIcons.phone,
+                            iconColor: AppColors.accentBlue,
+                            label: 'PHONE',
+                            value: member.phoneNumber ?? 'Not shared',
                           ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: _contactButton(TablerIcons.brand_whatsapp, 'WA', () {
-                              if (member.phoneNumber != null) {
-                                final phone = member.phoneNumber!.replaceAll(RegExp(r'\D'), '');
-                                launchUrl(Uri.parse('https://wa.me/$phone'), mode: LaunchMode.externalApplication);
-                              }
-                            }),
+                          _hairlineDivider(),
+                          _premiumInfoRow(
+                            icon: TablerIcons.mail,
+                            iconColor: const Color(0xFF8B5CF6),
+                            label: 'EMAIL',
+                            value: member.email ?? 'Not shared',
                           ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: _contactButton(TablerIcons.mail, 'Email', () {
-                               if (member.email != null) {
-                                launchUrl(Uri.parse('mailto:${member.email}'));
-                              }
-                            }),
-                          ),
-                        ],
-                      ),
-                    ] else ...[
-                       const SizedBox(height: 24),
+                        ]),
+                        const SizedBox(height: 18),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _detailActionButton(
+                                icon: TablerIcons.phone,
+                                label: 'CALL',
+                                tint: AppColors.accentBlue,
+                                onTap: member.phoneNumber == null
+                                    ? null
+                                    : () {
+                                        HapticFeedback.selectionClick();
+                                        launchUrl(Uri.parse(
+                                            'tel:${member.phoneNumber}'));
+                                      },
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: _detailActionButton(
+                                icon: TablerIcons.brand_whatsapp,
+                                label: 'WHATSAPP',
+                                tint: AppColors.success,
+                                onTap: member.phoneNumber == null
+                                    ? null
+                                    : () {
+                                        HapticFeedback.selectionClick();
+                                        final phone = member.phoneNumber!
+                                            .replaceAll(
+                                                RegExp(r'\D'), '');
+                                        launchUrl(
+                                          Uri.parse('https://wa.me/$phone'),
+                                          mode:
+                                              LaunchMode.externalApplication,
+                                        );
+                                      },
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: _detailActionButton(
+                                icon: TablerIcons.mail,
+                                label: 'EMAIL',
+                                tint: AppColors.accent,
+                                onTap: member.email == null
+                                    ? null
+                                    : () {
+                                        HapticFeedback.selectionClick();
+                                        launchUrl(Uri.parse(
+                                            'mailto:${member.email}'));
+                                      },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ] else ...[
+                        const SizedBox(height: 18),
                         Container(
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: Colors.grey.shade100,
-                            borderRadius: BorderRadius.circular(12),
+                            color: AppColors.surfaceAlt,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                                color: AppColors.border
+                                    .withValues(alpha: 0.6)),
                           ),
-                          child: const Row(
+                          child: Row(
                             children: [
-                              Icon(TablerIcons.lock, color: AppColors.textSecondary, size: 20),
-                              SizedBox(width: 12),
-                              Expanded(
+                              Container(
+                                padding: const EdgeInsets.all(9),
+                                decoration: BoxDecoration(
+                                  color: AppColors.textMuted
+                                      .withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(TablerIcons.lock,
+                                    color: AppColors.textMuted, size: 16),
+                              ),
+                              const SizedBox(width: 12),
+                              const Expanded(
                                 child: Text(
-                                  'Contact details are only visible to chapter members.',
-                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+                                  'Contact details are only visible to members of the same chapter.',
+                                  style: TextStyle(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textSecondary,
+                                    height: 1.4,
+                                  ),
                                 ),
                               ),
                             ],
                           ),
                         ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDetailHero(Member member) {
+    final tierColor = _tierColor(member.verificationLevel);
+    final hasTier = member.verificationLevel.toLowerCase() != 'none';
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        gradient: const LinearGradient(
+          colors: AppColors.primaryGradient,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.22),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+          ),
+          BoxShadow(
+            color: AppColors.accent.withValues(alpha: 0.10),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(22),
+        child: Stack(
+          children: [
+            Positioned(
+              top: -50,
+              right: -50,
+              child: Container(
+                width: 170,
+                height: 170,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      AppColors.accent.withValues(alpha: 0.22),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: const LinearGradient(
+                        colors: AppColors.goldGradient,
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      boxShadow: AppColors.goldGlow,
+                    ),
+                    child: CachedAvatar(
+                      imageUrl: member.profilePhoto,
+                      initials: member.initials,
+                      size: 72,
+                      backgroundColor: AppColors.surface,
+                      textColor: AppColors.primary,
+                      fontSize: 26,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          member.fullName,
+                          style: GoogleFonts.dmSans(
+                            color: Colors.white,
+                            fontSize: 19,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.5,
+                            height: 1.15,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black.withValues(alpha: 0.25),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          member.company,
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.78),
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: [
+                            if (member.isSameChapter)
+                              _glassPill(
+                                icon: TablerIcons.discount_check_filled,
+                                label: 'SAME CHAPTER',
+                                color: AppColors.accent,
+                              ),
+                            if (hasTier)
+                              _glassPill(
+                                icon: TablerIcons.discount_check_filled,
+                                label: member.verificationLevel.toUpperCase(),
+                                color: tierColor,
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -617,26 +1309,148 @@ class _MembersPageState extends State<MembersPage> {
     );
   }
 
-  Widget _detailRow(IconData icon, String label, String value) {
+  Widget _glassPill({
+    required IconData icon,
+    required String label,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(7),
+        border:
+            Border.all(color: color.withValues(alpha: 0.45), width: 0.8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 10, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 9.5,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.7,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _detailLabel(String text) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(left: 4),
+      child: Row(
+        children: [
+          Container(
+            width: 3,
+            height: 14,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: AppColors.goldGradient,
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            text,
+            style: GoogleFonts.dmSans(
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+              color: AppColors.text,
+              letterSpacing: -0.2,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _detailInfoCard(List<Widget> children) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: AppColors.surfaceGradient,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.7)),
+        boxShadow: AppColors.shadowSm,
+      ),
+      child: Column(children: children),
+    );
+  }
+
+  Widget _hairlineDivider() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      child: Container(
+        height: 1,
+        color: AppColors.border.withValues(alpha: 0.5),
+      ),
+    );
+  }
+
+  Widget _premiumInfoRow({
+    required IconData icon,
+    required Color iconColor,
+    required String label,
+    required String value,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.all(14),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(8)),
-            child: Icon(icon, size: 18, color: AppColors.primary),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  iconColor.withValues(alpha: 0.18),
+                  iconColor.withValues(alpha: 0.06),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(10),
+              border:
+                  Border.all(color: iconColor.withValues(alpha: 0.22)),
+            ),
+            child: Icon(icon, size: 15, color: iconColor),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(label.toUpperCase(), style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: AppColors.textSecondary)),
-                Text(value, 
-                  maxLines: 1, 
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.textMuted,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  value,
+                  style: GoogleFonts.dmSans(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.text,
+                    letterSpacing: -0.2,
+                  ),
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.text)),
+                ),
               ],
             ),
           ),
@@ -645,27 +1459,76 @@ class _MembersPageState extends State<MembersPage> {
     );
   }
 
-  Widget _contactButton(IconData icon, String label, VoidCallback onTap) {
-    return ElevatedButton.icon(
-      onPressed: onTap,
-      icon: Icon(icon, size: 18),
-      label: Text(label),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        elevation: 0,
+  Widget _detailActionButton({
+    required IconData icon,
+    required String label,
+    required Color tint,
+    required VoidCallback? onTap,
+  }) {
+    final enabled = onTap != null;
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            gradient: enabled
+                ? LinearGradient(
+                    colors: [
+                      tint.withValues(alpha: 0.22),
+                      tint.withValues(alpha: 0.08),
+                    ],
+                  )
+                : LinearGradient(
+                    colors: [
+                      AppColors.textMuted.withValues(alpha: 0.10),
+                      AppColors.textMuted.withValues(alpha: 0.04),
+                    ],
+                  ),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: enabled
+                  ? tint.withValues(alpha: 0.32)
+                  : AppColors.border.withValues(alpha: 0.6),
+            ),
+          ),
+          child: Column(
+            children: [
+              Icon(icon,
+                  size: 18,
+                  color: enabled ? tint : AppColors.textMuted),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.w900,
+                  color: enabled ? tint : AppColors.textMuted,
+                  letterSpacing: 0.6,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
-  Color _getVerificationColor(String? level) {
-    switch (level?.toLowerCase()) {
-      case 'platinum': return const Color(0xFF94A3B8); // Platinum look
-      case 'gold': return const Color(0xFFFACC15);
-      case 'silver': return const Color(0xFF94A3B8);
-      case 'verified': return const Color(0xFF3B82F6);
-      default: return Colors.transparent;
+
+  Color _tierColor(String level) {
+    switch (level.toLowerCase()) {
+      case 'platinum':
+        return const Color(0xFFE5E7EB);
+      case 'gold':
+        return AppColors.accent;
+      case 'silver':
+        return AppColors.textMuted;
+      case 'verified':
+        return AppColors.accentBlue;
+      default:
+        return AppColors.accent;
     }
   }
 }

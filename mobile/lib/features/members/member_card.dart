@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:pbn/core/constants/app_colors.dart';
+import 'package:pbn/core/widgets/cached_avatar.dart';
 import 'package:pbn/models/member.dart';
 
 class MemberCard extends StatelessWidget {
@@ -39,7 +40,7 @@ class MemberCard extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                // Premium gold-ringed initial avatar
+                // Premium gold-ringed avatar (photo with initials fallback)
                 Container(
                   padding: const EdgeInsets.all(2),
                   decoration: BoxDecoration(
@@ -57,31 +58,13 @@ class MemberCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: Container(
-                    width: 52,
-                    height: 52,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        colors: [
-                          AppColors.primary,
-                          AppColors.primary.withValues(alpha: 0.85),
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        member.initials,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 18,
-                          letterSpacing: -0.3,
-                        ),
-                      ),
-                    ),
+                  child: CachedAvatar(
+                    imageUrl: member.profilePhoto,
+                    initials: member.initials,
+                    size: 52,
+                    backgroundColor: AppColors.primary,
+                    textColor: Colors.white,
+                    fontSize: 18,
                   ),
                 ),
                 const SizedBox(width: 16),
