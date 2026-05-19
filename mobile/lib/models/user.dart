@@ -9,6 +9,7 @@ class User {
   final String createdAt;
   final String updatedAt;
   final bool mustChangePassword;
+  final bool twoFactorEnabled;
   final String? chapterId;
   final String verificationLevel;
 
@@ -23,6 +24,7 @@ class User {
     required this.createdAt,
     required this.updatedAt,
     required this.mustChangePassword,
+    this.twoFactorEnabled = false,
     this.chapterId,
     this.verificationLevel = 'none',
   });
@@ -38,6 +40,7 @@ class User {
         createdAt: json['created_at'] ?? '',
         updatedAt: json['updated_at'] ?? '',
         mustChangePassword: json['must_change_password'] ?? false,
+        twoFactorEnabled: json['two_factor_enabled'] ?? false,
         chapterId: json['chapter_id'],
         verificationLevel: json['verification_level'] ?? 'none',
       );
@@ -59,6 +62,7 @@ class User {
     String? createdAt,
     String? updatedAt,
     bool? mustChangePassword,
+    bool? twoFactorEnabled,
     String? chapterId,
     String? verificationLevel,
   }) {
@@ -73,6 +77,7 @@ class User {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       mustChangePassword: mustChangePassword ?? this.mustChangePassword,
+      twoFactorEnabled: twoFactorEnabled ?? this.twoFactorEnabled,
       chapterId: chapterId ?? this.chapterId,
       verificationLevel: verificationLevel ?? this.verificationLevel,
     );

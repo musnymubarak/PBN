@@ -43,6 +43,8 @@ OTP_KEY = "otp:{phone}"
 OTP_RATE_KEY = "otp_rate:{phone}"
 VERIFY_RATE_KEY = "verify_rate:{phone}"
 REFRESH_KEY = "refresh:{user_id}"
+TFA_OTP_KEY = "tfa_otp:{user_id}"
+TFA_TOKEN_KEY = "tfa_token:{token}"
 
 # ── Constants ────────────────────────────────────────────────────────────────
 
@@ -51,6 +53,8 @@ OTP_RATE_LIMIT = 3             # max OTP sends per window
 OTP_RATE_WINDOW = 600          # 10 minutes
 VERIFY_RATE_LIMIT = 5          # max verify attempts per window
 VERIFY_RATE_WINDOW = 900       # 15 minutes
+TFA_OTP_TTL_SECONDS = 60        # 1 minute validity
+TFA_TOKEN_TTL_SECONDS = 300     # 5 minutes validity for 2FA token
 
 
 # ── OTP ──────────────────────────────────────────────────────────────────────
@@ -374,6 +378,48 @@ async def login(
             message="Invalid credentials.", code="INVALID_CREDENTIALS"
         )
 
+    # ── 2FA Check ──
+    if user.two_factor_enabled:
+        if not user.email:
+            raise BadRequestException(
+                message="2FA is enabled but no email is configured.",
+                code="NO_EMAIL_FOR_2FA"
+            )
+
+        # Generate and store OTP (valid for 60 seconds)
+        otp = _generate_otp()
+        hashed_otp = _hash_otp(otp)
+        tfa_otp_key = TFA_OTP_KEY.format(user_id=str(user.id))
+        await redis.set(tfa_otp_key, hashed_otp, ex=TFA_OTP_TTL_SECONDS)
+
+        # Generate a temporary TFA token (valid for 5 minutes)
+        tfa_token = secrets.token_urlsafe(32)
+        tfa_token_key = TFA_TOKEN_KEY.format(token=_hash_otp(tfa_token))
+        await redis.set(tfa_token_key, str(user.id), ex=TFA_TOKEN_TTL_SECONDS)
+
+        # Send OTP email
+        from app.core.email_service import send_email, render_template
+        try:
+            html = render_template("2fa_otp_email.html", {"otp": otp})
+            await send_email(user.email, "PBN Login Verification Code", html)
+            logger.info("2FA OTP sent to %s for user %s", user.email, user.id)
+        except Exception as mail_err:
+            logger.error("Failed to send 2FA email: %s", str(mail_err))
+            raise BadRequestException(
+                message="Failed to send 2FA email. Please try again later.",
+                code="EMAIL_SEND_FAILED"
+            )
+
+        # DEV helper to print OTP to server logs for easier automated/local testing
+        if settings.ENVIRONMENT == "development":
+            logger.info("📱 [DEV TFA STUB] 2FA OTP: %s", otp)
+
+        return {
+            "requires_2fa": True,
+            "tfa_token": tfa_token,
+            "message": "A verification code has been sent to your email."
+        }
+
     # Generate tokens
     access_token = await create_access_token_with_claims(user, db)
     refresh_token = _create_refresh_token(user)
@@ -396,6 +442,7 @@ async def login(
             "email": user.email,
             "role": user.role.value,
             "must_change_password": user.must_change_password,
+            "two_factor_enabled": user.two_factor_enabled,
         },
     }
 
@@ -516,4 +563,154 @@ async def reset_password(
     user.must_change_password = False
     await db.commit()
     logger.info(f"Password reset SUCCESS for user: {user.id}")
+
+
+async def verify_2fa(
+    tfa_token: str,
+    otp: str,
+    redis: Redis,
+    db: AsyncSession,
+) -> dict[str, Any]:
+    """Verify 2FA OTP after successful password login."""
+
+    # 1. Validate tfa_token
+    tfa_token_key = TFA_TOKEN_KEY.format(token=_hash_otp(tfa_token))
+    user_id = await redis.get(tfa_token_key)
+
+    if user_id is None:
+        raise UnauthorizedException(
+            message="2FA session expired. Please login again.",
+            code="TFA_SESSION_EXPIRED"
+        )
+
+    # 2. Verify OTP
+    tfa_otp_key = TFA_OTP_KEY.format(user_id=user_id)
+    stored_hash = await redis.get(tfa_otp_key)
+
+    if stored_hash is None:
+        raise BadRequestException(
+            message="Verification code expired. Please login again.",
+            code="TFA_OTP_EXPIRED"
+        )
+
+    if _hash_otp(otp) != stored_hash:
+        raise BadRequestException(
+            message="Invalid verification code.",
+            code="INVALID_TFA_OTP"
+        )
+
+    # 3. Cleanup Redis
+    await redis.delete(tfa_otp_key)
+    await redis.delete(tfa_token_key)
+
+    # 4. Fetch user and generate real tokens
+    user = await _get_user_by_id(UUID(user_id), db)
+    if user is None or not user.is_active:
+        raise UnauthorizedException(message="Account deactivated.", code="ACCOUNT_INACTIVE")
+
+    access_token = await create_access_token_with_claims(user, db)
+    refresh_token = _create_refresh_token(user)
+
+    refresh_key = REFRESH_KEY.format(user_id=str(user.id))
+    await redis.set(
+        refresh_key,
+        _hash_otp(refresh_token),
+        ex=settings.REFRESH_TOKEN_EXPIRE_DAYS * 86400,
+    )
+
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer",
+        "user": {
+            "id": str(user.id),
+            "full_name": user.full_name,
+            "email": user.email,
+            "role": user.role.value,
+            "must_change_password": user.must_change_password,
+            "two_factor_enabled": user.two_factor_enabled,
+        },
+    }
+
+
+async def toggle_2fa(
+    user: User,
+    enable: bool,
+    password: str,
+    db: AsyncSession,
+) -> bool:
+    """Enable or disable 2FA. Requires password confirmation."""
+    # Require email to enable 2FA
+    if enable and not user.email:
+        raise BadRequestException(
+            message="You must have an email address to enable Two-Factor Authentication.",
+            code="NO_EMAIL_FOR_2FA"
+        )
+
+    # Verify password before changing 2FA setting
+    if not user.password_hash or not pwd_context.verify(password, user.password_hash):
+        raise UnauthorizedException(
+            message="Incorrect password.",
+            code="INVALID_PASSWORD"
+        )
+
+    user.two_factor_enabled = enable
+    await db.commit()
+    logger.info("2FA %s for user: %s", "enabled" if enable else "disabled", user.id)
+    return enable
+
+
+async def resend_2fa(
+    tfa_token: str,
+    redis: Redis,
+    db: AsyncSession,
+) -> None:
+    """Resend a new 2FA OTP code, updating the existing OTP in Redis."""
+    tfa_token_key = TFA_TOKEN_KEY.format(token=_hash_otp(tfa_token))
+    user_id = await redis.get(tfa_token_key)
+
+    if user_id is None:
+        raise UnauthorizedException(
+            message="2FA session expired. Please login again.",
+            code="TFA_SESSION_EXPIRED"
+        )
+
+    user = await _get_user_by_id(UUID(user_id), db)
+    if user is None or not user.is_active:
+        raise UnauthorizedException(message="Account deactivated.", code="ACCOUNT_INACTIVE")
+
+    if not user.email:
+        raise BadRequestException(
+            message="No email is configured for this account.",
+            code="NO_EMAIL_FOR_2FA"
+        )
+
+    # Rate limiting on resends
+    rate_key = f"tfa_resend_rate:{user_id}"
+    await _check_rate_limit(
+        redis, rate_key, OTP_RATE_LIMIT, OTP_RATE_WINDOW,
+        "Too many resend attempts. Try again in 10 minutes."
+    )
+
+    # Generate new OTP (valid for 60 seconds)
+    otp = _generate_otp()
+    hashed_otp = _hash_otp(otp)
+    tfa_otp_key = TFA_OTP_KEY.format(user_id=str(user.id))
+    await redis.set(tfa_otp_key, hashed_otp, ex=TFA_OTP_TTL_SECONDS)
+
+    # Send email
+    from app.core.email_service import send_email, render_template
+    try:
+        html = render_template("2fa_otp_email.html", {"otp": otp})
+        await send_email(user.email, "PBN Login Verification Code", html)
+        logger.info("Resent 2FA OTP to %s for user %s", user.email, user.id)
+    except Exception as mail_err:
+        logger.error("Failed to resend 2FA email: %s", str(mail_err))
+        raise BadRequestException(
+            message="Failed to send 2FA email. Please try again later.",
+            code="EMAIL_SEND_FAILED"
+        )
+
+    if settings.ENVIRONMENT == "development":
+        logger.info("📱 [DEV TFA RESEND STUB] 2FA OTP: %s", otp)
 

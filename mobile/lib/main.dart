@@ -23,6 +23,7 @@ import 'package:pbn/features/partner/partner_dashboard_page.dart';
 import 'package:pbn/features/auth/onboarding_page.dart';
 import 'package:pbn/features/auth/force_change_password_page.dart';
 import 'package:pbn/features/auth/forgot_password_page.dart';
+import 'package:pbn/features/auth/tfa_verify_page.dart';
 import 'package:pbn/features/notifications/notification_settings_page.dart';
 import 'package:pbn/features/clubs/clubs_page.dart';
 import 'package:pbn/core/services/push_notification_service.dart';
@@ -93,6 +94,7 @@ class PBNApp extends StatelessWidget {
         '/notification-settings': (context) => const AuthGuard(child: NotificationSettingsPage()),
         '/forgot-password': (context) => const ForgotPasswordPage(),
         '/clubs': (context) => const AuthGuard(child: ClubsPage()),
+        '/verify-2fa': (context) => const TfaVerifyPage(),
       },
     );
   }

@@ -29,6 +29,9 @@ from app.features.auth.schemas import (
     ChangePasswordRequest,
     ForgotPasswordRequest,
     ResetPasswordRequest,
+    Verify2FARequest,
+    Toggle2FARequest,
+    Resend2FARequest,
 )
 from pydantic import BaseModel
 
@@ -44,6 +47,9 @@ from app.features.auth.service import (
     change_password,
     forgot_password,
     reset_password,
+    verify_2fa,
+    toggle_2fa,
+    resend_2fa,
 )
 from app.models.user import User
 
@@ -160,6 +166,7 @@ async def me_endpoint(
             "role": current_user.role.value,
             "is_active": current_user.is_active,
             "must_change_password": current_user.must_change_password,
+            "two_factor_enabled": current_user.two_factor_enabled,
             "profile_photo": current_user.profile_photo,
             "created_at": current_user.created_at.isoformat(),
             "updated_at": current_user.updated_at.isoformat(),
@@ -276,3 +283,39 @@ async def reset_password_endpoint(
     """Verify OTP and update password."""
     await reset_password(body.identifier, body.otp, body.new_password, redis, db)
     return success_response(message="Password reset successfully. You can now login with your new password.")
+
+
+@router.post("/verify-2fa", summary="Verify 2FA OTP after login")
+async def verify_2fa_endpoint(
+    body: Verify2FARequest,
+    redis: Redis = Depends(get_redis),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    """Complete login by verifying 2FA OTP code."""
+    tokens = await verify_2fa(body.tfa_token, body.otp, redis, db)
+    return success_response(data=tokens, status_code=200)
+
+
+@router.post("/resend-2fa", summary="Resend 2FA OTP")
+async def resend_2fa_endpoint(
+    body: Resend2FARequest,
+    redis: Redis = Depends(get_redis),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    """Resend a new 2FA verification code to user email."""
+    await resend_2fa(body.tfa_token, redis, db)
+    return success_response(message="A new verification code has been sent to your email.")
+
+
+@router.put("/2fa", summary="Toggle 2FA on/off")
+async def toggle_2fa_endpoint(
+    body: Toggle2FARequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    """Enable or disable Two-Factor Authentication."""
+    enabled = await toggle_2fa(current_user, body.enable, body.password, db)
+    return success_response(
+        data={"two_factor_enabled": enabled},
+        message=f"Two-Factor Authentication {'enabled' if enabled else 'disabled'}."
+    )

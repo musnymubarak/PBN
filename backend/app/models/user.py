@@ -76,6 +76,9 @@ class User(Base, TimestampMixin):
     must_change_password: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False
     )
+    two_factor_enabled: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False
+    )
     notification_settings: Mapped[dict | None] = mapped_column(
         JSONB, nullable=True, default=None
     )

@@ -105,6 +105,31 @@ class ChangePasswordRequest(BaseModel):
         return v
 
 
+class Verify2FARequest(BaseModel):
+    """Verify the 2FA OTP after password login."""
+    tfa_token: str = Field(..., description="Temporary token from login response")
+    otp: str = Field(..., description="6-digit OTP from email")
+
+    @field_validator("otp")
+    @classmethod
+    def validate_otp(cls, v: str) -> str:
+        v = v.strip()
+        if not re.match(r"^\d{6}$", v):
+            raise ValueError("OTP must be a 6-digit number")
+        return v
+
+
+class Resend2FARequest(BaseModel):
+    """Request to resend 2FA OTP."""
+    tfa_token: str = Field(..., description="Temporary token from login response")
+
+
+class Toggle2FARequest(BaseModel):
+    """Enable or disable 2FA."""
+    enable: bool = Field(..., description="True to enable, False to disable")
+    password: str = Field(..., description="Current password for confirmation")
+
+
 # ── Response Schemas ─────────────────────────────────────────────────────────
 
 
@@ -130,5 +155,6 @@ class UserProfileResponse(BaseModel):
     full_name: str
     role: str
     is_active: bool
+    two_factor_enabled: bool
     created_at: str
     updated_at: str

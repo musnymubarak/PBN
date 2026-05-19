@@ -1138,6 +1138,9 @@ class _ProfilePageState extends State<ProfilePage> {
   // 6) GROUPED ACCOUNT CARD (iOS-style settings list)
   // ──────────────────────────────────────────────────────────
   Widget _buildGroupedAccountCard() {
+    final auth = context.watch<AuthProvider>();
+    final user = auth.user;
+
     return Container(
       decoration: BoxDecoration(
         gradient: const LinearGradient(
@@ -1178,6 +1181,15 @@ class _ProfilePageState extends State<ProfilePage> {
                 context,
                 MaterialPageRoute(builder: (_) => const BusinessMatchingProfilePage()),
               ),
+            ),
+            _hairlineDivider(),
+            _settingsSwitchRow(
+              icon: TablerIcons.shield_lock,
+              iconColor: const Color(0xFF10B981),
+              title: 'Two-Factor Authentication',
+              subtitle: 'Require email verification to log in',
+              value: user?.twoFactorEnabled ?? false,
+              onChanged: _toggleTwoFactor,
             ),
           ],
         ),
@@ -1263,6 +1275,189 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
       ),
     );
+  }
+
+  Widget _settingsSwitchRow({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String subtitle,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.all(14),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  iconColor.withValues(alpha: 0.18),
+                  iconColor.withValues(alpha: 0.06),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(11),
+              border: Border.all(color: iconColor.withValues(alpha: 0.22)),
+            ),
+            child: Icon(icon, size: 19, color: iconColor),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.dmSans(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14.5,
+                    color: AppColors.text,
+                    letterSpacing: -0.2,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textSecondary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          Switch.adaptive(
+            value: value,
+            activeColor: AppColors.accent,
+            onChanged: onChanged,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _toggleTwoFactor(bool newValue) async {
+    final auth = context.read<AuthProvider>();
+    final user = auth.user;
+    if (user == null) return;
+
+    if (newValue && (user.email == null || user.email!.isEmpty)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('You must configure an email address before enabling Two-Factor Authentication.'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
+    final passwordCtrl = TextEditingController();
+    bool submittable = false;
+    bool dialogLoading = false;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return AlertDialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            title: Text(
+              newValue ? 'Enable Two-Factor?' : 'Disable Two-Factor?',
+              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  newValue
+                      ? 'Confirm your password to enable Two-Factor Authentication. A login verification code will be sent to your email.'
+                      : 'Confirm your password to disable Two-Factor Authentication.',
+                  style: const TextStyle(fontSize: 13, height: 1.4, color: AppColors.textSecondary),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: passwordCtrl,
+                  obscureText: true,
+                  onChanged: (val) {
+                    setModalState(() {
+                      submittable = val.trim().isNotEmpty;
+                    });
+                  },
+                  decoration: InputDecoration(
+                    labelText: 'Current Password',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: dialogLoading ? null : () => Navigator.pop(ctx, false),
+                child: const Text('Cancel', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+              ),
+              ElevatedButton(
+                onPressed: (!submittable || dialogLoading)
+                    ? null
+                    : () async {
+                        setModalState(() => dialogLoading = true);
+                        final success = await auth.toggle2FA(newValue, passwordCtrl.text.trim());
+                        if (context.mounted) {
+                          if (success) {
+                            Navigator.pop(ctx, true);
+                          } else {
+                            setModalState(() => dialogLoading = false);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(auth.error ?? 'Failed to update Two-Factor Authentication setting'),
+                                backgroundColor: Colors.redAccent,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                child: dialogLoading
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                      )
+                    : const Text('Confirm', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            newValue
+                ? 'Two-Factor Authentication enabled successfully.'
+                : 'Two-Factor Authentication disabled.',
+          ),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
   }
 
   // ──────────────────────────────────────────────────────────

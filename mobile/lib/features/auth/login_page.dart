@@ -31,6 +31,12 @@ class _LoginPageState extends State<LoginPage> {
     final auth = context.read<AuthProvider>();
     final success = await auth.login(identifier, password);
 
+    if (auth.requires2FA && mounted) {
+      TextInput.finishAutofillContext();
+      Navigator.pushNamed(context, '/verify-2fa');
+      return;
+    }
+
     if (success && mounted) {
       TextInput.finishAutofillContext();
       if (auth.user?.role == 'PARTNER_ADMIN') {
