@@ -70,25 +70,6 @@ async def login_endpoint(
     return success_response(data=tokens, status_code=200)
 
 
-# ── Dev-only: retrieve OTP for automated testing ─────────────────────────────
-
-from app.core.config import get_settings as _get_settings
-_settings = _get_settings()
-
-if _settings.ENVIRONMENT == "development":
-    from app.features.auth.service import OTP_KEY
-
-    @router.get("/dev/otp/{phone_number}", summary="[DEV] Get stored OTP hash", include_in_schema=False)
-    async def dev_get_otp(
-        phone_number: str,
-        redis: Redis = Depends(get_redis),
-    ) -> ORJSONResponse:
-        """DEV ONLY — Returns the stored OTP hash for automated testing."""
-        otp_key = OTP_KEY.format(phone=phone_number)
-        stored = await redis.get(otp_key)
-        return success_response(data={"otp_hash": stored})
-
-
 # ── Send OTP ─────────────────────────────────────────────────────────────────
 
 
