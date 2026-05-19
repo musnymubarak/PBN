@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/services/api_client.dart';
@@ -72,6 +73,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         'confirm_password': confirm,
       });
       if (mounted) {
+        TextInput.finishAutofillContext();
         _showSuccess('Password reset successfully! Please login.');
         Navigator.pop(context);
       }
@@ -125,7 +127,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 30, offset: const Offset(0, 15)),
                   ],
                 ),
-                child: Column(
+                child: AutofillGroup(
+                  child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
@@ -148,6 +151,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                         controller: _identifierController,
                         hint: 'Enter your credentials',
                         icon: TablerIcons.mail,
+                        autofillHints: const [AutofillHints.username, AutofillHints.email],
                       ),
                       const SizedBox(height: 32),
                       SizedBox(
@@ -179,6 +183,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                         isPassword: true,
                         obscure: _obscurePassword,
                         onToggleObscure: () => setState(() => _obscurePassword = !_obscurePassword),
+                        autofillHints: const [AutofillHints.newPassword],
                       ),
                       const SizedBox(height: 20),
                       _buildLabel('CONFIRM NEW PASSWORD'),
@@ -189,6 +194,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                         icon: TablerIcons.lock_check,
                         isPassword: true,
                         obscure: _obscurePassword,
+                        autofillHints: const [AutofillHints.newPassword],
                       ),
                       const SizedBox(height: 32),
                       SizedBox(
@@ -210,6 +216,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                       ),
                     ],
                   ],
+                  ),
                 ),
               ),
               const SizedBox(height: 40),
@@ -232,6 +239,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     bool obscure = false,
     VoidCallback? onToggleObscure,
     TextInputType? keyboardType,
+    Iterable<String>? autofillHints,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -242,6 +250,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         controller: controller,
         obscureText: obscure,
         keyboardType: keyboardType,
+        autofillHints: autofillHints,
         style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.text),
         decoration: InputDecoration(
           hintText: hint,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:provider/provider.dart';
 import 'package:pbn/core/constants/app_colors.dart';
@@ -29,8 +30,9 @@ class _LoginPageState extends State<LoginPage> {
 
     final auth = context.read<AuthProvider>();
     final success = await auth.login(identifier, password);
-    
+
     if (success && mounted) {
+      TextInput.finishAutofillContext();
       if (auth.user?.role == 'PARTNER_ADMIN') {
         Navigator.pushReplacementNamed(context, '/partner_dashboard');
       } else {
@@ -140,7 +142,8 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ],
                     ),
-                    child: Column(
+                    child: AutofillGroup(
+                      child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text('Log In', style: TextStyle(color: AppColors.text, fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -1)),
@@ -154,6 +157,8 @@ class _LoginPageState extends State<LoginPage> {
                           controller: _identifierController,
                           hint: 'Enter credentials',
                           icon: TablerIcons.mail,
+                          autofillHints: const [AutofillHints.username, AutofillHints.email],
+                          textInputAction: TextInputAction.next,
                         ),
                         const SizedBox(height: 16),
 
@@ -166,6 +171,9 @@ class _LoginPageState extends State<LoginPage> {
                           isPassword: true,
                           obscure: _obscurePassword,
                           onToggleObscure: () => setState(() => _obscurePassword = !_obscurePassword),
+                          autofillHints: const [AutofillHints.password],
+                          textInputAction: TextInputAction.done,
+                          onSubmitted: (_) => _handleLogin(),
                         ),
                         
                         Align(
@@ -207,6 +215,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ],
                     ),
+                    ),
                   ),
                   const SizedBox(height: 40),
                 ],
@@ -229,6 +238,9 @@ class _LoginPageState extends State<LoginPage> {
     bool isPassword = false,
     bool obscure = false,
     VoidCallback? onToggleObscure,
+    Iterable<String>? autofillHints,
+    TextInputAction? textInputAction,
+    ValueChanged<String>? onSubmitted,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -246,6 +258,9 @@ class _LoginPageState extends State<LoginPage> {
       child: TextField(
         controller: controller,
         obscureText: obscure,
+        autofillHints: autofillHints,
+        textInputAction: textInputAction,
+        onSubmitted: onSubmitted,
         style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.text),
         decoration: InputDecoration(
           hintText: hint,

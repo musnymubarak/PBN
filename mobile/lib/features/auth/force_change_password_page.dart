@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:provider/provider.dart';
 import 'package:pbn/core/constants/app_colors.dart';
@@ -52,9 +53,10 @@ class _ForceChangePasswordPageState extends State<ForceChangePasswordPage> {
       );
 
       if (success && mounted) {
+        TextInput.finishAutofillContext();
         // Refresh profile to clear the must_change_password flag in provider
         await context.read<AuthProvider>().tryAutoLogin();
-        
+
         if (mounted) {
           // Navigate to dashboard
           Navigator.pushReplacementNamed(context, '/dashboard');
@@ -82,7 +84,8 @@ class _ForceChangePasswordPageState extends State<ForceChangePasswordPage> {
           child: SingleChildScrollView(
             clipBehavior: Clip.none,
             padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
-            child: Column(
+            child: AutofillGroup(
+              child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 20),
@@ -146,6 +149,7 @@ class _ForceChangePasswordPageState extends State<ForceChangePasswordPage> {
                   icon: TablerIcons.key,
                   obscure: _obscureOld,
                   onToggle: () => setState(() => _obscureOld = !_obscureOld),
+                  autofillHints: const [AutofillHints.password],
                 ),
                 const SizedBox(height: 24),
                 _buildField(
@@ -155,6 +159,7 @@ class _ForceChangePasswordPageState extends State<ForceChangePasswordPage> {
                   icon: TablerIcons.lock,
                   obscure: _obscureNew,
                   onToggle: () => setState(() => _obscureNew = !_obscureNew),
+                  autofillHints: const [AutofillHints.newPassword],
                 ),
                 const SizedBox(height: 24),
                 _buildField(
@@ -164,6 +169,7 @@ class _ForceChangePasswordPageState extends State<ForceChangePasswordPage> {
                   icon: TablerIcons.lock_check,
                   obscure: _obscureConfirm,
                   onToggle: () => setState(() => _obscureConfirm = !_obscureConfirm),
+                  autofillHints: const [AutofillHints.newPassword],
                 ),
                 const SizedBox(height: 48),
                 
@@ -190,6 +196,7 @@ class _ForceChangePasswordPageState extends State<ForceChangePasswordPage> {
                   ),
                 ),
               ],
+              ),
             ),
           ),
         ),
@@ -204,6 +211,7 @@ class _ForceChangePasswordPageState extends State<ForceChangePasswordPage> {
     required IconData icon,
     required bool obscure,
     required VoidCallback onToggle,
+    Iterable<String>? autofillHints,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -227,6 +235,7 @@ class _ForceChangePasswordPageState extends State<ForceChangePasswordPage> {
           child: TextField(
             controller: controller,
             obscureText: obscure,
+            autofillHints: autofillHints,
             style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
             decoration: InputDecoration(
               hintText: hint,
