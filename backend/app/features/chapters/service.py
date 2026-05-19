@@ -23,7 +23,7 @@ from app.models.user import User
 async def list_chapters(db: AsyncSession, district: str | None = None, active_only: bool = True) -> List[Chapter]:
     stmt = select(Chapter).order_by(
         case(
-            (Chapter.name.ilike("Primes%"), 0),
+            (Chapter.name.ilike("Prime%"), 0),
             else_=1
         ),
         Chapter.name
