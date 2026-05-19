@@ -40,13 +40,21 @@ async def initiate_payment_endpoint(
     return success_response(data=result, message="Payment initiated", status_code=201)
 
 
-@router.post("/payments/webhook", summary="WebxPay webhook callback")
-async def webhook_endpoint(
-    payload: dict,
-    db: AsyncSession = Depends(get_db),
-) -> ORJSONResponse:
-    result = await service.process_webhook(payload, db)
-    return success_response(data=result)
+# ── WebxPay webhook callback ────────────────────────────────────────────────
+#
+# DISABLED until WebxPay goes live. Re-enabling this requires completing the
+# F-05b hardening checklist first: bind payment_id into the signed payload,
+# add an nginx-level source-IP allowlist for WebxPay's egress range, and add
+# Redis-based replay protection. Leaving the route mounted while idle exposes
+# an unauthenticated state-mutation surface for no business benefit.
+#
+# @router.post("/payments/webhook", summary="WebxPay webhook callback")
+# async def webhook_endpoint(
+#     payload: dict,
+#     db: AsyncSession = Depends(get_db),
+# ) -> ORJSONResponse:
+#     result = await service.process_webhook(payload, db)
+#     return success_response(data=result)
 
 
 @router.post("/payments/simulate-webhook", summary="Simulate successful payment (dev only)")

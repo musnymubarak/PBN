@@ -126,13 +126,22 @@ async def verify_webhook_signature(payload: dict, secret: str) -> bool:
     return hmac.compare_digest(received_sig, expected_sig)
 
 
-async def process_webhook(payload: dict, db: AsyncSession) -> Dict[str, Any]:
-    """Process an incoming WebxPay webhook notification."""
+async def process_webhook(
+    payload: dict,
+    db: AsyncSession,
+    *,
+    _skip_signature_check: bool = False,
+) -> Dict[str, Any]:
+    """Process an incoming WebxPay webhook notification.
+
+    `_skip_signature_check` is a keyword-only internal flag used by
+    `simulate_webhook()` in non-prod environments. It is NOT readable
+    from the request payload — the public webhook endpoint can never
+    set it.
+    """
     settings = get_settings()
 
-    # Verify signature (skip verification for simulated webhooks)
-    is_simulated = payload.get("simulated", False)
-    if not is_simulated:
+    if not _skip_signature_check:
         valid = await verify_webhook_signature(payload, settings.WEBXPAY_SECRET_KEY)
         if not valid:
             raise BadRequestException("Invalid webhook signature", code="INVALID_SIGNATURE")
@@ -229,15 +238,17 @@ async def _apply_payment_side_effects(payment: Payment, db: AsyncSession) -> Non
 
 
 async def simulate_webhook(payment_id: UUID, db: AsyncSession) -> Dict[str, Any]:
-    """Simulate a successful WebxPay webhook for dev/testing."""
+    """Simulate a successful WebxPay webhook for dev/testing.
+
+    Only reachable via the env-gated /payments/simulate-webhook endpoint;
+    bypasses signature check via the internal _skip_signature_check flag.
+    """
     payload = {
         "payment_id": str(payment_id),
         "status_code": "2",
         "order_id": "SIMULATED",
-        "md5sig": "SIMULATED",
-        "simulated": True,
     }
-    return await process_webhook(payload, db)
+    return await process_webhook(payload, db, _skip_signature_check=True)
 
 
 async def get_my_payments(user_id: UUID, db: AsyncSession) -> List[Dict[str, Any]]:

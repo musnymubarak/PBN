@@ -116,24 +116,38 @@ def _register_exception_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(Exception)
     async def global_exception_handler(request: Request, exc: Exception):
-        """Catch-all for unhandled exceptions (returns 500)."""
-        logger.error(f"Unhandled exception: {str(exc)}", exc_info=True)
-        
-        # Extract the actual error message to show in the UI
-        error_msg = str(exc)
-        
-        # If it's a known database error, make it a bit cleaner
-        if "UniqueViolationError" in error_msg:
-            error_msg = "A record with this information already exists (Unique constraint violation)."
-        elif "ForeignKeyViolationError" in error_msg:
-            error_msg = "This item cannot be deleted or modified because it is being used by other records."
+        """Catch-all for unhandled exceptions (returns 500).
+
+        Full exception detail is logged server-side with the request ID.
+        Clients receive a generic message + request_id only — never raw
+        exception text, which can leak DB schema, bound parameters, or
+        internal paths (CWE-209).
+        """
+        request_id = getattr(request.state, "request_id", None)
+        logger.error(
+            "Unhandled exception (request_id=%s): %s", request_id, exc, exc_info=True
+        )
+
+        # Map known DB errors to user-safe phrases. Anything else gets a
+        # generic message — the request_id lets support correlate to logs.
+        raw = str(exc)
+        if "UniqueViolationError" in raw:
+            user_message = "A record with this information already exists."
+            code = "UNIQUE_VIOLATION"
+        elif "ForeignKeyViolationError" in raw:
+            user_message = "This item cannot be deleted or modified because it is being used by other records."
+            code = "FK_VIOLATION"
+        else:
+            user_message = "An unexpected error occurred. Please try again later."
+            code = "INTERNAL_ERROR"
 
         return ORJSONResponse(
             status_code=500,
             content={
                 "status": "error",
-                "message": error_msg,
-                "code": "INTERNAL_ERROR",
+                "message": user_message,
+                "code": code,
+                "request_id": request_id,
             },
         )
 
