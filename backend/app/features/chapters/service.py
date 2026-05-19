@@ -7,7 +7,7 @@ from __future__ import annotations
 from typing import Any, Dict, List
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import select, case
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
@@ -21,7 +21,13 @@ from app.models.user import User
 
 
 async def list_chapters(db: AsyncSession, district: str | None = None, active_only: bool = True) -> List[Chapter]:
-    stmt = select(Chapter).order_by(Chapter.name)
+    stmt = select(Chapter).order_by(
+        case(
+            (Chapter.name.ilike("Primes%"), 0),
+            else_=1
+        ),
+        Chapter.name
+    )
     if district:
         stmt = stmt.where(Chapter.district == district)
     if active_only:
