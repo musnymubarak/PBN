@@ -79,7 +79,7 @@ class _ForceChangePasswordPageState extends State<ForceChangePasswordPage> {
       canPop: false, // Prevent going back
       child: Scaffold(
         backgroundColor: Colors.white,
-        resizeToAvoidBottomInset: false,
+        resizeToAvoidBottomInset: true,
         body: SafeArea(
           child: SingleChildScrollView(
             clipBehavior: Clip.none,
