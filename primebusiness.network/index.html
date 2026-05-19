@@ -2631,6 +2631,154 @@
         max-width: 100%;
       }
     }
+
+    /* ── PBN PREMIUM CUSTOM SELECT dropdowns ── */
+    .pbn-custom-select-wrapper {
+      position: relative;
+      width: 100%;
+    }
+
+    .pbn-custom-select-trigger {
+      width: 100%;
+      padding: 12px 16px;
+      background: #f4f5f8;
+      border: 1.5px solid #dde1f0;
+      border-radius: 6px;
+      font-family: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
+      font-size: 0.9rem;
+      color: #080d24;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+      user-select: none;
+      min-height: 48px;
+    }
+
+    .pbn-custom-select-wrapper:not(.is-disabled) .pbn-custom-select-trigger:hover {
+      border-color: #c9a84c;
+    }
+
+    .pbn-custom-select-wrapper.is-open .pbn-custom-select-trigger {
+      border-color: #c9a84c;
+      box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.15);
+      background: #ffffff;
+    }
+
+    .pbn-custom-select-value {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .pbn-custom-select-value.is-placeholder {
+      color: #aab0cc;
+    }
+
+    .pbn-custom-select-chevron {
+      color: #7a85b0;
+      flex-shrink: 0;
+      margin-left: 8px;
+      transition: transform 0.2s ease;
+    }
+
+    .pbn-custom-select-wrapper.is-open .pbn-custom-select-chevron {
+      transform: rotate(180deg);
+      color: #c9a84c;
+    }
+
+    /* Disabled state */
+    .pbn-custom-select-wrapper.is-disabled .pbn-custom-select-trigger {
+      background: #ebecf0;
+      border-color: #e2e5f0;
+      color: #9ba0bc;
+      cursor: not-allowed;
+    }
+
+    .pbn-custom-select-wrapper.is-disabled .pbn-custom-select-chevron {
+      color: #b0b5cf;
+    }
+
+    /* Menu Dropdown styling */
+    .pbn-custom-select-menu {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      background: #ffffff;
+      border: 1px solid #dde1f0;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px -5px rgba(8, 13, 36, 0.1), 0 8px 16px -6px rgba(8, 13, 36, 0.05);
+      z-index: 1050;
+      max-height: 280px;
+      overflow-y: auto;
+      padding: 6px;
+      display: none;
+      animation: pbnFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .pbn-custom-select-wrapper.is-open .pbn-custom-select-menu {
+      display: block;
+    }
+
+    @keyframes pbnFadeIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .pbn-custom-select-item {
+      padding: 10px 14px;
+      border-radius: 5px;
+      font-size: 0.88rem;
+      font-weight: 500;
+      color: #4a5580;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .pbn-custom-select-item:hover {
+      background: #f4f5f8;
+      color: #080d24;
+    }
+
+    .pbn-custom-select-item.is-selected {
+      background: rgba(201, 168, 76, 0.08);
+      color: #c9a84c;
+      font-weight: 600;
+    }
+
+    .pbn-custom-select-item.is-disabled {
+      color: #b5bbd6;
+      cursor: not-allowed;
+      background: transparent;
+      font-style: italic;
+    }
+
+    .pbn-custom-select-item.is-disabled:hover {
+      background: transparent;
+      color: #b5bbd6;
+    }
+
+    /* Custom scrollbar for menu */
+    .pbn-custom-select-menu::-webkit-scrollbar {
+      width: 6px;
+    }
+    .pbn-custom-select-menu::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .pbn-custom-select-menu::-webkit-scrollbar-thumb {
+      background: #dde1f0;
+      border-radius: 10px;
+    }
+    .pbn-custom-select-menu::-webkit-scrollbar-thumb:hover {
+      background: #c9a84c;
+    }
   </style>
 </head>
 
@@ -3304,7 +3452,7 @@
     </div>
   </section>
 
-  <!-- VENUE PARTNERS -->
+  <!-- VENUE PARTNERS
   <section id="venue-partners">
     <div class="reveal">
       <div class="section-label">Our Venue Partners</div>
@@ -3323,6 +3471,7 @@
       </div>
     </div>
   </section>
+  -->
 
   <!-- CHAPTERS -->
   <section id="chapters" class="section-light">
@@ -4002,6 +4151,9 @@
       industrySelect.disabled = true;
       industrySelect.innerHTML = '<option value="" disabled selected>Select a chapter first</option>';
 
+      syncSelect('f_chapter');
+      syncSelect('f_category');
+
       try {
         const res = await fetch(`${GATEWAY_URL}?path=chapters&district=${encodeURIComponent(district)}`);
         const data = await res.json();
@@ -4021,6 +4173,8 @@
       } catch (err) {
         chapterSelect.innerHTML = '<option value="" disabled selected>Error loading chapters</option>';
       }
+
+      syncSelect('f_chapter');
     }
 
     async function onChapterChange(chapterId) {
@@ -4028,6 +4182,9 @@
       if (!chapterId) return;
       industrySelect.innerHTML = '<option value="" disabled selected>Checking occupancy...</option>';
       industrySelect.disabled = true;
+
+      syncSelect('f_category');
+
       try {
         const res = await fetch(`${GATEWAY_URL}?path=chapters/${chapterId}/occupied-industries`);
         const data = await res.json();
@@ -4046,6 +4203,8 @@
       } catch (err) {
         industrySelect.innerHTML = '<option value="" disabled selected>Error loading industries</option>';
       }
+
+      syncSelect('f_category');
     }
 
     function openModal() {
@@ -4064,12 +4223,129 @@
       document.getElementById('modalFormWrap').style.display = '';
       document.getElementById('modalSuccess').classList.remove('show');
       loadInitialData();
+
+      syncAllSelects();
     }
 
     function closeModal() {
       document.getElementById('applyModal').classList.remove('open');
       document.body.style.overflow = '';
     }
+
+    /* ── PBN PREMIUM CUSTOM SELECT DROPDOWNS INITIALIZATION ── */
+    function syncSelect(id) {
+      const select = document.getElementById(id);
+      if (!select) return;
+
+      let wrapper = select.closest('.pbn-custom-select-wrapper');
+      if (!wrapper) {
+        wrapper = document.createElement('div');
+        wrapper.className = 'pbn-custom-select-wrapper';
+        
+        const trigger = document.createElement('div');
+        trigger.className = 'pbn-custom-select-trigger';
+        trigger.innerHTML = `
+          <span class="pbn-custom-select-value"></span>
+          <svg class="pbn-custom-select-chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 9l6 6 6-6"/>
+          </svg>
+        `;
+        
+        const menu = document.createElement('div');
+        menu.className = 'pbn-custom-select-menu';
+
+        select.parentNode.insertBefore(wrapper, select);
+        wrapper.appendChild(select);
+        wrapper.appendChild(trigger);
+        wrapper.appendChild(menu);
+
+        // Visually hide native select but keep it keyboard/form accessible
+        select.style.position = 'absolute';
+        select.style.width = '1px';
+        select.style.height = '1px';
+        select.style.padding = '0';
+        select.style.margin = '-1px';
+        select.style.overflow = 'hidden';
+        select.style.clip = 'rect(0,0,0,0)';
+        select.style.border = '0';
+
+        trigger.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (select.disabled) return;
+          
+          const isOpen = wrapper.classList.contains('is-open');
+          closeAllCustomSelects();
+          if (!isOpen) {
+            wrapper.classList.add('is-open');
+          }
+        });
+      }
+
+      const trigger = wrapper.querySelector('.pbn-custom-select-trigger');
+      const menu = wrapper.querySelector('.pbn-custom-select-menu');
+      const valueSpan = trigger.querySelector('.pbn-custom-select-value');
+
+      if (select.disabled) {
+        wrapper.classList.add('is-disabled');
+      } else {
+        wrapper.classList.remove('is-disabled');
+      }
+
+      const selectedOpt = select.options[select.selectedIndex];
+      if (selectedOpt) {
+        valueSpan.textContent = selectedOpt.textContent;
+        if (select.value === "") {
+          valueSpan.classList.add('is-placeholder');
+        } else {
+          valueSpan.classList.remove('is-placeholder');
+        }
+      } else {
+        valueSpan.textContent = '';
+        valueSpan.classList.add('is-placeholder');
+      }
+
+      menu.innerHTML = '';
+      Array.from(select.options).forEach((opt, idx) => {
+        const item = document.createElement('div');
+        item.className = 'pbn-custom-select-item';
+        item.textContent = opt.textContent;
+        
+        if (opt.disabled) {
+          item.classList.add('is-disabled');
+        }
+        if (idx === select.selectedIndex) {
+          item.classList.add('is-selected');
+        }
+
+        item.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (opt.disabled) return;
+          select.value = opt.value;
+          select.dispatchEvent(new Event('change'));
+          syncSelect(id);
+          closeAllCustomSelects();
+        });
+
+        menu.appendChild(item);
+      });
+    }
+
+    function syncAllSelects() {
+      syncSelect('f_district');
+      syncSelect('f_chapter');
+      syncSelect('f_category');
+    }
+
+    function closeAllCustomSelects() {
+      document.querySelectorAll('.pbn-custom-select-wrapper').forEach(w => {
+        w.classList.remove('is-open');
+      });
+    }
+
+    document.addEventListener('click', closeAllCustomSelects);
+
+    // Initial load
+    syncAllSelects();
 
     async function submitForm(e) {
       e.preventDefault();
