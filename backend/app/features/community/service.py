@@ -292,7 +292,7 @@ async def delete_post(user_id: uuid.UUID, post_id: uuid.UUID, role: UserRole, db
         raise NotFoundException("Post not found")
         
     # Only author or Admin can delete
-    if post.author_id != user_id and role not in [UserRole.SUPER_ADMIN, UserRole.CHAPTER_ADMIN]:
+    if post.author_id != user_id and role not in [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.CHAPTER_ADMIN]:
         raise ForbiddenException("You cannot delete this post")
         
     await db.delete(post)
@@ -304,7 +304,7 @@ async def delete_comment(user_id: uuid.UUID, comment_id: uuid.UUID, role: UserRo
     if not comment:
         raise NotFoundException("Comment not found")
         
-    if comment.author_id != user_id and role not in [UserRole.SUPER_ADMIN, UserRole.CHAPTER_ADMIN]:
+    if comment.author_id != user_id and role not in [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.CHAPTER_ADMIN]:
         raise ForbiddenException("You cannot delete this comment")
         
     await db.delete(comment)
@@ -341,7 +341,7 @@ async def update_lead_status(user_id: uuid.UUID, post_id: uuid.UUID, status: str
     user_stmt = select(User.role).where(User.id == user_id)
     user_role = (await db.execute(user_stmt)).scalar()
     
-    if post.author_id != user_id and user_role not in [UserRole.SUPER_ADMIN, UserRole.CHAPTER_ADMIN]:
+    if post.author_id != user_id and user_role not in [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.CHAPTER_ADMIN]:
         raise ForbiddenException("Only the author or an admin can update lead status")
         
     from app.models.community import LeadStatus

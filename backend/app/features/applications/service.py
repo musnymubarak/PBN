@@ -137,7 +137,7 @@ async def create_application(
     try:
         from app.features.notifications.service import send_push_notification
         # Find all Super Admins
-        admin_stmt = select(User.id).where(User.role == UserRole.SUPER_ADMIN, User.is_active == True)
+        admin_stmt = select(User.id).where(User.role.in_([UserRole.SUPER_ADMIN, UserRole.ADMIN]), User.is_active == True)
         admin_ids = (await db.execute(admin_stmt)).scalars().all()
         
         for admin_id in admin_ids:
@@ -321,7 +321,7 @@ async def update_application_status(
             db.add(user)
             await db.flush()
         else:
-            if user.role != UserRole.SUPER_ADMIN: # Don't downgrade admins
+            if user.role not in (UserRole.SUPER_ADMIN, UserRole.ADMIN): # Don't downgrade admins
                 user.role = UserRole.PROSPECT
                 user.full_name = app.full_name
                 if app.email:

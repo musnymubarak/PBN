@@ -21,7 +21,7 @@ from app.models.user import User, UserRole
 
 router = APIRouter(tags=["Payments"])
 
-member_req = require_role([UserRole.MEMBER, UserRole.CHAPTER_ADMIN, UserRole.SUPER_ADMIN])
+member_req = require_role([UserRole.MEMBER, UserRole.CHAPTER_ADMIN, UserRole.SUPER_ADMIN, UserRole.ADMIN])
 
 
 @router.post("/payments/initiate", summary="Initiate a payment", status_code=201)
@@ -88,7 +88,7 @@ async def payment_status_endpoint(
     current_user: User = Depends(member_req),
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
-    is_admin = current_user.role in (UserRole.CHAPTER_ADMIN, UserRole.SUPER_ADMIN)
+    is_admin = current_user.role in (UserRole.CHAPTER_ADMIN, UserRole.SUPER_ADMIN, UserRole.ADMIN)
     result = await service.get_payment_status(payment_id, current_user.id, is_admin, db)
     return success_response(data=result)
 
@@ -97,7 +97,7 @@ async def payment_status_endpoint(
 async def admin_payments_endpoint(
     status: Optional[str] = Query(None),
     payment_type: Optional[str] = Query(None),
-    current_user: User = Depends(require_role([UserRole.SUPER_ADMIN, UserRole.CHAPTER_ADMIN])),
+    current_user: User = Depends(require_role([UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.CHAPTER_ADMIN])),
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
     payments = await service.list_all_payments(status, payment_type, db)
@@ -107,7 +107,7 @@ async def admin_payments_endpoint(
 @router.post("/admin/payments", summary="Admin: record manual payment", status_code=201)
 async def admin_record_payment_endpoint(
     data: PaymentCreateAdmin,
-    current_user: User = Depends(require_role([UserRole.SUPER_ADMIN, UserRole.CHAPTER_ADMIN])),
+    current_user: User = Depends(require_role([UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.CHAPTER_ADMIN])),
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
     result = await service.record_manual_payment(current_user.id, data, db)
@@ -118,7 +118,7 @@ async def admin_record_payment_endpoint(
 async def admin_update_payment_endpoint(
     payment_id: UUID,
     data: PaymentUpdateAdmin,
-    current_user: User = Depends(require_role([UserRole.SUPER_ADMIN, UserRole.CHAPTER_ADMIN])),
+    current_user: User = Depends(require_role([UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.CHAPTER_ADMIN])),
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
     result = await service.update_payment(payment_id, current_user.id, data, db)

@@ -151,8 +151,8 @@ async def deactivate_user(user_id: UUID, actor_id: UUID, db: AsyncSession) -> Di
     user = (await db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
     if not user:
         raise NotFoundException("User not found")
-    if user.role == UserRole.SUPER_ADMIN:
-        raise BadRequestException("Cannot deactivate a Super Admin")
+    if user.role in (UserRole.SUPER_ADMIN, UserRole.ADMIN):
+        raise BadRequestException("Cannot deactivate a Super Admin or Admin user.")
 
     old_active = user.is_active
     user.is_active = False

@@ -39,8 +39,8 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["Events"])
 
-admin_req = require_role([UserRole.CHAPTER_ADMIN, UserRole.SUPER_ADMIN])
-member_req = require_role([UserRole.MEMBER, UserRole.CHAPTER_ADMIN, UserRole.SUPER_ADMIN])
+admin_req = require_role([UserRole.CHAPTER_ADMIN, UserRole.SUPER_ADMIN, UserRole.ADMIN])
+member_req = require_role([UserRole.MEMBER, UserRole.CHAPTER_ADMIN, UserRole.SUPER_ADMIN, UserRole.ADMIN])
 
 
 @router.post("/events", summary="Create a new event", status_code=201)
@@ -65,7 +65,7 @@ async def list_events_endpoint(
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
     # If not admin, force published_only to True
-    if current_user.role not in (UserRole.CHAPTER_ADMIN, UserRole.SUPER_ADMIN):
+    if current_user.role not in (UserRole.CHAPTER_ADMIN, UserRole.SUPER_ADMIN, UserRole.ADMIN):
         published_only = True
         
     events = await list_events(chapter_id, published_only, db)

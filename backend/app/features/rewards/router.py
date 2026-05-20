@@ -57,9 +57,9 @@ router = APIRouter(tags=["Rewards"])
 # Template directory is at backend/templates/
 # Removed Jinja templates
 
-admin_req = require_role([UserRole.CHAPTER_ADMIN, UserRole.SUPER_ADMIN])
-member_req = require_role([UserRole.MEMBER, UserRole.CHAPTER_ADMIN, UserRole.SUPER_ADMIN])
-partner_req = require_role([UserRole.PARTNER_ADMIN, UserRole.SUPER_ADMIN])
+admin_req = require_role([UserRole.CHAPTER_ADMIN, UserRole.SUPER_ADMIN, UserRole.ADMIN])
+member_req = require_role([UserRole.MEMBER, UserRole.CHAPTER_ADMIN, UserRole.SUPER_ADMIN, UserRole.ADMIN])
+partner_req = require_role([UserRole.PARTNER_ADMIN, UserRole.SUPER_ADMIN, UserRole.ADMIN])
 
 
 # ── Privilege Card ──────────────────────────────────────────
@@ -139,7 +139,7 @@ async def admin_replace_card_endpoint(
     return success_response(data=result, message="Card replaced successfully. Rs. 1000 fee applies.")
 
 
-@router.get("/admin/cards/{card_id}/history", dependencies=[Depends(require_role([UserRole.SUPER_ADMIN, UserRole.CHAPTER_ADMIN]))])
+@router.get("/admin/cards/{card_id}/history", dependencies=[Depends(require_role([UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.CHAPTER_ADMIN]))])
 async def admin_list_card_history(card_id: UUID, db: AsyncSession = Depends(get_db)):
     """List audit trail for a specific card."""
     data = await list_privilege_card_history(card_id, db)
@@ -155,7 +155,7 @@ async def list_partners_endpoint(
     current_user: User = Depends(member_req),
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
-    if current_user.role not in (UserRole.CHAPTER_ADMIN, UserRole.SUPER_ADMIN):
+    if current_user.role not in (UserRole.CHAPTER_ADMIN, UserRole.SUPER_ADMIN, UserRole.ADMIN):
         active_only = True
 
     partners = await list_partners(active_only, db, user_id=current_user.id)

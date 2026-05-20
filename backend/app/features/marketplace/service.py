@@ -113,7 +113,7 @@ async def update_listing(
     listing = await get_listing(listing_id, db)
     
     # Permission check: Owner or Admin
-    if listing.seller_id != user_id and role not in [UserRole.SUPER_ADMIN, UserRole.CHAPTER_ADMIN]:
+    if listing.seller_id != user_id and role not in [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.CHAPTER_ADMIN]:
         raise ForbiddenException("You cannot edit this listing")
         
     update_data = data.model_dump(exclude_unset=True)
@@ -226,7 +226,7 @@ async def delete_listing(user_id: uuid.UUID, listing_id: uuid.UUID, role: UserRo
     listing = await get_listing(listing_id, db)
 
     # Permission check: Owner or Admin
-    if listing.seller_id != user_id and role not in [UserRole.SUPER_ADMIN, UserRole.CHAPTER_ADMIN]:
+    if listing.seller_id != user_id and role not in [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.CHAPTER_ADMIN]:
         raise ForbiddenException("You cannot delete this listing")
 
     await db.delete(listing)

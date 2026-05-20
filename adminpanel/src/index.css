@@ -2115,6 +2115,16 @@ input.filter-input {
   animation: dropdownFadeIn 0.18s ease-out;
 }
 
+/* Prevent dropdown from being cut off in the last rows of a table by opening upwards */
+tr:last-child .action-dropdown,
+tr:nth-last-child(2) .action-dropdown {
+  top: auto;
+  bottom: 100%;
+  margin-top: 0;
+  margin-bottom: var(--space-1);
+}
+
+
 @keyframes dropdownFadeIn {
   from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }

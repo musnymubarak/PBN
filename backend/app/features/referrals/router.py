@@ -25,7 +25,7 @@ from app.models.user import User, UserRole
 router = APIRouter(tags=["Referrals"])
 
 # Referrals only available for MEMBERS and above.
-member_req = require_role([UserRole.MEMBER, UserRole.CHAPTER_ADMIN, UserRole.SUPER_ADMIN])
+member_req = require_role([UserRole.MEMBER, UserRole.CHAPTER_ADMIN, UserRole.SUPER_ADMIN, UserRole.ADMIN])
 
 
 @router.post("/referrals", summary="Submit a new referral", status_code=201)

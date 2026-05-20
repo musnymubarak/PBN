@@ -17,6 +17,7 @@ class IndustryCategory(Base, TimestampMixin):
     slug: Mapped[str] = mapped_column(String(150), unique=True, nullable=False, index=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    is_locked: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, server_default="false")
 
     def __repr__(self) -> str:
         return f"<IndustryCategory {self.slug}>"

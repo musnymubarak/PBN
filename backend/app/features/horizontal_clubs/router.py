@@ -12,7 +12,7 @@ from app.features.horizontal_clubs.schemas import HorizontalClubResponse
 
 router = APIRouter(tags=["Horizontal Clubs"])
 
-member_req = require_role([UserRole.MEMBER, UserRole.CHAPTER_ADMIN, UserRole.SUPER_ADMIN])
+member_req = require_role([UserRole.MEMBER, UserRole.CHAPTER_ADMIN, UserRole.SUPER_ADMIN, UserRole.ADMIN])
 
 @router.get("/horizontal-clubs", response_model=List[HorizontalClubResponse])
 async def get_clubs(

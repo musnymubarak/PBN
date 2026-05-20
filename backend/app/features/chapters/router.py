@@ -87,7 +87,7 @@ async def list_chapters_endpoint(
     )
 
 
-@router.post("", summary="Create a new chapter", dependencies=[Depends(require_role([UserRole.SUPER_ADMIN]))])
+@router.post("", summary="Create a new chapter", dependencies=[Depends(require_role([UserRole.SUPER_ADMIN, UserRole.ADMIN]))])
 async def create_chapter_endpoint(
     data: ChapterCreate,
     db: AsyncSession = Depends(get_db),
@@ -100,7 +100,7 @@ async def create_chapter_endpoint(
     )
 
 
-@router.patch("/{chapter_id}", summary="Update a chapter", dependencies=[Depends(require_role([UserRole.SUPER_ADMIN]))])
+@router.patch("/{chapter_id}", summary="Update a chapter", dependencies=[Depends(require_role([UserRole.SUPER_ADMIN, UserRole.ADMIN]))])
 async def update_chapter_endpoint(
     chapter_id: UUID,
     data: ChapterUpdate,
@@ -114,7 +114,7 @@ async def update_chapter_endpoint(
     )
 
 
-@router.delete("/{chapter_id}", summary="Delete a chapter", dependencies=[Depends(require_role([UserRole.SUPER_ADMIN]))])
+@router.delete("/{chapter_id}", summary="Delete a chapter", dependencies=[Depends(require_role([UserRole.SUPER_ADMIN, UserRole.ADMIN]))])
 async def delete_chapter_endpoint(
     chapter_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -131,7 +131,7 @@ async def delete_chapter_endpoint(
     summary="Get my memberships",
 )
 async def my_memberships_endpoint(
-    current_user: User = Depends(require_role([UserRole.MEMBER, UserRole.CHAPTER_ADMIN, UserRole.SUPER_ADMIN])),
+    current_user: User = Depends(require_role([UserRole.MEMBER, UserRole.CHAPTER_ADMIN, UserRole.SUPER_ADMIN, UserRole.ADMIN])),
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
     memberships = await get_my_memberships(current_user.id, db)
@@ -168,7 +168,7 @@ async def chapter_members_endpoint(
 @router.delete(
     "/{chapter_id}/members/{user_id}",
     summary="Remove member from chapter",
-    dependencies=[Depends(require_role([UserRole.CHAPTER_ADMIN, UserRole.SUPER_ADMIN]))]
+    dependencies=[Depends(require_role([UserRole.SUPER_ADMIN, UserRole.ADMIN]))]
 )
 async def remove_member_endpoint(
     chapter_id: UUID,

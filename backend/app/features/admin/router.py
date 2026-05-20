@@ -1,7 +1,10 @@
 """
 Prime Business Network – Admin Router.
 
-All endpoints restricted to SUPER_ADMIN role.
+Role tiers:
+- SUPER_ADMIN: all endpoints, including user management.
+- ADMIN: all admin endpoints except user-management mutations and PII reads.
+- CHAPTER_ADMIN: read-only access, scoped to their own chapter where applicable.
 """
 
 from __future__ import annotations
@@ -16,7 +19,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_db
 from app.core.response import success_response
-from app.features.auth.dependencies import require_role
+from app.features.auth.dependencies import (
+    require_role,
+    get_chapter_admin_chapter_ids,
+)
 from app.features.admin import service
 from pydantic import BaseModel, Field
 from app.models.user import User, UserRole
@@ -25,7 +31,12 @@ from app.features.matchmaking.tasks import process_new_marketplace_listing
 
 router = APIRouter(tags=["Admin"])
 
-admin_req = require_role([UserRole.SUPER_ADMIN])
+# Read-only access: any administrative role can fetch (chapter-scoped where applicable).
+read_req = require_role([UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.CHAPTER_ADMIN])
+# Write access for non-user-management mutations.
+admin_req = require_role([UserRole.SUPER_ADMIN, UserRole.ADMIN])
+# User management and PII reads.
+superadmin_req = require_role([UserRole.SUPER_ADMIN])
 
 class AdminClubUpdate(BaseModel):
     name: Optional[str] = None
@@ -47,9 +58,14 @@ async def list_users_endpoint(
     industry_id: Optional[UUID] = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    current_user: User = Depends(admin_req),
+    current_user: User = Depends(read_req),
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
+    if current_user.role == UserRole.CHAPTER_ADMIN:
+        own_chapters = await get_chapter_admin_chapter_ids(current_user, db)
+        if not own_chapters:
+            return success_response(data={"users": [], "total": 0, "page": page, "page_size": page_size})
+        chapter_id = own_chapters[0]
     result = await service.list_users(
         role, is_active, search, page, page_size, db,
         chapter_id=chapter_id, industry_id=industry_id
@@ -57,9 +73,136 @@ async def list_users_endpoint(
     return success_response(data=result)
 
 
+_STAFF_ROLES = (UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.CHAPTER_ADMIN, UserRole.PARTNER_ADMIN)
+
+
+class StaffCreateRequest(BaseModel):
+    full_name: str = Field(..., min_length=2, max_length=150)
+    phone_number: str = Field(..., min_length=6, max_length=20)
+    email: Optional[str] = Field(None, max_length=255)
+    role: UserRole
+    password: str = Field(..., min_length=8, max_length=128)
+
+
+@router.post("/admin/staff", summary="Create a new admin-panel user", status_code=201)
+async def create_staff_endpoint(
+    data: StaffCreateRequest,
+    current_user: User = Depends(superadmin_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    from app.features.auth.service import hash_password
+    from app.core.exceptions import BadRequestException
+
+    if data.role not in _STAFF_ROLES:
+        raise BadRequestException("Role must be one of SUPER_ADMIN, ADMIN, CHAPTER_ADMIN, PARTNER_ADMIN.")
+
+    existing = (await db.execute(
+        select(User).where((User.phone_number == data.phone_number) | (User.email == data.email))
+    )).scalar_one_or_none()
+    if existing:
+        raise BadRequestException("A user with this phone or email already exists.")
+
+    user = User(
+        phone_number=data.phone_number,
+        email=data.email,
+        full_name=data.full_name,
+        role=data.role,
+        password_hash=hash_password(data.password),
+        is_active=True,
+        must_change_password=True,
+    )
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+
+    return success_response(
+        data={
+            "id": str(user.id),
+            "full_name": user.full_name,
+            "phone_number": user.phone_number,
+            "email": user.email,
+            "role": user.role.value,
+            "is_active": user.is_active,
+        },
+        message="Admin user created successfully",
+        status_code=201,
+    )
+
+
+@router.delete("/admin/staff/{user_id}", summary="Delete an admin-panel user")
+async def delete_staff_endpoint(
+    user_id: UUID,
+    current_user: User = Depends(superadmin_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    from app.core.exceptions import BadRequestException, NotFoundException
+
+    if user_id == current_user.id:
+        raise BadRequestException("You cannot delete your own account.")
+
+    user = (await db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
+    if not user:
+        raise NotFoundException("User not found.")
+    if user.role not in _STAFF_ROLES:
+        raise BadRequestException("This endpoint only deletes admin-panel users.")
+
+    await db.delete(user)
+    await db.commit()
+    return success_response(message="Admin user deleted successfully")
+
+
+@router.get("/admin/staff", summary="List admin-panel users (super-admin only)")
+async def list_staff_endpoint(
+    search: Optional[str] = Query(None),
+    role: Optional[str] = Query(None),
+    is_active: Optional[bool] = Query(None),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=200),
+    current_user: User = Depends(superadmin_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    """Return only users with admin-panel access (SUPER_ADMIN/ADMIN/CHAPTER_ADMIN/PARTNER_ADMIN)."""
+    stmt = select(User).where(User.role.in_(_STAFF_ROLES)).order_by(User.created_at.desc())
+    if role:
+        stmt = stmt.where(User.role == role)
+    if is_active is not None:
+        stmt = stmt.where(User.is_active == is_active)
+    if search:
+        pattern = f"%{search}%"
+        stmt = stmt.where(
+            (User.full_name.ilike(pattern))
+            | (User.phone_number.ilike(pattern))
+            | (User.email.ilike(pattern))
+        )
+
+    count_stmt = select(func.count(1)).select_from(stmt.subquery())
+    total = (await db.execute(count_stmt)).scalar_one()
+
+    stmt = stmt.offset((page - 1) * page_size).limit(page_size)
+    users = (await db.execute(stmt)).scalars().all()
+
+    return success_response(data={
+        "users": [
+            {
+                "id": str(u.id),
+                "full_name": u.full_name,
+                "phone_number": u.phone_number,
+                "email": u.email,
+                "role": u.role.value,
+                "is_active": u.is_active,
+                "created_at": u.created_at.isoformat() if u.created_at else None,
+            }
+            for u in users
+        ],
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+    })
+
+
 @router.get("/admin/industries", summary="List all industry categories")
 async def list_industries_endpoint(
-    current_user: User = Depends(admin_req),
+    current_user: User = Depends(read_req),
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
     """Helper for the admin panel to populate industry filters."""
@@ -74,7 +217,7 @@ async def list_industries_endpoint(
 @router.patch("/admin/users/{user_id}/deactivate", summary="Deactivate a user")
 async def deactivate_user_endpoint(
     user_id: UUID,
-    current_user: User = Depends(admin_req),
+    current_user: User = Depends(superadmin_req),
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
     result = await service.deactivate_user(user_id, current_user.id, db)
@@ -84,7 +227,7 @@ async def deactivate_user_endpoint(
 @router.patch("/admin/users/{user_id}/reactivate", summary="Reactivate a user")
 async def reactivate_user_endpoint(
     user_id: UUID,
-    current_user: User = Depends(admin_req),
+    current_user: User = Depends(superadmin_req),
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
     result = await service.reactivate_user(user_id, current_user.id, db)
@@ -95,7 +238,7 @@ async def reactivate_user_endpoint(
 async def update_user_endpoint(
     user_id: UUID,
     payload: dict,
-    current_user: User = Depends(admin_req),
+    current_user: User = Depends(superadmin_req),
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
     result = await service.update_user(user_id, current_user.id, payload, db)
@@ -105,7 +248,7 @@ async def update_user_endpoint(
 @router.delete("/admin/users/{user_id}/chapter", summary="Remove user from chapter")
 async def remove_user_chapter_endpoint(
     user_id: UUID,
-    current_user: User = Depends(admin_req),
+    current_user: User = Depends(superadmin_req),
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
     result = await service.remove_user_from_chapter(user_id, current_user.id, db)
@@ -116,7 +259,7 @@ async def remove_user_chapter_endpoint(
 @router.get("/admin/users/{user_id}/masked", summary="Get masked PII data")
 async def masked_user_endpoint(
     user_id: UUID,
-    current_user: User = Depends(admin_req),
+    current_user: User = Depends(superadmin_req),
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
     result = await service.get_masked_user_data(user_id, db)
@@ -129,7 +272,7 @@ async def audit_logs_endpoint(
     action: Optional[str] = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    current_user: User = Depends(admin_req),
+    current_user: User = Depends(superadmin_req),
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
     result = await service.list_audit_logs(entity_type, action, page, page_size, db)
@@ -156,7 +299,7 @@ async def list_all_referrals_endpoint(
     status: Optional[str] = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    current_user: User = Depends(admin_req),
+    current_user: User = Depends(read_req),
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
     result = await service.list_all_referrals(search, status, page, page_size, db)
@@ -257,7 +400,7 @@ async def delete_club_endpoint(
 
 @router.get("/admin/fees", summary="List all active fee schedules")
 async def list_fees_endpoint(
-    current_user: User = Depends(admin_req),
+    current_user: User = Depends(read_req),
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
     from app.models.memberships import FeeSchedule
@@ -300,7 +443,7 @@ async def admin_list_listings_endpoint(
     is_approved: Optional[bool] = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    current_user: User = Depends(admin_req),
+    current_user: User = Depends(read_req),
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
     from sqlalchemy import desc

@@ -26,8 +26,8 @@ from app.features.analytics.service import (
 
 router = APIRouter(tags=["Dashboard & Analytics"])
 
-admin_req = require_role([UserRole.CHAPTER_ADMIN, UserRole.SUPER_ADMIN])
-member_req = require_role([UserRole.MEMBER, UserRole.CHAPTER_ADMIN, UserRole.SUPER_ADMIN])
+admin_req = require_role([UserRole.CHAPTER_ADMIN, UserRole.SUPER_ADMIN, UserRole.ADMIN])
+member_req = require_role([UserRole.MEMBER, UserRole.CHAPTER_ADMIN, UserRole.SUPER_ADMIN, UserRole.ADMIN])
 
 
 @router.get("/dashboard", summary="User Dashboard Overview")
@@ -47,7 +47,7 @@ async def leaderboard_endpoint(
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
     # If not admin, restrict chapter_id filtering
-    if current_user.role not in (UserRole.CHAPTER_ADMIN, UserRole.SUPER_ADMIN):
+    if current_user.role not in (UserRole.CHAPTER_ADMIN, UserRole.SUPER_ADMIN, UserRole.ADMIN):
         # Could force chapter_id = current_user's chapter_id
         pass
 
@@ -67,7 +67,9 @@ async def analytics_roi_endpoint(
 
 @router.get("/admin/analytics/overview", summary="Admin Platform Overview")
 async def admin_overview_endpoint(
-    current_user: User = Depends(require_role([UserRole.SUPER_ADMIN])),
+    current_user: User = Depends(require_role([
+        UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.CHAPTER_ADMIN
+    ])),
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
     results = await get_admin_overview(db)
@@ -78,7 +80,9 @@ async def admin_overview_endpoint(
 async def admin_timeseries_endpoint(
     metric: str = Query("members", description="One of: members, revenue, leads"),
     days: int = Query(30, description="Window size in days (7, 30, or 90)"),
-    current_user: User = Depends(require_role([UserRole.SUPER_ADMIN])),
+    current_user: User = Depends(require_role([
+        UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.CHAPTER_ADMIN
+    ])),
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
     results = await get_admin_timeseries(metric, days, db)

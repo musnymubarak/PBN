@@ -12,11 +12,13 @@ from uuid import UUID
 
 from fastapi import Depends, Request
 from redis.asyncio import Redis
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_db, get_redis
 from app.core.exceptions import ForbiddenException, UnauthorizedException
 from app.features.auth.service import decode_access_token, get_user_by_id
+from app.models.memberships import ChapterMembership
 from app.models.user import User, UserRole
 
 
@@ -78,3 +80,22 @@ def require_role(
         return current_user
 
     return _role_checker
+
+
+async def get_chapter_admin_chapter_ids(
+    user: User, db: AsyncSession
+) -> List[UUID]:
+    """Return chapter IDs a CHAPTER_ADMIN administers (via active ChapterMembership).
+
+    Returns an empty list if the user is not a CHAPTER_ADMIN or has no active
+    chapter membership. SUPER_ADMIN / ADMIN are not scoped and should bypass
+    this helper.
+    """
+    if user.role != UserRole.CHAPTER_ADMIN:
+        return []
+    stmt = select(ChapterMembership.chapter_id).where(
+        ChapterMembership.user_id == user.id,
+        ChapterMembership.is_active.is_(True),
+    )
+    rows = (await db.execute(stmt)).scalars().all()
+    return list(rows)

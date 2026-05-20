@@ -1,6 +1,7 @@
 import {
   IconChartBar,
   IconUsers,
+  IconUserShield,
   IconHierarchy2,
   IconCoin,
   IconSettings,
@@ -48,6 +49,7 @@ export const MENU_GROUPS = [
   {
     label: 'System & Security',
     links: [
+      { id: 'user-management', icon: IconUserShield, label: 'User Management', roles: ['SUPER_ADMIN'] },
       { id: 'settings', icon: IconSettings, label: 'Global Settings' },
       { id: 'notifications', icon: IconBell, label: 'Security Logs' },
     ],

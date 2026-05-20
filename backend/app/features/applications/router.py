@@ -111,7 +111,7 @@ async def get_my_applications_endpoint(
 @router.get(
     "/applications",
     summary="List applications",
-    dependencies=[Depends(require_role([UserRole.CHAPTER_ADMIN, UserRole.SUPER_ADMIN]))],
+    dependencies=[Depends(require_role([UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.CHAPTER_ADMIN]))],
 )
 async def list_applications_endpoint(
     status: Optional[ApplicationStatus] = Query(None),
@@ -158,13 +158,14 @@ async def list_applications_endpoint(
 @router.get(
     "/applications/{app_id}",
     summary="Get application detail",
-    dependencies=[Depends(require_role([UserRole.CHAPTER_ADMIN, UserRole.SUPER_ADMIN]))],
+    dependencies=[Depends(require_role([UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.CHAPTER_ADMIN]))],
 )
 async def get_application_detail_endpoint(
     app_id: UUID,
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
     from app.models.chapters import Chapter
+    from app.models.industry_categories import IndustryCategory
     from sqlalchemy import select
     
     app = await get_application_by_id(app_id, db)
@@ -173,6 +174,10 @@ async def get_application_detail_endpoint(
     # Get chapter name
     chap_stmt = select(Chapter.name).where(Chapter.id == app.chapter_id)
     chapter_name = (await db.execute(chap_stmt)).scalar() or "Unknown"
+
+    # Get industry name
+    ind_stmt = select(IndustryCategory.name).where(IndustryCategory.id == app.industry_category_id)
+    industry_name = (await db.execute(ind_stmt)).scalar() or "Unknown"
     
     return success_response(
         data={
@@ -183,6 +188,7 @@ async def get_application_detail_endpoint(
             "email": app.email,
             "district": app.district,
             "industry_category_id": str(app.industry_category_id),
+            "industry_name": industry_name,
             "chapter_id": str(app.chapter_id),
             "chapter_name": chapter_name,
             "status": app.status.value,
@@ -212,7 +218,7 @@ async def get_application_detail_endpoint(
 async def patch_application_status_endpoint(
     app_id: UUID,
     data: ApplicationStatusUpdate,
-    current_user: User = Depends(require_role([UserRole.CHAPTER_ADMIN, UserRole.SUPER_ADMIN])),
+    current_user: User = Depends(require_role([UserRole.SUPER_ADMIN, UserRole.ADMIN])),
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
     app = await update_application_status(app_id, current_user, data, db)
@@ -227,7 +233,7 @@ async def patch_application_status_endpoint(
 @router.delete(
     "/applications/{app_id}",
     summary="Delete application",
-    dependencies=[Depends(require_role([UserRole.SUPER_ADMIN]))],
+    dependencies=[Depends(require_role([UserRole.SUPER_ADMIN, UserRole.ADMIN]))],
 )
 async def delete_application_endpoint(
     app_id: UUID,

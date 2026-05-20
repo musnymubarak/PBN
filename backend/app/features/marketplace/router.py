@@ -166,7 +166,7 @@ async def update_interest_endpoint(
     return interest
 
 
-@router.post("/listings/{listing_id}/feature", response_model=bool, dependencies=[Depends(require_role([UserRole.SUPER_ADMIN, UserRole.CHAPTER_ADMIN]))])
+@router.post("/listings/{listing_id}/feature", response_model=bool, dependencies=[Depends(require_role([UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.CHAPTER_ADMIN]))])
 async def toggle_feature_endpoint(
     listing_id: uuid.UUID,
     db: AsyncSession = Depends(get_db)

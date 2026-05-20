@@ -21,7 +21,7 @@ from app.features.notifications import service
 
 router = APIRouter(tags=["Notifications"])
 
-auth_req = require_role([UserRole.PROSPECT, UserRole.MEMBER, UserRole.CHAPTER_ADMIN, UserRole.SUPER_ADMIN])
+auth_req = require_role([UserRole.PROSPECT, UserRole.MEMBER, UserRole.CHAPTER_ADMIN, UserRole.SUPER_ADMIN, UserRole.ADMIN])
 
 
 @router.post("/notifications/token", summary="Update FCM Device Token")

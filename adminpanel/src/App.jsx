@@ -425,6 +425,14 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
               <p>{detail.email || '—'}</p>
             </div>
             <div className="detail-item">
+              <label>District</label>
+              <p>{detail.district || '—'}</p>
+            </div>
+            <div className="detail-item">
+              <label>Industry</label>
+              <p>{detail.industry_name || '—'}</p>
+            </div>
+            <div className="detail-item">
               <label>Targetted Chapter</label>
               <p>{detail.chapter_name || '—'}</p>
             </div>
@@ -1064,15 +1072,20 @@ function CustomSelect({ label, value, options, onChange, style, disabledOptions 
               <div
                 key={opt.id}
                 className={`custom-select-option ${String(value) === String(opt.id) ? 'selected' : ''} ${isDisabled ? 'disabled' : ''}`}
-                onClick={() => { 
+                onClick={() => {
                   if (!isDisabled) {
-                    onChange(opt.id); 
-                    setIsOpen(false); 
+                    onChange(opt.id);
+                    setIsOpen(false);
                   }
                 }}
-                style={isDisabled ? { color: '#94a3b8', cursor: 'not-allowed', background: '#f8fafc', pointerEvents: 'none' } : {}}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  ...(isDisabled ? { color: '#94a3b8', cursor: 'not-allowed', background: '#f8fafc', pointerEvents: 'none' } : {}),
+                }}
               >
-                {opt.name || opt.label}
+                <span>{opt.name || opt.label}</span>
                 {isDisabled && <span style={{ marginLeft: 'auto', fontSize: '0.65rem', fontWeight: 800, color: 'var(--text-secondary)', background: '#e2e8f0', padding: '2px 6px', borderRadius: '4px' }}>OCCUPIED</span>}
               </div>
             );
@@ -1455,6 +1468,363 @@ function MembersPage() {
   );
 }
 
+
+// ── Staff Edit Modal ─────────────────────────────────────────────────────────
+
+function StaffEditModal({ user, currentUserId, onClose, onUpdate }) {
+  const [role, setRole] = useState(user.role);
+  const [isActive, setIsActive] = useState(user.is_active);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const isSelf = currentUserId === user.id;
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await api.updateUser(user.id, { role, is_active: isActive });
+      onUpdate();
+      onClose();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm(`Delete admin user ${user.full_name}? This cannot be undone.`)) return;
+    setLoading(true);
+    try {
+      await api.deleteStaff(user.id);
+      onUpdate();
+      onClose();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 420 }}>
+        <div className="modal-header">
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Manage Admin User</h2>
+          <button type="button" className="modal-close-btn" onClick={onClose}>
+            <IconX size={20} />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} style={{ padding: '1.5rem' }}>
+          {error && <div className="login-error" style={{ marginBottom: '1rem' }}>{error}</div>}
+
+          <div style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
+            <div className="avatar-sm" style={{ width: 64, height: 64, fontSize: '1.5rem', margin: '0 auto 0.75rem', background: '#f1f5f9', color: 'var(--primary)' }}>
+              {user.full_name ? user.full_name[0] : '?'}
+            </div>
+            <h3 style={{ fontWeight: 800 }}>{user.full_name}</h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>{user.email || user.phone_number}</p>
+          </div>
+
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>Admin Role</label>
+            <CustomSelect
+              label="Select role..."
+              value={role}
+              options={[
+                { id: 'SUPER_ADMIN', name: 'Super Admin' },
+                { id: 'ADMIN', name: 'Admin' },
+                { id: 'CHAPTER_ADMIN', name: 'Chapter Admin' },
+                { id: 'PARTNER_ADMIN', name: 'Partner Admin' },
+              ]}
+              onChange={setRole}
+            />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', padding: '1rem', background: '#f8fafc', borderRadius: '12px' }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>Account Active</div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Toggle login access to the admin panel</div>
+            </div>
+            <input
+              type="checkbox"
+              checked={isActive}
+              onChange={e => setIsActive(e.target.checked)}
+              style={{ width: 20, height: 20, cursor: 'pointer' }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <button type="submit" className="login-btn" disabled={loading} style={{ flex: 2 }}>
+              {loading ? 'Saving...' : 'Save Changes'}
+            </button>
+            {!isSelf && (
+              <button
+                type="button"
+                className="login-btn"
+                onClick={handleDelete}
+                disabled={loading}
+                style={{ flex: 1, background: '#fee2e2', color: '#dc2626', border: '1px solid #fecaca' }}
+                title="Delete user"
+              >
+                <IconTrash size={18} />
+              </button>
+            )}
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+
+// ── Staff Create Modal ──────────────────────────────────────────────────────
+
+function StaffCreateModal({ onClose, onCreate }) {
+  const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [role, setRole] = useState('ADMIN');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    try {
+      await api.createStaff({
+        full_name: fullName,
+        phone_number: phone,
+        email: email || null,
+        role,
+        password,
+      });
+      onCreate();
+      onClose();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 420 }}>
+        <div className="modal-header">
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Add Admin User</h2>
+          <button type="button" className="modal-close-btn" onClick={onClose}>
+            <IconX size={20} />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} style={{ padding: '1.5rem' }}>
+          {error && <div className="login-error" style={{ marginBottom: '1rem' }}>{error}</div>}
+
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>Full Name</label>
+            <Ds.Input value={fullName} onChange={e => setFullName(e.target.value)} required />
+          </div>
+
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>Phone Number</label>
+            <Ds.Input value={phone} onChange={e => setPhone(e.target.value)} placeholder="+947XXXXXXXX" required />
+          </div>
+
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>Email</label>
+            <Ds.Input type="email" value={email} onChange={e => setEmail(e.target.value)} />
+          </div>
+
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>Role</label>
+            <CustomSelect
+              label="Select role..."
+              value={role}
+              options={[
+                { id: 'SUPER_ADMIN', name: 'Super Admin' },
+                { id: 'ADMIN', name: 'Admin' },
+                { id: 'CHAPTER_ADMIN', name: 'Chapter Admin' },
+                { id: 'PARTNER_ADMIN', name: 'Partner Admin' },
+              ]}
+              onChange={setRole}
+            />
+          </div>
+
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>Temporary Password</label>
+            <Ds.Input type="password" value={password} onChange={e => setPassword(e.target.value)} minLength={8} required />
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+              The user will be required to change this on first login.
+            </div>
+          </div>
+
+          <button type="submit" className="login-btn" disabled={loading} style={{ width: '100%' }}>
+            {loading ? 'Creating...' : 'Create User'}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+
+// ── User Management Page (admin-panel users only) ───────────────────────────
+
+function UserManagementPage({ adminUser }) {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [total, setTotal] = useState(0);
+  const [search, setSearch] = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [showCreate, setShowCreate] = useState(false);
+
+  const fetchStaff = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = { page_size: 100 };
+      if (search) params.search = search;
+      if (roleFilter) params.role = roleFilter;
+      const result = await api.listStaff(params);
+      setUsers(result.users || []);
+      setTotal(result.total || 0);
+    } catch (err) {
+      console.error('Failed to load admin users:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [search, roleFilter]);
+
+  useEffect(() => { fetchStaff(); }, [fetchStaff]);
+
+  const roleOptions = [
+    { id: 'SUPER_ADMIN', name: 'Super Admin' },
+    { id: 'ADMIN', name: 'Admin' },
+    { id: 'CHAPTER_ADMIN', name: 'Chapter Admin' },
+    { id: 'PARTNER_ADMIN', name: 'Partner Admin' },
+  ];
+
+  return (
+    <section className="ds-page">
+      <Ds.PageHeader
+        title="User Management"
+        description="Manage admin-panel access: roles, status, and login privileges for staff users."
+        actions={
+          <>
+            <Ds.Button
+              variant="secondary"
+              leftIcon={<IconRefresh size={14} />}
+              onClick={fetchStaff}
+            >
+              Refresh
+            </Ds.Button>
+            <Ds.Button
+              leftIcon={<IconPlus size={14} />}
+              onClick={() => setShowCreate(true)}
+            >
+              Add User
+            </Ds.Button>
+          </>
+        }
+      />
+
+      <Ds.Section
+        title="Admin Users"
+        subtitle={total > 0 ? `${total.toLocaleString()} staff accounts` : undefined}
+        flush
+      >
+        <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', padding: 'var(--space-5) var(--space-6)', borderBottom: '1px solid var(--border-subtle)' }}>
+          <Ds.Input
+            placeholder="Search by name, email or phone…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            leftIcon={<IconSearch size={14} />}
+            wrapClassName=""
+            style={{ flex: 1, minWidth: 240 }}
+          />
+          <Ds.Select
+            placeholder="All roles"
+            value={roleFilter}
+            options={roleOptions}
+            allowClear
+            onChange={setRoleFilter}
+            style={{ width: 200 }}
+          />
+        </div>
+
+        <Ds.Table>
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Contact</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Created</th>
+              <th className="ds-table__actions" />
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <Ds.Table.LoadingRow colSpan={6} label="Loading admin users…" />
+            ) : users.length === 0 ? (
+              <Ds.Table.EmptyRow
+                colSpan={6}
+                icon={IconUsers}
+                title="No admin users found"
+                description="No staff accounts match the current filters."
+              />
+            ) : users.map(user => (
+              <tr key={user.id} className="is-clickable" onClick={() => setSelectedUser(user)}>
+                <td>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+                    <Ds.Avatar size="sm" name={user.full_name || '?'} />
+                    <div className="ds-table__primary">{user.full_name || 'Unnamed'}</div>
+                  </div>
+                </td>
+                <td className="ds-table__muted">
+                  <div>{user.email || '—'}</div>
+                  <div style={{ fontSize: 'var(--text-xs)' }}>{user.phone_number}</div>
+                </td>
+                <td>
+                  <Ds.Badge variant="brand">{user.role}</Ds.Badge>
+                </td>
+                <td>
+                  <Ds.Badge dot variant={user.is_active ? 'success' : 'danger'}>
+                    {user.is_active ? 'Active' : 'Inactive'}
+                  </Ds.Badge>
+                </td>
+                <td className="ds-table__muted">
+                  {user.created_at ? new Date(user.created_at).toLocaleDateString() : '—'}
+                </td>
+                <td className="ds-table__actions" onClick={e => e.stopPropagation()}>
+                  <UserActionMenu user={user} onEdit={() => setSelectedUser(user)} />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </Ds.Table>
+      </Ds.Section>
+
+      {selectedUser && (
+        <StaffEditModal
+          user={selectedUser}
+          currentUserId={adminUser?.id}
+          onClose={() => setSelectedUser(null)}
+          onUpdate={fetchStaff}
+        />
+      )}
+
+      {showCreate && (
+        <StaffCreateModal
+          onClose={() => setShowCreate(false)}
+          onCreate={fetchStaff}
+        />
+      )}
+    </section>
+  );
+}
 
 
 function PaymentActionMenu({ payment, onEdit }) {
@@ -6115,7 +6485,14 @@ function AnalyticsHubPage({ overview, overviewLoading, overviewError, onChangeTa
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => !!localStorage.getItem('access_token'));
   const [adminUser, setAdminUser] = useState(null);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState(() => {
+    return localStorage.getItem('active_tab') || 'overview';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('active_tab', activeTab);
+  }, [activeTab]);
+
   const [showChangePassword, setShowChangePassword] = useState(false);
   const { toasts, showToast } = useToast();
   
@@ -6163,9 +6540,11 @@ export default function App() {
   const handleLogout = () => {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
+    localStorage.removeItem('active_tab');
     setIsAuthenticated(false);
     setAdminUser(null);
     setShowProfileMenu(false);
+    setActiveTab('overview');
   };
 
   const dismissNotification = async (id) => {
@@ -6199,6 +6578,10 @@ export default function App() {
     const commonProps = { adminUser, showToast, onShowChangePassword: () => setShowChangePassword(true) };
     if (activeTab === 'applications') return <ApplicationsPage />;
     if (activeTab === 'members') return <MembersPage />;
+    if (activeTab === 'user-management') {
+      if (adminUser?.role !== 'SUPER_ADMIN') return <MembersPage />;
+      return <UserManagementPage adminUser={adminUser} />;
+    }
     if (activeTab === 'chapters') return <ChaptersPage />;
     if (activeTab === 'marketplace') return <MarketplacePage />;
     if (activeTab === 'payments') return <PaymentsPage />;

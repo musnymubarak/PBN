@@ -30,7 +30,7 @@ from app.models.user import User, UserRole
 router = APIRouter(tags=["Community"])
 
 # Community available for MEMBERS and above.
-member_req = require_role([UserRole.MEMBER, UserRole.CHAPTER_ADMIN, UserRole.SUPER_ADMIN])
+member_req = require_role([UserRole.MEMBER, UserRole.CHAPTER_ADMIN, UserRole.SUPER_ADMIN, UserRole.ADMIN])
 
 @router.post("/community/posts", summary="Create a new community post", status_code=201)
 async def create_post_endpoint(

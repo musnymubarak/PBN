@@ -8,6 +8,8 @@ import { MENU_GROUPS } from './menuConfig';
 const NAV_ITEMS = MENU_GROUPS.flatMap(g => g.links);
 
 export function Sidebar({ activeTab, onChangeTab, adminUser, onLogout }) {
+  const role = adminUser?.role;
+  const visibleItems = NAV_ITEMS.filter(item => !item.roles || item.roles.includes(role));
   return (
     <aside className="ds-sidebar">
       <div className="ds-sidebar__brand">
@@ -18,7 +20,7 @@ export function Sidebar({ activeTab, onChangeTab, adminUser, onLogout }) {
 
       <nav className="ds-sidebar__nav" aria-label="Primary">
         <ul className="ds-sidebar__items">
-          {NAV_ITEMS.map(link => {
+          {visibleItems.map(link => {
             const Icon = link.icon;
             const active = activeTab === link.id;
             return (
