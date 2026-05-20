@@ -1336,7 +1336,7 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           Switch.adaptive(
             value: value,
-            activeColor: AppColors.accent,
+            activeThumbColor: AppColors.accent,
             onChanged: onChanged,
           ),
         ],
