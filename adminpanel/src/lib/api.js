@@ -25,7 +25,13 @@ async function apiFetch(path, options = {}) {
       return Promise.reject(new Error('Session expired'));
     }
     const errorJson = await res.json().catch(() => ({}));
-    throw new Error(`API ${res.status}: ${path} - ${errorJson.message || 'Unknown Error'} (${errorJson.code || 'NO_CODE'})`);
+    const friendlyMessage = errorJson.message || errorJson.error || 'Unknown Error';
+    const err = new Error(friendlyMessage);
+    err.status = res.status;
+    err.code = errorJson.code || 'NO_CODE';
+    err.path = path;
+    err.details = `API ${res.status}: ${path} - ${friendlyMessage} (${err.code})`;
+    throw err;
   }
   const contentType = res.headers.get('Content-Type');
   if (contentType && (contentType.includes('text/csv') || contentType.includes('application/octet-stream'))) {

@@ -81,6 +81,9 @@ async def create_application(
     data: ApplicationCreate,
     db: AsyncSession,
 ) -> Application:
+    # Normalize email (lowercased, trimmed) for consistent uniqueness checks
+    normalized_email = (data.email or "").strip().lower() or None
+
     # Validate industry active
     stmt = select(IndustryCategory).where(
         IndustryCategory.id == data.industry_category_id,
@@ -90,16 +93,46 @@ async def create_application(
     if result.scalar_one_or_none() is None:
         raise BadRequestException("Invalid or inactive industry category.", code="INVALID_INDUSTRY")
 
-    # Check duplicates for same industry in same chapter (prevent multiple pending for same spot)
-    dup_stmt = select(Application).where(
+    # ── Email uniqueness ─────────────────────────────────────────────────
+    # Reject if the email is already linked to a registered user/member.
+    if normalized_email:
+        existing_user_stmt = select(User.id).where(func.lower(User.email) == normalized_email).limit(1)
+        if (await db.execute(existing_user_stmt)).first() is not None:
+            raise BadRequestException(
+                "This email is already registered to an existing member. Please login or use a different email.",
+                code="EMAIL_REGISTERED",
+            )
+
+        # Reject if an active (non-rejected) application already uses this email.
+        existing_app_email_stmt = select(Application.id).where(
+            func.lower(Application.email) == normalized_email,
+            Application.status.notin_([ApplicationStatus.REJECTED]),
+        ).limit(1)
+        if (await db.execute(existing_app_email_stmt)).first() is not None:
+            raise BadRequestException(
+                "An application with this email already exists. Please wait for review or contact support.",
+                code="EMAIL_APPLICATION_EXISTS",
+            )
+
+    # ── Phone uniqueness ─────────────────────────────────────────────────
+    # Reject if the phone number is already linked to a registered user/member.
+    existing_phone_stmt = select(User.id).where(User.phone_number == data.contact_number).limit(1)
+    if (await db.execute(existing_phone_stmt)).first() is not None:
+        raise BadRequestException(
+            "This contact number is already registered to an existing member. Please login or use a different number.",
+            code="PHONE_REGISTERED",
+        )
+
+    # Reject if an active (non-rejected) application already uses this phone.
+    existing_app_phone_stmt = select(Application.id).where(
         Application.contact_number == data.contact_number,
-        Application.industry_category_id == data.industry_category_id,
-        Application.chapter_id == data.chapter_id,
-        Application.status.notin_([ApplicationStatus.REJECTED])
-    )
-    dup_result = await db.execute(dup_stmt)
-    if dup_result.scalar_one_or_none() is not None:
-        raise BadRequestException("Application already exists.", code="DUPLICATE_APPLICATION")
+        Application.status.notin_([ApplicationStatus.REJECTED]),
+    ).limit(1)
+    if (await db.execute(existing_app_phone_stmt)).first() is not None:
+        raise BadRequestException(
+            "An application with this contact number already exists. Please wait for review or contact support.",
+            code="PHONE_APPLICATION_EXISTS",
+        )
 
     # Check if industry is already occupied by a member in this chapter
     occ_stmt = select(ChapterMembership).where(
@@ -114,7 +147,7 @@ async def create_application(
         full_name=data.full_name,
         business_name=data.business_name,
         contact_number=data.contact_number,
-        email=data.email,
+        email=normalized_email,
         district=data.district,
         industry_category_id=data.industry_category_id,
         chapter_id=data.chapter_id,

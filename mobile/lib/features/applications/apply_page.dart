@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:pbn/core/constants/app_colors.dart';
@@ -108,11 +109,24 @@ class _ApplyPageState extends State<ApplyPage> {
       if (mounted) {
         _showSuccessDialog();
       }
-    } catch (_) {
+    } catch (e) {
+      String message = 'Submission failed. Please try again.';
+      if (e is DioException) {
+        final data = e.response?.data;
+        if (data is Map && data['message'] is String && (data['message'] as String).isNotEmpty) {
+          message = data['message'] as String;
+        } else if (data is Map && data['error'] is String) {
+          message = data['error'] as String;
+        }
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Submission failed'),
-          backgroundColor: Colors.redAccent, behavior: SnackBarBehavior.floating));
+          SnackBar(
+            content: Text(message),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
     }
     if (mounted) setState(() => _submitting = false);

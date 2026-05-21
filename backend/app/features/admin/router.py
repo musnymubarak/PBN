@@ -92,19 +92,43 @@ async def create_staff_endpoint(
 ) -> ORJSONResponse:
     from app.features.auth.service import hash_password
     from app.core.exceptions import BadRequestException
+    from app.models.applications import Application, ApplicationStatus
 
     if data.role not in _STAFF_ROLES:
         raise BadRequestException("Role must be one of SUPER_ADMIN, ADMIN, CHAPTER_ADMIN, PARTNER_ADMIN.")
 
-    existing = (await db.execute(
-        select(User).where((User.phone_number == data.phone_number) | (User.email == data.email))
-    )).scalar_one_or_none()
-    if existing:
-        raise BadRequestException("A user with this phone or email already exists.")
+    normalized_email = (data.email or "").strip().lower() or None
+
+    if (await db.execute(
+        select(User.id).where(User.phone_number == data.phone_number).limit(1)
+    )).first() is not None:
+        raise BadRequestException("A user with this phone number already exists.", code="PHONE_REGISTERED")
+
+    if normalized_email and (await db.execute(
+        select(User.id).where(func.lower(User.email) == normalized_email).limit(1)
+    )).first() is not None:
+        raise BadRequestException("A user with this email already exists.", code="EMAIL_REGISTERED")
+
+    # Block if an active application already claims this email/phone
+    if normalized_email and (await db.execute(
+        select(Application.id).where(
+            func.lower(Application.email) == normalized_email,
+            Application.status.notin_([ApplicationStatus.REJECTED]),
+        ).limit(1)
+    )).first() is not None:
+        raise BadRequestException("An application with this email already exists.", code="EMAIL_APPLICATION_EXISTS")
+
+    if (await db.execute(
+        select(Application.id).where(
+            Application.contact_number == data.phone_number,
+            Application.status.notin_([ApplicationStatus.REJECTED]),
+        ).limit(1)
+    )).first() is not None:
+        raise BadRequestException("An application with this phone number already exists.", code="PHONE_APPLICATION_EXISTS")
 
     user = User(
         phone_number=data.phone_number,
-        email=data.email,
+        email=normalized_email,
         full_name=data.full_name,
         role=data.role,
         password_hash=hash_password(data.password),
