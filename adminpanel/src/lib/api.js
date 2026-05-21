@@ -148,6 +148,9 @@ export const api = {
   removeUserFromChapter: (id) => apiFetch(`/admin/users/${id}/chapter`, {
     method: 'DELETE',
   }),
+  deleteUser: (id) => apiFetch(`/admin/users/${id}`, {
+    method: 'DELETE',
+  }),
 
 
   changePassword: (body) => apiFetch('/auth/change-password', {

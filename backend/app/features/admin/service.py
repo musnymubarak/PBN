@@ -268,36 +268,59 @@ async def update_user(
     return _serialize_user(user)
 
 
-async def remove_user_from_chapter(user_id: UUID, actor_id: UUID, db: AsyncSession) -> Dict[str, Any]:
-    """Remove a user from their assigned chapter by deleting their membership."""
-    # Find the membership
-    stmt = select(ChapterMembership).where(ChapterMembership.user_id == user_id)
-    membership = (await db.execute(stmt)).scalar_one_or_none()
-    
-    if not membership:
-        raise NotFoundException("Chapter membership not found for this user")
-    
-    # Audit log before deletion
+async def delete_user(user_id: UUID, actor_id: UUID, db: AsyncSession) -> Dict[str, Any]:
+    """Permanently delete a user account (any role, any status). Only self-delete is blocked."""
+    if user_id == actor_id:
+        raise BadRequestException("You cannot delete your own account.")
+
+    user = (await db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
+    if not user:
+        raise NotFoundException("User not found")
+
+    snapshot = _serialize_user(user)
+
     audit = AuditLog(
         actor_id=actor_id,
-        entity_type="membership",
-        entity_id=membership.id,
-        action="remove_from_chapter",
-        old_value={"user_id": str(user_id), "chapter_id": str(membership.chapter_id)},
+        entity_type="user",
+        entity_id=user.id,
+        action="delete",
+        old_value=snapshot,
         new_value=None,
     )
     db.add(audit)
-    
-    # Delete membership
-    await db.delete(membership)
-    
+
+    await db.delete(user)
+    await db.commit()
+
+    return snapshot
+
+
+async def remove_user_from_chapter(user_id: UUID, actor_id: UUID, db: AsyncSession) -> Dict[str, Any]:
+    """Remove a user from every chapter membership they hold."""
+    stmt = select(ChapterMembership).where(ChapterMembership.user_id == user_id)
+    memberships = (await db.execute(stmt)).scalars().all()
+
+    if not memberships:
+        raise NotFoundException("Chapter membership not found for this user")
+
+    for membership in memberships:
+        db.add(AuditLog(
+            actor_id=actor_id,
+            entity_type="membership",
+            entity_id=membership.id,
+            action="remove_from_chapter",
+            old_value={"user_id": str(user_id), "chapter_id": str(membership.chapter_id)},
+            new_value=None,
+        ))
+        await db.delete(membership)
+
     # Also downgrade user to PROSPECT if they were a MEMBER
     user = (await db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
     if user and user.role == UserRole.MEMBER:
         user.role = UserRole.PROSPECT
-    
+
     await db.commit()
-    
+
     if user:
         return _serialize_user(user)
     return {"message": "User removed from chapter"}

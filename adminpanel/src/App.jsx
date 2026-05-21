@@ -1133,6 +1133,20 @@ function UserEditModal({ user, onClose, onUpdate, chapters = [] }) {
     }
   };
 
+  const handleDelete = async () => {
+    if (!window.confirm(`Permanently delete ${user.full_name}? This removes their account, memberships, referrals, listings, and related data. This cannot be undone.`)) return;
+    setLoading(true);
+    try {
+      await api.deleteUser(user.id);
+      onUpdate();
+      onClose();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 450 }}>
@@ -1207,16 +1221,34 @@ function UserEditModal({ user, onClose, onUpdate, chapters = [] }) {
               {loading ? 'Saving...' : 'Update Status'}
             </button>
             {user.chapter_name && (
-              <button 
-                type="button" 
-                className="login-btn" 
-                onClick={handleRemoveFromChapter} 
+              <button
+                type="button"
+                className="login-btn"
+                onClick={handleRemoveFromChapter}
                 disabled={loading}
                 style={{ flex: 1, background: '#fee2e2', color: '#dc2626', border: '1px solid #fecaca' }}
+                title="Remove from chapter"
               >
                 <IconTrash size={18} />
               </button>
             )}
+          </div>
+
+          <div style={{ marginTop: '1.25rem', paddingTop: '1.25rem', borderTop: '1px solid #e2e8f0' }}>
+            <button
+              type="button"
+              className="login-btn"
+              onClick={handleDelete}
+              disabled={loading}
+              style={{ width: '100%', background: '#dc2626', color: '#fff', border: '1px solid #b91c1c', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+              title="Permanently delete this member"
+            >
+              <IconTrash size={16} />
+              Permanently delete member
+            </button>
+            <p style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
+              Removes the account and all related data (memberships, referrals, listings). Cannot be undone.
+            </p>
           </div>
         </form>
       </div>
@@ -1400,6 +1432,9 @@ function MembersPage() {
                       <div className="ds-table__primary">{user.full_name || 'Unnamed User'}</div>
                       <div style={{ fontSize: 'var(--text-xs)', color: 'var(--fg-muted)', fontWeight: 'var(--weight-medium)' }}>
                         {user.phone_number}
+                      </div>
+                      <div style={{ fontSize: 'var(--text-xs)', color: 'var(--fg-muted)', fontWeight: 'var(--weight-medium)' }}>
+                        {user.email || '—'}
                       </div>
                     </div>
                   </div>

@@ -279,6 +279,16 @@ async def remove_user_chapter_endpoint(
     return success_response(data=result, message="User removed from chapter successfully")
 
 
+@router.delete("/admin/users/{user_id}", summary="Permanently delete a member")
+async def delete_user_endpoint(
+    user_id: UUID,
+    current_user: User = Depends(superadmin_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    result = await service.delete_user(user_id, current_user.id, db)
+    return success_response(data=result, message="User deleted successfully")
+
+
 
 @router.get("/admin/users/{user_id}/masked", summary="Get masked PII data")
 async def masked_user_endpoint(
