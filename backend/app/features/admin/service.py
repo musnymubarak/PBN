@@ -61,16 +61,29 @@ def _serialize_user(u: User, mask: bool = False, chapter_name: str | None = None
 
 
 
-def _serialize_audit(a: AuditLog) -> Dict[str, Any]:
+def _serialize_audit(a: AuditLog, actor: User | None = None) -> Dict[str, Any]:
     return {
         "id": str(a.id),
+        "actor": {
+            "id": str(actor.id) if actor else (str(a.actor_id) if a.actor_id else None),
+            "full_name": actor.full_name if actor else None,
+            "email": actor.email if actor else None,
+            "role": (actor.role.value if actor and hasattr(actor.role, "value") else None),
+        },
         "actor_id": str(a.actor_id) if a.actor_id else None,
         "entity_type": a.entity_type,
-        "entity_id": str(a.entity_id),
+        "entity_id": str(a.entity_id) if a.entity_id else None,
         "action": a.action,
+        "description": a.description,
+        "method": a.method,
+        "path": a.path,
+        "status_code": a.status_code,
+        "duration_ms": a.duration_ms,
+        "request_id": a.request_id,
+        "user_agent": a.user_agent,
+        "ip_address": a.ip_address,
         "old_value": a.old_value,
         "new_value": a.new_value,
-        "ip_address": a.ip_address,
         "created_at": a.created_at.isoformat() if a.created_at else None,
     }
 
@@ -297,23 +310,58 @@ async def list_audit_logs(
     page: int,
     page_size: int,
     db: AsyncSession,
+    actor_id: UUID | None = None,
+    method: str | None = None,
+    status_code: int | None = None,
+    search: str | None = None,
+    date_from: datetime | None = None,
+    date_to: datetime | None = None,
 ) -> Dict[str, Any]:
-    """Paginated audit log retriever for the admin dashboard."""
-    stmt = select(AuditLog).order_by(desc(AuditLog.created_at))
+    """Paginated audit log retriever for the admin dashboard.
+
+    Returns rows joined with the acting user so the frontend can display
+    `who` without a second query per row.
+    """
+    Actor = aliased(User)
+    stmt = (
+        select(AuditLog, Actor)
+        .outerjoin(Actor, AuditLog.actor_id == Actor.id)
+        .order_by(desc(AuditLog.created_at))
+    )
 
     if entity_type:
         stmt = stmt.where(AuditLog.entity_type == entity_type)
     if action:
         stmt = stmt.where(AuditLog.action == action)
+    if actor_id:
+        stmt = stmt.where(AuditLog.actor_id == actor_id)
+    if method:
+        stmt = stmt.where(AuditLog.method == method.upper())
+    if status_code is not None:
+        stmt = stmt.where(AuditLog.status_code == status_code)
+    if date_from is not None:
+        stmt = stmt.where(AuditLog.created_at >= date_from)
+    if date_to is not None:
+        stmt = stmt.where(AuditLog.created_at <= date_to)
+    if search:
+        pattern = f"%{search}%"
+        stmt = stmt.where(
+            (AuditLog.path.ilike(pattern))
+            | (AuditLog.action.ilike(pattern))
+            | (AuditLog.description.ilike(pattern))
+            | (AuditLog.entity_type.ilike(pattern))
+            | (Actor.full_name.ilike(pattern))
+            | (Actor.email.ilike(pattern))
+        )
 
     count_stmt = select(func.count(1)).select_from(stmt.subquery())
     total = (await db.execute(count_stmt)).scalar_one()
 
     stmt = stmt.offset((page - 1) * page_size).limit(page_size)
-    results = (await db.execute(stmt)).scalars().all()
+    rows = (await db.execute(stmt)).all()
 
     return {
-        "logs": [_serialize_audit(a) for a in results],
+        "logs": [_serialize_audit(a, actor) for (a, actor) in rows],
         "total": total,
         "page": page,
         "page_size": page_size,

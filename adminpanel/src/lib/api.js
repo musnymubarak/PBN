@@ -250,5 +250,15 @@ export const api = {
   listMarketplaceInterests: (listingId) => apiFetch(`/marketplace/${listingId}/interests`),
 
   listPrivilegeCardHistory: (cardId) => apiFetch(`/admin/cards/${cardId}/history`),
+
+  // Audit Logs (SUPER_ADMIN only)
+  listAuditLogs: (params = {}) => {
+    const qs = new URLSearchParams();
+    Object.entries(params).forEach(([k, v]) => {
+      if (v !== undefined && v !== null && v !== '') qs.append(k, v);
+    });
+    return apiFetch(`/admin/audit-logs?${qs.toString()}`);
+  },
+  getAuditLogFacets: () => apiFetch('/admin/audit-logs/facets'),
 };
 

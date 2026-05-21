@@ -294,13 +294,63 @@ async def masked_user_endpoint(
 async def audit_logs_endpoint(
     entity_type: Optional[str] = Query(None),
     action: Optional[str] = Query(None),
+    actor_id: Optional[UUID] = Query(None),
+    method: Optional[str] = Query(None),
+    status_code: Optional[int] = Query(None),
+    search: Optional[str] = Query(None),
+    date_from: Optional[str] = Query(None, description="ISO 8601 datetime"),
+    date_to: Optional[str] = Query(None, description="ISO 8601 datetime"),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     current_user: User = Depends(superadmin_req),
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
-    result = await service.list_audit_logs(entity_type, action, page, page_size, db)
+    from datetime import datetime as _dt
+
+    def _parse_dt(value: Optional[str]):
+        if not value:
+            return None
+        try:
+            return _dt.fromisoformat(value.replace("Z", "+00:00"))
+        except ValueError:
+            return None
+
+    result = await service.list_audit_logs(
+        entity_type,
+        action,
+        page,
+        page_size,
+        db,
+        actor_id=actor_id,
+        method=method,
+        status_code=status_code,
+        search=search,
+        date_from=_parse_dt(date_from),
+        date_to=_parse_dt(date_to),
+    )
     return success_response(data=result)
+
+
+@router.get("/admin/audit-logs/facets", summary="Distinct values for audit log filters")
+async def audit_log_facets_endpoint(
+    current_user: User = Depends(superadmin_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    from app.models.audit_logs import AuditLog as _AuditLog
+    entity_types = (await db.execute(
+        select(_AuditLog.entity_type).distinct().order_by(_AuditLog.entity_type)
+    )).scalars().all()
+    actions = (await db.execute(
+        select(_AuditLog.action).distinct().order_by(_AuditLog.action)
+    )).scalars().all()
+    methods = (await db.execute(
+        select(_AuditLog.method).distinct().where(_AuditLog.method.is_not(None))
+    )).scalars().all()
+    return success_response(data={
+        "entity_types": list(entity_types),
+        "actions": list(actions),
+        "methods": list(methods),
+    })
 
 
 @router.get("/admin/export", summary="Export platform aggregate data")

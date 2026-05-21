@@ -4012,22 +4012,712 @@ function SettingsPage({ adminUser, onShowChangePassword, showToast }) {
   );
 }
 
-// ── Security Logs Page ────────────────────────────────────────────────────
-function SecurityLogsPage() {
+// ── Security Logs (Audit Trail) Page ─────────────────────────────────────
+
+// Map machine-derived action names to human labels. Falls back to title-casing.
+const ACTION_LABELS = {
+  create: 'Create',
+  update: 'Update',
+  delete: 'Delete',
+  create_chapters: 'Create chapter',
+  delete_chapters: 'Delete chapter',
+  update_chapters: 'Update chapter',
+  create_clubs: 'Create club',
+  update_clubs: 'Update club',
+  delete_clubs: 'Delete club',
+  create_staff: 'Create admin user',
+  delete_staff: 'Delete admin user',
+  update_change_password: 'Change password',
+  update_2fa: 'Toggle 2FA',
+  update_me: 'Update profile',
+  create_me: 'Update profile',
+  admin_update: 'Admin update',
+  deactivate: 'Deactivate user',
+  reactivate: 'Reactivate user',
+  remove_from_chapter: 'Remove from chapter',
+  status_update: 'Change status',
+  manual_record: 'Record payment',
+  webhook_processed: 'Webhook processed',
+  approve: 'Approve',
+  reject: 'Reject',
+  feature: 'Feature listing',
+};
+
+const humanizeAction = (a) => {
+  if (!a) return '—';
+  if (ACTION_LABELS[a]) return ACTION_LABELS[a];
+  return a.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+};
+
+// Specific, contextual label for an audit row based on method + path + body.
+// Falls back to humanizeAction(log.action) when no rule matches.
+function describeAuditAction(log) {
+  if (!log) return '—';
+  const path = (log.path || '').replace(/^\/api\/v[0-9]+/, ''); // strip /api/v1
+  const m = (log.method || '').toUpperCase();
+  const body = log.new_value || {};
+  const status = body.status;
+
+  // Applications
+  if (/^\/applications\/[^/]+\/status$/.test(path)) {
+    if (status === 'approved') return 'Application approved';
+    if (status === 'rejected') return 'Application rejected';
+    if (status === 'waitlisted') return 'Application waitlisted';
+    if (status === 'fit_call_scheduled') return 'Application moved to fit call';
+    if (status) return `Application status → ${status.replace(/_/g, ' ')}`;
+    return 'Application status updated';
+  }
+  if (/^\/admin\/applications\/[^/]+\/payment-status$/.test(path)) return 'Application payment status updated';
+  if (/^\/applications$/.test(path) && m === 'POST') return 'Application submitted';
+  if (/^\/applications\/[^/]+$/.test(path) && m === 'DELETE') return 'Application deleted';
+
+  // Auth / self profile
+  if (path === '/auth/change-password') return 'Password changed';
+  if (path === '/auth/me/photo') return 'Profile photo updated';
+  if (path === '/auth/me' && m === 'PUT') return 'Profile updated';
+  if (path === '/auth/2fa' && m === 'PUT') return 'Two-factor authentication toggled';
+
+  // Staff (admin-panel users)
+  if (path === '/admin/staff' && m === 'POST') return 'Admin user created';
+  if (/^\/admin\/staff\/[^/]+$/.test(path) && m === 'DELETE') return 'Admin user deleted';
+
+  // Member / user management
+  if (/^\/admin\/users\/[^/]+\/deactivate$/.test(path)) return 'User deactivated';
+  if (/^\/admin\/users\/[^/]+\/reactivate$/.test(path)) return 'User reactivated';
+  if (/^\/admin\/users\/[^/]+\/chapter$/.test(path) && m === 'DELETE') return 'User removed from chapter';
+  if (/^\/admin\/users\/[^/]+$/.test(path) && m === 'PATCH') {
+    if (body.is_active === false) return 'User deactivated';
+    if (body.is_active === true) return 'User reactivated';
+    if (body.role) return `User role changed → ${body.role}`;
+    if (body.membership_type) return `Membership type changed → ${body.membership_type}`;
+    return 'User updated';
+  }
+
+  // Chapters
+  if (path === '/chapters' && m === 'POST') return 'Chapter created';
+  if (/^\/chapters\/[^/]+$/.test(path) && m === 'PATCH') return 'Chapter updated';
+  if (/^\/chapters\/[^/]+$/.test(path) && m === 'DELETE') return 'Chapter deleted';
+
+  // Horizontal clubs
+  if (path === '/admin/clubs' && m === 'POST') return 'Horizontal club created';
+  if (/^\/admin\/clubs\/[^/]+$/.test(path) && m === 'PATCH') return 'Horizontal club updated';
+  if (/^\/admin\/clubs\/[^/]+$/.test(path) && m === 'DELETE') return 'Horizontal club deleted';
+
+  // Events
+  if (path === '/events' && m === 'POST') return 'Event created';
+  if (/^\/events\/[^/]+$/.test(path) && m === 'PATCH') return 'Event updated';
+  if (/^\/events\/[^/]+\/approve$/.test(path)) return 'Event RSVP approved';
+  if (/^\/events\/[^/]+\/attendance$/.test(path)) return 'Event attendance marked';
+  if (path === '/events/upload-image') return 'Event image uploaded';
+
+  // Marketplace moderation
+  if (/^\/admin\/marketplace\/listings\/[^/]+\/approve$/.test(path)) return 'Marketplace listing approved';
+  if (/^\/admin\/marketplace\/listings\/[^/]+\/reject$/.test(path)) return 'Marketplace listing rejected';
+  if (path === '/marketplace/listings' && m === 'POST') return 'Marketplace listing created';
+  if (/^\/marketplace\/listings\/[^/]+$/.test(path) && m === 'PATCH') return 'Marketplace listing updated';
+  if (/^\/marketplace\/listings\/[^/]+$/.test(path) && m === 'DELETE') return 'Marketplace listing deleted';
+
+  // Rewards / privilege cards
+  if (path === '/admin/cards/issue') return 'Privilege card issued';
+  if (/^\/admin\/cards\/[^/]+\/suspend$/.test(path)) return 'Privilege card suspended';
+  if (/^\/admin\/cards\/[^/]+\/replace$/.test(path)) return 'Privilege card replaced';
+  if (/^\/admin\/cards\/[^/]+$/.test(path) && m === 'PATCH') return 'Privilege card updated';
+
+  // Partners & offers
+  if (path === '/rewards/partners' && m === 'POST') return 'Partner created';
+  if (/^\/rewards\/partners\/[^/]+$/.test(path) && m === 'PATCH') return 'Partner updated';
+  if (/^\/rewards\/partners\/[^/]+\/offers$/.test(path) && m === 'POST') return 'Reward offer created';
+  if (path === '/rewards/partners/upload-logo') return 'Partner logo uploaded';
+
+  // Payments
+  if (path === '/admin/payments' && m === 'POST') return 'Payment recorded';
+  if (/^\/admin\/payments\/[^/]+$/.test(path) && m === 'PATCH') return 'Payment updated';
+
+  // Fees
+  if (/^\/admin\/fees\/[^/]+$/.test(path) && m === 'PATCH') return 'Fee schedule updated';
+
+  // Community moderation
+  if (/^\/community\/posts\/[^/]+\/pin$/.test(path)) return 'Community post pinned/unpinned';
+  if (/^\/community\/posts\/[^/]+\/status$/.test(path)) return 'Community post status updated';
+  if (/^\/community\/posts\/[^/]+$/.test(path) && m === 'DELETE') return 'Community post deleted';
+  if (/^\/community\/comments\/[^/]+$/.test(path) && m === 'DELETE') return 'Community comment deleted';
+
+  return humanizeAction(log.action);
+}
+
+const ENTITY_LABELS = {
+  user: 'User',
+  users: 'User',
+  staff: 'Staff',
+  chapters: 'Chapter',
+  chapter_membership: 'Membership',
+  membership: 'Membership',
+  application: 'Application',
+  applications: 'Application',
+  payment: 'Payment',
+  payments: 'Payment',
+  marketplace: 'Marketplace',
+  events: 'Event',
+  clubs: 'Club',
+  rewards: 'Reward',
+  cards: 'Privilege card',
+  auth: 'Auth',
+  fees: 'Fee schedule',
+};
+
+const humanizeEntity = (e) => {
+  if (!e) return '—';
+  if (ENTITY_LABELS[e]) return ENTITY_LABELS[e];
+  return e.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+};
+
+function SecurityLogsPage({ adminUser }) {
+  const isSuperAdmin = adminUser?.role === 'SUPER_ADMIN';
+
+  const [logs, setLogs] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(25);
+  const [search, setSearch] = useState('');
+  const [entityType, setEntityType] = useState('');
+  const [action, setAction] = useState('');
+  const [method, setMethod] = useState('');
+  const [dateFrom, setDateFrom] = useState(null);
+  const [dateTo, setDateTo] = useState(null);
+  const [facets, setFacets] = useState({ entity_types: [], actions: [], methods: [] });
+  const [selected, setSelected] = useState(null);
+  const [error, setError] = useState(null);
+
+  const fetchLogs = useCallback(async () => {
+    if (!isSuperAdmin) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const params = { page, page_size: pageSize };
+      if (search) params.search = search;
+      if (entityType) params.entity_type = entityType;
+      if (action) params.action = action;
+      if (method) params.method = method;
+      if (dateFrom) params.date_from = dateFrom.toISOString();
+      if (dateTo) params.date_to = dateTo.toISOString();
+      const data = await api.listAuditLogs(params);
+      setLogs(data.logs || []);
+      setTotal(data.total || 0);
+    } catch (err) {
+      console.error('Failed to load audit logs:', err);
+      setError(err.message || 'Failed to load audit logs');
+    } finally {
+      setLoading(false);
+    }
+  }, [isSuperAdmin, page, pageSize, search, entityType, action, method, dateFrom, dateTo]);
+
+  useEffect(() => { fetchLogs(); }, [fetchLogs]);
+
+  useEffect(() => {
+    if (!isSuperAdmin) return;
+    api.getAuditLogFacets()
+      .then(setFacets)
+      .catch(err => console.error('Failed to load facets:', err));
+  }, [isSuperAdmin]);
+
+  useEffect(() => { setPage(1); }, [search, entityType, action, method, dateFrom, dateTo]);
+
+  const clearFilters = () => {
+    setSearch(''); setEntityType(''); setAction(''); setMethod('');
+    setDateFrom(null); setDateTo(null);
+  };
+  const hasFilters = !!(search || entityType || action || method || dateFrom || dateTo);
+
+  if (!isSuperAdmin) {
+    return (
+      <section className="ds-page">
+        <Ds.PageHeader
+          title="Audit Log"
+          description="Timeline of administrative actions across the platform."
+        />
+        <Ds.Section>
+          <Ds.EmptyState
+            icon={IconLock}
+            title="Restricted area"
+            description="Only Super Admins can view the audit trail."
+          />
+        </Ds.Section>
+      </section>
+    );
+  }
+
+  const methodVariant = (m) => {
+    if (m === 'POST') return 'success';
+    if (m === 'PATCH' || m === 'PUT') return 'brand';
+    if (m === 'DELETE') return 'danger';
+    return 'neutral';
+  };
+  const statusVariant = (code) => {
+    if (!code) return 'neutral';
+    if (code >= 500) return 'danger';
+    if (code >= 400) return 'warning';
+    if (code >= 300) return 'brand';
+    return 'success';
+  };
+
+  // Compact two-line date for the When column
+  const formatWhen = (iso) => {
+    if (!iso) return { date: '—', time: '' };
+    const d = new Date(iso);
+    return {
+      date: d.toLocaleDateString(undefined, { month: 'short', day: '2-digit', year: 'numeric' }),
+      time: d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }),
+    };
+  };
+
+  // Stat strip — computed from the current visible page (cheap, helpful at-a-glance)
+  const stats = {
+    total,
+    failures: logs.filter(l => l.status_code && l.status_code >= 400).length,
+    today: logs.filter(l => {
+      if (!l.created_at) return false;
+      const d = new Date(l.created_at);
+      const now = new Date();
+      return d.toDateString() === now.toDateString();
+    }).length,
+    actors: new Set(logs.filter(l => l.actor?.id).map(l => l.actor.id)).size,
+  };
+
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  const methodChips = [
+    { value: '', label: 'All' },
+    { value: 'POST', label: 'POST' },
+    { value: 'PATCH', label: 'PATCH' },
+    { value: 'PUT', label: 'PUT' },
+    { value: 'DELETE', label: 'DELETE' },
+  ];
+
   return (
     <section className="ds-page">
       <Ds.PageHeader
-        title="Security & Audit"
-        description="Timeline of critical administrative actions and system events."
+        title="Audit Log"
+        description="Every admin operation is recorded — who, what, when, and from where."
+        actions={
+          <Ds.Button
+            variant="secondary"
+            leftIcon={<IconRefresh size={14} />}
+            onClick={fetchLogs}
+          >
+            Refresh
+          </Ds.Button>
+        }
       />
-      <Ds.Section>
-        <Ds.EmptyState
-          icon={IconLock}
-          title="Audit logging module"
-          description="Real-time audit logs are currently being initialized for the network."
+
+      <div className="ds-stat-grid">
+        <Ds.StatCard
+          label="Total events"
+          value={total.toLocaleString()}
+          icon={IconListDetails}
+          iconColor="var(--brand-blue)"
+          iconBg="var(--brand-blue-50)"
+        />
+        <Ds.StatCard
+          label="On this page"
+          value={logs.length}
+          icon={IconClipboardList}
+          iconColor="var(--fg-secondary)"
+          iconBg="var(--bg-subtle)"
+        />
+        <Ds.StatCard
+          label="Failures on page"
+          value={stats.failures}
+          icon={IconAlertCircle}
+          iconColor="var(--warning)"
+          iconBg="var(--warning-bg)"
+        />
+        <Ds.StatCard
+          label="Distinct actors"
+          value={stats.actors}
+          icon={IconUserCheck}
+          iconColor="var(--success)"
+          iconBg="var(--success-bg)"
+        />
+      </div>
+
+      <Ds.Section
+        title="Activity trail"
+        subtitle="Click any row to inspect the request body, response status and diff."
+        flush
+        actions={
+          <Ds.ChipGroup
+            value={method}
+            onChange={setMethod}
+            options={methodChips}
+          />
+        }
+      >
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'minmax(260px, 1.4fr) minmax(160px, 1fr) minmax(160px, 1fr) auto auto',
+          gap: 'var(--space-3)',
+          alignItems: 'center',
+          padding: 'var(--space-4) var(--space-6)',
+          borderBottom: '1px solid var(--border-subtle)',
+        }}>
+          <Ds.Input
+            placeholder="Search by actor, action or path…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            leftIcon={<IconSearch size={14} />}
+          />
+          <Ds.Select
+            placeholder="All entities"
+            value={entityType}
+            options={facets.entity_types.map(t => ({ id: t, name: humanizeEntity(t) }))}
+            allowClear
+            onChange={setEntityType}
+          />
+          <Ds.Select
+            placeholder="All actions"
+            value={action}
+            options={facets.actions.map(a => ({ id: a, name: humanizeAction(a) }))}
+            allowClear
+            onChange={setAction}
+          />
+          <div className="audit-daterange">
+            <DatePicker
+              selected={dateFrom}
+              onChange={setDateFrom}
+              selectsStart
+              startDate={dateFrom}
+              endDate={dateTo}
+              dateFormat="MMM d, yyyy"
+              placeholderText="From date"
+              className="modern-datepicker-input"
+              isClearable
+            />
+            <span style={{ color: 'var(--fg-muted)', padding: '0 6px' }}>—</span>
+            <DatePicker
+              selected={dateTo}
+              onChange={setDateTo}
+              selectsEnd
+              startDate={dateFrom}
+              endDate={dateTo}
+              minDate={dateFrom}
+              dateFormat="MMM d, yyyy"
+              placeholderText="To date"
+              className="modern-datepicker-input"
+              isClearable
+            />
+          </div>
+          {hasFilters ? (
+            <Ds.Button variant="ghost" onClick={clearFilters} leftIcon={<IconX size={14} />}>
+              Clear
+            </Ds.Button>
+          ) : <span />}
+        </div>
+
+        {error && (
+          <div style={{ padding: 'var(--space-4) var(--space-6)', color: 'var(--danger)' }}>
+            {error}
+          </div>
+        )}
+
+        <Ds.Table>
+          <thead>
+            <tr>
+              <th style={{ width: 140 }}>When</th>
+              <th style={{ width: 220 }}>Actor</th>
+              <th>Action</th>
+              <th style={{ width: 140 }}>Target</th>
+              <th style={{ width: 90 }}>Method</th>
+              <th style={{ width: 90 }}>Status</th>
+              <th style={{ width: 130 }}>Source</th>
+              <th className="ds-table__actions" />
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <Ds.Table.LoadingRow colSpan={8} label="Loading audit trail…" />
+            ) : logs.length === 0 ? (
+              <Ds.Table.EmptyRow
+                colSpan={8}
+                icon={IconLock}
+                title="No audit events"
+                description={hasFilters ? "No events match the current filters." : "Activity will appear here as soon as admins start operating."}
+              />
+            ) : logs.map(log => {
+              const when = formatWhen(log.created_at);
+              return (
+                <tr key={log.id} className="is-clickable" onClick={() => setSelected(log)}>
+                  <td style={{ fontVariantNumeric: 'tabular-nums' }}>
+                    <div className="ds-table__primary" style={{ fontSize: 'var(--text-sm)' }}>{when.date}</div>
+                    <div className="ds-table__muted" style={{ fontSize: 'var(--text-xs)' }}>{when.time}</div>
+                  </td>
+                  <td>
+                    {log.actor?.full_name ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', minWidth: 0 }}>
+                        <Ds.Avatar size="sm" name={log.actor.full_name} />
+                        <div style={{ minWidth: 0 }}>
+                          <div className="ds-table__primary" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {log.actor.full_name}
+                          </div>
+                          <div className="ds-table__muted" style={{ fontSize: 'var(--text-xs)' }}>
+                            {log.actor.role || '—'}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="ds-table__muted">System</span>
+                    )}
+                  </td>
+                  <td>
+                    <div className="ds-table__primary">{describeAuditAction(log)}</div>
+                  </td>
+                  <td className="ds-table__muted">{humanizeEntity(log.entity_type)}</td>
+                  <td>
+                    {log.method ? <Ds.Badge variant={methodVariant(log.method)}>{log.method}</Ds.Badge> : <span className="ds-table__muted">—</span>}
+                  </td>
+                  <td>
+                    {log.status_code ? (
+                      <Ds.Badge variant={statusVariant(log.status_code)}>{log.status_code}</Ds.Badge>
+                    ) : <span className="ds-table__muted">—</span>}
+                  </td>
+                  <td className="ds-table__muted" style={{ fontVariantNumeric: 'tabular-nums', fontSize: 'var(--text-xs)' }}>
+                    {log.ip_address || '—'}
+                  </td>
+                  <td className="ds-table__actions" onClick={e => e.stopPropagation()}>
+                    <Ds.IconButton aria-label="View details" onClick={() => setSelected(log)}>
+                      <IconEye size={16} />
+                    </Ds.IconButton>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </Ds.Table>
+
+        <Ds.Pagination
+          page={page}
+          totalPages={totalPages}
+          total={total}
+          pageLabel="events"
+          onPageChange={p => setPage(Math.max(1, p))}
         />
       </Ds.Section>
+
+      {selected && (
+        <AuditLogDetailModal log={selected} onClose={() => setSelected(null)} />
+      )}
     </section>
+  );
+}
+
+// Fetcher: given an audit log row, try to load the related entity.
+// Returns { kind, data, loading, error }. Currently supports applications.
+function useAuditContext(log) {
+  const [state, setState] = useState({ kind: null, data: null, loading: false, error: null });
+
+  useEffect(() => {
+    if (!log) return;
+    const path = (log.path || '').replace(/^\/api\/v[0-9]+/, '');
+    const m = (log.method || '').toUpperCase();
+
+    // Try to derive an application id from the path or entity fields.
+    const appMatch = path.match(/^\/applications\/([0-9a-f-]{36})/i)
+      || path.match(/^\/admin\/applications\/([0-9a-f-]{36})/i);
+
+    if (appMatch && (log.entity_type === 'application' || log.entity_type === 'applications' || appMatch)) {
+      const appId = appMatch[1];
+      // Don't try to fetch if the application was just deleted in this very event
+      if (m === 'DELETE' && path.endsWith(appId)) {
+        setState({ kind: 'application', data: null, loading: false, error: 'Application was deleted in this event' });
+        return;
+      }
+      setState({ kind: 'application', data: null, loading: true, error: null });
+      api.getApplication(appId)
+        .then(d => setState({ kind: 'application', data: d, loading: false, error: null }))
+        .catch(err => setState({ kind: 'application', data: null, loading: false, error: err.message || 'Failed to load application' }));
+      return;
+    }
+    // Future: add chapter / privilege card / etc. here as their getById endpoints land.
+  }, [log]);
+
+  return state;
+}
+
+function ApplicationContextCard({ data }) {
+  if (!data) return null;
+  return (
+    <div style={{
+      border: '1px solid var(--border-subtle)',
+      borderRadius: 'var(--radius-lg, 12px)',
+      background: 'var(--bg-elevated, #fff)',
+      padding: 'var(--space-4)',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-3)' }}>
+        <Ds.Avatar size="md" name={data.full_name || '?'} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontWeight: 'var(--weight-bold)', fontSize: 'var(--text-base)' }}>
+            {data.full_name || '—'}
+          </div>
+          <div style={{ color: 'var(--fg-secondary)', fontSize: 'var(--text-sm)' }}>
+            {data.business_name || '—'} · {data.industry_name || '—'}
+          </div>
+        </div>
+        <Ds.Badge variant={
+          data.status === 'approved' ? 'success'
+          : data.status === 'rejected' ? 'danger'
+          : data.status === 'fit_call_scheduled' ? 'brand'
+          : 'warning'
+        }>
+          {data.status?.replace(/_/g, ' ')}
+        </Ds.Badge>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 'var(--space-3) var(--space-4)' }}>
+        <ContextRow label="Email" value={data.email} />
+        <ContextRow label="Phone" value={data.contact_number} />
+        <ContextRow label="District" value={data.district} />
+        <ContextRow label="Chapter" value={data.chapter_name} />
+        <ContextRow label="Industry" value={data.industry_name} />
+        <ContextRow label="Submitted" value={data.created_at ? new Date(data.created_at).toLocaleString() : null} />
+        {data.fit_call_date && <ContextRow label="Fit call" value={new Date(data.fit_call_date).toLocaleString()} />}
+        {data.notes && <ContextRow label="Notes" value={data.notes} full />}
+      </div>
+
+      {data.history && data.history.length > 0 && (
+        <div style={{ marginTop: 'var(--space-4)' }}>
+          <div style={{ fontSize: 'var(--text-xs)', color: 'var(--fg-secondary)', textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 8 }}>
+            Status history
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+            {data.history.slice().reverse().map(h => (
+              <div key={h.id} style={{
+                display: 'flex', alignItems: 'center', gap: 'var(--space-3)',
+                padding: 'var(--space-2) var(--space-3)',
+                background: 'var(--bg-subtle)', borderRadius: 'var(--radius-md, 8px)',
+              }}>
+                <span className="ds-table__muted" style={{ fontSize: 'var(--text-xs)', minWidth: 140 }}>
+                  {h.created_at ? new Date(h.created_at).toLocaleString() : '—'}
+                </span>
+                <span style={{ fontSize: 'var(--text-sm)' }}>
+                  {h.old_status ? `${h.old_status.replace(/_/g, ' ')} → ` : ''}
+                  <strong>{h.new_status?.replace(/_/g, ' ')}</strong>
+                </span>
+                {h.notes && <span className="ds-table__muted" style={{ fontSize: 'var(--text-xs)', marginLeft: 'auto' }}>{h.notes}</span>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ContextRow({ label, value, full = false }) {
+  return (
+    <div style={full ? { gridColumn: '1 / -1' } : undefined}>
+      <div style={{ fontSize: 'var(--text-xs)', color: 'var(--fg-secondary)', textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 2 }}>
+        {label}
+      </div>
+      <div style={{ fontSize: 'var(--text-sm)', wordBreak: 'break-word' }}>
+        {value || '—'}
+      </div>
+    </div>
+  );
+}
+
+function AuditLogDetailModal({ log, onClose }) {
+  const ctx = useAuditContext(log);
+  const headline = describeAuditAction(log);
+
+  return (
+    <Ds.Modal open onClose={onClose} size="lg">
+      <Ds.Modal.Header
+        title={headline}
+        subtitle={`${log.actor?.full_name || 'System'} · ${new Date(log.created_at).toLocaleString()}`}
+        onClose={onClose}
+      />
+      <Ds.Modal.Body>
+        {/* Event summary */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+          gap: 'var(--space-3) var(--space-4)',
+          padding: 'var(--space-4)',
+          background: 'var(--bg-subtle)',
+          borderRadius: 'var(--radius-lg, 12px)',
+          marginBottom: 'var(--space-5)',
+        }}>
+          <ContextRow label="Actor" value={log.actor?.full_name || 'System'} />
+          <ContextRow label="Role" value={log.actor?.role} />
+          <ContextRow label="Target" value={humanizeEntity(log.entity_type)} />
+          <ContextRow label="Result" value={log.status_code ? `HTTP ${log.status_code}` : '—'} />
+          <ContextRow label="IP address" value={log.ip_address} />
+          <ContextRow label="Duration" value={log.duration_ms != null ? `${log.duration_ms} ms` : null} />
+          {log.actor?.email && <ContextRow label="Actor email" value={log.actor.email} />}
+          {log.user_agent && <ContextRow label="User agent" value={log.user_agent} full />}
+        </div>
+
+        {/* Related entity context */}
+        {ctx.kind && (
+          <div style={{ marginBottom: 'var(--space-5)' }}>
+            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--fg-secondary)', textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 8 }}>
+              Related {ctx.kind}
+            </div>
+            {ctx.loading && (
+              <div style={{ padding: 'var(--space-4)', color: 'var(--fg-secondary)' }}>Loading…</div>
+            )}
+            {ctx.error && (
+              <div style={{ padding: 'var(--space-3)', color: 'var(--fg-secondary)', fontSize: 'var(--text-sm)', fontStyle: 'italic' }}>
+                {ctx.error}
+              </div>
+            )}
+            {ctx.kind === 'application' && ctx.data && <ApplicationContextCard data={ctx.data} />}
+          </div>
+        )}
+
+        {/* Diff / raw payload (advanced) */}
+        {(log.old_value || log.new_value) && (
+          <details>
+            <summary style={{
+              cursor: 'pointer', userSelect: 'none',
+              fontSize: 'var(--text-xs)', color: 'var(--fg-secondary)',
+              textTransform: 'uppercase', letterSpacing: '.04em',
+              padding: 'var(--space-2) 0',
+            }}>
+              Request payload & diff
+            </summary>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'var(--space-4)', marginTop: 'var(--space-3)' }}>
+              {log.old_value && (
+                <div>
+                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--fg-secondary)', marginBottom: 6 }}>Before</div>
+                  <pre style={{
+                    background: '#0f172a', color: '#f1f5f9',
+                    padding: 'var(--space-3)', borderRadius: 'var(--radius-md, 8px)',
+                    maxHeight: 280, overflow: 'auto', fontSize: 'var(--text-xs)', margin: 0,
+                  }}>
+                    {JSON.stringify(log.old_value, null, 2)}
+                  </pre>
+                </div>
+              )}
+              {log.new_value && (
+                <div>
+                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--fg-secondary)', marginBottom: 6 }}>After / payload</div>
+                  <pre style={{
+                    background: '#0f172a', color: '#f1f5f9',
+                    padding: 'var(--space-3)', borderRadius: 'var(--radius-md, 8px)',
+                    maxHeight: 280, overflow: 'auto', fontSize: 'var(--text-xs)', margin: 0,
+                  }}>
+                    {JSON.stringify(log.new_value, null, 2)}
+                  </pre>
+                </div>
+              )}
+            </div>
+          </details>
+        )}
+      </Ds.Modal.Body>
+      <Ds.Modal.Footer>
+        <Ds.Button variant="secondary" onClick={onClose}>Close</Ds.Button>
+      </Ds.Modal.Footer>
+    </Ds.Modal>
   );
 }
 
@@ -6592,7 +7282,7 @@ export default function App() {
     if (activeTab === 'revenue') return <RevenuePage onNavigateToGovernance={() => setActiveTab('governance')} />;
     if (activeTab === 'governance') return <GovernancePage onBack={() => setActiveTab('revenue')} />;
     if (activeTab === 'settings') return <SettingsPage {...commonProps} />;
-    if (activeTab === 'notifications') return <SecurityLogsPage />;
+    if (activeTab === 'notifications') return <SecurityLogsPage adminUser={adminUser} />;
 
     // Default: Analytics Hub
     return (

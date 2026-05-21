@@ -87,6 +87,10 @@ def _register_middleware(app: FastAPI) -> None:
     from app.core.rate_limit import RateLimitMiddleware
     app.add_middleware(RateLimitMiddleware)
 
+    # Audit log capture for admin-panel mutations
+    from app.core.audit import AuditMiddleware
+    app.add_middleware(AuditMiddleware)
+
     # CORS (Must be outermost to handle preflights correctly)
     # Use specified origins and allow credentials to support Authorization headers
     origins = settings.CORS_ORIGINS
