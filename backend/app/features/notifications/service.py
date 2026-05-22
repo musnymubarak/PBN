@@ -138,6 +138,11 @@ async def send_push_notification(
                         notification=messaging.Notification(title=title, body=body),
                         data=data if data else {},
                         token=user.fcm_token,
+                        apns=messaging.APNSConfig(
+                            payload=messaging.APNSPayload(
+                                aps=messaging.Aps(sound="default")
+                            )
+                        ),
                     )
                     response = messaging.send(message)
                     logger.info(f"FCM [DISPATCHED]: {response}")
@@ -204,6 +209,11 @@ async def broadcast_notification(
                                 notification=messaging.Notification(title=title, body=body),
                                 data=data if data else {},
                                 token=token,
+                                apns=messaging.APNSConfig(
+                                    payload=messaging.APNSPayload(
+                                        aps=messaging.Aps(sound="default")
+                                    )
+                                ),
                             )
                             messaging.send(message)
                             success_count += 1
@@ -280,6 +290,11 @@ async def notify_multiple_users(
                                 notification=messaging.Notification(title=title, body=body),
                                 data=data if data else {},
                                 token=token,
+                                apns=messaging.APNSConfig(
+                                    payload=messaging.APNSPayload(
+                                        aps=messaging.Aps(sound="default")
+                                    )
+                                ),
                             )
                             messaging.send(message)
                         except Exception as e:
