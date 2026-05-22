@@ -23,6 +23,30 @@ class ApplicationStatus(str, enum.Enum):
     WAITLISTED = "waitlisted"
 
 
+class DecisionAuthority(str, enum.Enum):
+    SOLE = "sole"
+    SHARED = "shared"
+    INFLUENCER = "influencer"
+
+
+class BusinessLegalType(str, enum.Enum):
+    SOLE_PROPRIETORSHIP = "sole_proprietorship"
+    PARTNERSHIP = "partnership"
+    PVT_LTD = "pvt_ltd"
+    PLC = "plc"
+    NGO = "ngo"
+    OTHER = "other"
+
+
+class TshirtSize(str, enum.Enum):
+    S = "S"
+    M = "M"
+    L = "L"
+    XL = "XL"
+    XXL = "XXL"
+    XXXL = "XXXL"
+
+
 class Application(Base, TimestampMixin):
     __tablename__ = "applications"
 
@@ -44,6 +68,50 @@ class Application(Base, TimestampMixin):
     )
     fit_call_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # ── Tier 1 profile fields (nullable in DB; frontend-required for new applicants) ──
+    designation: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    decision_authority: Mapped[DecisionAuthority | None] = mapped_column(
+        Enum(
+            DecisionAuthority,
+            name="decision_authority",
+            create_type=False,
+            values_callable=lambda x: [e.value for e in x],
+        ),
+        nullable=True,
+    )
+    years_in_operation: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    business_legal_type: Mapped[BusinessLegalType | None] = mapped_column(
+        Enum(
+            BusinessLegalType,
+            name="business_legal_type",
+            create_type=False,
+            values_callable=lambda x: [e.value for e in x],
+        ),
+        nullable=True,
+    )
+    business_registration_number: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    website_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    linkedin_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    referred_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    what_you_offer: Mapped[str | None] = mapped_column(String(280), nullable=True)
+    what_you_seek: Mapped[str | None] = mapped_column(String(280), nullable=True)
+
+    # ── Onboarding (post-approval) ──
+    tshirt_size: Mapped[TshirtSize | None] = mapped_column(
+        Enum(
+            TshirtSize,
+            name="tshirt_size",
+            create_type=False,
+            values_callable=lambda x: [e.value for e in x],
+        ),
+        nullable=True,
+    )
+    onboarding_token: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True, index=True)
+    onboarding_token_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    onboarding_completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     def __repr__(self) -> str:
         return f"<Application {self.full_name} [{self.status.value}]>"

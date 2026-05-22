@@ -18,6 +18,8 @@ from app.core.response import success_response
 from app.features.applications.schemas import (
     ApplicationCreate,
     ApplicationStatusUpdate,
+    OnboardingDetailsUpdate,
+    OnboardingTshirtUpdate,
 )
 from app.features.applications.service import (
     create_application,
@@ -28,6 +30,9 @@ from app.features.applications.service import (
     list_applications,
     update_application_status,
     delete_application,
+    get_onboarding_status,
+    update_onboarding_details,
+    submit_onboarding_tshirt,
 )
 from app.features.auth.dependencies import get_current_user, require_role
 from app.models.applications import ApplicationStatus
@@ -194,6 +199,18 @@ async def get_application_detail_endpoint(
             "status": app.status.value,
             "fit_call_date": app.fit_call_date.isoformat() if app.fit_call_date else None,
             "notes": app.notes,
+            "designation": app.designation,
+            "decision_authority": app.decision_authority.value if app.decision_authority else None,
+            "years_in_operation": app.years_in_operation,
+            "business_legal_type": app.business_legal_type.value if app.business_legal_type else None,
+            "business_registration_number": app.business_registration_number,
+            "website_url": app.website_url,
+            "linkedin_url": app.linkedin_url,
+            "referred_by_user_id": str(app.referred_by_user_id) if app.referred_by_user_id else None,
+            "what_you_offer": app.what_you_offer,
+            "what_you_seek": app.what_you_seek,
+            "tshirt_size": app.tshirt_size.value if app.tshirt_size else None,
+            "onboarding_completed_at": app.onboarding_completed_at.isoformat() if app.onboarding_completed_at else None,
             "created_at": app.created_at.isoformat(),
             "updated_at": app.updated_at.isoformat(),
             "history": [
@@ -241,3 +258,69 @@ async def delete_application_endpoint(
 ) -> ORJSONResponse:
     await delete_application(app_id, db)
     return success_response(message="Application deleted successfully")
+
+
+# ── Onboarding (public; token-authenticated) ────────────────────────────────
+
+@router.get(
+    "/applications/onboard/{token}",
+    summary="Resolve onboarding link (public, token-authenticated)",
+)
+async def get_onboarding_status_endpoint(
+    token: str,
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    result = await get_onboarding_status(token, db)
+    return success_response(data={
+        **result,
+        "application_id": str(result["application_id"]),
+        "expires_at": result["expires_at"].isoformat() if result.get("expires_at") else None,
+        "decision_authority": (
+            result["decision_authority"].value if result.get("decision_authority") else None
+        ),
+        "business_legal_type": (
+            result["business_legal_type"].value if result.get("business_legal_type") else None
+        ),
+        "tshirt_size": (
+            result["tshirt_size"].value if result.get("tshirt_size") else None
+        ),
+    })
+
+
+@router.patch(
+    "/applications/onboard/{token}/details",
+    summary="Backfill missing Tier-1 fields during onboarding",
+)
+async def patch_onboarding_details_endpoint(
+    token: str,
+    data: OnboardingDetailsUpdate,
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    result = await update_onboarding_details(token, data, db)
+    return success_response(data={
+        **result,
+        "application_id": str(result["application_id"]),
+        "expires_at": result["expires_at"].isoformat() if result.get("expires_at") else None,
+        "decision_authority": (
+            result["decision_authority"].value if result.get("decision_authority") else None
+        ),
+        "business_legal_type": (
+            result["business_legal_type"].value if result.get("business_legal_type") else None
+        ),
+        "tshirt_size": (
+            result["tshirt_size"].value if result.get("tshirt_size") else None
+        ),
+    })
+
+
+@router.post(
+    "/applications/onboard/{token}/tshirt",
+    summary="Record T-shirt size and complete onboarding",
+)
+async def post_onboarding_tshirt_endpoint(
+    token: str,
+    data: OnboardingTshirtUpdate,
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    result = await submit_onboarding_tshirt(token, data, db)
+    return success_response(data=result, message="Onboarding completed")

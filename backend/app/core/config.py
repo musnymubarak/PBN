@@ -73,6 +73,11 @@ class Settings(BaseSettings):
     SMTP_FROM_NAME: str = "Prime Business Network"
     SMTP_FROM_EMAIL: str = "info@primebusiness.network"
 
+    # ── Public URLs ──────────────────────────────────────────
+    # Base URL of the public site; used to build onboarding links emailed to
+    # approved applicants. Override per-environment via env var if needed.
+    PUBLIC_SITE_URL: str = "https://primebusiness.network"
+
     # ── CORS ─────────────────────────────────────────────────
     CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:5173"]
 

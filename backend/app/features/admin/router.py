@@ -290,6 +290,16 @@ async def delete_user_endpoint(
 
 
 
+@router.get("/admin/users/{user_id}/profile", summary="Full member profile (composite)")
+async def member_profile_endpoint(
+    user_id: UUID,
+    current_user: User = Depends(read_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    result = await service.get_member_profile(user_id, db)
+    return success_response(data=result)
+
+
 @router.get("/admin/users/{user_id}/masked", summary="Get masked PII data")
 async def masked_user_endpoint(
     user_id: UUID,

@@ -45,6 +45,9 @@ import { AppShell } from './components/layout/AppShell';
 import * as Ds from './components/ui';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import OnboardingPage from './onboarding/OnboardingPage';
+import MemberDetailPage from './members/MemberDetailPage';
+import ComplementsPage from './complements/ComplementsPage';
 
 
 // ── Login Page ──────────────────────────────────────────────────────────────
@@ -254,6 +257,7 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
   const [paymentStatus, setPaymentStatus] = useState('pending');
   const [errorMessage, setErrorMessage] = useState('');
   const [fitCallDate, setFitCallDate] = useState(new Date());
+  const [approvalEmail, setApprovalEmail] = useState('');
 
   useEffect(() => {
     setLoading(true);
@@ -294,6 +298,19 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
       return;
     }
 
+    // Approval requires an email — backend sends the onboarding link there.
+    if (newStatus === 'approved' && !detail.email) {
+      const trimmed = approvalEmail.trim();
+      if (!trimmed) {
+        setErrorMessage('Email is required to approve. Add the applicant’s email below to send the onboarding link.');
+        return;
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+        setErrorMessage('Please enter a valid email address.');
+        return;
+      }
+    }
+
     setUpdating(true);
     try {
       await api.updateApplicationStatus(appId, {
@@ -302,6 +319,7 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
         chapter_id: selectedChapterId || undefined,
         payment_status: newStatus === 'approved' ? paymentStatus : undefined,
         fit_call_date: newStatus === 'fit_call_scheduled' ? fitCallDate.toISOString() : undefined,
+        email: (newStatus === 'approved' && !detail.email) ? approvalEmail.trim() : undefined,
       });
       onStatusUpdated();
       onClose();
@@ -442,6 +460,51 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
             </div>
           </div>
 
+          {/* Founding-member profile (Tier-1 fields) */}
+          {(detail.designation || detail.decision_authority || detail.years_in_operation || detail.business_legal_type || detail.business_registration_number || detail.website_url || detail.linkedin_url || detail.what_you_offer || detail.what_you_seek || detail.tshirt_size) && (
+            <div style={{ marginTop: '2rem' }}>
+              <h4 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.75rem' }}>Founding-member profile</h4>
+              <div className="detail-grid">
+                {detail.designation && (
+                  <div className="detail-item"><label>Designation</label><p>{detail.designation}</p></div>
+                )}
+                {detail.decision_authority && (
+                  <div className="detail-item"><label>Decision authority</label><p style={{ textTransform: 'capitalize' }}>{detail.decision_authority.replace(/_/g, ' ')}</p></div>
+                )}
+                {detail.years_in_operation && (
+                  <div className="detail-item"><label>Years in operation</label><p>{detail.years_in_operation}</p></div>
+                )}
+                {detail.business_legal_type && (
+                  <div className="detail-item"><label>Legal type</label><p style={{ textTransform: 'uppercase' }}>{detail.business_legal_type.replace(/_/g, ' ')}</p></div>
+                )}
+                {detail.business_registration_number && (
+                  <div className="detail-item"><label>BR Number</label><p>{detail.business_registration_number}</p></div>
+                )}
+                {detail.website_url && (
+                  <div className="detail-item"><label>Website</label><p><a href={detail.website_url} target="_blank" rel="noreferrer" style={{ color: 'var(--brand-navy-600, #1e3a8a)' }}>{detail.website_url}</a></p></div>
+                )}
+                {detail.linkedin_url && (
+                  <div className="detail-item"><label>LinkedIn</label><p><a href={detail.linkedin_url} target="_blank" rel="noreferrer" style={{ color: 'var(--brand-navy-600, #1e3a8a)' }}>{detail.linkedin_url}</a></p></div>
+                )}
+                {detail.tshirt_size && (
+                  <div className="detail-item"><label>T-shirt size</label><p>{detail.tshirt_size}</p></div>
+                )}
+              </div>
+              {detail.what_you_offer && (
+                <div style={{ marginTop: '1rem' }}>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>What they offer</label>
+                  <p style={{ marginTop: '0.5rem', fontSize: '0.9375rem', color: 'var(--text-primary)', background: '#f8fafc', padding: '0.85rem 1rem', borderRadius: '12px', lineHeight: 1.6 }}>{detail.what_you_offer}</p>
+                </div>
+              )}
+              {detail.what_you_seek && (
+                <div style={{ marginTop: '0.75rem' }}>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>What they seek</label>
+                  <p style={{ marginTop: '0.5rem', fontSize: '0.9375rem', color: 'var(--text-primary)', background: '#f8fafc', padding: '0.85rem 1rem', borderRadius: '12px', lineHeight: 1.6 }}>{detail.what_you_seek}</p>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Notes */}
           {detail.notes && (
             <div style={{ marginTop: '1.5rem' }}>
@@ -481,8 +544,25 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
                   <IconCheck size={18} /> Approve Application
                 </h4>
                 <p style={{ fontSize: '0.85rem', color: '#166534', marginBottom: '1.25rem' }}>
-                  Select the chapter and confirming the initial payment status if previously received.
+                  Select the chapter and confirming the initial payment status if previously received. The applicant receives a welcome email with login credentials and an onboarding link.
                 </p>
+                {!detail.email && (
+                  <div style={{ marginBottom: '1.25rem' }}>
+                    <label style={{ color: '#92400e', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem', display: 'block' }}>
+                      Email (required to send the onboarding link)
+                    </label>
+                    <input
+                      type="email"
+                      value={approvalEmail}
+                      onChange={e => setApprovalEmail(e.target.value)}
+                      placeholder="applicant@example.com"
+                      style={{ width: '100%', padding: '0.75rem 1rem', border: '1px solid #fcd34d', borderRadius: '12px', fontSize: '0.9375rem', background: '#fffbeb', height: '52px' }}
+                    />
+                    <p style={{ fontSize: '0.75rem', color: '#92400e', marginTop: '0.4rem' }}>
+                      This application was submitted without an email. Add one to proceed.
+                    </p>
+                  </div>
+                )}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
                   <div>
                     <label style={{ color: '#166534', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem', display: 'block' }}>Target Chapter</label>
@@ -1301,6 +1381,30 @@ function MembersPage() {
   const [roleFilter, setRoleFilter] = useState('');
   const [selectedUser, setSelectedUser] = useState(null);
 
+  // Member detail page is navigated to via ?member=<uuid>. We track the id
+  // here so clicks update the URL (bookmarkable) and Back works as expected.
+  const readMemberFromUrl = () => new URLSearchParams(window.location.search).get('member');
+  const [detailMemberId, setDetailMemberId] = useState(readMemberFromUrl);
+
+  useEffect(() => {
+    const onPop = () => setDetailMemberId(readMemberFromUrl());
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
+  const openMember = (id) => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('member', id);
+    window.history.pushState({}, '', url);
+    setDetailMemberId(id);
+  };
+  const closeMember = () => {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('member');
+    window.history.pushState({}, '', url);
+    setDetailMemberId(null);
+  };
+
   const [chapters, setChapters] = useState([]);
   const [industries, setIndustries] = useState([]);
 
@@ -1344,6 +1448,10 @@ function MembersPage() {
     { id: 'CHAPTER_ADMIN', name: 'Chapter Admins' },
     { id: 'PARTNER_ADMIN', name: 'Partner Admins' },
   ];
+
+  if (detailMemberId) {
+    return <MemberDetailPage memberId={detailMemberId} onBack={closeMember} />;
+  }
 
   return (
     <section className="ds-page">
@@ -1424,10 +1532,10 @@ function MembersPage() {
                 description="Try clearing filters or adjusting your search."
               />
             ) : users.map(user => (
-              <tr key={user.id} className="is-clickable" onClick={() => setSelectedUser(user)}>
+              <tr key={user.id} className="is-clickable" onClick={() => openMember(user.id)}>
                 <td>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
-                    <Ds.Avatar size="sm" name={user.full_name || '?'} />
+                    <Ds.Avatar size="sm" name={user.full_name || '?'} src={user.profile_photo ? `${STATIC_BASE_URL}${user.profile_photo}` : undefined} />
                     <div style={{ minWidth: 0 }}>
                       <div className="ds-table__primary">{user.full_name || 'Unnamed User'}</div>
                       <div style={{ fontSize: 'var(--text-xs)', color: 'var(--fg-muted)', fontWeight: 'var(--weight-medium)' }}>
@@ -7208,6 +7316,11 @@ function AnalyticsHubPage({ overview, overviewLoading, overviewError, onChangeTa
 
 
 export default function App() {
+  // Public onboarding wizard — token-authenticated, bypasses the admin login.
+  if (typeof window !== 'undefined' && window.location.pathname.startsWith('/onboard')) {
+    return <OnboardingPage />;
+  }
+
   const [isAuthenticated, setIsAuthenticated] = useState(() => !!localStorage.getItem('access_token'));
   const [adminUser, setAdminUser] = useState(null);
   const [activeTab, setActiveTab] = useState(() => {
@@ -7314,6 +7427,7 @@ export default function App() {
     if (activeTab === 'referrals') return <ReferralsPage />;
     if (activeTab === 'events') return <EventsPage />;
     if (activeTab === 'clubs') return <ClubsPage />;
+    if (activeTab === 'complements') return <ComplementsPage />;
     if (activeTab === 'revenue') return <RevenuePage onNavigateToGovernance={() => setActiveTab('governance')} />;
     if (activeTab === 'governance') return <GovernancePage onBack={() => setActiveTab('revenue')} />;
     if (activeTab === 'settings') return <SettingsPage {...commonProps} />;

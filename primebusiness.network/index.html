@@ -4049,6 +4049,91 @@
 
           <div class="modal-divider"></div>
 
+          <!-- Tier 1 – Profile fields (required for new applicants) -->
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Your Role / Designation <span>*</span></label>
+              <select class="form-select" name="designation" required>
+                <option value="" disabled selected>Select your role…</option>
+                <option>Founder</option>
+                <option>CEO</option>
+                <option>Managing Director</option>
+                <option>Director</option>
+                <option>Partner</option>
+                <option>Manager</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Decision Authority <span>*</span></label>
+              <select class="form-select" name="decision_authority" required>
+                <option value="" disabled selected>How do you decide deals?</option>
+                <option value="sole">Sole decision-maker</option>
+                <option value="shared">Shared / committee decision</option>
+                <option value="influencer">Influencer / not the decider</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Years in Operation <span>*</span></label>
+              <select class="form-select" name="years_in_operation" required>
+                <option value="" disabled selected>Select range…</option>
+                <option value="<1">Less than 1 year</option>
+                <option value="1-3">1–3 years</option>
+                <option value="3-7">3–7 years</option>
+                <option value="7+">7+ years</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Business Legal Type <span>*</span></label>
+              <select class="form-select" name="business_legal_type" required>
+                <option value="" disabled selected>Select legal form…</option>
+                <option value="sole_proprietorship">Sole Proprietorship</option>
+                <option value="partnership">Partnership</option>
+                <option value="pvt_ltd">Private Limited (Pvt) Ltd</option>
+                <option value="plc">Public Limited (PLC)</option>
+                <option value="ngo">NGO / Non-profit</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Business Registration No. <span style="opacity:.5;">(optional)</span></label>
+              <input class="form-input" type="text" name="business_registration_number" placeholder="Eg: PV 1234567" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Website URL <span>*</span></label>
+              <input class="form-input" type="text" inputmode="url" name="website_url" required placeholder="your-business.lk" />
+            </div>
+          </div>
+
+          <div class="form-row" style="grid-template-columns: 1fr;">
+            <div class="form-group">
+              <label class="form-label">LinkedIn Profile URL <span>*</span></label>
+              <input class="form-input" type="text" inputmode="url" name="linkedin_url" required placeholder="linkedin.com/in/yourname" />
+            </div>
+          </div>
+
+          <div class="form-row" style="grid-template-columns: 1fr;">
+            <div class="form-group">
+              <label class="form-label">What you offer the network <span>*</span></label>
+              <textarea class="form-input" name="what_you_offer" required rows="2" maxlength="280" placeholder="One sentence on the products / services you bring to PBN members."></textarea>
+            </div>
+          </div>
+
+          <div class="form-row" style="grid-template-columns: 1fr;">
+            <div class="form-group">
+              <label class="form-label">What you seek from the network <span>*</span></label>
+              <textarea class="form-input" name="what_you_seek" required rows="2" maxlength="280" placeholder="One sentence on the customers / partnerships / referrals you're looking for."></textarea>
+            </div>
+          </div>
+
+          <div class="modal-divider"></div>
+
           <!-- Privacy Policy Consent -->
           <label class="privacy-consent" for="privacyCheck">
             <input type="checkbox" id="privacyCheck" name="privacy_accepted" required />
@@ -4365,6 +4450,14 @@
 
       const data = Object.fromEntries(new FormData(form).entries());
       data.privacy_accepted = true;
+      // Auto-prefix URL fields with https:// if scheme missing.
+      for (const k of ['website_url', 'linkedin_url']) {
+        if (data[k] && !/^https?:\/\//i.test(data[k])) data[k] = 'https://' + data[k];
+      }
+      // Drop empty optional fields so backend stores NULL, not "".
+      for (const k of Object.keys(data)) {
+        if (typeof data[k] === 'string' && data[k].trim() === '') delete data[k];
+      }
 
       try {
         const res = await fetch(`${GATEWAY_URL}?path=applications`, {

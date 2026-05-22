@@ -10,6 +10,7 @@ import {
   IconCalendarEvent,
   IconBuildingStore,
   IconBuildingCommunity,
+  IconShirt,
 } from '@tabler/icons-react';
 
 /**
@@ -36,6 +37,7 @@ export const MENU_GROUPS = [
       { id: 'marketplace', icon: IconBuildingStore, label: 'Marketplace' },
       { id: 'payments', icon: IconCoin, label: 'Payments' },
       { id: 'revenue', icon: IconChartBar, label: 'Revenue & ROI' },
+      { id: 'complements', icon: IconShirt, label: 'Complements' },
     ],
   },
   {

@@ -152,6 +152,16 @@ async def create_application(
         industry_category_id=data.industry_category_id,
         chapter_id=data.chapter_id,
         status=ApplicationStatus.PENDING,
+        designation=data.designation,
+        decision_authority=data.decision_authority,
+        years_in_operation=data.years_in_operation,
+        business_legal_type=data.business_legal_type,
+        business_registration_number=data.business_registration_number,
+        website_url=data.website_url,
+        linkedin_url=data.linkedin_url,
+        referred_by_user_id=data.referred_by_user_id,
+        what_you_offer=data.what_you_offer,
+        what_you_seek=data.what_you_seek,
     )
     db.add(app)
     await db.flush()
@@ -335,10 +345,22 @@ async def update_application_status(
     
     # On Approval
     if data.status == ApplicationStatus.APPROVED:
+        # Allow admin to backfill a missing email at approval time.
+        if data.email and not app.email:
+            app.email = data.email.strip().lower() or None
+
+        # Hard guard: we cannot deliver the onboarding link without an email.
+        if not app.email:
+            raise BadRequestException(
+                "Email is required to approve and send the onboarding link. "
+                "Add the applicant's email and try again.",
+                code="EMAIL_REQUIRED_FOR_APPROVAL",
+            )
+
         # Find or create user
         usr_stmt = select(User).where(User.phone_number == app.contact_number)
         user = (await db.execute(usr_stmt)).scalar_one_or_none()
-        
+
         # Generate new password
         temp_password = generate_temp_password()
         
@@ -366,18 +388,29 @@ async def update_application_status(
         # Generate privilege card
         await _generate_privilege_card(user.id, db)
 
+        # Issue a single-use onboarding token (14-day expiry) and build the link
+        # for the approval email. We do this before sending so the link is in the
+        # email body. Token is regenerated on every approval to prevent reuse of
+        # any prior link.
+        app.onboarding_token = secrets.token_urlsafe(32)
+        app.onboarding_token_expires_at = datetime.now(timezone.utc) + timedelta(days=14)
+        app.onboarding_completed_at = None
+        onboarding_url = f"{settings.PUBLIC_SITE_URL.rstrip('/')}/onboard?token={app.onboarding_token}"
+
         # Send Approval Email
-        if app.email:
-            try:
-                html = render_template("application_approved.html", {
-                    "full_name": app.full_name,
-                    "business_name": app.business_name,
-                    "email": app.email,
-                    "password": temp_password
-                })
-                await send_email(app.email, "Welcome to PBN! Your Application is Approved", html)
-            except Exception as e:
-                logger.error(f"Failed to send approval email to {app.email}: {e}")
+        try:
+            missing_fields = _missing_onboarding_fields(app)
+            html = render_template("application_approved.html", {
+                "full_name": app.full_name,
+                "business_name": app.business_name,
+                "email": app.email,
+                "password": temp_password,
+                "onboarding_url": onboarding_url,
+                "has_missing_fields": bool(missing_fields),
+            })
+            await send_email(app.email, "Welcome to PBN! Your Application is Approved", html)
+        except Exception as e:
+            logger.error(f"Failed to send approval email to {app.email}: {e}")
         
         # Determine chapter: use the admin's chapter, or fallback to any chapter if super admin, or data.chapter_id
         chapter_id = data.chapter_id
@@ -523,3 +556,121 @@ async def delete_application(app_id: UUID, db: AsyncSession) -> None:
     app = await get_application_by_id(app_id, db)
     await db.delete(app)
     await db.commit()
+
+
+# ── Onboarding ───────────────────────────────────────────────────────────────
+
+from app.features.applications.schemas import (
+    ONBOARDING_REQUIRED_FIELDS,
+    OnboardingDetailsUpdate,
+    OnboardingTshirtUpdate,
+)
+
+
+def _missing_onboarding_fields(app: Application) -> list[str]:
+    """Return Tier-1 field names that are still empty on the application."""
+    return [f for f in ONBOARDING_REQUIRED_FIELDS if not getattr(app, f, None)]
+
+
+async def _get_app_by_onboarding_token(token: str, db: AsyncSession) -> Application:
+    stmt = select(Application).where(Application.onboarding_token == token)
+    app = (await db.execute(stmt)).scalar_one_or_none()
+    if not app:
+        raise NotFoundException("Onboarding link is invalid or has already been used.")
+    if app.onboarding_token_expires_at and app.onboarding_token_expires_at < datetime.now(timezone.utc):
+        raise BadRequestException(
+            "This onboarding link has expired. Please contact PBN support to receive a new link.",
+            code="ONBOARDING_TOKEN_EXPIRED",
+        )
+    return app
+
+
+async def get_onboarding_status(token: str, db: AsyncSession) -> dict:
+    app = await _get_app_by_onboarding_token(token, db)
+    return {
+        "application_id": app.id,
+        "full_name": app.full_name,
+        "business_name": app.business_name,
+        "email": app.email,
+        "missing_fields": _missing_onboarding_fields(app),
+        "tshirt_size": app.tshirt_size,
+        "completed": app.onboarding_completed_at is not None,
+        "expires_at": app.onboarding_token_expires_at,
+        "designation": app.designation,
+        "decision_authority": app.decision_authority,
+        "years_in_operation": app.years_in_operation,
+        "business_legal_type": app.business_legal_type,
+        "business_registration_number": app.business_registration_number,
+        "website_url": app.website_url,
+        "linkedin_url": app.linkedin_url,
+        "what_you_offer": app.what_you_offer,
+        "what_you_seek": app.what_you_seek,
+    }
+
+
+async def update_onboarding_details(
+    token: str,
+    data: OnboardingDetailsUpdate,
+    db: AsyncSession,
+) -> dict:
+    """Backfill missing Tier-1 fields. Only non-null values in the payload are written."""
+    app = await _get_app_by_onboarding_token(token, db)
+
+    updates = data.model_dump(exclude_unset=True, exclude_none=True)
+    for field, value in updates.items():
+        setattr(app, field, value)
+
+    await db.commit()
+    await db.refresh(app)
+    return await get_onboarding_status(token, db)
+
+
+async def submit_onboarding_tshirt(
+    token: str,
+    data: OnboardingTshirtUpdate,
+    db: AsyncSession,
+) -> dict:
+    """Record T-shirt size in the complements ledger and finalize onboarding.
+
+    The size is persisted on `member_complements` (sole truth for fulfilment),
+    NOT on `applications.tshirt_size` — that column is left untouched as a
+    frozen historical record from earlier flows.
+
+    Token is invalidated on success.
+    """
+    from app.features.complements.service import assign_complement
+
+    app = await _get_app_by_onboarding_token(token, db)
+
+    missing = _missing_onboarding_fields(app)
+    if missing:
+        raise BadRequestException(
+            f"Cannot finalize onboarding while these fields are still missing: {', '.join(missing)}.",
+            code="ONBOARDING_FIELDS_MISSING",
+        )
+
+    # Find the approved member account created at application-approval time.
+    user_stmt = select(User).where(User.phone_number == app.contact_number)
+    user = (await db.execute(user_stmt)).scalar_one_or_none()
+    if not user:
+        raise BadRequestException(
+            "Member account is not provisioned yet. Please try again in a few minutes.",
+            code="MEMBER_ACCOUNT_MISSING",
+        )
+
+    await assign_complement(
+        user_id=user.id,
+        type_code="founders_tshirt",
+        variant=data.size.value,
+        db=db,
+    )
+
+    app.onboarding_completed_at = datetime.now(timezone.utc)
+    app.onboarding_token = None  # invalidate single-use token
+
+    await db.commit()
+    return {
+        "application_id": str(app.id),
+        "tshirt_size": data.size.value,
+        "completed_at": app.onboarding_completed_at.isoformat(),
+    }

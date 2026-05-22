@@ -141,6 +141,7 @@ export const api = {
   getOccupiedIndustries: (chapterId) => apiFetch(`/chapters/${chapterId}/occupied-industries`),
 
   // Users
+  getMemberProfile: (id) => apiFetch(`/admin/users/${id}/profile`),
   updateUser: (id, body) => apiFetch(`/admin/users/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(body),
@@ -253,6 +254,36 @@ export const api = {
   listMarketplaceInterests: (listingId) => apiFetch(`/marketplace/${listingId}/interests`),
 
   listPrivilegeCardHistory: (cardId) => apiFetch(`/admin/cards/${cardId}/history`),
+
+  // Complements (admin)
+  listComplements: (params = {}) => {
+    const qs = new URLSearchParams();
+    Object.entries(params).forEach(([k, v]) => {
+      if (v !== undefined && v !== null && v !== '') qs.append(k, v);
+    });
+    return apiFetch(`/admin/complements?${qs.toString()}`);
+  },
+  updateComplementStatus: (id, body) => apiFetch(`/admin/complements/${id}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+  }),
+  listComplementTypes: (activeOnly = true) =>
+    apiFetch(`/admin/complement-types?active_only=${activeOnly}`),
+  createComplementType: (body) => apiFetch('/admin/complement-types', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  }),
+
+  // Onboarding (public; token-authenticated)
+  getOnboardingStatus: (token) => apiFetch(`/applications/onboard/${encodeURIComponent(token)}`),
+  patchOnboardingDetails: (token, body) => apiFetch(`/applications/onboard/${encodeURIComponent(token)}/details`, {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+  }),
+  submitOnboardingTshirt: (token, size) => apiFetch(`/applications/onboard/${encodeURIComponent(token)}/tshirt`, {
+    method: 'POST',
+    body: JSON.stringify({ size }),
+  }),
 
   // Audit Logs (SUPER_ADMIN only)
   listAuditLogs: (params = {}) => {

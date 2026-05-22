@@ -53,6 +53,7 @@ def _serialize_user(u: User, mask: bool = False, chapter_name: str | None = None
         "full_name": u.full_name,
         "role": str(role_val),
         "is_active": u.is_active,
+        "profile_photo": u.profile_photo,
         "chapter_name": chapter_name,
         "industry_name": industry_name,
         "membership_type": u.membership_type if hasattr(u, 'membership_type') else None,
@@ -397,6 +398,178 @@ async def get_masked_user_data(user_id: UUID, db: AsyncSession) -> Dict[str, Any
     if not user:
         raise NotFoundException("User not found")
     return _serialize_user(user, mask=True)
+
+
+async def get_member_profile(user_id: UUID, db: AsyncSession) -> Dict[str, Any]:
+    """Aggregated member profile: user + chapter + business + application + activity counts."""
+    from app.models.applications import Application
+    from app.models.businesses import Business
+    from app.models.referrals import Referral
+    from app.models.payments import Payment
+    from app.models.privilege_cards import PrivilegeCard
+    from app.models.marketplace import MarketplaceListing
+    from app.models.complements import ComplementType, MemberComplement
+    from sqlalchemy import or_
+
+    user = (await db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
+    if not user:
+        raise NotFoundException("User not found")
+
+    # Chapter membership (active first)
+    cm_stmt = (
+        select(
+            ChapterMembership,
+            Chapter.name.label("chapter_name"),
+            IndustryCategory.name.label("industry_name"),
+        )
+        .join(Chapter, ChapterMembership.chapter_id == Chapter.id, isouter=True)
+        .join(IndustryCategory, ChapterMembership.industry_category_id == IndustryCategory.id, isouter=True)
+        .where(ChapterMembership.user_id == user_id)
+        .order_by(ChapterMembership.is_active.desc(), ChapterMembership.start_date.desc())
+        .limit(1)
+    )
+    cm_row = (await db.execute(cm_stmt)).first()
+    membership = None
+    if cm_row:
+        m, chapter_name, industry_name = cm_row
+        membership = {
+            "chapter_id": str(m.chapter_id) if m.chapter_id else None,
+            "chapter_name": chapter_name,
+            "industry_category_id": str(m.industry_category_id) if m.industry_category_id else None,
+            "industry_name": industry_name,
+            "membership_type": m.membership_type.value if hasattr(m.membership_type, "value") else m.membership_type,
+            "is_active": m.is_active,
+            "start_date": m.start_date.isoformat() if m.start_date else None,
+            "end_date": m.end_date.isoformat() if m.end_date else None,
+        }
+
+    # Business profile
+    biz = (await db.execute(
+        select(Business).where(Business.owner_user_id == user_id)
+    )).scalar_one_or_none()
+    business = None
+    if biz:
+        business = {
+            "business_name": biz.business_name,
+            "description": biz.description,
+            "website": biz.website,
+            "logo_url": biz.logo_url,
+            "district": biz.district,
+        }
+
+    # Linked application — match by phone OR email (whichever the applicant used)
+    app_stmt = select(Application).where(
+        or_(
+            Application.contact_number == user.phone_number,
+            (Application.email == user.email) if user.email else (Application.id == None),
+        )
+    ).order_by(Application.created_at.desc()).limit(1)
+    app = (await db.execute(app_stmt)).scalar_one_or_none()
+
+    # Resolve referrer name if present on the application
+    referred_by_name = None
+    if app and app.referred_by_user_id:
+        referrer = (await db.execute(
+            select(User.full_name).where(User.id == app.referred_by_user_id)
+        )).scalar_one_or_none()
+        referred_by_name = referrer
+
+    application = None
+    if app:
+        application = {
+            "id": str(app.id),
+            "status": app.status.value,
+            "designation": app.designation,
+            "decision_authority": app.decision_authority.value if app.decision_authority else None,
+            "years_in_operation": app.years_in_operation,
+            "business_legal_type": app.business_legal_type.value if app.business_legal_type else None,
+            "business_registration_number": app.business_registration_number,
+            "website_url": app.website_url,
+            "linkedin_url": app.linkedin_url,
+            "referred_by_user_id": str(app.referred_by_user_id) if app.referred_by_user_id else None,
+            "referred_by_name": referred_by_name,
+            "what_you_offer": app.what_you_offer,
+            "what_you_seek": app.what_you_seek,
+            "tshirt_size": app.tshirt_size.value if app.tshirt_size else None,
+            "onboarding_completed_at": app.onboarding_completed_at.isoformat() if app.onboarding_completed_at else None,
+            "fit_call_date": app.fit_call_date.isoformat() if app.fit_call_date else None,
+            "submitted_at": app.created_at.isoformat() if app.created_at else None,
+        }
+
+    # Activity counts
+    async def _count(stmt):
+        return (await db.execute(select(func.count()).select_from(stmt.subquery()))).scalar_one()
+
+    referrals_given = await _count(select(Referral.id).where(Referral.from_member_id == user_id))
+    referrals_received = await _count(select(Referral.id).where(Referral.to_member_id == user_id))
+    payments_total = (await db.execute(
+        select(func.coalesce(func.sum(Payment.amount), 0)).where(
+            Payment.user_id == user_id,
+            Payment.status == "completed",
+        )
+    )).scalar_one()
+    payments_count = await _count(select(Payment.id).where(Payment.user_id == user_id))
+    listings_count = await _count(select(MarketplaceListing.id).where(MarketplaceListing.seller_id == user_id))
+    card = (await db.execute(
+        select(PrivilegeCard).where(PrivilegeCard.user_id == user_id).limit(1)
+    )).scalar_one_or_none()
+
+    activity = {
+        "referrals_given": referrals_given,
+        "referrals_received": referrals_received,
+        "payments_count": payments_count,
+        "payments_total": float(payments_total) if payments_total else 0.0,
+        "listings_count": listings_count,
+        "privilege_card": (
+            {
+                "card_number": card.card_number,
+                "issued_at": card.issued_at.isoformat() if card.issued_at else None,
+                "expires_at": card.expires_at.isoformat() if card.expires_at else None,
+            }
+            if card else None
+        ),
+    }
+
+    # Complements ledger for this member.
+    comp_rows = (await db.execute(
+        select(MemberComplement, ComplementType)
+        .join(ComplementType, MemberComplement.complement_type_id == ComplementType.id)
+        .where(MemberComplement.user_id == user_id)
+        .order_by(desc(MemberComplement.assigned_at))
+    )).all()
+    complements = [
+        {
+            "id": str(c.id),
+            "type_code": t.code,
+            "type_name": t.name,
+            "variant": c.variant,
+            "fulfilment_status": c.fulfilment_status.value,
+            "assigned_at": c.assigned_at.isoformat() if c.assigned_at else None,
+            "fulfilled_at": c.fulfilled_at.isoformat() if c.fulfilled_at else None,
+        }
+        for (c, t) in comp_rows
+    ]
+
+    return {
+        "user": {
+            "id": str(user.id),
+            "full_name": user.full_name,
+            "phone_number": user.phone_number,
+            "email": user.email,
+            "role": user.role.value if hasattr(user.role, "value") else user.role,
+            "is_active": user.is_active,
+            "profile_photo": user.profile_photo,
+            "verification_level": user.verification_level.value if hasattr(user.verification_level, "value") else user.verification_level,
+            "cumulative_value_generated": float(user.cumulative_value_generated) if user.cumulative_value_generated else 0.0,
+            "created_at": user.created_at.isoformat() if user.created_at else None,
+            "must_change_password": user.must_change_password,
+        },
+        "membership": membership,
+        "business": business,
+        "application": application,
+        "activity": activity,
+        "complements": complements,
+    }
 
 
 async def list_all_referrals(

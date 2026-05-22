@@ -14,6 +14,11 @@
         .value { font-size: 18px; font-weight: bold; color: #166534; font-family: monospace; }
         .status-badge { display: inline-block; padding: 4px 12px; background-color: #dcfce7; border-radius: 20px; font-size: 11px; font-weight: 900; color: #15803d; letter-spacing: 1px; text-transform: uppercase; }
         .button { display: inline-block; padding: 14px 30px; background-color: #0f172a; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 10px; }
+        .onboard-cta { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); padding: 28px; border-radius: 10px; margin: 24px 0; text-align: center; color: #ffffff; }
+        .onboard-cta h3 { margin: 0 0 8px 0; font-size: 18px; }
+        .onboard-cta p { margin: 0 0 16px 0; font-size: 14px; color: #cbd5e1; }
+        .onboard-cta .button { background-color: #f59e0b; color: #0f172a; }
+        .expires { font-size: 11px; color: #94a3b8; margin-top: 12px; }
     </style>
 </head>
 <body>
@@ -23,10 +28,21 @@
         </div>
         <div class="content">
             <div class="status-badge">Application Approved</div>
-            <h2>Congratulations!</h2>
-            <p>We are thrilled to inform you that your application for <strong>{{ business_name }}</strong> has been approved! Welcome to the Prime Business Network.</p>
-            
-            <p>You can now log in to the PBN mobile app using the credentials below. <strong>Please change your password after your first login.</strong></p>
+            <h2>Congratulations, {{ full_name }}!</h2>
+            <p>Your application for <strong>{{ business_name }}</strong> has been approved. Welcome to the Prime Business Network.</p>
+
+            <div class="onboard-cta">
+                <h3>One last step</h3>
+                {% if has_missing_fields %}
+                <p>Complete your founding-member profile and pick your PBN T-shirt size to finalise your seat.</p>
+                {% else %}
+                <p>Pick your PBN T-shirt size to finalise your founding-member seat.</p>
+                {% endif %}
+                <a href="{{ onboarding_url }}" class="button">Complete Onboarding &rarr;</a>
+                <div class="expires">This link is valid for 14 days.</div>
+            </div>
+
+            <p>You can also log in to the PBN mobile app with the credentials below. <strong>Please change your password after your first login.</strong></p>
 
             <div class="cred-box">
                 <div style="margin-bottom: 20px;">
@@ -39,11 +55,7 @@
                 </div>
             </div>
 
-            <p style="text-align: center;">
-                <a href="#" class="button">Download App</a>
-            </p>
-
-            <p>We look forward to seeing your business grow with us!</p>
+            <p>We look forward to seeing your business grow with us.</p>
             <p>Best regards,<br>The PBN Team</p>
         </div>
         <div class="footer">
