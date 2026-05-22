@@ -65,6 +65,12 @@ jobs:
         working-directory: ./mobile
         run: flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
 
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pbn-ipa
+          path: mobile/build/ios/ipa/*.ipa
+
       - name: Upload to TestFlight
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
