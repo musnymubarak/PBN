@@ -1,35 +1,72 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8">
-    <style>
-        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f4f7f9; }
-        .container { max-width: 600px; margin: 20px auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .header { background-color: #0f172a; color: #ffffff; padding: 40px 20px; text-align: center; }
-        .header h1 { margin: 0; font-size: 24px; letter-spacing: 1px; }
-        .content { padding: 40px; }
-        .footer { background-color: #f8fafc; color: #64748b; padding: 20px; text-align: center; font-size: 12px; }
-        .button { display: inline-block; padding: 14px 30px; background-color: #3b82f6; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 20px; }
-        .status-badge { display: inline-block; padding: 4px 12px; background-color: #e2e8f0; border-radius: 20px; font-size: 11px; font-weight: 900; color: #475569; letter-spacing: 1px; text-transform: uppercase; }
-    </style>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Application received — Prime Business Network</title>
 </head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>PRIME BUSINESS NETWORK</h1>
-        </div>
-        <div class="content">
-            <div class="status-badge">Application Received</div>
-            <h2>Dear {{ full_name }},</h2>
-            <p>Thank you for applying to join the Prime Business Network. We have successfully received your application for <strong>{{ business_name }}</strong>.</p>
-            <p>Our team is currently reviewing your application. The next step will be a "Fit Call" where we will discuss how PBN can help grow your business and how you can contribute to our community.</p>
-            <p>We will notify you via email as soon as a fit call is scheduled.</p>
-            <p>Best regards,</p>
-            {% include 'signature.html' %}
-        </div>
-        <div class="footer">
-            &copy; 2026 Prime Business Network. All rights reserved.
-        </div>
-    </div>
+<body style="margin:0; padding:0; background:#ffffff; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; color:#0f172a;">
+
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#ffffff;">
+    <tr>
+      <td align="center" style="padding:48px 16px;">
+
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="560" style="max-width:560px; width:100%;">
+
+          <!-- Wordmark -->
+          <tr>
+            <td style="padding-bottom:36px;">
+              <span style="font-size:14px; font-weight:700; color:#0f172a; letter-spacing:0.3px;">Prime <span style="color:#C9A84C;">Business</span> Network</span>
+            </td>
+          </tr>
+
+          <!-- Status -->
+          <tr>
+            <td style="padding-bottom:8px;">
+              <span style="font-size:12px; font-weight:600; color:#64748b; letter-spacing:1.2px; text-transform:uppercase;">Application received</span>
+            </td>
+          </tr>
+
+          <!-- Greeting -->
+          <tr>
+            <td style="padding-bottom:24px;">
+              <h1 style="margin:0; font-size:24px; font-weight:600; color:#0f172a; line-height:1.35;">Hi {{ full_name }},</h1>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="font-size:15px; color:#334155; line-height:1.7;">
+              <p style="margin:0 0 16px;">Thank you for applying to join the Prime Business Network. We have received your application for <strong style="color:#0f172a;">{{ business_name }}</strong>.</p>
+
+              <p style="margin:0 0 16px;">Our team is reviewing it now. The next step is a Fit Call where we discuss how PBN can support your growth and how you'll contribute to the community.</p>
+
+              <p style="margin:0;">We'll email you once your Fit Call is scheduled.</p>
+            </td>
+          </tr>
+
+          <!-- Signature block -->
+          <tr>
+            <td style="padding-top:32px;">
+              <p style="margin:0 0 4px; font-size:15px; color:#334155;">Best regards,</p>
+              {% include 'signature.html' %}
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:36px 0 0; border-top:1px solid #e5e7eb; margin-top:36px;">
+              <div style="padding-top:24px; font-size:12px; color:#94a3b8; line-height:1.5;">
+                &copy; 2026 Prime Business Network (Pvt) Ltd. &nbsp;·&nbsp; <a href="https://primebusiness.network" style="color:#94a3b8; text-decoration:underline;">primebusiness.network</a>
+              </div>
+            </td>
+          </tr>
+
+        </table>
+
+      </td>
+    </tr>
+  </table>
+
 </body>
 </html>
