@@ -2221,26 +2221,28 @@
     .form-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 16px;
+      column-gap: 16px;
+      row-gap: 18px;
+      margin-bottom: 20px;
+    }
+
+    .form-row:last-of-type {
+      margin-bottom: 0;
     }
 
     .form-group {
       display: flex;
       flex-direction: column;
-      gap: 6px;
-      margin-bottom: 18px;
-    }
-
-    .form-group:last-child {
-      margin-bottom: 0;
+      gap: 10px;
     }
 
     .form-label {
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       font-weight: 700;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
       color: #4a5580;
+      line-height: 1.2;
     }
 
     .form-label span {
@@ -2374,6 +2376,105 @@
       margin-top: 14px;
       font-size: 0.78rem;
       color: #7a85b0;
+    }
+
+    /* ── Multi-step modal ── */
+    .step-indicator {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 22px;
+      flex-wrap: wrap;
+    }
+
+    .step-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 100px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: #7a85b0;
+      background: #f4f5f8;
+      border: 1px solid #dde1f0;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+    }
+
+    .step-pill .step-num {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #dde1f0;
+      color: #7a85b0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      font-weight: 800;
+    }
+
+    .step-pill.active {
+      background: rgba(201, 168, 76, 0.12);
+      color: #8a6a20;
+      border-color: rgba(201, 168, 76, 0.4);
+    }
+
+    .step-pill.active .step-num {
+      background: #c9a84c;
+      color: #080d24;
+    }
+
+    .step-pill.done .step-num {
+      background: #c9a84c;
+      color: #080d24;
+    }
+
+    .step-connector {
+      flex: 0 0 16px;
+      height: 1px;
+      background: #dde1f0;
+    }
+
+    .modal-step {
+      display: none;
+    }
+
+    .modal-step.active {
+      display: block;
+      animation: fadeUp 0.35s ease;
+    }
+
+    .step-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    .step-actions .form-submit {
+      flex: 1;
+      margin-top: 0;
+    }
+
+    .btn-secondary {
+      flex: 0 0 auto;
+      padding: 15px 22px;
+      background: #f4f5f8;
+      color: #080d24;
+      border: 1px solid #dde1f0;
+      border-radius: 6px;
+      font-family: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
+      font-weight: 600;
+      font-size: 0.95rem;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-secondary:hover {
+      background: #eaedf5;
+      border-color: #c9a84c;
     }
 
     .modal-success {
@@ -2725,8 +2826,15 @@
     }
 
     @keyframes pbnFadeIn {
-      from { opacity: 0; transform: translateY(-8px); }
-      to { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(-8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     .pbn-custom-select-item {
@@ -2769,13 +2877,16 @@
     .pbn-custom-select-menu::-webkit-scrollbar {
       width: 6px;
     }
+
     .pbn-custom-select-menu::-webkit-scrollbar-track {
       background: transparent;
     }
+
     .pbn-custom-select-menu::-webkit-scrollbar-thumb {
       background: #dde1f0;
       border-radius: 10px;
     }
+
     .pbn-custom-select-menu::-webkit-scrollbar-thumb:hover {
       background: #c9a84c;
     }
@@ -3144,7 +3255,8 @@
               <path d="M12 6v2m0 8v2" />
             </svg></span></div>
         <div class="benefit-title">Exclusive Charter Rate</div>
-        <div class="benefit-desc">Lock in the founding rate of LKR 15,000 per year — a privilege reserved only for the first 30 members.</div>
+        <div class="benefit-desc">Lock in the founding rate of LKR 15,000 per year — a privilege reserved only for the
+          first 30 members.</div>
       </div>
       <div class="benefit-card">
         <div class="benefit-icon"><span class="ti"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36"
@@ -3977,180 +4089,214 @@
 
       <div class="modal-body" id="modalFormWrap">
         <form id="applyForm" onsubmit="submitForm(event)" novalidate>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Full Name <span>*</span></label>
-              <input class="form-input" type="text" name="full_name" required placeholder="Eg: Amal Perera" />
+
+          <!-- Step indicator -->
+          <div class="step-indicator" aria-label="Application steps">
+            <div class="step-pill active" data-step-pill="1">
+              <span class="step-num">1</span> Basics
             </div>
-            <div class="form-group">
-              <label class="form-label">Business Name <span>*</span></label>
-              <input class="form-input" type="text" name="business_name" required placeholder="Eg: Perera & Co." />
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Contact Number <span>*</span></label>
-              <input class="form-input" type="tel" name="contact_number" required placeholder="Eg: 077 123 4567" />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Email Address</label>
-              <input class="form-input" type="email" name="email" placeholder="Eg: amal@business.lk" />
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">District <span>*</span></label>
-              <select class="form-select" id="f_district" name="district" required
-                onchange="onDistrictChange(this.value)">
-                <option value="" disabled selected>Select your district</option>
-                <option>Colombo</option>
-                <option>Gampaha</option>
-                <option>Kalutara</option>
-                <option>Kandy</option>
-                <option>Matale</option>
-                <option>Nuwara Eliya</option>
-                <option>Galle</option>
-                <option>Matara</option>
-                <option>Hambantota</option>
-                <option>Jaffna</option>
-                <option>Kilinochchi</option>
-                <option>Mannar</option>
-                <option>Mullaitivu</option>
-                <option>Vavuniya</option>
-                <option>Trincomalee</option>
-                <option>Batticaloa</option>
-                <option>Ampara</option>
-                <option>Kurunegala</option>
-                <option>Puttalam</option>
-                <option>Anuradhapura</option>
-                <option>Polonnaruwa</option>
-                <option>Badulla</option>
-                <option>Monaragala</option>
-                <option>Ratnapura</option>
-                <option>Kegalle</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Target Chapter <span>*</span></label>
-              <select class="form-select" id="f_chapter" name="chapter_id" required disabled
-                onchange="onChapterChange(this.value)">
-                <option value="" disabled selected>Select district first</option>
-              </select>
-            </div>
-          </div>
-          <div class="form-row" style="grid-template-columns: 1fr;">
-            <div class="form-group">
-              <label class="form-label">Industry Category <span>*</span></label>
-              <select class="form-select" id="f_category" name="industry_category_id" required disabled>
-                <option value="" disabled selected>Select a chapter first</option>
-              </select>
+            <div class="step-connector"></div>
+            <div class="step-pill" data-step-pill="2">
+              <span class="step-num">2</span> Business profile
             </div>
           </div>
 
-          <div class="modal-divider"></div>
+          <!-- ─── STEP 1 — Basics ─── -->
+          <div class="modal-step active" data-step="1">
+            <div class="form-row" style="grid-template-columns: 1fr;">
+              <div class="form-group">
+                <label class="form-label">Full Name <span>*</span></label>
+                <input class="form-input" type="text" name="full_name" required placeholder="Eg: Amal Perera" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Contact Number <span>*</span></label>
+                <input class="form-input" type="tel" name="contact_number" required placeholder="Eg: 077 123 4567" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Email Address <span>*</span></label>
+                <input class="form-input" type="email" name="email" required placeholder="Eg: amal@business.lk" />
+              </div>
+            </div>
+            <div class="form-row" style="grid-template-columns: 1fr;">
+              <div class="form-group">
+                <label class="form-label">LinkedIn Profile URL <span>*</span></label>
+                <input class="form-input" type="text" inputmode="url" name="linkedin_url" required
+                  placeholder="linkedin.com/in/yourname" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">District <span>*</span></label>
+                <select class="form-select" id="f_district" name="district" required
+                  onchange="onDistrictChange(this.value)">
+                  <option value="" disabled selected>Select your district</option>
+                  <option>Colombo</option>
+                  <option>Gampaha</option>
+                  <option>Kalutara</option>
+                  <option>Kandy</option>
+                  <option>Matale</option>
+                  <option>Nuwara Eliya</option>
+                  <option>Galle</option>
+                  <option>Matara</option>
+                  <option>Hambantota</option>
+                  <option>Jaffna</option>
+                  <option>Kilinochchi</option>
+                  <option>Mannar</option>
+                  <option>Mullaitivu</option>
+                  <option>Vavuniya</option>
+                  <option>Trincomalee</option>
+                  <option>Batticaloa</option>
+                  <option>Ampara</option>
+                  <option>Kurunegala</option>
+                  <option>Puttalam</option>
+                  <option>Anuradhapura</option>
+                  <option>Polonnaruwa</option>
+                  <option>Badulla</option>
+                  <option>Monaragala</option>
+                  <option>Ratnapura</option>
+                  <option>Kegalle</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Target Chapter <span>*</span></label>
+                <select class="form-select" id="f_chapter" name="chapter_id" required disabled
+                  onchange="onChapterChange(this.value)">
+                  <option value="" disabled selected>Select district first</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row" style="grid-template-columns: 1fr;">
+              <div class="form-group">
+                <label class="form-label">Industry Category <span>*</span></label>
+                <select class="form-select" id="f_category" name="industry_category_id" required disabled>
+                  <option value="" disabled selected>Select a chapter first</option>
+                </select>
+              </div>
+            </div>
 
-          <!-- Tier 1 – Profile fields (required for new applicants) -->
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Your Role / Designation <span>*</span></label>
-              <select class="form-select" name="designation" required>
-                <option value="" disabled selected>Select your role…</option>
-                <option>Founder</option>
-                <option>CEO</option>
-                <option>Managing Director</option>
-                <option>Director</option>
-                <option>Partner</option>
-                <option>Manager</option>
-                <option>Other</option>
-              </select>
+            <div id="formError"
+              style="display:none; background:#fff0f0; border:1px solid #f5c0c0; border-radius:6px; padding:12px 16px; font-size:0.82rem; color:#c0392b; margin-bottom:14px;">
             </div>
-            <div class="form-group">
-              <label class="form-label">Decision Authority <span>*</span></label>
-              <select class="form-select" name="decision_authority" required>
-                <option value="" disabled selected>How do you decide deals?</option>
-                <option value="sole">Sole decision-maker</option>
-                <option value="shared">Shared / committee decision</option>
-                <option value="influencer">Influencer / not the decider</option>
-              </select>
-            </div>
+
+            <button class="form-submit" type="button" onclick="goToStep(2)">Next: Business profile &rarr;</button>
+            <div class="form-note">Step 1 of 2 — your contact details and industry slot.</div>
           </div>
 
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Years in Operation <span>*</span></label>
-              <select class="form-select" name="years_in_operation" required>
-                <option value="" disabled selected>Select range…</option>
-                <option value="<1">Less than 1 year</option>
-                <option value="1-3">1–3 years</option>
-                <option value="3-7">3–7 years</option>
-                <option value="7+">7+ years</option>
-              </select>
+          <!-- ─── STEP 2 — Business profile ─── -->
+          <div class="modal-step" data-step="2">
+            <div class="form-row" style="grid-template-columns: 1fr;">
+              <div class="form-group">
+                <label class="form-label">Business Name <span>*</span></label>
+                <input class="form-input" type="text" name="business_name" required placeholder="Eg: Perera & Co." />
+              </div>
             </div>
-            <div class="form-group">
-              <label class="form-label">Business Legal Type <span>*</span></label>
-              <select class="form-select" name="business_legal_type" required>
-                <option value="" disabled selected>Select legal form…</option>
-                <option value="sole_proprietorship">Sole Proprietorship</option>
-                <option value="partnership">Partnership</option>
-                <option value="pvt_ltd">Private Limited (Pvt) Ltd</option>
-                <option value="plc">Public Limited (PLC)</option>
-                <option value="ngo">NGO / Non-profit</option>
-                <option value="other">Other</option>
-              </select>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Your Role / Designation <span>*</span></label>
+                <select class="form-select" name="designation" required>
+                  <option value="" disabled selected>Select your role…</option>
+                  <option>Founder</option>
+                  <option>CEO</option>
+                  <option>Managing Director</option>
+                  <option>Director</option>
+                  <option>Partner</option>
+                  <option>Manager</option>
+                  <option>Other</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Decision Authority <span>*</span></label>
+                <select class="form-select" name="decision_authority" required>
+                  <option value="" disabled selected>How do you decide deals?</option>
+                  <option value="sole">Sole decision-maker</option>
+                  <option value="shared">Shared / committee decision</option>
+                  <option value="influencer">Influencer / not the decider</option>
+                </select>
+              </div>
             </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Years in Operation <span>*</span></label>
+                <select class="form-select" name="years_in_operation" required>
+                  <option value="" disabled selected>Select range…</option>
+                  <option value="<1">Less than 1 year</option>
+                  <option value="1-3">1–3 years</option>
+                  <option value="3-7">3–7 years</option>
+                  <option value="7+">7+ years</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Business Legal Type <span>*</span></label>
+                <select class="form-select" name="business_legal_type" required>
+                  <option value="" disabled selected>Select legal form…</option>
+                  <option value="sole_proprietorship">Sole Proprietorship</option>
+                  <option value="partnership">Partnership</option>
+                  <option value="pvt_ltd">Private Limited (Pvt) Ltd</option>
+                  <option value="plc">Public Limited (PLC)</option>
+                  <option value="ngo">NGO / Non-profit</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Business Registration No. <span style="opacity:.5;">(optional)</span></label>
+                <input class="form-input" type="text" name="business_registration_number"
+                  placeholder="Eg: PV 1234567" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Website URL <span>*</span></label>
+                <input class="form-input" type="text" inputmode="url" name="website_url" required
+                  placeholder="your-business.lk" />
+              </div>
+            </div>
+
+            <div class="form-row" style="grid-template-columns: 1fr;">
+              <div class="form-group">
+                <label class="form-label">What you offer the network <span>*</span></label>
+                <textarea class="form-input" name="what_you_offer" required rows="2" maxlength="280"
+                  placeholder="One sentence on the products / services you bring to PBN members."></textarea>
+              </div>
+            </div>
+
+            <div class="form-row" style="grid-template-columns: 1fr;">
+              <div class="form-group">
+                <label class="form-label">What you seek from the network <span>*</span></label>
+                <textarea class="form-input" name="what_you_seek" required rows="2" maxlength="280"
+                  placeholder="One sentence on the customers / partnerships / referrals you're looking for."></textarea>
+              </div>
+            </div>
+
+            <div class="modal-divider"></div>
+
+            <!-- Privacy Policy Consent -->
+            <label class="privacy-consent" for="privacyCheck">
+              <input type="checkbox" id="privacyCheck" name="privacy_accepted" required />
+              <span class="privacy-consent-text">
+                I have read and agree to the <a href="privacy-policy.html" target="_blank"
+                  onclick="event.stopPropagation()">PBN Privacy Policy</a>. I understand that my personal and business
+                data will be processed as described therein, including for the AI-Based Matchmaking System and Digital
+                Platform operations.
+              </span>
+            </label>
+
+            <div id="formErrorStep2"
+              style="display:none; background:#fff0f0; border:1px solid #f5c0c0; border-radius:6px; padding:12px 16px; font-size:0.82rem; color:#c0392b; margin-bottom:14px;">
+            </div>
+
+            <div class="step-actions">
+              <button class="btn-secondary" type="button" onclick="goToStep(1)">&larr; Back</button>
+              <button class="form-submit" type="submit" id="formSubmitBtn">Submit Application &rarr;</button>
+            </div>
+            <div class="form-note">Step 2 of 2 — by submitting, you acknowledge PBN's right to decline any application
+              without detailed reasons.</div>
           </div>
 
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Business Registration No. <span style="opacity:.5;">(optional)</span></label>
-              <input class="form-input" type="text" name="business_registration_number" placeholder="Eg: PV 1234567" />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Website URL <span>*</span></label>
-              <input class="form-input" type="text" inputmode="url" name="website_url" required placeholder="your-business.lk" />
-            </div>
-          </div>
-
-          <div class="form-row" style="grid-template-columns: 1fr;">
-            <div class="form-group">
-              <label class="form-label">LinkedIn Profile URL <span>*</span></label>
-              <input class="form-input" type="text" inputmode="url" name="linkedin_url" required placeholder="linkedin.com/in/yourname" />
-            </div>
-          </div>
-
-          <div class="form-row" style="grid-template-columns: 1fr;">
-            <div class="form-group">
-              <label class="form-label">What you offer the network <span>*</span></label>
-              <textarea class="form-input" name="what_you_offer" required rows="2" maxlength="280" placeholder="One sentence on the products / services you bring to PBN members."></textarea>
-            </div>
-          </div>
-
-          <div class="form-row" style="grid-template-columns: 1fr;">
-            <div class="form-group">
-              <label class="form-label">What you seek from the network <span>*</span></label>
-              <textarea class="form-input" name="what_you_seek" required rows="2" maxlength="280" placeholder="One sentence on the customers / partnerships / referrals you're looking for."></textarea>
-            </div>
-          </div>
-
-          <div class="modal-divider"></div>
-
-          <!-- Privacy Policy Consent -->
-          <label class="privacy-consent" for="privacyCheck">
-            <input type="checkbox" id="privacyCheck" name="privacy_accepted" required />
-            <span class="privacy-consent-text">
-              I have read and agree to the <a href="privacy-policy.html" target="_blank"
-                onclick="event.stopPropagation()">PBN Privacy Policy</a>. I understand that my personal and business
-              data will be processed as described therein, including for the AI-Based Matchmaking System and Digital
-              Platform operations. Acceptance is mandatory as required under PBN Bylaws Article 7.5.
-            </span>
-          </label>
-
-          <div id="formError"
-            style="display:none; background:#fff0f0; border:1px solid #f5c0c0; border-radius:6px; padding:12px 16px; font-size:0.82rem; color:#c0392b; margin-bottom:14px;">
-          </div>
-          <button class="form-submit" type="submit" id="formSubmitBtn">Submit Application &rarr;</button>
-          <div class="form-note">By submitting, you acknowledge PBN's right to decline any application without detailed
-            reasons. Confirmed seats are subject to successful industry fit assessment.</div>
         </form>
       </div>
 
@@ -4304,9 +4450,12 @@
       document.getElementById('f_category').disabled = true;
 
       document.getElementById('formError').style.display = 'none';
+      document.getElementById('formErrorStep2').style.display = 'none';
       document.getElementById('privacyCheck').checked = false;
       document.getElementById('modalFormWrap').style.display = '';
       document.getElementById('modalSuccess').classList.remove('show');
+      // Reset wizard to step 1 every time the modal opens.
+      try { goToStep(1); } catch (_) { /* DOM not yet ready */ }
       loadInitialData();
 
       syncAllSelects();
@@ -4326,7 +4475,7 @@
       if (!wrapper) {
         wrapper = document.createElement('div');
         wrapper.className = 'pbn-custom-select-wrapper';
-        
+
         const trigger = document.createElement('div');
         trigger.className = 'pbn-custom-select-trigger';
         trigger.innerHTML = `
@@ -4335,7 +4484,7 @@
             <path d="M6 9l6 6 6-6"/>
           </svg>
         `;
-        
+
         const menu = document.createElement('div');
         menu.className = 'pbn-custom-select-menu';
 
@@ -4357,7 +4506,7 @@
         trigger.addEventListener('click', (e) => {
           e.stopPropagation();
           if (select.disabled) return;
-          
+
           const isOpen = wrapper.classList.contains('is-open');
           closeAllCustomSelects();
           if (!isOpen) {
@@ -4394,7 +4543,7 @@
         const item = document.createElement('div');
         item.className = 'pbn-custom-select-item';
         item.textContent = opt.textContent;
-        
+
         if (opt.disabled) {
           item.classList.add('is-disabled');
         }
@@ -4432,10 +4581,65 @@
     // Initial load
     syncAllSelects();
 
+    // ── Multi-step wizard ────────────────────────────────────────────────
+    const STEP1_FIELDS = [
+      'full_name', 'contact_number', 'email', 'linkedin_url',
+      'district', 'chapter_id', 'industry_category_id',
+    ];
+
+    function showStepError(stepNum, message) {
+      const id = stepNum === 1 ? 'formError' : 'formErrorStep2';
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (message) { el.textContent = message; el.style.display = 'block'; }
+      else el.style.display = 'none';
+    }
+
+    function validateStep1() {
+      const form = document.getElementById('applyForm');
+      for (const name of STEP1_FIELDS) {
+        const field = form.elements.namedItem(name);
+        if (!field || !(field.value || '').trim()) {
+          field?.focus?.();
+          const label = field?.closest('.form-group')?.querySelector('.form-label')?.textContent?.replace('*', '').trim() || name;
+          return `Please fill in ${label}.`;
+        }
+      }
+      const email = (form.elements.namedItem('email').value || '').trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        form.elements.namedItem('email').focus();
+        return 'Please enter a valid email address.';
+      }
+      return null;
+    }
+
+    function goToStep(n) {
+      const form = document.getElementById('applyForm');
+      if (n === 2) {
+        const err = validateStep1();
+        if (err) { showStepError(1, err); return; }
+        showStepError(1, null);
+      }
+      form.querySelectorAll('.modal-step').forEach(el => el.classList.remove('active'));
+      form.querySelector(`.modal-step[data-step="${n}"]`)?.classList.add('active');
+      form.querySelectorAll('[data-step-pill]').forEach(el => {
+        const s = parseInt(el.dataset.stepPill, 10);
+        el.classList.toggle('active', s === n);
+        el.classList.toggle('done', s < n);
+      });
+      // Scroll the modal back to the top so the new step starts at the top.
+      const wrap = document.getElementById('modalFormWrap');
+      if (wrap) wrap.scrollTop = 0;
+    }
+
     async function submitForm(e) {
       e.preventDefault();
       const privacyCheck = document.getElementById('privacyCheck');
-      const errEl = document.getElementById('formError');
+      const errEl = document.getElementById('formErrorStep2');
+
+      // Re-validate step 1 in case the user manipulated the DOM or skipped via console.
+      const step1Err = validateStep1();
+      if (step1Err) { showStepError(1, step1Err); goToStep(1); return; }
 
       if (!privacyCheck.checked) {
         errEl.textContent = 'You must read and agree to the Privacy Policy before submitting your application.';
