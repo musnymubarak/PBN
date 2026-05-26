@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
+import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/models/reward.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:intl/intl.dart';
@@ -290,7 +291,7 @@ class _PrivilegeCardWidgetState extends State<PrivilegeCardWidget> with SingleTi
 
   BoxDecoration _cardDecoration() {
     return BoxDecoration(
-      color: const Color(0xFF0F172A),
+      color: AppColors.primary,
       borderRadius: BorderRadius.circular(14),
       boxShadow: [
         BoxShadow(
@@ -354,8 +355,8 @@ class _PrivilegeCardWidgetState extends State<PrivilegeCardWidget> with SingleTi
       ),
       child: Text(
         label,
-        style: const TextStyle(
-          color: Color(0xFF0F172A),
+        style: TextStyle(
+          color: AppColors.primary,
           fontSize: 10,
           fontWeight: FontWeight.w900,
           letterSpacing: 0.5,

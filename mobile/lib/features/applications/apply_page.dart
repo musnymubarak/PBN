@@ -354,7 +354,7 @@ class _ApplyPageState extends State<ApplyPage> {
               hintText: 'Enter $hint...',
               prefixIcon: Icon(icon, size: 20, color: AppColors.primary),
               filled: true,
-              fillColor: const Color(0xFFF8FAFC),
+              fillColor: AppColors.background,
               contentPadding: const EdgeInsets.all(20),
               enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: Colors.grey.shade100)),
               focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.primary, width: 1)),
@@ -369,7 +369,7 @@ class _ApplyPageState extends State<ApplyPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: AppColors.background,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: Colors.grey.shade100),
       ),
@@ -400,7 +400,7 @@ class _ApplyPageState extends State<ApplyPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: AppColors.background,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: Colors.grey.shade100),
       ),
@@ -428,7 +428,7 @@ class _ApplyPageState extends State<ApplyPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: AppColors.background,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: Colors.grey.shade100),
       ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:ui';
+import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/services/prefs_service.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 
@@ -87,7 +88,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 child: Image.asset(
                   _bgImages[_bgImageIndex],
                   fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(color: const Color(0xFF0F172A)),
+                  errorBuilder: (context, error, stackTrace) => Container(color: AppColors.primary),
                 ),
               ),
             ),

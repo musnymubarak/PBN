@@ -259,6 +259,80 @@ class _ProfilePageState extends State<ProfilePage> {
     if (mounted) Navigator.pushNamedAndRemoveUntil(context, '/login', (r) => false);
   }
 
+  Future<void> _confirmDeleteAccount() async {
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+        contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.error.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(TablerIcons.trash, color: AppColors.error, size: 18),
+            ),
+            const SizedBox(width: 12),
+            const Text('Delete Account?', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+          ],
+        ),
+        content: const Text(
+          'This action is permanent and cannot be undone. All your data, memberships, and history will be deleted.',
+          style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w500, color: AppColors.textSecondary, height: 1.5),
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.textSecondary,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+            ),
+            child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w700)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('Delete', style: TextStyle(fontWeight: FontWeight.w800)),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldDelete != true || !mounted) return;
+
+    setState(() => _loading = true);
+    try {
+      await ApiClient().dio.delete('/auth/me');
+      if (!mounted) return;
+      
+      final auth = context.read<AuthProvider>();
+      context.read<MemberProvider>().clearCache();
+      context.read<NotificationProvider>().stopListening();
+      await auth.logout();
+      if (mounted) Navigator.pushNamedAndRemoveUntil(context, '/login', (r) => false);
+    } catch (e) {
+      String message = 'Failed to delete account.';
+      if (e is DioException) {
+        message = e.response?.data?['message'] ?? message;
+      }
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
@@ -283,6 +357,8 @@ class _ProfilePageState extends State<ProfilePage> {
       _buildGroupedAccountCard(),
       const SizedBox(height: 24),
       _buildSignOutCard(),
+      const SizedBox(height: 16),
+      _buildDeleteAccountCard(),
       const SizedBox(height: 24),
     ];
 
@@ -1504,6 +1580,49 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   // ──────────────────────────────────────────────────────────
+  // 8) DELETE ACCOUNT CARD
+  // ──────────────────────────────────────────────────────────
+  Widget _buildDeleteAccountCard() {
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () {
+          HapticFeedback.selectionClick();
+          _confirmDeleteAccount();
+        },
+        splashColor: Colors.red.withValues(alpha: 0.06),
+        highlightColor: Colors.red.withValues(alpha: 0.04),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.red.withValues(alpha: 0.22), width: 1),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(TablerIcons.trash, size: 18, color: Colors.red),
+              const SizedBox(width: 10),
+              Text(
+                'Delete Account',
+                style: GoogleFonts.dmSans(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 14,
+                  color: Colors.red,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ──────────────────────────────────────────────────────────
   // HELPERS
   // ──────────────────────────────────────────────────────────
   Color _tierColor(String level) {
@@ -1513,7 +1632,7 @@ class _ProfilePageState extends State<ProfilePage> {
       case 'gold':
         return const Color(0xFFFACC15);
       case 'silver':
-        return const Color(0xFF94A3B8);
+        return AppColors.textMuted;
       case 'verified':
         return const Color(0xFF3B82F6);
       default:

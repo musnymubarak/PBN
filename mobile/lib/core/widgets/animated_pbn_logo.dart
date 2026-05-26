@@ -85,7 +85,7 @@ class _AnimatedPbnLogoState extends State<AnimatedPbnLogo> with SingleTickerProv
           width: widget.size,
           height: widget.size,
           decoration: BoxDecoration(
-            color: const Color(0xFF0F172A), // Matches the dark container in the user image
+            color: AppColors.primary,
             borderRadius: BorderRadius.circular(widget.size * 0.15),
             boxShadow: [
               // Subtle glow for the B

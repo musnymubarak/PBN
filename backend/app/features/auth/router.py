@@ -179,6 +179,22 @@ async def update_me_endpoint(
         status_code=200,
     )
 
+
+@router.delete("/me", summary="Delete current user account")
+async def delete_me_endpoint(
+    current_user: User = Depends(get_current_user),
+    redis: Redis = Depends(get_redis),
+    db: AsyncSession = Depends(get_db)
+) -> ORJSONResponse:
+    """Permanently delete the authenticated user's account and data."""
+    from app.features.auth.service import delete_account
+    await delete_account(current_user, redis, db)
+    return success_response(
+        data={"message": "Account successfully deleted"},
+        status_code=200
+    )
+
+
 @router.post("/me/photo", summary="Upload profile photo")
 async def upload_profile_photo(
     file: UploadFile = File(...),

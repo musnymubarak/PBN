@@ -243,7 +243,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: AppColors.background,
         borderRadius: BorderRadius.circular(16),
       ),
       child: TextField(
@@ -255,9 +255,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: TextStyle(color: Colors.grey.shade300, fontSize: 14, fontWeight: FontWeight.w600),
-          prefixIcon: Icon(icon, size: 18, color: const Color(0xFF94A3B8)),
+          prefixIcon: Icon(icon, size: 18, color: AppColors.textMuted),
           suffixIcon: isPassword ? IconButton(
-            icon: Icon(obscure ? TablerIcons.eye : TablerIcons.eye_off, size: 18, color: const Color(0xFF94A3B8)),
+            icon: Icon(obscure ? TablerIcons.eye : TablerIcons.eye_off, size: 18, color: AppColors.textMuted),
             onPressed: onToggleObscure,
           ) : null,
           contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),

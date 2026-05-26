@@ -209,7 +209,7 @@ class _TfaVerifyPageState extends State<TfaVerifyPage> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: AppColors.background,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.border.withValues(alpha: 0.6), width: 1),
       ),
@@ -225,7 +225,7 @@ class _TfaVerifyPageState extends State<TfaVerifyPage> {
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: TextStyle(color: Colors.grey.shade300, fontSize: 20, letterSpacing: 8, fontWeight: FontWeight.w600),
-          prefixIcon: Icon(icon, size: 18, color: const Color(0xFF94A3B8)),
+          prefixIcon: Icon(icon, size: 18, color: AppColors.textMuted),
           contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
           counterText: '',

@@ -339,7 +339,7 @@ class _DashboardPageState extends State<DashboardPage> {
       case 'gold':
         return AppColors.accent;
       case 'silver':
-        return const Color(0xFF94A3B8);
+        return AppColors.textMuted;
       default:
         return AppColors.accentBlue;
     }
@@ -1118,7 +1118,7 @@ class _DashboardPageState extends State<DashboardPage> {
             Positioned.fill(
               child: _smartImage(
                 'https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&q=80&w=600',
-                const [AppColors.primary, Color(0xFF1E293B)],
+                AppColors.primaryGradient,
               ),
             ),
             Positioned.fill(

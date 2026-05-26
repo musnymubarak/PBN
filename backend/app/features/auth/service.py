@@ -714,3 +714,15 @@ async def resend_2fa(
     if settings.ENVIRONMENT == "development":
         logger.info("📱 [DEV TFA RESEND STUB] 2FA OTP: %s", otp)
 
+
+async def delete_account(user: User, redis: Redis, db: AsyncSession) -> None:
+    """Hard delete the user account and revoke active tokens."""
+    # Revoke tokens first
+    refresh_key = REFRESH_KEY.format(user_id=str(user.id))
+    await redis.delete(refresh_key)
+    
+    # Delete the user from the database
+    await db.delete(user)
+    await db.commit()
+    logger.info("Account permanently deleted for user: %s", user.id)
+
