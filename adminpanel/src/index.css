@@ -2811,7 +2811,6 @@ tr:nth-last-child(2) .action-dropdown {
   border-radius: var(--radius-xl);
   box-shadow: var(--elev-1);
   margin-bottom: var(--space-6);
-  overflow: hidden;
 }
 
 .ds-section__head {
@@ -3137,7 +3136,11 @@ tr:nth-last-child(2) .action-dropdown {
 }
 
 /* ── Table ────────────────────────────────────────────────────────────────── */
-.ds-table-wrap { overflow-x: auto; }
+.ds-table-wrap {
+  overflow-x: auto;
+  border-bottom-left-radius: var(--radius-xl);
+  border-bottom-right-radius: var(--radius-xl);
+}
 
 .ds-table {
   width: 100%;

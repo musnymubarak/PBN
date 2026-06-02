@@ -98,6 +98,7 @@ async def list_users(
     db: AsyncSession,
     chapter_id: UUID | None = None,
     industry_id: UUID | None = None,
+    district: str | None = None,
 ) -> Dict[str, Any]:
     """List all users with optional filtering, search, and pagination."""
     # Use outer joins to include chapter and industry info if available
@@ -122,6 +123,8 @@ async def list_users(
         stmt = stmt.where(Chapter.id == chapter_id)
     if industry_id:
         stmt = stmt.where(IndustryCategory.id == industry_id)
+    if district:
+        stmt = stmt.where(Chapter.district == district)
         
     if search:
         pattern = f"%{search}%"

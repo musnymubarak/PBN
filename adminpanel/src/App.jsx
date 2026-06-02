@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   IconChartBar,
   IconUsers,
@@ -1376,6 +1376,7 @@ function MembersPage() {
   const [pages, setPages] = useState(0);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+  const [districtFilter, setDistrictFilter] = useState('');
   const [chapterFilter, setChapterFilter] = useState('');
   const [industryFilter, setIndustryFilter] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
@@ -1408,6 +1409,11 @@ function MembersPage() {
   const [chapters, setChapters] = useState([]);
   const [industries, setIndustries] = useState([]);
 
+  const filteredChapters = useMemo(() => {
+    if (!districtFilter) return chapters;
+    return chapters.filter(c => c.district === districtFilter);
+  }, [chapters, districtFilter]);
+
   const fetchMembers = useCallback(async () => {
     setLoading(true);
     try {
@@ -1416,6 +1422,7 @@ function MembersPage() {
       if (chapterFilter) params.chapter_id = chapterFilter;
       if (industryFilter) params.industry_id = industryFilter;
       if (roleFilter) params.role = roleFilter;
+      if (districtFilter) params.district = districtFilter;
 
       const result = await api.listUsers(params);
       setUsers(result.users || []);
@@ -1426,7 +1433,7 @@ function MembersPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, chapterFilter, industryFilter, roleFilter]);
+  }, [page, search, chapterFilter, industryFilter, roleFilter, districtFilter]);
 
   useEffect(() => {
     fetchMembers();
@@ -1484,9 +1491,26 @@ function MembersPage() {
             style={{ flex: 1, minWidth: 240 }}
           />
           <Ds.Select
+            placeholder="All districts"
+            value={districtFilter}
+            options={SRI_LANKA_DISTRICTS.map(d => ({ id: d, name: d }))}
+            allowClear
+            onChange={val => {
+              setDistrictFilter(val);
+              setPage(1);
+              if (val && chapterFilter) {
+                const selectedChap = chapters.find(c => c.id === chapterFilter);
+                if (selectedChap && selectedChap.district !== val) {
+                  setChapterFilter('');
+                }
+              }
+            }}
+            style={{ width: 180 }}
+          />
+          <Ds.Select
             placeholder="All chapters"
             value={chapterFilter}
-            options={chapters}
+            options={filteredChapters}
             allowClear
             onChange={val => { setChapterFilter(val); setPage(1); }}
             style={{ width: 200 }}
@@ -6588,6 +6612,11 @@ function ChaptersPage() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingChapter, setEditingChapter] = useState(null);
+
+  // Filters state
+  const [search, setSearch] = useState('');
+  const [districtFilter, setDistrictFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   
   const fetchChapters = async () => {
     setLoading(true);
@@ -6627,6 +6656,33 @@ function ChaptersPage() {
     }
   };
 
+  // Filtered chapters list
+  const filteredChapters = chapters.filter(c => {
+    if (search) {
+      const q = search.toLowerCase();
+      const nameMatch = c.name?.toLowerCase().includes(q);
+      const districtMatch = c.district?.toLowerCase().includes(q);
+      const scheduleMatch = c.meeting_schedule?.toLowerCase().includes(q);
+      if (!nameMatch && !districtMatch && !scheduleMatch) return false;
+    }
+    if (districtFilter && c.district !== districtFilter) {
+      return false;
+    }
+    if (statusFilter !== '') {
+      const isActiveFilter = statusFilter === 'active';
+      if (c.is_active !== isActiveFilter) {
+        return false;
+      }
+    }
+    return true;
+  });
+
+  const districtOptions = SRI_LANKA_DISTRICTS.map(d => ({ id: d, name: d }));
+  const statusOptions = [
+    { id: 'active', name: 'Active' },
+    { id: 'inactive', name: 'Inactive' }
+  ];
+
   return (
     <section className="ds-page">
       <Ds.PageHeader
@@ -6645,9 +6701,36 @@ function ChaptersPage() {
 
       <Ds.Section
         title="Chapters"
-        subtitle={`${chapters.length} active across the network`}
+        subtitle={`${filteredChapters.length} of ${chapters.length} chapters`}
         flush
       >
+        <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', padding: 'var(--space-5) var(--space-6)', borderBottom: '1px solid var(--border-subtle)' }}>
+          <Ds.Input
+            placeholder="Search by name, district or schedule…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            leftIcon={<IconSearch size={14} />}
+            wrapClassName=""
+            style={{ flex: 1, minWidth: 240 }}
+          />
+          <Ds.Select
+            placeholder="All Districts"
+            value={districtFilter}
+            options={districtOptions}
+            allowClear
+            onChange={setDistrictFilter}
+            style={{ width: 200 }}
+          />
+          <Ds.Select
+            placeholder="All Status"
+            value={statusFilter}
+            options={statusOptions}
+            allowClear
+            onChange={setStatusFilter}
+            style={{ width: 150 }}
+          />
+        </div>
+
         <Ds.Table>
           <thead>
             <tr>
@@ -6661,14 +6744,14 @@ function ChaptersPage() {
           <tbody>
             {loading ? (
               <Ds.Table.LoadingRow colSpan={5} label="Loading chapters…" />
-            ) : chapters.length === 0 ? (
+            ) : filteredChapters.length === 0 ? (
               <Ds.Table.EmptyRow
                 colSpan={5}
                 icon={IconBuildingCommunity}
-                title="No chapters yet"
-                description="Add the first chapter to get started."
+                title="No chapters found"
+                description={chapters.length === 0 ? "Add the first chapter to get started." : "Try adjusting your filters or search."}
               />
-            ) : chapters.map(c => (
+            ) : filteredChapters.map(c => (
               <tr key={c.id}>
                 <td className="ds-table__primary">{c.name}</td>
                 <td>
@@ -7381,7 +7464,6 @@ export default function App() {
     localStorage.removeItem('active_tab');
     setIsAuthenticated(false);
     setAdminUser(null);
-    setShowProfileMenu(false);
     setActiveTab('overview');
   };
 

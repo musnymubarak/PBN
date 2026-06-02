@@ -56,6 +56,7 @@ async def list_users_endpoint(
     search: Optional[str] = Query(None),
     chapter_id: Optional[UUID] = Query(None),
     industry_id: Optional[UUID] = Query(None),
+    district: Optional[str] = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     current_user: User = Depends(read_req),
@@ -68,7 +69,8 @@ async def list_users_endpoint(
         chapter_id = own_chapters[0]
     result = await service.list_users(
         role, is_active, search, page, page_size, db,
-        chapter_id=chapter_id, industry_id=industry_id
+        chapter_id=chapter_id, industry_id=industry_id,
+        district=district
     )
     return success_response(data=result)
 
