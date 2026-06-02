@@ -1,0 +1,18 @@
+RewriteEngine On
+
+# Redirect /index.html to / (root)
+RewriteCond %{THE_REQUEST} \s/+(index)\.html[\s?] [NC]
+RewriteRule ^ / [R=301,L,NE]
+
+# Redirect /any-file.html to /any-file (except index)
+RewriteCond %{THE_REQUEST} \s/+(.+?)\.html[\s?] [NC]
+RewriteRule ^ /%1 [R=301,L,NE]
+
+# If the request is for an existing file or directory, do not rewrite
+RewriteCond %{REQUEST_FILENAME} -d [OR]
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^ - [L]
+
+# Rewrite /any-file to /any-file.html internally if the file exists
+RewriteCond %{REQUEST_FILENAME}.html -f
+RewriteRule ^(.*)$ $1.html [L]
