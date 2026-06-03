@@ -1,6 +1,4 @@
 import React from 'react';
-import { IconLogout } from '@tabler/icons-react';
-import { Avatar } from '../ui/Avatar';
 import { cx } from '../ui/classNames';
 import { MENU_GROUPS } from './menuConfig';
 
@@ -40,23 +38,6 @@ export function Sidebar({ activeTab, onChangeTab, adminUser, onLogout }) {
           })}
         </ul>
       </nav>
-
-      {adminUser && (
-        <div className="ds-sidebar__footer">
-          <div className="ds-sidebar__user">
-            <Avatar
-              size="sm"
-              name={adminUser.full_name || 'Admin'}
-              variant="brand"
-              style={{ background: 'rgba(255,255,255,0.12)', color: '#fff' }}
-            />
-            <span className="ds-sidebar__user-meta">
-              <span className="ds-sidebar__user-name">{adminUser.full_name || 'Admin User'}</span>
-              <span className="ds-sidebar__user-role">{adminUser.role || 'Administrator'}</span>
-            </span>
-          </div>
-        </div>
-      )}
     </aside>
   );
 }

@@ -3070,6 +3070,123 @@
     .pbn-custom-select-menu::-webkit-scrollbar-thumb:hover {
       background: #c9a84c;
     }
+
+    /* ── DEDICATED COUNTDOWN SECTION ── */
+    #launch-countdown-sec {
+      background: linear-gradient(180deg, #080d24 0%, #0c122e 100%);
+      padding: 90px 60px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      display: flex;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .countdown-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      max-width: 720px;
+      width: 100%;
+    }
+
+    .countdown-wrap .section-title {
+      margin-bottom: 16px;
+    }
+
+    .countdown-wrap .section-sub {
+      color: #7a85b0;
+      max-width: 580px;
+      margin-bottom: 36px;
+      line-height: 1.6;
+    }
+
+    .countdown-wrap .section-sub strong {
+      color: #e8c97a;
+    }
+
+    .countdown-card {
+      background: rgba(14, 21, 53, 0.55);
+      border: 1px solid rgba(201, 168, 76, 0.25);
+      border-radius: 8px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 15px 45px rgba(0, 0, 0, 0.35);
+      padding: 36px 48px;
+      width: 100%;
+      max-width: 600px;
+      margin-bottom: 36px;
+    }
+
+    .countdown-timer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+    }
+
+    .time-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+    }
+
+    .time-val {
+      font-size: clamp(2.2rem, 5vw, 3.4rem);
+      font-weight: 700;
+      color: #ffffff;
+      line-height: 1;
+      background: linear-gradient(180deg, #ffffff 40%, #e8c97a 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 20px rgba(201, 168, 76, 0.15);
+    }
+
+    .time-separator {
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      font-weight: 700;
+      color: rgba(201, 168, 76, 0.4);
+      line-height: 1;
+      margin-bottom: 20px;
+      user-select: none;
+    }
+
+    .time-lbl {
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: #7a85b0;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-top: 8px;
+    }
+
+    .countdown-actions {
+      display: flex;
+      justify-content: center;
+    }
+
+    @media (max-width: 768px) {
+      #launch-countdown-sec {
+        padding: 60px 24px;
+      }
+      .countdown-card {
+        padding: 24px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .countdown-timer {
+        gap: 4px;
+      }
+      .time-separator {
+        margin-bottom: 12px;
+      }
+      .time-lbl {
+        font-size: 0.55rem;
+        letter-spacing: 0.05em;
+        margin-top: 4px;
+      }
+    }
   </style>
 </head>
 
@@ -3136,6 +3253,43 @@
     </div>
     <div class="scroll-hint">
       <div class="scroll-line"></div>Scroll to explore
+    </div>
+  </section>
+
+  <!-- DEDICATED COUNTDOWN SECTION -->
+  <section id="launch-countdown-sec">
+    <div class="reveal countdown-wrap">
+      <div class="section-label">FLAGSHIP CHAPTER LAUNCH</div>
+      <h2 class="section-title">The Countdown Is On</h2>
+      <p class="section-sub">We are starting our first chapter on <strong>1st of July at 6:00 PM Sri Lanka Time</strong>. Don't miss your chance to secure your exclusive industry seat.</p>
+      
+      <div class="countdown-card">
+        <div class="countdown-timer">
+          <div class="time-block">
+            <span class="time-val" id="d-days">00</span>
+            <span class="time-lbl">Days</span>
+          </div>
+          <div class="time-separator">:</div>
+          <div class="time-block">
+            <span class="time-val" id="d-hours">00</span>
+            <span class="time-lbl">Hours</span>
+          </div>
+          <div class="time-separator">:</div>
+          <div class="time-block">
+            <span class="time-val" id="d-minutes">00</span>
+            <span class="time-lbl">Mins</span>
+          </div>
+          <div class="time-separator">:</div>
+          <div class="time-block">
+            <span class="time-val" id="d-seconds">00</span>
+            <span class="time-lbl">Secs</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="countdown-actions">
+        <a href="#cta" class="btn-primary">Secure Your Founding Seat</a>
+      </div>
     </div>
   </section>
 
@@ -4548,6 +4702,42 @@
   </button>
 
   <script>
+    // Countdown Timer initialization
+    (function initCountdown() {
+      // July 1, 2026 6:00 PM Sri Lanka Time (UTC+5:30)
+      const targetDate = new Date("2026-07-01T18:00:00+05:30").getTime();
+
+      function updateCountdown() {
+        const now = new Date().getTime();
+        const distance = targetDate - now;
+
+        if (distance < 0) {
+          clearInterval(timerInterval);
+          const countdownEl = document.getElementById("launch-countdown-sec");
+          if (countdownEl) countdownEl.style.display = "none";
+          return;
+        }
+
+        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+        const dEl = document.getElementById("d-days");
+        const hEl = document.getElementById("d-hours");
+        const mEl = document.getElementById("d-minutes");
+        const sEl = document.getElementById("d-seconds");
+
+        if (dEl) dEl.innerText = String(days).padStart(2, '0');
+        if (hEl) hEl.innerText = String(hours).padStart(2, '0');
+        if (mEl) mEl.innerText = String(minutes).padStart(2, '0');
+        if (sEl) sEl.innerText = String(seconds).padStart(2, '0');
+      }
+
+      updateCountdown();
+      const timerInterval = setInterval(updateCountdown, 1000);
+    })();
+
     // Scroll reveal
     const io = new IntersectionObserver((entries) => {
       entries.forEach((e, i) => { if (e.isIntersecting) setTimeout(() => e.target.classList.add('visible'), i * 80); });
