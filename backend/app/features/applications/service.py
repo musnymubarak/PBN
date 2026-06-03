@@ -407,6 +407,8 @@ async def update_application_status(
                 "password": temp_password,
                 "onboarding_url": onboarding_url,
                 "has_missing_fields": bool(missing_fields),
+                "play_store_url": settings.PLAY_STORE_URL,
+                "app_store_url": settings.APP_STORE_URL,
             })
             await send_email(app.email, "Welcome to PBN! Your Application is Approved", html)
         except Exception as e:

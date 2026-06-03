@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Application received — Prime Business Network</title>
+    <title>Password reset — Prime Business Network</title>
 </head>
 <body style="margin:0; padding:0; background-color:#f8fafc; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; color:#0f172a;">
 
@@ -30,23 +30,41 @@
                 <!-- Status -->
                 <tr>
                   <td style="padding-bottom:12px;">
-                    <span style="font-size:12px; font-weight:600; color:#64748b; letter-spacing:1px; text-transform:uppercase;">Application received</span>
+                    <span style="font-size:12px; font-weight:600; color:#64748b; letter-spacing:1px; text-transform:uppercase;">Password reset</span>
                   </td>
                 </tr>
 
-                <!-- Greeting -->
+                <!-- Heading -->
                 <tr>
                   <td style="padding-bottom:20px;">
-                    <h1 style="margin:0; font-size:24px; font-weight:600; color:#0f172a; line-height:1.3;">Hi {{ full_name }},</h1>
+                    <h1 style="margin:0; font-size:24px; font-weight:600; color:#0f172a; line-height:1.3;">Your one-time code</h1>
                   </td>
                 </tr>
 
                 <!-- Body -->
                 <tr>
-                  <td style="font-size:15px; color:#334155; line-height:1.6; padding-bottom:24px;">
-                    <p style="margin:0 0 16px;">Thank you for applying to join the Prime Business Network. We have received your application for <strong style="color:#0f172a;">{{ business_name }}</strong>.</p>
-                    <p style="margin:0 0 16px;">Our team is reviewing it now. The next step is a Fit Call where we discuss how PBN can support your growth and how you'll contribute to the community.</p>
-                    <p style="margin:0;">We'll email you once your Fit Call is scheduled.</p>
+                  <td style="font-size:15px; color:#334155; line-height:1.6; padding-bottom:16px;">
+                    <p style="margin:0;">Use the code below to reset your Prime Business Network password.</p>
+                  </td>
+                </tr>
+
+                <!-- OTP card -->
+                <tr>
+                  <td style="padding-bottom:20px;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border:1px solid #e5e7eb; border-radius:8px;">
+                      <tr>
+                        <td align="center" style="padding:24px 18px; background:#f8fafc; border-radius:8px;">
+                          <div style="font-size:32px; font-weight:700; letter-spacing:8px; color:#0f172a; font-family:SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;">489210</div>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <!-- Body Footer -->
+                <tr>
+                  <td style="font-size:14px; color:#64748b; line-height:1.6; padding-bottom:24px;">
+                    <p style="margin:0;">This code expires in <strong style="color:#334155;">5 minutes</strong>. If you didn't request a password reset, you can safely ignore this email.</p>
                   </td>
                 </tr>
 
@@ -54,7 +72,21 @@
                 <tr>
                   <td style="border-top:1px solid #f1f5f9; padding-top:24px;">
                     <p style="margin:0 0 4px; font-size:15px; color:#334155;">Best regards,</p>
-                    {% include 'signature.html' %}
+                    <!--
+  Minimal email signature: name, role, contact line.
+  No logo, no tagline badge, no social row — kept in line with modern
+  transactional email aesthetics (Stripe / Linear / Vercel).
+-->
+<div style="margin-top:8px;">
+  <div style="font-size:14px; font-weight:600; color:#0f172a; line-height:1.4;">PBN Support Team</div>
+  <div style="font-size:13px; color:#64748b; margin-top:2px; line-height:1.5;">Prime Business Network (Pvt) Ltd.</div>
+  <div style="font-size:13px; color:#64748b; margin-top:10px; line-height:1.5;">
+    <a href="mailto:info@primebusiness.network" style="color:#64748b; text-decoration:underline;">info@primebusiness.network</a>
+    &nbsp;·&nbsp;
+    <a href="https://primebusiness.network" style="color:#64748b; text-decoration:underline;">primebusiness.network</a>
+    
+  </div>
+</div>
                   </td>
                 </tr>
 

@@ -77,6 +77,8 @@ class Settings(BaseSettings):
     # Base URL of the public site; used to build onboarding links emailed to
     # approved applicants. Override per-environment via env var if needed.
     PUBLIC_SITE_URL: str = "https://primebusiness.network"
+    PLAY_STORE_URL: str = "https://play.google.com/store/apps/details?id=network.primebusiness.app"
+    APP_STORE_URL: str = "https://apps.apple.com/us/app/prime-business-network/id6772060160"
 
     # ── CORS ─────────────────────────────────────────────────
     CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:5173"]

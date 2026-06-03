@@ -21,7 +21,9 @@ def test_render():
             "has_missing_fields": True,
             "onboarding_url": "https://primebusiness.network/onboard?token=testtoken",
             "email": "jane@globex.com",
-            "password": "temporary_password_123"
+            "password": "temporary_password_123",
+            "play_store_url": "https://play.google.com/store/apps/details?id=network.primebusiness.app",
+            "app_store_url": "https://apps.apple.com/us/app/prime-business-network/id6772060160"
         },
         "application_rejected.html": {
             "full_name": "Bob Johnson",
@@ -32,6 +34,12 @@ def test_render():
             "full_name": "Alice Williams",
             "business_name": "Umbrella Corp",
             "fit_call_date": "Monday, June 1st at 10:00 AM UTC"
+        },
+        "otp_email.html": {
+            "otp": "489210"
+        },
+        "2fa_otp_email.html": {
+            "otp": "123456"
         }
     }
     
