@@ -239,7 +239,7 @@ async def list_applications(
     stmt = select(
         Application,
         Chapter.name.label("chapter_name")
-    ).join(Chapter, Application.chapter_id == Chapter.id)
+    ).outerjoin(Chapter, Application.chapter_id == Chapter.id)
     
     if status:
         stmt = stmt.where(Application.status == status)

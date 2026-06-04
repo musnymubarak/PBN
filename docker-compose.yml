@@ -23,7 +23,7 @@ services:
     # SMTP delivery hits "Connection refused". The cert SAN covers
     # mail.primebusiness.network so TLS validation still succeeds.
     extra_hosts:
-      - "mail.primebusiness.network:67.211.218.75"
+      - "mail.primebusiness.network:204.13.233.186"
     networks:
       - pbn-network
     volumes:

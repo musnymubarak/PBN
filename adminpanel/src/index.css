@@ -3799,3 +3799,58 @@ tr:nth-last-child(2) .action-dropdown {
 }
 
 
+/* ── Mailbox Page ── */
+.mailbox-item {
+  position: relative;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+.mailbox-item:hover {
+  background-color: var(--bg-subtle);
+}
+.mailbox-item.selected {
+  background-color: var(--brand-blue-50);
+  border-color: var(--brand-blue-200);
+}
+/* Accent bar marking the active conversation */
+.mailbox-item.selected::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--brand-blue);
+}
+/* Subtle tint so unread mail stands out from already-read mail */
+.mailbox-item.unread:not(.selected) {
+  background-color: color-mix(in srgb, var(--brand-blue-50) 55%, transparent);
+}
+
+.mailbox-unread-badge {
+  font-size: var(--text-xxs);
+  font-weight: var(--weight-bold);
+  color: var(--brand-blue-900);
+  background: var(--brand-blue-50);
+  border: 1px solid var(--brand-blue-200);
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* Collapse the mailbox to a single column on narrow viewports */
+@media (max-width: 900px) {
+  .mailbox-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+
+

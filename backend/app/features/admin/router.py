@@ -629,3 +629,274 @@ async def reject_listing_endpoint(
     listing.rejection_reason = data.reason
     await db.commit()
     return success_response(message="Listing rejected/unapproved with reason")
+
+
+# ── Mailbox Viewer Endpoints ──
+import imaplib
+import email
+from email.header import decode_header
+import asyncio
+from app.core.config import get_settings
+
+settings = get_settings()
+
+def _fetch_mailbox_list():
+    try:
+        mail = imaplib.IMAP4_SSL(settings.SMTP_HOST, 993, timeout=10)
+        mail.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+        mail.select("INBOX")
+
+        status, messages = mail.search(None, "ALL")
+        if status != "OK":
+            return []
+
+        mail_ids = messages[0].split()
+        latest_ids = mail_ids[-20:]
+        latest_ids.reverse()
+
+        emails_list = []
+        for mail_id in latest_ids:
+            res, msg_data = mail.fetch(mail_id, "(FLAGS RFC822)")
+            if res != "OK":
+                continue
+            for response_part in msg_data:
+                if isinstance(response_part, tuple):
+                    # Check if the email has the \Seen flag
+                    metadata = response_part[0]
+                    is_read = b"\\seen" in metadata.lower()
+                    
+                    msg = email.message_from_bytes(response_part[1])
+                    
+                    # Decode Subject
+                    subject = ""
+                    if msg["Subject"]:
+                        subject_decoded = decode_header(msg["Subject"])[0]
+                        subject_bytes, encoding = subject_decoded
+                        if isinstance(subject_bytes, bytes):
+                            subject = subject_bytes.decode(encoding or "utf-8", errors="ignore")
+                        else:
+                            subject = str(subject_bytes)
+                        
+                    # Decode From
+                    from_sender = ""
+                    if msg["From"]:
+                        from_decoded = decode_header(msg["From"])[0]
+                        from_bytes, encoding = from_decoded
+                        if isinstance(from_bytes, bytes):
+                            from_sender = from_bytes.decode(encoding or "utf-8", errors="ignore")
+                        else:
+                            from_sender = str(from_bytes)
+                        
+                    date = msg.get("Date", "")
+                    
+                    # Extract body snippet
+                    body_snippet = ""
+                    if msg.is_multipart():
+                        for part in msg.walk():
+                            content_type = part.get_content_type()
+                            content_disposition = str(part.get("Content-Disposition"))
+                            if content_type == "text/plain" and "attachment" not in content_disposition:
+                                payload = part.get_payload(decode=True)
+                                if payload:
+                                    body_snippet = payload.decode(part.get_content_charset() or "utf-8", errors="ignore")
+                                    break
+                    else:
+                        payload = msg.get_payload(decode=True)
+                        if payload:
+                            body_snippet = payload.decode(msg.get_content_charset() or "utf-8", errors="ignore")
+                            
+                    # Clean snippet
+                    snippet = " ".join(body_snippet.split())[:120]
+                    
+                    emails_list.append({
+                        "uid": mail_id.decode(),
+                        "from": from_sender,
+                        "subject": subject,
+                        "date": date,
+                        "snippet": snippet,
+                        "read": is_read
+                    })
+        mail.close()
+        mail.logout()
+        return emails_list
+    except Exception as e:
+        from app.core.exceptions import AppException
+        raise AppException(f"Failed to connect or fetch mailbox: {e}", status_code=500)
+
+def _fetch_mailbox_email(uid: str):
+    try:
+        mail = imaplib.IMAP4_SSL(settings.SMTP_HOST, 993, timeout=10)
+        mail.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+        mail.select("INBOX")
+
+        res, msg_data = mail.fetch(uid.encode(), "(RFC822)")
+        if res != "OK":
+            from app.core.exceptions import AppException
+            raise AppException("Email not found", status_code=404)
+
+        email_data = {}
+        for response_part in msg_data:
+            if isinstance(response_part, tuple):
+                msg = email.message_from_bytes(response_part[1])
+                
+                # Decode Subject
+                subject = ""
+                if msg["Subject"]:
+                    subject_decoded = decode_header(msg["Subject"])[0]
+                    subject_bytes, encoding = subject_decoded
+                    if isinstance(subject_bytes, bytes):
+                        subject = subject_bytes.decode(encoding or "utf-8", errors="ignore")
+                    else:
+                        subject = str(subject_bytes)
+                    
+                # Decode From
+                from_sender = ""
+                if msg["From"]:
+                    from_decoded = decode_header(msg["From"])[0]
+                    from_bytes, encoding = from_decoded
+                    if isinstance(from_bytes, bytes):
+                        from_sender = from_bytes.decode(encoding or "utf-8", errors="ignore")
+                    else:
+                        from_sender = str(from_bytes)
+                    
+                date = msg.get("Date", "")
+                
+                # Extract full plain text body
+                body = ""
+                if msg.is_multipart():
+                    for part in msg.walk():
+                        content_type = part.get_content_type()
+                        content_disposition = str(part.get("Content-Disposition"))
+                        if content_type == "text/plain" and "attachment" not in content_disposition:
+                            payload = part.get_payload(decode=True)
+                            if payload:
+                                body = payload.decode(part.get_content_charset() or "utf-8", errors="ignore")
+                                break
+                else:
+                    payload = msg.get_payload(decode=True)
+                    if payload:
+                        body = payload.decode(msg.get_content_charset() or "utf-8", errors="ignore")
+                
+                email_data = {
+                    "uid": uid,
+                    "from": from_sender,
+                    "subject": subject,
+                    "date": date,
+                    "body": body
+                }
+        mail.close()
+        mail.logout()
+        return email_data
+    except Exception as e:
+        from app.core.exceptions import AppException
+        raise AppException(f"Failed to fetch email details: {e}", status_code=500)
+
+
+@router.get("/admin/mailbox", summary="List latest emails from admin mailbox")
+async def list_mailbox_endpoint(
+    current_user: User = Depends(admin_req),
+) -> ORJSONResponse:
+    emails = await asyncio.to_thread(_fetch_mailbox_list)
+    return success_response(data=emails)
+
+
+@router.get("/admin/mailbox/{uid}", summary="Fetch a specific email's plain-text content")
+async def get_mailbox_email_endpoint(
+    uid: str,
+    current_user: User = Depends(admin_req),
+) -> ORJSONResponse:
+    email_detail = await asyncio.to_thread(_fetch_mailbox_email, uid)
+    return success_response(data=email_detail)
+
+
+class MailboxSendRequest(BaseModel):
+    to_email: str = Field(..., max_length=255)
+    subject: str = Field(..., max_length=255)
+    body: str
+
+@router.post("/admin/mailbox/send", summary="Send an email from the admin mailbox")
+async def send_mailbox_email_endpoint(
+    data: MailboxSendRequest,
+    current_user: User = Depends(admin_req),
+) -> ORJSONResponse:
+    from app.core.email_service import send_email
+    # Convert newlines to HTML breaks so plain text formats correctly in email clients
+    html_body = f"<html><body><p>{data.body.replace(chr(10), '<br/>')}</p></body></html>"
+    await send_email(data.to_email, data.subject, html_body)
+    return success_response(message="Email sent successfully")
+
+
+# ── Mailbox Settings Endpoints ──────────────────────────────────────────────
+
+class MailboxSettingsResponse(BaseModel):
+    smtp_host: str
+    smtp_port: int
+    smtp_user: str
+    smtp_from_name: str
+    smtp_from_email: str
+    # password is intentionally omitted from reads for security
+
+class MailboxSettingsUpdate(BaseModel):
+    smtp_host: Optional[str] = Field(None, max_length=255)
+    smtp_port: Optional[int] = None
+    smtp_user: Optional[str] = Field(None, max_length=255)
+    smtp_password: Optional[str] = Field(None, max_length=255)
+    smtp_from_name: Optional[str] = Field(None, max_length=255)
+    smtp_from_email: Optional[str] = Field(None, max_length=255)
+
+@router.get("/admin/mailbox-settings", summary="Get current mailbox SMTP settings")
+async def get_mailbox_settings(
+    current_user: User = Depends(superadmin_req),
+) -> ORJSONResponse:
+    s = get_settings()
+    return success_response(data={
+        "smtp_host": s.SMTP_HOST,
+        "smtp_port": s.SMTP_PORT,
+        "smtp_user": s.SMTP_USER,
+        "smtp_from_name": s.SMTP_FROM_NAME,
+        "smtp_from_email": s.SMTP_FROM_EMAIL,
+        "has_password": bool(s.SMTP_PASSWORD),
+    })
+
+@router.patch("/admin/mailbox-settings", summary="Update mailbox SMTP settings in .env")
+async def update_mailbox_settings(
+    data: MailboxSettingsUpdate,
+    current_user: User = Depends(superadmin_req),
+) -> ORJSONResponse:
+    import re, os
+
+    env_path = ".env"
+    if not os.path.exists(env_path):
+        from app.core.exceptions import AppException
+        raise AppException("Server .env file not found", status_code=500)
+
+    with open(env_path, "r") as f:
+        content = f.read()
+
+    def set_env(content: str, key: str, value: str) -> str:
+        pattern = rf"^({key}=).*$"
+        replacement = rf"\g<1>{value}"
+        if re.search(pattern, content, flags=re.MULTILINE):
+            return re.sub(pattern, replacement, content, flags=re.MULTILINE)
+        # Key not present – append it
+        return content + f"\n{key}={value}"
+
+    if data.smtp_host is not None:
+        content = set_env(content, "SMTP_HOST", data.smtp_host)
+    if data.smtp_port is not None:
+        content = set_env(content, "SMTP_PORT", str(data.smtp_port))
+    if data.smtp_user is not None:
+        content = set_env(content, "SMTP_USER", data.smtp_user)
+    if data.smtp_password is not None:
+        content = set_env(content, "SMTP_PASSWORD", data.smtp_password)
+    if data.smtp_from_name is not None:
+        content = set_env(content, "SMTP_FROM_NAME", data.smtp_from_name)
+    if data.smtp_from_email is not None:
+        content = set_env(content, "SMTP_FROM_EMAIL", data.smtp_from_email)
+
+    with open(env_path, "w") as f:
+        f.write(content)
+
+    return success_response(message="Mailbox settings updated. Restart the API service for changes to take effect.")
+
+

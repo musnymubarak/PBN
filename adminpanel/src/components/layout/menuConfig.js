@@ -11,6 +11,7 @@ import {
   IconBuildingStore,
   IconBuildingCommunity,
   IconShirt,
+  IconMail,
 } from '@tabler/icons-react';
 
 /**
@@ -53,6 +54,7 @@ export const MENU_GROUPS = [
     links: [
       { id: 'user-management', icon: IconUserShield, label: 'User Management', roles: ['SUPER_ADMIN'] },
       { id: 'settings', icon: IconSettings, label: 'Global Settings' },
+      { id: 'mailbox', icon: IconMail, label: 'Mailbox', roles: ['SUPER_ADMIN', 'ADMIN'] },
       { id: 'notifications', icon: IconBell, label: 'Audit Log', roles: ['SUPER_ADMIN'] },
     ],
   },

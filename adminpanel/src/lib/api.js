@@ -294,5 +294,14 @@ export const api = {
     return apiFetch(`/admin/audit-logs?${qs.toString()}`);
   },
   getAuditLogFacets: () => apiFetch('/admin/audit-logs/facets'),
+
+  // Mailbox Viewer
+  listMailbox: () => apiFetch('/admin/mailbox'),
+  getMailboxEmail: (uid) => apiFetch(`/admin/mailbox/${uid}`),
+  sendMailboxEmail: (body) => apiFetch('/admin/mailbox/send', { method: 'POST', body: JSON.stringify(body) }),
+
+  // Mailbox Settings (SUPER_ADMIN only)
+  getMailboxSettings: () => apiFetch('/admin/mailbox-settings'),
+  updateMailboxSettings: (body) => apiFetch('/admin/mailbox-settings', { method: 'PATCH', body: JSON.stringify(body) }),
 };
 

@@ -38,6 +38,10 @@ import {
   IconStarFilled,
   IconBuildingCommunity,
   IconMapPin,
+  IconInbox,
+  IconSend,
+  IconArrowBackUp,
+  IconPointFilled,
 } from '@tabler/icons-react';
 import { api, STATIC_BASE_URL } from './lib/api';
 import { useApi } from './hooks/useApi';
@@ -4087,6 +4091,144 @@ function NotificationPanel({ notifications, onDismiss, onMarkAllRead, onClose })
 }
 
 // ── Settings Page ─────────────────────────────────────────────────────────
+function MailboxSettingsSection({ showToast }) {
+  const [settings, setSettings] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    smtp_host: '',
+    smtp_port: '',
+    smtp_user: '',
+    smtp_password: '',
+    smtp_from_name: '',
+    smtp_from_email: '',
+  });
+
+  useEffect(() => {
+    api.getMailboxSettings()
+      .then(data => {
+        setSettings(data);
+        setForm({
+          smtp_host: data.smtp_host || '',
+          smtp_port: String(data.smtp_port || '465'),
+          smtp_user: data.smtp_user || '',
+          smtp_password: '',
+          smtp_from_name: data.smtp_from_name || '',
+          smtp_from_email: data.smtp_from_email || '',
+        });
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const payload = {
+        smtp_host: form.smtp_host || undefined,
+        smtp_port: form.smtp_port ? parseInt(form.smtp_port, 10) : undefined,
+        smtp_user: form.smtp_user || undefined,
+        smtp_from_name: form.smtp_from_name || undefined,
+        smtp_from_email: form.smtp_from_email || undefined,
+      };
+      if (form.smtp_password) payload.smtp_password = form.smtp_password;
+      await api.updateMailboxSettings(payload);
+      showToast('Mailbox settings saved. Restart the API service to apply.', 'success');
+      setForm(f => ({ ...f, smtp_password: '' }));
+    } catch (err) {
+      showToast(err.message || 'Failed to save settings', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) return (
+    <Ds.Section title="Mailbox Settings" subtitle="SMTP / IMAP configuration for info@primebusiness.network">
+      <div style={{ display: 'flex', justifyContent: 'center', padding: 'var(--space-6)' }}><Ds.Spinner size="md" /></div>
+    </Ds.Section>
+  );
+
+  return (
+    <Ds.Section
+      title="Mailbox Settings"
+      subtitle="SMTP / IMAP configuration for the admin mailbox"
+    >
+      <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 'var(--space-2)', alignItems: 'end' }}>
+          <div>
+            <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>Mail Server Host</label>
+            <Ds.Input
+              value={form.smtp_host}
+              onChange={e => setForm(f => ({ ...f, smtp_host: e.target.value }))}
+              placeholder="mail.example.com"
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>SMTP Port</label>
+            <Ds.Input
+              value={form.smtp_port}
+              onChange={e => setForm(f => ({ ...f, smtp_port: e.target.value }))}
+              placeholder="465"
+              style={{ width: '90px' }}
+            />
+          </div>
+        </div>
+
+        <div>
+          <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>Mailbox Email (SMTP User)</label>
+          <Ds.Input
+            type="email"
+            value={form.smtp_user}
+            onChange={e => setForm(f => ({ ...f, smtp_user: e.target.value }))}
+            placeholder="info@example.com"
+          />
+        </div>
+
+        <div>
+          <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>
+            Password {settings?.has_password ? <span style={{ color: 'var(--success)', fontSize: '0.65rem', fontWeight: 600, marginLeft: 4 }}>● Saved</span> : <span style={{ color: 'var(--danger)', fontSize: '0.65rem', marginLeft: 4 }}>● Not set</span>}
+          </label>
+          <Ds.Input
+            type="password"
+            value={form.smtp_password}
+            onChange={e => setForm(f => ({ ...f, smtp_password: e.target.value }))}
+            placeholder="Leave blank to keep existing password"
+          />
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-2)' }}>
+          <div>
+            <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>From Name</label>
+            <Ds.Input
+              value={form.smtp_from_name}
+              onChange={e => setForm(f => ({ ...f, smtp_from_name: e.target.value }))}
+              placeholder="Prime Business Network"
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>From Email</label>
+            <Ds.Input
+              type="email"
+              value={form.smtp_from_email}
+              onChange={e => setForm(f => ({ ...f, smtp_from_email: e.target.value }))}
+              placeholder="info@example.com"
+            />
+          </div>
+        </div>
+
+        <div style={{ marginTop: 'var(--space-2)', padding: 'var(--space-3)', background: 'var(--bg-subtle)', borderRadius: 'var(--radius-md)', fontSize: 'var(--text-xs)', color: 'var(--fg-muted)' }}>
+          <strong>Note:</strong> IMAP (port 993) uses the same host and credentials as SMTP above. After saving, the API service must be restarted for changes to take effect.
+        </div>
+
+        <Ds.Button type="submit" variant="primary" loading={saving} leftIcon={<IconMail size={14} />}>
+          Save Mailbox Settings
+        </Ds.Button>
+      </form>
+    </Ds.Section>
+  );
+}
+
 function SettingsPage({ adminUser, onShowChangePassword, showToast }) {
   const [notifPreferences, setNotifPreferences] = useState({
     applications: true,
@@ -4174,8 +4316,776 @@ function SettingsPage({ adminUser, onShowChangePassword, showToast }) {
             ))}
           </div>
         </Ds.Section>
+
+        {/* Mailbox Settings – SUPER_ADMIN only */}
+        {adminUser?.role === 'SUPER_ADMIN' && (
+          <MailboxSettingsSection showToast={showToast} />
+        )}
       </div>
     </section>
+  );
+}
+
+
+// ── Mailbox Viewer Page ───────────────────────────────────────────────────
+// ── Mailbox helpers ───────────────────────────────────────────────────────
+const MAILBOX_AVATAR_COLORS = [
+  '#2563EB', '#7C3AED', '#DB2777', '#EA580C',
+  '#059669', '#0891B2', '#4F46E5', '#CA8A04',
+];
+
+// Split a raw "From" header into a display name and bare email address.
+function parseSender(raw = '') {
+  const match = raw.match(/^\s*"?([^"<]*?)"?\s*<([^>]+)>\s*$/);
+  if (match) {
+    const email = match[2].trim();
+    return { name: match[1].trim() || email, email };
+  }
+  const trimmed = raw.trim();
+  return { name: trimmed || '(Unknown sender)', email: trimmed.includes('@') ? trimmed : '' };
+}
+
+function senderInitials(value = '') {
+  const parts = value.replace(/[<>"@.]/g, ' ').trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function avatarColor(key = '') {
+  let hash = 0;
+  for (let i = 0; i < key.length; i++) hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
+  return MAILBOX_AVATAR_COLORS[hash % MAILBOX_AVATAR_COLORS.length];
+}
+
+// Human-friendly relative timestamp ("3m ago", "2h ago", "Yesterday", "Mar 4").
+function formatMailDate(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '';
+  const now = new Date();
+  const diffMin = Math.floor((now - d) / 60000);
+  if (diffMin < 1) return 'Just now';
+  if (diffMin < 60) return `${diffMin}m ago`;
+  if (d.toDateString() === now.toDateString()) return `${Math.floor(diffMin / 60)}h ago`;
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (d.toDateString() === yesterday.toDateString()) return 'Yesterday';
+  const sameYear = d.getFullYear() === now.getFullYear();
+  return d.toLocaleDateString(undefined, sameYear
+    ? { month: 'short', day: 'numeric' }
+    : { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function MailAvatar({ name, email, size = 40 }) {
+  return (
+    <div style={{
+      width: size, height: size, minWidth: size, borderRadius: '50%',
+      background: avatarColor(email || name || ''), color: '#fff',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontWeight: 'var(--weight-bold)', letterSpacing: '0.5px',
+      fontSize: size <= 36 ? 'var(--text-xs)' : 'var(--text-sm)',
+      boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.15)',
+    }}>
+      {senderInitials(name || email)}
+    </div>
+  );
+}
+
+// Clean up Outlook mailto: links from body text
+function cleanMailBody(text) {
+  if (!text) return '';
+  // Remove mailto: links like <mailto:email@address.com> that follow email addresses
+  let cleaned = text.replace(/<mailto:[^>]+>/gi, '');
+  return cleaned;
+}
+
+// Parses raw plain text email threads into separate message objects
+function parseEmailThread(body, topSender, topDate) {
+  if (!body) return [];
+
+  const lines = body.split(/\r?\n/);
+  const messages = [];
+  let currentBodyLines = [];
+
+  // Initialize with the top-level message details
+  const newestMessage = {
+    from: topSender || '',
+    date: topDate || '',
+    to: '',
+    subject: '',
+    body: '',
+    caution: '',
+    isCollapsed: false,
+    isFirst: true,
+  };
+  messages.push(newestMessage);
+
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+
+    // Check if this line starts a header block of an older reply.
+    // Standard header blocks start with "From: " (sometimes with "Original Message" prefix)
+    const fromMatch = line.match(/^(?:-----Original Message-----|----- Original Message -----)?\s*From:\s*(.+)$/i);
+    let isHeaderBlock = false;
+    let headersTemp = {};
+
+    if (fromMatch) {
+      // Look ahead up to 6 lines to parse the accompanying header fields
+      const lookAheadLimit = Math.min(lines.length, i + 6);
+      let foundDateOrSent = false;
+      let foundTo = false;
+      const tempFields = { from: fromMatch[1].trim() };
+
+      for (let j = i + 1; j < lookAheadLimit; j++) {
+        const nextLine = lines[j];
+        const dateMatch = nextLine.match(/^(?:Sent|Date):\s*(.+)$/i);
+        const toMatch = nextLine.match(/^To:\s*(.+)$/i);
+        const subjectMatch = nextLine.match(/^Subject:\s*(.+)$/i);
+        const ccMatch = nextLine.match(/^Cc:\s*(.+)$/i);
+
+        if (dateMatch) {
+          foundDateOrSent = true;
+          tempFields.date = dateMatch[1].trim();
+        } else if (toMatch) {
+          foundTo = true;
+          tempFields.to = toMatch[1].trim();
+        } else if (subjectMatch) {
+          tempFields.subject = subjectMatch[1].trim();
+        } else if (ccMatch) {
+          tempFields.cc = ccMatch[1].trim();
+        }
+      }
+
+      if (foundDateOrSent || foundTo) {
+        isHeaderBlock = true;
+        headersTemp = tempFields;
+        
+        // Count how many header lines to skip
+        let linesToSkip = 1;
+        for (let j = i + 1; j < lookAheadLimit; j++) {
+          const nextLine = lines[j];
+          if (/^(?:Sent|Date|To|Subject|Cc):\s*/i.test(nextLine)) {
+            linesToSkip = j - i + 1;
+          } else if (nextLine.trim() === '') {
+            continue;
+          } else {
+            break;
+          }
+        }
+        i += linesToSkip - 1;
+      }
+    }
+
+    if (isHeaderBlock) {
+      // Commit the text parsed so far to the previous message
+      if (messages.length > 0) {
+        messages[messages.length - 1].body = currentBodyLines.join('\n').trim();
+      }
+      currentBodyLines = [];
+
+      messages.push({
+        from: headersTemp.from || '',
+        date: headersTemp.date || '',
+        to: headersTemp.to || '',
+        subject: headersTemp.subject || '',
+        cc: headersTemp.cc || '',
+        body: '',
+        caution: '',
+        isCollapsed: true,
+        isFirst: false,
+      });
+    } else {
+      currentBodyLines.push(line);
+    }
+    i++;
+  }
+
+  // Commit any remaining lines to the last message
+  if (messages.length > 0) {
+    messages[messages.length - 1].body = currentBodyLines.join('\n').trim();
+  }
+
+  // Clean caution warning block out of each message body
+  const cautionRegex = /\[CAUTION:[\s\S]+?\]/i;
+  messages.forEach(msg => {
+    const cautionMatch = msg.body.match(cautionRegex);
+    if (cautionMatch) {
+      msg.caution = cautionMatch[0].replace(/^\[|\]$/g, '').trim();
+      msg.body = msg.body.replace(cautionRegex, '').trim();
+    }
+    msg.body = cleanMailBody(msg.body);
+  });
+
+  return messages;
+}
+
+function MailboxPage({ showToast }) {
+  const [emails, setEmails] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [selectedUid, setSelectedUid] = useState(null);
+  const [emailDetail, setEmailDetail] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [search, setSearch] = useState('');
+  const [readUids, setReadUids] = useState(() => new Set());
+
+  const [compose, setCompose] = useState(null); // null | { to, subject, body }
+  const [expandedIndices, setExpandedIndices] = useState({});
+
+  const fetchEmails = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const data = await api.listMailbox();
+      setEmails(data || []);
+      if (data) {
+        const readSet = new Set();
+        data.forEach(e => {
+          if (e.read) {
+            readSet.add(e.uid);
+          }
+        });
+        setReadUids(readSet);
+      }
+    } catch (err) {
+      console.error(err);
+      setError(err.message || 'Failed to fetch emails');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const fetchEmailDetail = useCallback(async (uid) => {
+    setDetailLoading(true);
+    try {
+      const data = await api.getMailboxEmail(uid);
+      setEmailDetail(data);
+    } catch (err) {
+      console.error(err);
+      showToast(err.message || 'Failed to fetch email body', 'error');
+    } finally {
+      setDetailLoading(false);
+    }
+  }, [showToast]);
+
+  useEffect(() => {
+    fetchEmails();
+  }, [fetchEmails]);
+
+  useEffect(() => {
+    setExpandedIndices({});
+    if (selectedUid) {
+      fetchEmailDetail(selectedUid);
+    } else {
+      setEmailDetail(null);
+    }
+  }, [selectedUid, fetchEmailDetail]);
+
+  const selectEmail = useCallback((uid) => {
+    setSelectedUid(uid);
+    setReadUids(prev => {
+      if (prev.has(uid)) return prev;
+      const next = new Set(prev);
+      next.add(uid);
+      return next;
+    });
+  }, []);
+
+  const filteredEmails = useMemo(() => {
+    if (!search) return emails;
+    const s = search.toLowerCase();
+    return emails.filter(e =>
+      (e.subject || '').toLowerCase().includes(s) ||
+      (e.from || '').toLowerCase().includes(s) ||
+      (e.snippet || '').toLowerCase().includes(s)
+    );
+  }, [emails, search]);
+
+  const unreadCount = useMemo(
+    () => emails.reduce((n, e) => (readUids.has(e.uid) ? n : n + 1), 0),
+    [emails, readUids]
+  );
+
+  const threadMessages = useMemo(() => {
+    if (!emailDetail) return [];
+    return parseEmailThread(emailDetail.body, emailDetail.from, emailDetail.date);
+  }, [emailDetail]);
+
+  const toggleIndex = useCallback((index) => {
+    setExpandedIndices(prev => ({
+      ...prev,
+      [index]: !prev[index]
+    }));
+  }, []);
+
+  const expandAll = useCallback(() => {
+    const all = {};
+    threadMessages.forEach((_, idx) => {
+      all[idx] = true;
+    });
+    setExpandedIndices(all);
+  }, [threadMessages]);
+
+  const collapseAll = useCallback(() => {
+    setExpandedIndices({});
+  }, []);
+
+  const handleReply = useCallback(() => {
+    if (!emailDetail) return;
+    const { email } = parseSender(emailDetail.from);
+    const subject = emailDetail.subject || '';
+    setCompose({
+      to: email,
+      subject: /^re:/i.test(subject) ? subject : `Re: ${subject}`,
+      body: '',
+    });
+  }, [emailDetail]);
+
+  return (
+    <section className="ds-page" style={{ height: 'calc(100vh - 120px)', display: 'flex', flexDirection: 'column' }}>
+      <Ds.PageHeader
+        title="Admin Mailbox"
+        description="Manage the info@primebusiness.network inbox — read incoming emails and compose new messages."
+        actions={
+          <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+            <Ds.Button
+              variant="secondary"
+              leftIcon={<IconRefresh size={14} />}
+              onClick={fetchEmails}
+              loading={loading}
+            >
+              Refresh
+            </Ds.Button>
+            <Ds.Button
+              variant="primary"
+              leftIcon={<IconPlus size={14} />}
+              onClick={() => setCompose({ to: '', subject: '', body: '' })}
+            >
+              Compose
+            </Ds.Button>
+          </div>
+        }
+      />
+
+      <div className="mailbox-grid" style={{ display: 'grid', gridTemplateColumns: '380px 1fr', gap: 'var(--space-4)', flex: 1, minHeight: 0, marginTop: 'var(--space-4)' }}>
+        {/* Email List Sidebar */}
+        <div style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          {/* Inbox summary header */}
+          <div style={{ padding: 'var(--space-3) var(--space-4)', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-2)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+              <IconInbox size={18} stroke={1.75} style={{ color: 'var(--brand-blue)' }} />
+              <span style={{ fontWeight: 'var(--weight-bold)', color: 'var(--brand-navy)', fontSize: 'var(--text-sm)' }}>Inbox</span>
+              <span style={{ fontSize: 'var(--text-xxs)', color: 'var(--fg-muted)' }}>
+                {emails.length} {emails.length === 1 ? 'message' : 'messages'}
+              </span>
+            </div>
+            {unreadCount > 0 && (
+              <span className="mailbox-unread-badge">{unreadCount} unread</span>
+            )}
+          </div>
+
+          <div style={{ padding: 'var(--space-3)', borderBottom: '1px solid var(--border-subtle)' }}>
+            <div className="login-input-wrap" style={{ margin: 0 }}>
+              <IconSearch size={16} className="login-input-icon" />
+              <input
+                type="text"
+                placeholder="Search mailbox..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                style={{ paddingLeft: '2.5rem', height: '36px', fontSize: 'var(--text-sm)' }}
+              />
+            </div>
+          </div>
+
+          <div style={{ flex: 1, overflowY: 'auto', padding: 'var(--space-2)' }}>
+            {loading ? (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '150px', color: 'var(--fg-muted)' }}>
+                <Ds.Spinner size="md" />
+                <span style={{ marginLeft: 'var(--space-2)', fontSize: 'var(--text-sm)' }}>Loading emails...</span>
+              </div>
+            ) : error ? (
+              <div style={{ padding: 'var(--space-4)', color: 'var(--danger)', fontSize: 'var(--text-sm)', textAlign: 'center' }}>
+                {error}
+              </div>
+            ) : filteredEmails.length === 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: 'var(--space-6)', color: 'var(--fg-muted)', fontSize: 'var(--text-sm)', textAlign: 'center', gap: 'var(--space-2)' }}>
+                <IconInbox size={32} stroke={1.5} style={{ opacity: 0.4 }} />
+                {search ? 'No emails match your search.' : 'Your inbox is empty.'}
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
+                {filteredEmails.map(e => {
+                  const isSelected = selectedUid === e.uid;
+                  const isUnread = !readUids.has(e.uid);
+                  const { name } = parseSender(e.from);
+                  return (
+                    <div
+                      key={e.uid}
+                      onClick={() => selectEmail(e.uid)}
+                      className={`mailbox-item ${isSelected ? 'selected' : ''} ${isUnread ? 'unread' : ''}`}
+                    >
+                      <MailAvatar name={name} email={e.from} size={38} />
+                      <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 'var(--space-2)' }}>
+                          <span style={{ fontWeight: isUnread ? 'var(--weight-bold)' : 'var(--weight-semibold)', color: isSelected ? 'var(--brand-blue-900)' : 'var(--fg-primary)', fontSize: 'var(--text-sm)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {name}
+                          </span>
+                          <span style={{ fontSize: 'var(--text-xxs)', color: 'var(--fg-muted)', whiteSpace: 'nowrap', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            {isUnread && <IconPointFilled size={10} style={{ color: 'var(--brand-blue)' }} />}
+                            {formatMailDate(e.date)}
+                          </span>
+                        </div>
+                        <div style={{ fontWeight: isUnread ? 'var(--weight-semibold)' : 'var(--weight-medium)', color: 'var(--fg-primary)', fontSize: 'var(--text-xs)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {e.subject || '(No Subject)'}
+                        </div>
+                        <div style={{ color: 'var(--fg-muted)', fontSize: 'var(--text-xxs)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.4 }}>
+                          {e.snippet}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Email Reading Pane */}
+        <div style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          {selectedUid ? (
+            detailLoading ? (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1, color: 'var(--fg-muted)' }}>
+                <Ds.Spinner size="lg" />
+                <span style={{ marginLeft: 'var(--space-3)' }}>Opening email...</span>
+              </div>
+            ) : emailDetail ? (
+              <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+                {/* Header / Thread Controls */}
+                <div style={{ padding: 'var(--space-4) var(--space-5)', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-3)', background: 'var(--bg-surface)' }}>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <h2 style={{ fontSize: 'var(--text-md)', fontWeight: 'var(--weight-bold)', color: 'var(--brand-navy)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>
+                      {emailDetail.subject || '(No Subject)'}
+                    </h2>
+                  </div>
+                  {threadMessages.length > 1 && (
+                    <div style={{ display: 'flex', gap: 'var(--space-2)', flexShrink: 0 }}>
+                      <Ds.Button
+                        variant="secondary"
+                        size="xs"
+                        onClick={expandAll}
+                        style={{ padding: '4px 8px', fontSize: 'var(--text-xs)' }}
+                      >
+                        Expand all
+                      </Ds.Button>
+                      <Ds.Button
+                        variant="secondary"
+                        size="xs"
+                        onClick={collapseAll}
+                        style={{ padding: '4px 8px', fontSize: 'var(--text-xs)' }}
+                      >
+                        Collapse all
+                      </Ds.Button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Email Body Thread */}
+                <div style={{ flex: 1, padding: 'var(--space-4)', overflowY: 'auto', background: 'var(--bg-subtle)', display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+                  {threadMessages.map((msg, idx) => {
+                    const isExpanded = idx === 0 ? (expandedIndices[0] !== false) : !!expandedIndices[idx];
+                    const sender = parseSender(msg.from);
+
+                    if (!isExpanded) {
+                      // Render Collapsed Message Card
+                      return (
+                        <div
+                          key={idx}
+                          onClick={() => toggleIndex(idx)}
+                          style={{
+                            background: 'var(--bg-surface)',
+                            border: '1px solid var(--border-subtle)',
+                            borderRadius: 'var(--radius-md)',
+                            padding: 'var(--space-3) var(--space-4)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            cursor: 'pointer',
+                            transition: 'background var(--duration-fast) var(--ease-out)',
+                            boxShadow: 'var(--shadow-sm)'
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-subtle)'}
+                          onMouseLeave={(e) => e.currentTarget.style.background = 'var(--bg-surface)'}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', minWidth: 0, flex: 1 }}>
+                            <MailAvatar name={sender.name} email={sender.email || msg.from} size={28} />
+                            <span style={{ fontWeight: 'var(--weight-semibold)', color: 'var(--fg-primary)', fontSize: 'var(--text-sm)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '150px' }}>
+                              {sender.name}
+                            </span>
+                            <span style={{ color: 'var(--fg-muted)', fontSize: 'var(--text-xs)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                              {msg.body.slice(0, 100) || '(No message content)'}
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', flexShrink: 0 }}>
+                            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--fg-muted)' }}>
+                              {msg.date || ''}
+                            </span>
+                            <IconChevronRight size={16} style={{ color: 'var(--fg-muted)' }} />
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    // Render Expanded Message Card
+                    return (
+                      <div
+                        key={idx}
+                        style={{
+                          background: '#ffffff',
+                          border: '1px solid var(--border-subtle)',
+                          borderRadius: 'var(--radius-md)',
+                          boxShadow: 'var(--shadow-sm)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          overflow: 'hidden'
+                        }}
+                      >
+                        {/* Message Header */}
+                        <div
+                          style={{
+                            padding: 'var(--space-4) var(--space-5)',
+                            borderBottom: '1px solid var(--border-subtle)',
+                            background: 'var(--bg-surface)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            cursor: 'pointer'
+                          }}
+                          onClick={() => toggleIndex(idx)}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', minWidth: 0 }}>
+                            <MailAvatar name={sender.name} email={sender.email || msg.from} size={36} />
+                            <div style={{ minWidth: 0 }}>
+                              <div style={{ display: 'flex', alignItems: 'baseline', gap: 'var(--space-2)' }}>
+                                <span style={{ fontWeight: 'var(--weight-bold)', color: 'var(--fg-primary)', fontSize: 'var(--text-sm)' }}>
+                                  {sender.name}
+                                </span>
+                                {sender.email && (
+                                  <span style={{ color: 'var(--fg-muted)', fontSize: 'var(--text-xs)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    &lt;{sender.email}&gt;
+                                  </span>
+                                )}
+                              </div>
+                              <div style={{ color: 'var(--fg-muted)', fontSize: 'var(--text-xs)', display: 'flex', gap: 'var(--space-2)', marginTop: '2px' }}>
+                                <span>to {msg.to || 'me'}</span>
+                                {msg.cc && <span>cc: {msg.cc}</span>}
+                              </div>
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', flexShrink: 0 }}>
+                            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--fg-muted)' }}>
+                              {msg.date || ''}
+                            </span>
+                            <IconChevronDown size={16} style={{ color: 'var(--fg-muted)' }} />
+                          </div>
+                        </div>
+
+                        {/* Caution Warning Box */}
+                        {msg.caution && (
+                          <div style={{
+                            margin: 'var(--space-3) var(--space-5) 0 var(--space-5)',
+                            padding: 'var(--space-3) var(--space-4)',
+                            background: '#FFFBEB',
+                            border: '1px solid #FDE68A',
+                            borderRadius: 'var(--radius-md)',
+                            color: '#78350F',
+                            fontSize: 'var(--text-xs)',
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            gap: 'var(--space-2)',
+                            lineHeight: 1.4
+                          }}>
+                            <IconAlertCircle size={16} style={{ color: '#D97706', flexShrink: 0, marginTop: '2px' }} />
+                            <span>{msg.caution}</span>
+                          </div>
+                        )}
+
+                        {/* Message Content */}
+                        <div style={{ padding: 'var(--space-5) var(--space-5) var(--space-4) var(--space-5)' }}>
+                          <pre style={{
+                            whiteSpace: 'pre-wrap',
+                            wordBreak: 'break-word',
+                            fontFamily: 'var(--font-sans)',
+                            fontSize: 'var(--text-sm)',
+                            color: 'var(--fg-primary)',
+                            lineHeight: '1.6',
+                            margin: 0
+                          }}>
+                            {msg.body}
+                          </pre>
+                        </div>
+
+                        {/* Message Card Footer Action */}
+                        <div style={{
+                          padding: '0 var(--space-5) var(--space-4) var(--space-5)',
+                          display: 'flex',
+                          justifyContent: 'flex-start'
+                        }}>
+                          <Ds.Button
+                            variant="secondary"
+                            size="sm"
+                            leftIcon={<IconArrowBackUp size={12} />}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const replyTo = sender.email || msg.from;
+                              const replySub = msg.subject || emailDetail.subject || '';
+                              setCompose({
+                                to: replyTo,
+                                subject: /^re:/i.test(replySub) ? replySub : `Re: ${replySub}`,
+                                body: ''
+                              });
+                            }}
+                            style={{ padding: '6px 12px', fontSize: 'var(--text-xs)' }}
+                          >
+                            Reply
+                          </Ds.Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1, color: 'var(--fg-muted)' }}>
+                Failed to load email details.
+              </div>
+            )
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', flex: 1, color: 'var(--fg-muted)', padding: 'var(--space-6)', textAlign: 'center' }}>
+              <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'var(--bg-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 'var(--space-4)' }}>
+                <IconMail size={36} stroke={1.5} style={{ opacity: 0.5 }} />
+              </div>
+              <h3 style={{ fontSize: 'var(--text-md)', fontWeight: 'var(--weight-semibold)', color: 'var(--fg-primary)' }}>No email selected</h3>
+              <p style={{ fontSize: 'var(--text-sm)', marginTop: '4px', maxWidth: '320px' }}>
+                Select an email from the list to read its contents and retrieve verification codes.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {compose && (
+        <ComposeEmailModal
+          initialTo={compose.to}
+          initialSubject={compose.subject}
+          initialBody={compose.body}
+          onClose={() => setCompose(null)}
+          showToast={showToast}
+        />
+      )}
+    </section>
+  );
+}
+
+function ComposeEmailModal({ onClose, showToast, initialTo = '', initialSubject = '', initialBody = '' }) {
+  const [to, setTo] = useState(initialTo);
+  const [subject, setSubject] = useState(initialSubject);
+  const [body, setBody] = useState(initialBody);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const isReply = !!initialTo;
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    try {
+      await api.sendMailboxEmail({ to_email: to, subject, body });
+      showToast('Email sent successfully!');
+      onClose();
+    } catch (err) {
+      console.error(err);
+      setError(err.message || 'Failed to send email');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 500 }}>
+        <div className="modal-header">
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            {isReply ? <IconArrowBackUp size={20} style={{ color: 'var(--brand-blue)' }} /> : <IconSend size={20} style={{ color: 'var(--brand-blue)' }} />}
+            {isReply ? 'Reply' : 'Compose Email'}
+          </h2>
+          <button type="button" className="modal-close-btn" onClick={onClose}>
+            <IconX size={20} />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {error && <div className="login-error">{error}</div>}
+          
+          <div className="login-field">
+            <label>To</label>
+            <input 
+              type="email" 
+              value={to} 
+              onChange={e => setTo(e.target.value)} 
+              className="filter-input v2" 
+              placeholder="recipient@example.com" 
+              required 
+            />
+          </div>
+
+          <div className="login-field">
+            <label>Subject</label>
+            <input 
+              type="text" 
+              value={subject} 
+              onChange={e => setSubject(e.target.value)} 
+              className="filter-input v2" 
+              placeholder="Subject" 
+              required 
+            />
+          </div>
+
+          <div className="login-field">
+            <label>Message</label>
+            <textarea 
+              value={body} 
+              onChange={e => setBody(e.target.value)} 
+              className="filter-input v2" 
+              placeholder="Write your email here..." 
+              rows={8}
+              style={{ padding: '0.75rem', height: 'auto', fontFamily: 'inherit', resize: 'vertical' }}
+              required 
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: 'var(--space-2)', marginTop: 'var(--space-2)' }}>
+            <Ds.Button 
+              type="button" 
+              variant="secondary" 
+              onClick={onClose}
+              block
+            >
+              Cancel
+            </Ds.Button>
+            <Ds.Button
+              type="submit"
+              variant="primary"
+              loading={loading}
+              leftIcon={<IconSend size={14} />}
+              block
+            >
+              {isReply ? 'Send Reply' : 'Send Email'}
+            </Ds.Button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }
 
@@ -7513,6 +8423,10 @@ export default function App() {
     if (activeTab === 'revenue') return <RevenuePage onNavigateToGovernance={() => setActiveTab('governance')} />;
     if (activeTab === 'governance') return <GovernancePage onBack={() => setActiveTab('revenue')} />;
     if (activeTab === 'settings') return <SettingsPage {...commonProps} />;
+    if (activeTab === 'mailbox') {
+      if (adminUser?.role !== 'SUPER_ADMIN' && adminUser?.role !== 'ADMIN') return <MembersPage />;
+      return <MailboxPage showToast={showToast} />;
+    }
     if (activeTab === 'notifications') return <SecurityLogsPage adminUser={adminUser} />;
 
     // Default: Analytics Hub
