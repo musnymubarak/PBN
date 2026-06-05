@@ -18,12 +18,13 @@ from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_db
-from app.core.response import success_response
+from app.core.response import success_response, error_response
 from app.features.auth.dependencies import (
     require_role,
     get_chapter_admin_chapter_ids,
 )
 from app.features.admin import service
+from app.features.admin import community_service
 from pydantic import BaseModel, Field
 from app.models.user import User, UserRole
 from app.models.marketplace import MarketplaceListing, ListingStatus
@@ -898,5 +899,127 @@ async def update_mailbox_settings(
         f.write(content)
 
     return success_response(message="Mailbox settings updated. Restart the API service for changes to take effect.")
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Community & Leads dashboard
+# ──────────────────────────────────────────────────────────────────────────────
+
+async def _community_chapter_scope(current_user: User, db: AsyncSession) -> Optional[UUID]:
+    """Return the chapter_id a CHAPTER_ADMIN is restricted to, else None (no scope)."""
+    if current_user.role == UserRole.CHAPTER_ADMIN:
+        own = await get_chapter_admin_chapter_ids(current_user, db)
+        return own[0] if own else UUID(int=0)  # impossible id => empty result set
+    return None
+
+
+@router.get("/admin/community/stats", summary="Community & leads KPIs and TYFB timeseries")
+async def community_stats_endpoint(
+    days: int = Query(30, ge=1, le=365),
+    current_user: User = Depends(read_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    scope = await _community_chapter_scope(current_user, db)
+    stats = await community_service.get_community_stats(db, chapter_id=scope, days=days)
+    return success_response(data=stats)
+
+
+@router.get("/admin/community/leads", summary="Cross-chapter LEAD/RFP pipeline")
+async def community_leads_endpoint(
+    status: Optional[str] = Query(None),
+    post_type: Optional[str] = Query(None),
+    search: Optional[str] = Query(None),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    current_user: User = Depends(read_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    scope = await _community_chapter_scope(current_user, db)
+    result = await community_service.list_leads(
+        db, chapter_id=scope, status=status, post_type=post_type,
+        search=search, page=page, page_size=page_size,
+    )
+    return success_response(data=result)
+
+
+@router.get("/admin/community/posts", summary="Cross-chapter community feed (moderation)")
+async def community_posts_endpoint(
+    post_type: Optional[str] = Query(None),
+    search: Optional[str] = Query(None),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    current_user: User = Depends(read_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    scope = await _community_chapter_scope(current_user, db)
+    result = await community_service.list_all_posts(
+        db, chapter_id=scope, post_type=post_type,
+        search=search, page=page, page_size=page_size,
+    )
+    return success_response(data=result)
+
+
+@router.get("/admin/community/posts/{post_id}", summary="Post detail with comments")
+async def community_post_detail_endpoint(
+    post_id: UUID,
+    current_user: User = Depends(read_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    data = await community_service.get_post_detail(db, post_id)
+    if data is None:
+        return error_response(message="Post not found", code="NOT_FOUND", status_code=404)
+    return success_response(data=data)
+
+
+@router.patch("/admin/community/posts/{post_id}/status", summary="Update lead/RFP status (admin)")
+async def community_update_status_endpoint(
+    post_id: UUID,
+    payload: dict,
+    current_user: User = Depends(admin_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    from app.features.community.service import update_lead_status
+    status = payload.get("status")
+    if not status:
+        return error_response(message="Status is required", code="VALIDATION_ERROR", status_code=400)
+    await update_lead_status(current_user.id, post_id, status, db)
+    return success_response(message=f"Lead status updated to {status}")
+
+
+@router.patch("/admin/community/posts/{post_id}/tyfb", summary="Record TYFB value (admin)")
+async def community_record_tyfb_endpoint(
+    post_id: UUID,
+    payload: dict,
+    current_user: User = Depends(admin_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    from app.features.community.service import record_tyfb
+    business_value = payload.get("business_value")
+    if business_value is None:
+        return error_response(message="Business value is required", code="VALIDATION_ERROR", status_code=400)
+    await record_tyfb(current_user.id, post_id, float(business_value), db)
+    return success_response(message="TYFB value recorded and lead closed successfully")
+
+
+@router.delete("/admin/community/posts/{post_id}", summary="Delete a community post (admin)")
+async def community_delete_post_endpoint(
+    post_id: UUID,
+    current_user: User = Depends(admin_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    from app.features.community.service import delete_post
+    await delete_post(current_user.id, post_id, current_user.role, db)
+    return success_response(message="Post deleted successfully")
+
+
+@router.delete("/admin/community/comments/{comment_id}", summary="Delete a comment (admin)")
+async def community_delete_comment_endpoint(
+    comment_id: UUID,
+    current_user: User = Depends(admin_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    from app.features.community.service import delete_comment
+    await delete_comment(current_user.id, comment_id, current_user.role, db)
+    return success_response(message="Comment deleted successfully")
 
 

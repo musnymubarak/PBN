@@ -42,6 +42,7 @@ import {
   IconSend,
   IconArrowBackUp,
   IconPointFilled,
+  IconMessages,
 } from '@tabler/icons-react';
 import { api, STATIC_BASE_URL } from './lib/api';
 import { useApi } from './hooks/useApi';
@@ -4643,6 +4644,32 @@ function MailboxPage({ showToast }) {
     });
   }, [emailDetail]);
 
+  const emailSuggestions = useMemo(() => {
+    const suggestions = new Set();
+    
+    // Extract from all emails in the inbox list
+    emails.forEach(e => {
+      if (e.from) {
+        const { email } = parseSender(e.from);
+        if (email) suggestions.add(email);
+      }
+    });
+
+    // Extract from local storage (sent emails)
+    try {
+      const sent = JSON.parse(localStorage.getItem('sent_emails') || '[]');
+      sent.forEach(email => {
+        if (email && email.includes('@')) {
+          suggestions.add(email.trim());
+        }
+      });
+    } catch (err) {
+      console.error('Error reading sent_emails from localStorage:', err);
+    }
+
+    return Array.from(suggestions);
+  }, [emails]);
+
   return (
     <section className="ds-page" style={{ height: 'calc(100vh - 120px)', display: 'flex', flexDirection: 'column' }}>
       <Ds.PageHeader
@@ -4671,7 +4698,7 @@ function MailboxPage({ showToast }) {
 
       <div className="mailbox-grid" style={{ display: 'grid', gridTemplateColumns: '380px 1fr', gap: 'var(--space-4)', flex: 1, minHeight: 0, marginTop: 'var(--space-4)' }}>
         {/* Email List Sidebar */}
-        <div style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
           {/* Inbox summary header */}
           <div style={{ padding: 'var(--space-3) var(--space-4)', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-2)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
@@ -4753,7 +4780,7 @@ function MailboxPage({ showToast }) {
         </div>
 
         {/* Email Reading Pane */}
-        <div style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
           {selectedUid ? (
             detailLoading ? (
               <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1, color: 'var(--fg-muted)' }}>
@@ -4813,7 +4840,8 @@ function MailboxPage({ showToast }) {
                             justifyContent: 'space-between',
                             cursor: 'pointer',
                             transition: 'background var(--duration-fast) var(--ease-out)',
-                            boxShadow: 'var(--shadow-sm)'
+                            boxShadow: 'var(--shadow-sm)',
+                            flexShrink: 0
                           }}
                           onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-subtle)'}
                           onMouseLeave={(e) => e.currentTarget.style.background = 'var(--bg-surface)'}
@@ -4848,7 +4876,8 @@ function MailboxPage({ showToast }) {
                           boxShadow: 'var(--shadow-sm)',
                           display: 'flex',
                           flexDirection: 'column',
-                          overflow: 'hidden'
+                          overflow: 'hidden',
+                          flexShrink: 0
                         }}
                       >
                         {/* Message Header */}
@@ -4982,13 +5011,14 @@ function MailboxPage({ showToast }) {
           initialBody={compose.body}
           onClose={() => setCompose(null)}
           showToast={showToast}
+          emailSuggestions={emailSuggestions}
         />
       )}
     </section>
   );
 }
 
-function ComposeEmailModal({ onClose, showToast, initialTo = '', initialSubject = '', initialBody = '' }) {
+function ComposeEmailModal({ onClose, showToast, initialTo = '', initialSubject = '', initialBody = '', emailSuggestions = [] }) {
   const [to, setTo] = useState(initialTo);
   const [subject, setSubject] = useState(initialSubject);
   const [body, setBody] = useState(initialBody);
@@ -5002,6 +5032,19 @@ function ComposeEmailModal({ onClose, showToast, initialTo = '', initialSubject 
     setError('');
     try {
       await api.sendMailboxEmail({ to_email: to, subject, body });
+      
+      // Save recipient to sent_emails in localStorage
+      try {
+        const sent = JSON.parse(localStorage.getItem('sent_emails') || '[]');
+        const cleanedTo = to.trim();
+        if (cleanedTo && !sent.includes(cleanedTo)) {
+          sent.push(cleanedTo);
+          localStorage.setItem('sent_emails', JSON.stringify(sent));
+        }
+      } catch (err) {
+        console.error('Failed to save sent email to local storage:', err);
+      }
+
       showToast('Email sent successfully!');
       onClose();
     } catch (err) {
@@ -5013,63 +5056,138 @@ function ComposeEmailModal({ onClose, showToast, initialTo = '', initialSubject 
   };
 
   return (
-    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 500 }}>
-        <div className="modal-header">
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            {isReply ? <IconArrowBackUp size={20} style={{ color: 'var(--brand-blue)' }} /> : <IconSend size={20} style={{ color: 'var(--brand-blue)' }} />}
-            {isReply ? 'Reply' : 'Compose Email'}
-          </h2>
-          <button type="button" className="modal-close-btn" onClick={onClose}>
+    <div className="ds-modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="ds-modal ds-modal--lg" onClick={e => e.stopPropagation()}>
+        <div className="ds-modal__header">
+          <div>
+            <h2 className="ds-modal__title" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+              {isReply ? <IconArrowBackUp size={20} style={{ color: 'var(--brand-blue)' }} /> : <IconSend size={20} style={{ color: 'var(--brand-blue)' }} />}
+              {isReply ? 'Reply to Message' : 'Compose Email'}
+            </h2>
+            <div className="ds-modal__subtitle">
+              {isReply ? 'Send a reply from info@primebusiness.network' : 'Compose and send an email from info@primebusiness.network'}
+            </div>
+          </div>
+          <button type="button" className="modal-close-btn" onClick={onClose} style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <IconX size={20} />
           </button>
         </div>
-        <form onSubmit={handleSubmit} style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {error && <div className="login-error">{error}</div>}
-          
-          <div className="login-field">
-            <label>To</label>
-            <input 
-              type="email" 
-              value={to} 
-              onChange={e => setTo(e.target.value)} 
-              className="filter-input v2" 
-              placeholder="recipient@example.com" 
-              required 
-            />
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+          <div className="ds-modal__body" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+            {error && <div className="login-error" style={{ marginBottom: 0 }}>{error}</div>}
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
+              <label style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--weight-bold)', color: 'var(--fg-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>To</label>
+              <input 
+                type="email" 
+                value={to} 
+                onChange={e => setTo(e.target.value)} 
+                list="email-suggestions"
+                style={{
+                  width: '100%',
+                  padding: 'var(--space-2) var(--space-3)',
+                  border: '1px solid var(--border-default)',
+                  borderRadius: 'var(--radius-md)',
+                  fontFamily: 'var(--font-body)',
+                  fontSize: 'var(--text-base)',
+                  color: 'var(--fg-primary)',
+                  background: 'var(--bg-surface)',
+                  outline: 'none',
+                  boxShadow: 'none',
+                  transition: 'border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out)'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = 'var(--border-focus)';
+                  e.target.style.boxShadow = 'var(--ring-focus)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = 'var(--border-default)';
+                  e.target.style.boxShadow = 'none';
+                }}
+                placeholder="recipient@example.com" 
+                required 
+              />
+              <datalist id="email-suggestions">
+                {emailSuggestions.map(email => (
+                  <option key={email} value={email} />
+                ))}
+              </datalist>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
+              <label style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--weight-bold)', color: 'var(--fg-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Subject</label>
+              <input 
+                type="text" 
+                value={subject} 
+                onChange={e => setSubject(e.target.value)} 
+                style={{
+                  width: '100%',
+                  padding: 'var(--space-2) var(--space-3)',
+                  border: '1px solid var(--border-default)',
+                  borderRadius: 'var(--radius-md)',
+                  fontFamily: 'var(--font-body)',
+                  fontSize: 'var(--text-base)',
+                  color: 'var(--fg-primary)',
+                  background: 'var(--bg-surface)',
+                  outline: 'none',
+                  boxShadow: 'none',
+                  transition: 'border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out)'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = 'var(--border-focus)';
+                  e.target.style.boxShadow = 'var(--ring-focus)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = 'var(--border-default)';
+                  e.target.style.boxShadow = 'none';
+                }}
+                placeholder="Subject" 
+                required 
+              />
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)', flex: 1, minHeight: 0 }}>
+              <label style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--weight-bold)', color: 'var(--fg-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Message</label>
+              <textarea 
+                value={body} 
+                onChange={e => setBody(e.target.value)} 
+                placeholder="Write your email here..." 
+                style={{
+                  width: '100%',
+                  flex: 1,
+                  minHeight: '200px',
+                  padding: 'var(--space-3)',
+                  border: '1px solid var(--border-default)',
+                  borderRadius: 'var(--radius-md)',
+                  fontFamily: 'var(--font-body)',
+                  fontSize: 'var(--text-base)',
+                  color: 'var(--fg-primary)',
+                  background: 'var(--bg-surface)',
+                  outline: 'none',
+                  resize: 'vertical',
+                  boxShadow: 'none',
+                  lineHeight: '1.6',
+                  transition: 'border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out)'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = 'var(--border-focus)';
+                  e.target.style.boxShadow = 'var(--ring-focus)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = 'var(--border-default)';
+                  e.target.style.boxShadow = 'none';
+                }}
+                required 
+              />
+            </div>
           </div>
 
-          <div className="login-field">
-            <label>Subject</label>
-            <input 
-              type="text" 
-              value={subject} 
-              onChange={e => setSubject(e.target.value)} 
-              className="filter-input v2" 
-              placeholder="Subject" 
-              required 
-            />
-          </div>
-
-          <div className="login-field">
-            <label>Message</label>
-            <textarea 
-              value={body} 
-              onChange={e => setBody(e.target.value)} 
-              className="filter-input v2" 
-              placeholder="Write your email here..." 
-              rows={8}
-              style={{ padding: '0.75rem', height: 'auto', fontFamily: 'inherit', resize: 'vertical' }}
-              required 
-            />
-          </div>
-
-          <div style={{ display: 'flex', gap: 'var(--space-2)', marginTop: 'var(--space-2)' }}>
+          <div className="ds-modal__footer">
             <Ds.Button 
               type="button" 
               variant="secondary" 
               onClick={onClose}
-              block
+              style={{ minWidth: '100px' }}
             >
               Cancel
             </Ds.Button>
@@ -5078,7 +5196,7 @@ function ComposeEmailModal({ onClose, showToast, initialTo = '', initialSubject 
               variant="primary"
               loading={loading}
               leftIcon={<IconSend size={14} />}
-              block
+              style={{ minWidth: '120px' }}
             >
               {isReply ? 'Send Reply' : 'Send Email'}
             </Ds.Button>
@@ -7790,6 +7908,499 @@ function ChapterFormModal({ chapter, districts, onClose, onSave }) {
 }
 
 
+// ── Community & Leads ───────────────────────────────────────────────────────
+
+const LEAD_STATUS_META = {
+  open: { label: 'Open', variant: 'info' },
+  in_progress: { label: 'In Progress', variant: 'warning' },
+  closed_won: { label: 'Closed Won', variant: 'success' },
+  closed_lost: { label: 'Closed Lost', variant: 'danger' },
+};
+
+const LEAD_STATUS_OPTIONS = [
+  { id: 'open', name: 'Open' },
+  { id: 'in_progress', name: 'In Progress' },
+  { id: 'closed_won', name: 'Closed Won' },
+  { id: 'closed_lost', name: 'Closed Lost' },
+];
+
+function fmtLKR(value) {
+  const n = Number(value || 0);
+  return `LKR ${n.toLocaleString('en-LK', { maximumFractionDigits: 0 })}`;
+}
+
+function LeadStatusBadge({ status }) {
+  if (!status) return <Ds.Badge variant="neutral">—</Ds.Badge>;
+  const meta = LEAD_STATUS_META[status] || { label: status, variant: 'neutral' };
+  return <Ds.Badge variant={meta.variant}>{meta.label}</Ds.Badge>;
+}
+
+function PostTypeBadge({ type }) {
+  const map = {
+    lead: { label: 'Lead', variant: 'brand' },
+    rfp: { label: 'RFP', variant: 'info' },
+    general: { label: 'General', variant: 'neutral' },
+  };
+  const meta = map[type] || { label: type || 'General', variant: 'neutral' };
+  return <Ds.Badge variant={meta.variant}>{meta.label}</Ds.Badge>;
+}
+
+function CommunityPage({ showToast }) {
+  const notify = showToast || ((m) => alert(m));
+  const [view, setView] = useState('overview'); // overview | leads | moderation
+
+  // Overview
+  const [stats, setStats] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [days, setDays] = useState('30');
+
+  // Leads pipeline
+  const [leads, setLeads] = useState([]);
+  const [leadsLoading, setLeadsLoading] = useState(false);
+  const [leadsTotal, setLeadsTotal] = useState(0);
+  const [leadsPage, setLeadsPage] = useState(1);
+  const [leadStatus, setLeadStatus] = useState('');
+  const [leadType, setLeadType] = useState('');
+  const [leadSearch, setLeadSearch] = useState('');
+
+  // Moderation feed
+  const [posts, setPosts] = useState([]);
+  const [postsLoading, setPostsLoading] = useState(false);
+  const [postsTotal, setPostsTotal] = useState(0);
+  const [postsPage, setPostsPage] = useState(1);
+  const [postType, setPostType] = useState('');
+  const [postSearch, setPostSearch] = useState('');
+
+  // Detail modal
+  const [detail, setDetail] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [tyfbValue, setTyfbValue] = useState('');
+
+  const PAGE_SIZE = 20;
+
+  const fetchStats = useCallback(async () => {
+    setStatsLoading(true);
+    try {
+      setStats(await api.getCommunityStats(days));
+    } catch (err) {
+      console.error('Failed to load community stats:', err);
+      notify(err.message || 'Failed to load stats', 'error');
+    } finally {
+      setStatsLoading(false);
+    }
+  }, [days]);
+
+  const fetchLeads = useCallback(async () => {
+    setLeadsLoading(true);
+    try {
+      const data = await api.listCommunityLeads({
+        status: leadStatus, post_type: leadType, search: leadSearch,
+        page: leadsPage, page_size: PAGE_SIZE,
+      });
+      setLeads(data.leads || []);
+      setLeadsTotal(data.total || 0);
+    } catch (err) {
+      console.error('Failed to load leads:', err);
+    } finally {
+      setLeadsLoading(false);
+    }
+  }, [leadStatus, leadType, leadSearch, leadsPage]);
+
+  const fetchPosts = useCallback(async () => {
+    setPostsLoading(true);
+    try {
+      const data = await api.listCommunityPosts({
+        post_type: postType, search: postSearch,
+        page: postsPage, page_size: PAGE_SIZE,
+      });
+      setPosts(data.posts || []);
+      setPostsTotal(data.total || 0);
+    } catch (err) {
+      console.error('Failed to load posts:', err);
+    } finally {
+      setPostsLoading(false);
+    }
+  }, [postType, postSearch, postsPage]);
+
+  useEffect(() => { fetchStats(); }, [fetchStats]);
+  useEffect(() => { if (view === 'leads') fetchLeads(); }, [view, fetchLeads]);
+  useEffect(() => { if (view === 'moderation') fetchPosts(); }, [view, fetchPosts]);
+
+  const openDetail = async (postId) => {
+    setDetail({ id: postId });
+    setDetailLoading(true);
+    setTyfbValue('');
+    try {
+      setDetail(await api.getCommunityPost(postId));
+    } catch (err) {
+      notify(err.message || 'Failed to load post', 'error');
+      setDetail(null);
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  const refreshAfterMutation = () => {
+    fetchStats();
+    if (view === 'leads') fetchLeads();
+    if (view === 'moderation') fetchPosts();
+  };
+
+  const handleStatusChange = async (postId, status) => {
+    try {
+      await api.updateCommunityLeadStatus(postId, status);
+      notify('Lead status updated');
+      setDetail((d) => (d && d.id === postId ? { ...d, lead_status: status } : d));
+      refreshAfterMutation();
+    } catch (err) {
+      notify(err.message || 'Failed to update status', 'error');
+    }
+  };
+
+  const handleRecordTyfb = async (postId) => {
+    const value = parseFloat(tyfbValue);
+    if (!value || value <= 0) return notify('Enter a valid business value', 'error');
+    try {
+      await api.recordCommunityTyfb(postId, value);
+      notify('TYFB recorded — lead closed as won');
+      setDetail((d) => (d && d.id === postId ? { ...d, business_value: value, lead_status: 'closed_won' } : d));
+      setTyfbValue('');
+      refreshAfterMutation();
+    } catch (err) {
+      notify(err.message || 'Failed to record TYFB', 'error');
+    }
+  };
+
+  const handleDeletePost = async (postId) => {
+    if (!confirm('Delete this post permanently? This also removes its likes and comments.')) return;
+    try {
+      await api.deleteCommunityPost(postId);
+      notify('Post deleted');
+      setDetail(null);
+      refreshAfterMutation();
+    } catch (err) {
+      notify(err.message || 'Failed to delete post', 'error');
+    }
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    if (!confirm('Delete this comment?')) return;
+    try {
+      await api.deleteCommunityComment(commentId);
+      setDetail((d) => (d ? { ...d, comments: (d.comments || []).filter((c) => c.id !== commentId) } : d));
+      notify('Comment deleted');
+    } catch (err) {
+      notify(err.message || 'Failed to delete comment', 'error');
+    }
+  };
+
+  const leadsPages = Math.max(1, Math.ceil(leadsTotal / PAGE_SIZE));
+  const postsPages = Math.max(1, Math.ceil(postsTotal / PAGE_SIZE));
+
+  return (
+    <section className="ds-page">
+      <Ds.PageHeader
+        title="Community & Leads"
+        description="Monitor network engagement, track the lead pipeline, and moderate the community feed."
+        actions={
+          <Ds.Button variant="secondary" leftIcon={<IconRefresh size={14} />} onClick={refreshAfterMutation}>
+            Refresh
+          </Ds.Button>
+        }
+      />
+
+      <div style={{ marginBottom: 'var(--space-4)' }}>
+        <Ds.ChipGroup
+          value={view}
+          onChange={setView}
+          options={[
+            { value: 'overview', label: 'Overview' },
+            { value: 'leads', label: 'Leads Pipeline' },
+            { value: 'moderation', label: 'Moderation' },
+          ]}
+        />
+      </div>
+
+      {/* ── Overview ── */}
+      {view === 'overview' && (
+        <>
+          <Ds.Section
+            title="Engagement & Business Value"
+            subtitle={`Last ${days} days`}
+            flush
+            actions={
+              <Ds.ChipGroup
+                value={days}
+                onChange={setDays}
+                options={[
+                  { value: '7', label: '7d' },
+                  { value: '30', label: '30d' },
+                  { value: '90', label: '90d' },
+                ]}
+              />
+            }
+          >
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 'var(--space-3)' }}>
+              <Ds.StatCard label="Total TYFB Value" value={statsLoading ? '—' : fmtLKR(stats?.total_tyfb_value)} icon={IconCoin} iconColor="#059669" iconBg="#ecfdf5" />
+              <Ds.StatCard label="Open Leads" value={statsLoading ? '—' : (stats?.open_leads ?? 0)} icon={IconHierarchy2} iconColor="#2563eb" iconBg="#eff6ff" />
+              <Ds.StatCard label="Win Rate" value={statsLoading ? '—' : `${stats?.win_rate ?? 0}%`} icon={IconChartBar} iconColor="#8b5cf6" iconBg="#f5f3ff" />
+              <Ds.StatCard label="Avg Deal Size" value={statsLoading ? '—' : fmtLKR(stats?.avg_deal_size)} icon={IconArrowUpRight} iconColor="#0891b2" iconBg="#ecfeff" />
+              <Ds.StatCard label="Posts" value={statsLoading ? '—' : (stats?.total_posts ?? 0)} icon={IconMessages} iconColor="#64748b" iconBg="#f8fafc" />
+              <Ds.StatCard label="Leads / RFPs" value={statsLoading ? '—' : `${stats?.total_leads ?? 0} / ${stats?.total_rfps ?? 0}`} icon={IconClipboardList} iconColor="#d97706" iconBg="#fffbeb" />
+              <Ds.StatCard label="Likes" value={statsLoading ? '—' : (stats?.total_likes ?? 0)} icon={IconStar} iconColor="#f59e0b" iconBg="#fffbeb" />
+              <Ds.StatCard label="Comments" value={statsLoading ? '—' : (stats?.total_comments ?? 0)} icon={IconMessages} iconColor="#0ea5e9" iconBg="#f0f9ff" />
+            </div>
+          </Ds.Section>
+
+          <Ds.Section title="TYFB Value Over Time" subtitle={`Daily business value recorded (last ${days} days)`}>
+            {statsLoading ? (
+              <div style={{ padding: 'var(--space-6)', color: 'var(--fg-muted)' }}>Loading…</div>
+            ) : (stats?.tyfb_timeseries?.length ? (
+              <Ds.Sparkline
+                points={stats.tyfb_timeseries.map((p) => p.value)}
+                color="var(--brand-blue, #2563eb)"
+                height={120}
+                ariaLabel="TYFB value over time"
+              />
+            ) : (
+              <Ds.EmptyState icon={IconChartBar} title="No business value recorded yet" description="Closed-won deals with a recorded TYFB value will appear here." />
+            ))}
+          </Ds.Section>
+        </>
+      )}
+
+      {/* ── Leads Pipeline ── */}
+      {view === 'leads' && (
+        <Ds.Section
+          title="Leads Pipeline"
+          subtitle={`${leadsTotal} ${leadsTotal === 1 ? 'opportunity' : 'opportunities'}`}
+          flush
+          actions={
+            <>
+              <Ds.Input
+                placeholder="Search content or author…"
+                value={leadSearch}
+                onChange={(e) => { setLeadSearch(e.target.value); setLeadsPage(1); }}
+                leftIcon={<IconSearch size={14} />}
+                size="sm"
+                style={{ width: 220 }}
+              />
+              <Ds.Select placeholder="All types" value={leadType} allowClear size="sm" style={{ width: 130 }}
+                options={[{ id: 'lead', name: 'Lead' }, { id: 'rfp', name: 'RFP' }]}
+                onChange={(v) => { setLeadType(v); setLeadsPage(1); }} />
+              <Ds.Select placeholder="All status" value={leadStatus} allowClear size="sm" style={{ width: 150 }}
+                options={LEAD_STATUS_OPTIONS}
+                onChange={(v) => { setLeadStatus(v); setLeadsPage(1); }} />
+            </>
+          }
+        >
+          <Ds.Table>
+            <thead>
+              <tr>
+                <th>Opportunity</th>
+                <th>Author</th>
+                <th>Chapter</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Budget</th>
+                <th>Value</th>
+                <th className="ds-table__actions" />
+              </tr>
+            </thead>
+            <tbody>
+              {leadsLoading ? (
+                <Ds.Table.LoadingRow colSpan={8} label="Loading leads…" />
+              ) : leads.length === 0 ? (
+                <Ds.Table.EmptyRow colSpan={8} icon={IconHierarchy2} title="No leads found" description="Adjust filters to see more opportunities." />
+              ) : leads.map((l) => (
+                <tr key={l.id} style={{ cursor: 'pointer' }} onClick={() => openDetail(l.id)}>
+                  <td><div className="ds-table__primary" style={{ maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.content}</div></td>
+                  <td>{l.author?.full_name || '—'}</td>
+                  <td>{l.chapter_name || '—'}</td>
+                  <td><PostTypeBadge type={l.post_type} /></td>
+                  <td><LeadStatusBadge status={l.lead_status} /></td>
+                  <td>{l.budget_range || '—'}</td>
+                  <td>{l.business_value ? fmtLKR(l.business_value) : '—'}</td>
+                  <td className="ds-table__actions" onClick={(e) => e.stopPropagation()}>
+                    <Ds.IconButton aria-label="View" onClick={() => openDetail(l.id)}><IconEye size={18} /></Ds.IconButton>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Ds.Table>
+          <Ds.Pagination page={leadsPage} totalPages={leadsPages} total={leadsTotal} pageLabel="leads" onPageChange={setLeadsPage} />
+        </Ds.Section>
+      )}
+
+      {/* ── Moderation ── */}
+      {view === 'moderation' && (
+        <Ds.Section
+          title="Community Feed"
+          subtitle={`${postsTotal} ${postsTotal === 1 ? 'post' : 'posts'}`}
+          flush
+          actions={
+            <>
+              <Ds.Input
+                placeholder="Search content or author…"
+                value={postSearch}
+                onChange={(e) => { setPostSearch(e.target.value); setPostsPage(1); }}
+                leftIcon={<IconSearch size={14} />}
+                size="sm"
+                style={{ width: 220 }}
+              />
+              <Ds.Select placeholder="All types" value={postType} allowClear size="sm" style={{ width: 140 }}
+                options={[{ id: 'general', name: 'General' }, { id: 'lead', name: 'Lead' }, { id: 'rfp', name: 'RFP' }]}
+                onChange={(v) => { setPostType(v); setPostsPage(1); }} />
+            </>
+          }
+        >
+          <Ds.Table>
+            <thead>
+              <tr>
+                <th>Post</th>
+                <th>Author</th>
+                <th>Chapter</th>
+                <th>Type</th>
+                <th>Posted</th>
+                <th className="ds-table__actions" />
+              </tr>
+            </thead>
+            <tbody>
+              {postsLoading ? (
+                <Ds.Table.LoadingRow colSpan={6} label="Loading posts…" />
+              ) : posts.length === 0 ? (
+                <Ds.Table.EmptyRow colSpan={6} icon={IconMessages} title="No posts found" description="Adjust filters to see more posts." />
+              ) : posts.map((p) => (
+                <tr key={p.id} style={{ cursor: 'pointer' }} onClick={() => openDetail(p.id)}>
+                  <td><div className="ds-table__primary" style={{ maxWidth: 320, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.content}</div></td>
+                  <td>{p.author?.full_name || '—'}</td>
+                  <td>{p.chapter_name || '—'}</td>
+                  <td><PostTypeBadge type={p.post_type} /></td>
+                  <td>{p.created_at ? new Date(p.created_at).toLocaleDateString() : '—'}</td>
+                  <td className="ds-table__actions" onClick={(e) => e.stopPropagation()}>
+                    <Ds.IconButton aria-label="View" onClick={() => openDetail(p.id)}><IconEye size={18} /></Ds.IconButton>
+                    <Ds.IconButton aria-label="Delete" onClick={() => handleDeletePost(p.id)} style={{ color: '#dc2626' }}><IconTrash size={18} /></Ds.IconButton>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Ds.Table>
+          <Ds.Pagination page={postsPage} totalPages={postsPages} total={postsTotal} pageLabel="posts" onPageChange={setPostsPage} />
+        </Ds.Section>
+      )}
+
+      {/* ── Detail modal ── */}
+      {detail && (
+        <Ds.Modal open onClose={() => setDetail(null)} size="lg">
+          <Ds.Modal.Header
+            title="Post Detail"
+            subtitle={detail.chapter_name ? `${detail.chapter_name}` : undefined}
+            onClose={() => setDetail(null)}
+          />
+          <Ds.Modal.Body>
+            {detailLoading || !detail.content ? (
+              <div style={{ padding: 'var(--space-6)', color: 'var(--fg-muted)' }}>Loading…</div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+                <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', alignItems: 'center' }}>
+                  <PostTypeBadge type={detail.post_type} />
+                  {detail.lead_status && <LeadStatusBadge status={detail.lead_status} />}
+                  {detail.business_value ? <Ds.Badge variant="success">{fmtLKR(detail.business_value)}</Ds.Badge> : null}
+                </div>
+
+                <div>
+                  <div style={{ fontWeight: 'var(--weight-semibold)' }}>{detail.author?.full_name || 'Unknown'}</div>
+                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--fg-muted)' }}>
+                    {detail.created_at ? new Date(detail.created_at).toLocaleString() : ''}
+                  </div>
+                </div>
+
+                <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>{detail.content}</div>
+                {detail.image_url && (
+                  <img
+                    src={detail.image_url.startsWith('http') ? detail.image_url : `${STATIC_BASE_URL}${detail.image_url}`}
+                    alt=""
+                    style={{ maxWidth: '100%', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}
+                  />
+                )}
+
+                {(detail.budget_range || detail.deadline || detail.target_industry_name || detail.target_club_name) && (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 'var(--space-2)', fontSize: 'var(--text-sm)' }}>
+                    {detail.budget_range && <div><span style={{ color: 'var(--fg-muted)' }}>Budget: </span>{detail.budget_range}</div>}
+                    {detail.deadline && <div><span style={{ color: 'var(--fg-muted)' }}>Deadline: </span>{new Date(detail.deadline).toLocaleDateString()}</div>}
+                    {detail.target_industry_name && <div><span style={{ color: 'var(--fg-muted)' }}>Industry: </span>{detail.target_industry_name}</div>}
+                    {detail.target_club_name && <div><span style={{ color: 'var(--fg-muted)' }}>Club: </span>{detail.target_club_name}</div>}
+                  </div>
+                )}
+
+                {/* Lead actions (only for lead/rfp) */}
+                {detail.post_type !== 'general' && (
+                  <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: 'var(--space-3)', display: 'flex', flexWrap: 'wrap', gap: 'var(--space-3)', alignItems: 'flex-end' }}>
+                    <div style={{ width: 180 }}>
+                      <Ds.Field label="Update status">
+                        <Ds.Select
+                          value={detail.lead_status || ''}
+                          options={LEAD_STATUS_OPTIONS}
+                          onChange={(v) => handleStatusChange(detail.id, v)}
+                          size="sm"
+                        />
+                      </Ds.Field>
+                    </div>
+                    <div style={{ width: 200 }}>
+                      <Ds.Field label="Record TYFB (LKR)">
+                        <Ds.Input
+                          type="number"
+                          placeholder="e.g. 150000"
+                          value={tyfbValue}
+                          onChange={(e) => setTyfbValue(e.target.value)}
+                          size="sm"
+                        />
+                      </Ds.Field>
+                    </div>
+                    <Ds.Button variant="primary" size="sm" leftIcon={<IconCoin size={14} />} onClick={() => handleRecordTyfb(detail.id)}>
+                      Record
+                    </Ds.Button>
+                  </div>
+                )}
+
+                {/* Comments */}
+                <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: 'var(--space-3)' }}>
+                  <div style={{ fontWeight: 'var(--weight-semibold)', marginBottom: 'var(--space-2)' }}>
+                    Comments ({detail.comments?.length || 0})
+                  </div>
+                  {(detail.comments || []).length === 0 ? (
+                    <div style={{ color: 'var(--fg-muted)', fontSize: 'var(--text-sm)' }}>No comments.</div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                      {detail.comments.map((c) => (
+                        <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 'var(--space-2)', padding: 'var(--space-2)', background: 'var(--bg-subtle)', borderRadius: 'var(--radius-md)' }}>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--weight-medium)' }}>{c.author?.full_name || 'Unknown'}</div>
+                            <div style={{ fontSize: 'var(--text-sm)' }}>{c.content}</div>
+                          </div>
+                          <Ds.IconButton aria-label="Delete comment" onClick={() => handleDeleteComment(c.id)} style={{ color: '#dc2626', flexShrink: 0 }}>
+                            <IconTrash size={16} />
+                          </Ds.IconButton>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </Ds.Modal.Body>
+          <Ds.Modal.Footer>
+            <Ds.Button variant="ghost" leftIcon={<IconTrash size={14} />} onClick={() => handleDeletePost(detail.id)} style={{ color: '#dc2626' }}>
+              Delete Post
+            </Ds.Button>
+            <Ds.Button variant="secondary" onClick={() => setDetail(null)}>Close</Ds.Button>
+          </Ds.Modal.Footer>
+        </Ds.Modal>
+      )}
+    </section>
+  );
+}
+
 // ── Analytics Hub (Overview landing page) ───────────────────────────────────
 
 function AnalyticsHubPage({ overview, overviewLoading, overviewError, onChangeTab, showToast }) {
@@ -8417,6 +9028,7 @@ export default function App() {
     if (activeTab === 'payments') return <PaymentsPage />;
     if (activeTab === 'rewards') return <RewardsHubPage />;
     if (activeTab === 'referrals') return <ReferralsPage />;
+    if (activeTab === 'community') return <CommunityPage showToast={showToast} />;
     if (activeTab === 'events') return <EventsPage />;
     if (activeTab === 'clubs') return <ClubsPage />;
     if (activeTab === 'complements') return <ComplementsPage />;

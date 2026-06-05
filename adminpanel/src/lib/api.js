@@ -303,5 +303,29 @@ export const api = {
   // Mailbox Settings (SUPER_ADMIN only)
   getMailboxSettings: () => apiFetch('/admin/mailbox-settings'),
   updateMailboxSettings: (body) => apiFetch('/admin/mailbox-settings', { method: 'PATCH', body: JSON.stringify(body) }),
+
+  // Community & Leads (admin)
+  getCommunityStats: (days = 30) => apiFetch(`/admin/community/stats?days=${days}`),
+  listCommunityLeads: (params = {}) => {
+    const qs = new URLSearchParams();
+    Object.entries(params).forEach(([k, v]) => {
+      if (v !== undefined && v !== null && v !== '') qs.append(k, v);
+    });
+    return apiFetch(`/admin/community/leads?${qs.toString()}`);
+  },
+  listCommunityPosts: (params = {}) => {
+    const qs = new URLSearchParams();
+    Object.entries(params).forEach(([k, v]) => {
+      if (v !== undefined && v !== null && v !== '') qs.append(k, v);
+    });
+    return apiFetch(`/admin/community/posts?${qs.toString()}`);
+  },
+  getCommunityPost: (id) => apiFetch(`/admin/community/posts/${id}`),
+  updateCommunityLeadStatus: (id, status) =>
+    apiFetch(`/admin/community/posts/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+  recordCommunityTyfb: (id, business_value) =>
+    apiFetch(`/admin/community/posts/${id}/tyfb`, { method: 'PATCH', body: JSON.stringify({ business_value }) }),
+  deleteCommunityPost: (id) => apiFetch(`/admin/community/posts/${id}`, { method: 'DELETE' }),
+  deleteCommunityComment: (id) => apiFetch(`/admin/community/comments/${id}`, { method: 'DELETE' }),
 };
 

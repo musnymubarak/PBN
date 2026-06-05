@@ -12,6 +12,7 @@ import {
   IconBuildingCommunity,
   IconShirt,
   IconMail,
+  IconMessages,
 } from '@tabler/icons-react';
 
 /**
@@ -34,6 +35,7 @@ export const MENU_GROUPS = [
     links: [
       { id: 'applications', icon: IconClipboardList, label: 'Applications' },
       { id: 'referrals', icon: IconHierarchy2, label: 'Referral Pipeline' },
+      { id: 'community', icon: IconMessages, label: 'Community & Leads' },
       { id: 'events', icon: IconCalendarEvent, label: 'Event Management' },
       { id: 'marketplace', icon: IconBuildingStore, label: 'Marketplace' },
       { id: 'payments', icon: IconCoin, label: 'Payments' },
