@@ -199,9 +199,10 @@ async def list_public_slides(user: User, db: AsyncSession) -> List[Dict[str, Any
             continue
 
         # ── Audience targeting ───────────────────────────────────────────────
-        if s.audience_roles and role_value not in s.audience_roles:
+        is_admin = role_value in (UserRole.ADMIN.value, UserRole.SUPER_ADMIN.value)
+        if s.audience_roles and role_value not in s.audience_roles and not is_admin:
             continue
-        if s.audience_chapter_ids:
+        if s.audience_chapter_ids and not is_admin:
             wanted = {str(c) for c in s.audience_chapter_ids}
             if not (my_chapter_ids & wanted):
                 continue
