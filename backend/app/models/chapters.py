@@ -17,6 +17,7 @@ class Chapter(Base, TimestampMixin):
     district: Mapped[str] = mapped_column(String(100), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     meeting_schedule: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    poster_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     def __repr__(self) -> str:

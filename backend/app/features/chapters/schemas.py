@@ -19,6 +19,7 @@ class ChapterResponse(BaseModel):
     district: str
     description: Optional[str] = None
     meeting_schedule: Optional[str] = None
+    poster_url: Optional[str] = None
     is_active: bool
 
 
@@ -27,6 +28,7 @@ class ChapterCreate(BaseModel):
     district: str
     description: Optional[str] = None
     meeting_schedule: Optional[str] = None
+    poster_url: Optional[str] = None
 
 
 class ChapterUpdate(BaseModel):
@@ -34,6 +36,7 @@ class ChapterUpdate(BaseModel):
     district: Optional[str] = None
     description: Optional[str] = None
     meeting_schedule: Optional[str] = None
+    poster_url: Optional[str] = None
     is_active: Optional[bool] = None
 
 

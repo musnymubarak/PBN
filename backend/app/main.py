@@ -176,12 +176,15 @@ def _register_routes(app: FastAPI) -> None:
     from app.features.marketplace.router import router as market_router
     from app.features.matchmaking.router import router as match_router
     from app.features.complements.router import router as complements_router
+    from app.features.home_content.router import router as home_router
     from fastapi.staticfiles import StaticFiles
     import os
 
     os.makedirs("uploads/profiles", exist_ok=True)
     os.makedirs("uploads/partners", exist_ok=True)
     os.makedirs("uploads/events", exist_ok=True)
+    os.makedirs("uploads/banners", exist_ok=True)
+    os.makedirs("uploads/chapter-posters", exist_ok=True)
     app.mount("/static", StaticFiles(directory="uploads"), name="static")
 
     app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
@@ -199,6 +202,7 @@ def _register_routes(app: FastAPI) -> None:
     app.include_router(market_router, prefix=settings.API_V1_PREFIX + "/marketplace")
     app.include_router(match_router, prefix=settings.API_V1_PREFIX + "/matchmaking")
     app.include_router(complements_router, prefix=settings.API_V1_PREFIX)
+    app.include_router(home_router, prefix=settings.API_V1_PREFIX)
 
     # ── Infrastructure Endpoints ─────────────────────────────────────────
     @app.get("/health", tags=["Infrastructure"])

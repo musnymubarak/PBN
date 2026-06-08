@@ -20,6 +20,7 @@ from app.models.community import CommunityPost, PostLike, PostComment  # noqa: F
 from app.models.marketplace import MarketplaceListing, MarketplaceInterest  # noqa: F401
 from app.models.matchmaking import MatchingProfile, IndustryRelationship, MatchSuggestion  # noqa: F401
 from app.models.complements import ComplementType, MemberComplement, FulfilmentStatus  # noqa: F401
+from app.models.home_content import HomeSlide  # noqa: F401
 
 __all__ = [
     "Base",
@@ -41,5 +42,6 @@ __all__ = [
     "MarketplaceListing", "MarketplaceInterest",
     "MatchingProfile", "IndustryRelationship", "MatchSuggestion",
     "ComplementType", "MemberComplement", "FulfilmentStatus",
+    "HomeSlide",
 ]
 

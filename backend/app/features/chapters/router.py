@@ -7,16 +7,22 @@ from __future__ import annotations
 from typing import List
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+import os
+import shutil
+import uuid
+
+from fastapi import APIRouter, Depends, Query, File, UploadFile
 from fastapi.responses import ORJSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from sqlalchemy import select, func
 
 from app.core.dependencies import get_db
+from app.core.exceptions import BadRequestException, NotFoundException
 from app.core.response import success_response
 from app.features.auth.dependencies import get_current_user, require_role
 from app.features.chapters.schemas import ChapterCreate, ChapterMemberResponse, ChapterResponse, ChapterUpdate, MyMembershipResponse
+from app.models.chapters import Chapter
 from app.features.chapters.service import (
     get_all_members,
     get_chapter_members,
@@ -79,6 +85,7 @@ async def list_chapters_endpoint(
                 "district": c.district,
                 "description": c.description,
                 "meeting_schedule": c.meeting_schedule,
+                "poster_url": c.poster_url,
                 "is_active": c.is_active,
                 "member_count": counts_by_chapter.get(str(c.id), 0),
             }
@@ -192,3 +199,49 @@ async def get_occupied_industries_endpoint(
 ) -> ORJSONResponse:
     ids = await get_occupied_industry_ids(chapter_id, db)
     return success_response(data=[str(i) for i in ids])
+
+
+@router.post(
+    "/{chapter_id}/upload-poster",
+    summary="Upload a chapter poster image",
+    dependencies=[Depends(require_role([UserRole.SUPER_ADMIN, UserRole.ADMIN]))],
+)
+async def upload_chapter_poster_endpoint(
+    chapter_id: UUID,
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    """Upload a poster/banner image for a chapter and persist its URL."""
+    chapter = (await db.execute(select(Chapter).where(Chapter.id == chapter_id))).scalar_one_or_none()
+    if not chapter:
+        raise NotFoundException("Chapter not found")
+
+    MAX_SIZE = 5 * 1024 * 1024  # 5MB
+    if file.size and file.size > MAX_SIZE:
+        raise BadRequestException(
+            message="File too large. Maximum size allowed is 5MB.",
+            code="FILE_TOO_LARGE",
+        )
+
+    ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"]
+    if file.content_type not in ALLOWED_TYPES:
+        raise BadRequestException(
+            message=f"Invalid file format: {file.content_type}. Only JPEG, PNG, and WebP images are allowed.",
+            code="INVALID_FORMAT",
+        )
+
+    os.makedirs("uploads/chapter-posters", exist_ok=True)
+    ext = file.filename.split(".")[-1].lower() if file.filename and "." in file.filename else "jpg"
+    if ext not in ["jpg", "jpeg", "png", "webp"]:
+        raise BadRequestException(message="Invalid file extension.", code="INVALID_EXTENSION")
+
+    filename = f"chapter_{uuid.uuid4().hex[:8]}.{ext}"
+    file_path = f"uploads/chapter-posters/{filename}"
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    poster_url = f"/static/chapter-posters/{filename}"
+    chapter.poster_url = poster_url
+    await db.commit()
+
+    return success_response(data={"poster_url": poster_url}, message="Poster uploaded successfully")

@@ -15,9 +15,11 @@ import 'package:pbn/core/providers/auth_provider.dart';
 import 'package:pbn/core/providers/notification_provider.dart';
 import 'package:pbn/core/services/dashboard_service.dart';
 import 'package:pbn/core/services/event_service.dart';
+import 'package:pbn/core/services/home_content_service.dart';
 import 'package:pbn/core/widgets/pbn_app_bar_actions.dart';
 import 'package:pbn/models/dashboard_data.dart';
 import 'package:pbn/models/event.dart';
+import 'package:pbn/models/home_slide.dart';
 
 import 'package:pbn/core/widgets/cached_avatar.dart';
 import 'package:pbn/features/members/members_page.dart';
@@ -47,6 +49,10 @@ class _DashboardPageState extends State<DashboardPage> {
   int _adIndex = 0;
   Timer? _adTimer;
 
+  // -- Dynamic home carousel (server-driven, falls back to the 3 built-ins) --
+  List<HomeSlide> _slides = [];
+  final _homeContentService = HomeContentService();
+
   NextEvent? _fallbackVirtual;
   NextEvent? _fallbackPhysical;
 
@@ -61,9 +67,15 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
     super.initState();
+    // Paint the carousel instantly from the last cached slides.
+    _slides = _homeContentService.cachedSlides();
     _loadData();
     _startAdTimer();
   }
+
+  /// Number of carousel pages — dynamic slides when available, else the 3
+  /// built-in fallback panels.
+  int get _slideCount => _slides.isNotEmpty ? _slides.length : 3;
 
   @override
   void dispose() {
@@ -75,9 +87,9 @@ class _DashboardPageState extends State<DashboardPage> {
   void _startAdTimer() {
     _adTimer?.cancel();
     _adTimer = Timer.periodic(const Duration(seconds: 6), (timer) {
-      if (mounted && _adController.hasClients) {
+      if (mounted && _adController.hasClients && _slideCount > 1) {
         setState(() {
-          _adIndex = (_adIndex + 1) % 3; // Cycle between 3 ads
+          _adIndex = (_adIndex + 1) % _slideCount; // Cycle through the slides
           _adController.animateToPage(
             _adIndex,
             duration: const Duration(milliseconds: 700),
@@ -106,6 +118,7 @@ class _DashboardPageState extends State<DashboardPage> {
         });
         _loadLeaderboard();
         _loadEventFallbacks();
+        _loadHomeSlides();
         _loadRoi(_roiPeriod);
         if (mounted) {
           final notifProvider = context.read<NotificationProvider>();
@@ -121,6 +134,18 @@ class _DashboardPageState extends State<DashboardPage> {
         });
       }
     }
+  }
+
+  Future<void> _loadHomeSlides() async {
+    try {
+      final slides = await _homeContentService.getHomeSlides();
+      if (mounted && slides.isNotEmpty) {
+        setState(() {
+          _slides = slides;
+          if (_adIndex >= _slideCount) _adIndex = 0;
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _loadLeaderboard() async {
@@ -521,11 +546,13 @@ class _DashboardPageState extends State<DashboardPage> {
         child: PageView(
           controller: _adController,
           onPageChanged: (i) => setState(() => _adIndex = i),
-          children: [
-            _buildAdPromoPanel(),
-            _buildEventZoomPanel(),
-            _buildPhysicalMeetingPanel(),
-          ],
+          children: _slides.isNotEmpty
+              ? _slides.map(_buildDynamicSlidePanel).toList()
+              : [
+                  _buildAdPromoPanel(),
+                  _buildEventZoomPanel(),
+                  _buildPhysicalMeetingPanel(),
+                ],
         ),
       ),
       const SizedBox(height: 14),
@@ -675,6 +702,8 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildAdIndicator() {
+    final count = _slideCount;
+    final activeIndex = count > 0 ? _adIndex % count : 0;
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -690,7 +719,7 @@ class _DashboardPageState extends State<DashboardPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                '${_adIndex + 1}',
+                '${activeIndex + 1}',
                 style: GoogleFonts.dmSans(
                   fontSize: 11,
                   fontWeight: FontWeight.w900,
@@ -699,12 +728,12 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
               ),
               const SizedBox(width: 8),
-              ...List.generate(3, (i) {
-                final active = _adIndex == i;
+              ...List.generate(count, (i) {
+                final active = activeIndex == i;
                 return AnimatedContainer(
                   duration: const Duration(milliseconds: 350),
                   curve: Curves.easeOutCubic,
-                  margin: EdgeInsets.only(right: i == 2 ? 0 : 4),
+                  margin: EdgeInsets.only(right: i == count - 1 ? 0 : 4),
                   width: active ? 18 : 5,
                   height: 5,
                   decoration: BoxDecoration(
@@ -718,7 +747,7 @@ class _DashboardPageState extends State<DashboardPage> {
               }),
               const SizedBox(width: 8),
               Text(
-                '3',
+                '$count',
                 style: GoogleFonts.dmSans(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
@@ -1094,6 +1123,235 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // ── Dynamic (server-driven) carousel slide ─────────────────────────────────
+
+  String? _resolveSlideImage(String? url) {
+    if (url == null || url.isEmpty) return null;
+    if (url.startsWith('http')) return url;
+    return '${ApiConfig.baseUrl.replaceAll('/api/v1', '')}$url';
+  }
+
+  void _handleSlideAction(HomeSlide slide) {
+    switch (slide.ctaActionType) {
+      case 'url':
+        _launchMeeting(slide.ctaActionValue);
+        break;
+      case 'maps':
+        _launchMaps(slide.ctaActionValue);
+        break;
+      case 'event':
+        Navigator.pushNamed(context, '/events');
+        break;
+      case 'route':
+        _navigateRoute(slide.ctaActionValue);
+        break;
+      default:
+        break;
+    }
+  }
+
+  void _navigateRoute(String? route) {
+    if (route == null || route.isEmpty) return;
+    switch (route) {
+      case 'create_referral':
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const CreateReferralPage()),
+        );
+        break;
+      case 'marketplace':
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const MarketplacePage()),
+        );
+        break;
+      case 'members':
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const MembersPage()),
+        );
+        break;
+      default:
+        // Treat as a named route, e.g. events, chapters, rewards, clubs.
+        final named = route.startsWith('/') ? route : '/$route';
+        try {
+          Navigator.pushNamed(context, named);
+        } catch (_) {}
+    }
+  }
+
+  Widget _buildDynamicSlidePanel(HomeSlide slide) {
+    final imageUrl = _resolveSlideImage(slide.imageUrl);
+    final hasBadge = slide.badgeLabel != null && slide.badgeLabel!.isNotEmpty;
+    final hasTitle = slide.title != null && slide.title!.isNotEmpty;
+    final hasDate = slide.startAt != null && slide.startAt!.isNotEmpty;
+    final hasSubtitle = slide.subtitle != null && slide.subtitle!.isNotEmpty;
+    final hasCta = slide.ctaLabel != null &&
+        slide.ctaLabel!.isNotEmpty &&
+        slide.ctaActionType != 'none';
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.12),
+            blurRadius: 32,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: imageUrl != null
+                  ? _smartImage(imageUrl, AppColors.primaryGradient)
+                  : const DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: AppColors.primaryGradient,
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                      ),
+                    ),
+            ),
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.black.withValues(alpha: 0.88),
+                      Colors.black.withValues(alpha: 0.12),
+                    ],
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                  ),
+                ),
+              ),
+            ),
+            // Floating accent orb
+            Positioned(
+              top: -40,
+              right: -40,
+              child: Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      AppColors.accent.withValues(alpha: 0.2),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  if (hasBadge) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.accent,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        slide.badgeLabel!,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  if (hasTitle)
+                    Text(
+                      slide.title!,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        height: 1.2,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                  if (hasDate) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(TablerIcons.calendar_event, color: Colors.white, size: 16),
+                          const SizedBox(width: 8),
+                          Text(
+                            _formatDateTime(slide.startAt),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ] else if (hasSubtitle) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      slide.subtitle!,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.85),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        height: 1.3,
+                      ),
+                    ),
+                  ],
+                  if (hasCta) ...[
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: () => _handleSlideAction(slide),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.accent,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+                      ),
+                      child: Text(
+                        slide.ctaLabel!,
+                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

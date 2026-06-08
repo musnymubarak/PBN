@@ -42,6 +42,7 @@ async def create_chapter(data: Any, db: AsyncSession) -> Chapter:
         district=data.district,
         description=data.description,
         meeting_schedule=data.meeting_schedule,
+        poster_url=getattr(data, "poster_url", None),
     )
     db.add(chapter)
     await db.commit()
@@ -59,6 +60,7 @@ async def update_chapter(chapter_id: UUID, data: Any, db: AsyncSession) -> Chapt
     if data.district is not None: chapter.district = data.district
     if data.description is not None: chapter.description = data.description
     if data.meeting_schedule is not None: chapter.meeting_schedule = data.meeting_schedule
+    if getattr(data, "poster_url", None) is not None: chapter.poster_url = data.poster_url
     if data.is_active is not None: chapter.is_active = data.is_active
     
     await db.commit()
@@ -227,6 +229,7 @@ async def get_my_memberships(user_id: UUID, db: AsyncSession) -> List[Dict[str, 
                 "district": chap.district,
                 "description": chap.description,
                 "meeting_schedule": chap.meeting_schedule,
+                "poster_url": chap.poster_url,
                 "is_active": chap.is_active,
             },
             "industry_category": {

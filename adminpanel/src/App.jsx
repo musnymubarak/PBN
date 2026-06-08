@@ -52,6 +52,7 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import OnboardingPage from './onboarding/OnboardingPage';
 import MemberDetailPage from './members/MemberDetailPage';
+import HomeSlidesPage from './home-content/HomeSlidesPage';
 import ComplementsPage from './complements/ComplementsPage';
 
 
@@ -7935,8 +7936,24 @@ function ChapterFormModal({ chapter, districts, onClose, onSave }) {
     district: chapter?.district || '',
     description: chapter?.description || '',
     meeting_schedule: chapter?.meeting_schedule || '',
+    poster_url: chapter?.poster_url || '',
     is_active: chapter?.is_active ?? true
   });
+  const [uploadingPoster, setUploadingPoster] = useState(false);
+
+  const handlePosterUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !chapter) return;
+    setUploadingPoster(true);
+    try {
+      const res = await api.uploadChapterPoster(chapter.id, file);
+      setFormData(prev => ({ ...prev, poster_url: res.poster_url }));
+    } catch (err) {
+      alert('Poster upload failed: ' + (err.message || ''));
+    } finally {
+      setUploadingPoster(false);
+    }
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -7988,13 +8005,42 @@ function ChapterFormModal({ chapter, districts, onClose, onSave }) {
 
           <div className="login-field">
             <label>Description</label>
-            <textarea 
-              className="action-textarea" 
-              value={formData.description} 
-              onChange={e => setFormData({ ...formData, description: e.target.value })} 
+            <textarea
+              className="action-textarea"
+              value={formData.description}
+              onChange={e => setFormData({ ...formData, description: e.target.value })}
               style={{ minHeight: 80 }}
             />
           </div>
+
+          {chapter ? (
+            <div className="login-field">
+              <label>Chapter Poster</label>
+              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginTop: '0.25rem' }}>
+                <div style={{ width: 120, height: 68, borderRadius: 8, background: '#f8fafc', overflow: 'hidden', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  {formData.poster_url
+                    ? <img src={formData.poster_url.startsWith('http') ? formData.poster_url : `${STATIC_BASE_URL}${formData.poster_url}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    : <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>No poster</span>}
+                </div>
+                <div>
+                  <input id="chapter-poster-upload" type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePosterUpload} />
+                  <label htmlFor="chapter-poster-upload" className="btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.85rem', padding: '0.5rem 0.75rem' }}>
+                    <IconPlus size={16} /> {uploadingPoster ? 'Uploading…' : formData.poster_url ? 'Change poster' : 'Upload poster'}
+                  </label>
+                  {formData.poster_url && (
+                    <button type="button" style={{ marginLeft: '0.5rem', fontSize: '0.75rem', color: '#ef4444', border: 'none', background: 'none', cursor: 'pointer', fontWeight: 600 }} onClick={() => setFormData({ ...formData, poster_url: '' })}>
+                      Remove
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="login-field">
+              <label>Chapter Poster</label>
+              <p style={{ fontSize: '0.8rem', color: '#94a3b8', margin: 0 }}>Save the chapter first, then edit it to upload a poster image.</p>
+            </div>
+          )}
 
           {chapter && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
@@ -9169,6 +9215,7 @@ export default function App() {
     if (activeTab === 'referrals') return <ReferralsPage />;
     if (activeTab === 'community') return <CommunityPage showToast={showToast} />;
     if (activeTab === 'events') return <EventsPage />;
+    if (activeTab === 'home-slides') return <HomeSlidesPage />;
     if (activeTab === 'clubs') return <ClubsPage />;
     if (activeTab === 'complements') return <ComplementsPage />;
     if (activeTab === 'revenue') return <RevenuePage onNavigateToGovernance={() => setActiveTab('governance')} />;

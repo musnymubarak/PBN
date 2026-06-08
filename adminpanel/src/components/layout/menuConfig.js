@@ -13,6 +13,7 @@ import {
   IconShirt,
   IconMail,
   IconMessages,
+  IconLayoutDashboard,
 } from '@tabler/icons-react';
 
 /**
@@ -37,6 +38,7 @@ export const MENU_GROUPS = [
       { id: 'referrals', icon: IconHierarchy2, label: 'Referral Pipeline' },
       { id: 'community', icon: IconMessages, label: 'Community & Leads' },
       { id: 'events', icon: IconCalendarEvent, label: 'Event Management' },
+      { id: 'home-slides', icon: IconLayoutDashboard, label: 'Home Slides' },
       { id: 'marketplace', icon: IconBuildingStore, label: 'Marketplace' },
       { id: 'payments', icon: IconCoin, label: 'Payments' },
       { id: 'revenue', icon: IconChartBar, label: 'Revenue & ROI' },

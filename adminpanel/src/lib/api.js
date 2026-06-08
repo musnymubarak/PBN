@@ -139,6 +139,15 @@ export const api = {
     method: 'DELETE',
   }),
   getOccupiedIndustries: (chapterId) => apiFetch(`/chapters/${chapterId}/occupied-industries`),
+  uploadChapterPoster: (chapterId, file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return apiFetch(`/chapters/${chapterId}/upload-poster`, {
+      method: 'POST',
+      body: formData,
+      headers: {},
+    }, true);
+  },
 
   // Users
   getMemberProfile: (id) => apiFetch(`/admin/users/${id}/profile`),
@@ -212,6 +221,33 @@ export const api = {
     method: 'POST',
     body: JSON.stringify(body),
   }),
+
+  // Home Slides (dynamic home carousel)
+  listHomeSlides: () => apiFetch('/admin/home/slides'),
+  createHomeSlide: (body) => apiFetch('/admin/home/slides', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  }),
+  updateHomeSlide: (id, body) => apiFetch(`/admin/home/slides/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+  }),
+  deleteHomeSlide: (id) => apiFetch(`/admin/home/slides/${id}`, {
+    method: 'DELETE',
+  }),
+  reorderHomeSlides: (orderedIds) => apiFetch('/admin/home/slides/reorder', {
+    method: 'POST',
+    body: JSON.stringify({ ordered_ids: orderedIds }),
+  }),
+  uploadHomeSlideImage: (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return apiFetch('/admin/home/slides/upload-image', {
+      method: 'POST',
+      body: formData,
+      headers: {},
+    }, true);
+  },
 
   // Horizontal Clubs
   listClubs: () => apiFetch('/horizontal-clubs'),
