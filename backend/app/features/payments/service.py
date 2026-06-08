@@ -15,7 +15,7 @@ from decimal import Decimal
 from typing import Any, Dict, List
 from uuid import UUID
 
-from app.features.notifications.service import send_push_notification
+from app.features.notifications.service import send_push_notification, notify_admins
 from app.features.payments.schemas import PaymentCreateAdmin, PaymentUpdateAdmin
 
 from sqlalchemy import select, desc
@@ -180,6 +180,17 @@ async def process_webhook(
             )
         except Exception:
             pass
+
+        # Notify admins (panel feed): money came in
+        try:
+            await notify_admins(
+                title="💰 Payment Received",
+                body=f"LKR {float(payment.amount):,.0f} received for {payment.payment_type.value}.",
+                notification_type="ADMIN_PAYMENT_RECEIVED",
+                data={"payment_id": str(payment.id), "route": "/payments"},
+            )
+        except Exception:
+            pass
     else:
         payment.status = PaymentStatus.FAILED
         payment.gateway_response = payload
@@ -331,7 +342,18 @@ async def record_manual_payment(
             )
         except Exception:
             pass
-        
+
+        # Notify admins (panel feed): payment recorded
+        try:
+            await notify_admins(
+                title="💰 Payment Recorded",
+                body=f"LKR {float(payment.amount):,.0f} recorded for {payment.payment_type.value}.",
+                notification_type="ADMIN_PAYMENT_RECEIVED",
+                data={"payment_id": str(payment.id), "route": "/payments"},
+            )
+        except Exception:
+            pass
+
     return payment
 
 
@@ -380,5 +402,16 @@ async def update_payment(
 
     if trigger_side_effects:
         await _apply_payment_side_effects(payment, db)
+
+        # Notify admins (panel feed): payment marked completed
+        try:
+            await notify_admins(
+                title="💰 Payment Received",
+                body=f"LKR {float(payment.amount):,.0f} marked completed for {payment.payment_type.value}.",
+                notification_type="ADMIN_PAYMENT_RECEIVED",
+                data={"payment_id": str(payment.id), "route": "/payments"},
+            )
+        except Exception:
+            pass
 
     return payment

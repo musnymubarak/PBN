@@ -641,11 +641,11 @@ from app.core.config import get_settings
 
 settings = get_settings()
 
-def _fetch_mailbox_list():
+def _fetch_mailbox_list(folder: str = "INBOX"):
     try:
         mail = imaplib.IMAP4_SSL(settings.SMTP_HOST, 993, timeout=10)
         mail.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-        mail.select("INBOX")
+        mail.select(f'"{folder}"')
 
         status, messages = mail.search(None, "ALL")
         if status != "OK":
@@ -688,6 +688,16 @@ def _fetch_mailbox_list():
                         else:
                             from_sender = str(from_bytes)
                         
+                    # Decode To
+                    to_recipient = ""
+                    if msg["To"]:
+                        to_decoded = decode_header(msg["To"])[0]
+                        to_bytes, encoding = to_decoded
+                        if isinstance(to_bytes, bytes):
+                            to_recipient = to_bytes.decode(encoding or "utf-8", errors="ignore")
+                        else:
+                            to_recipient = str(to_bytes)
+                            
                     date = msg.get("Date", "")
                     
                     # Extract body snippet
@@ -712,6 +722,7 @@ def _fetch_mailbox_list():
                     emails_list.append({
                         "uid": mail_id.decode(),
                         "from": from_sender,
+                        "to": to_recipient,
                         "subject": subject,
                         "date": date,
                         "snippet": snippet,
@@ -724,11 +735,11 @@ def _fetch_mailbox_list():
         from app.core.exceptions import AppException
         raise AppException(f"Failed to connect or fetch mailbox: {e}", status_code=500)
 
-def _fetch_mailbox_email(uid: str):
+def _fetch_mailbox_email(uid: str, folder: str = "INBOX"):
     try:
         mail = imaplib.IMAP4_SSL(settings.SMTP_HOST, 993, timeout=10)
         mail.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-        mail.select("INBOX")
+        mail.select(f'"{folder}"')
 
         res, msg_data = mail.fetch(uid.encode(), "(RFC822)")
         if res != "OK":
@@ -795,25 +806,33 @@ def _fetch_mailbox_email(uid: str):
 
 @router.get("/admin/mailbox", summary="List latest emails from admin mailbox")
 async def list_mailbox_endpoint(
+    folder: str = Query("INBOX"),
     current_user: User = Depends(admin_req),
 ) -> ORJSONResponse:
-    emails = await asyncio.to_thread(_fetch_mailbox_list)
+    emails = await asyncio.to_thread(_fetch_mailbox_list, folder)
     return success_response(data=emails)
 
 
 @router.get("/admin/mailbox/{uid}", summary="Fetch a specific email's plain-text content")
 async def get_mailbox_email_endpoint(
     uid: str,
+    folder: str = Query("INBOX"),
     current_user: User = Depends(admin_req),
 ) -> ORJSONResponse:
-    email_detail = await asyncio.to_thread(_fetch_mailbox_email, uid)
+    email_detail = await asyncio.to_thread(_fetch_mailbox_email, uid, folder)
     return success_response(data=email_detail)
 
+
+class MailboxAttachment(BaseModel):
+    filename: str
+    content: str  # base64 encoded
+    content_type: str
 
 class MailboxSendRequest(BaseModel):
     to_email: str = Field(..., max_length=255)
     subject: str = Field(..., max_length=255)
     body: str
+    attachments: Optional[list[MailboxAttachment]] = None
 
 @router.post("/admin/mailbox/send", summary="Send an email from the admin mailbox")
 async def send_mailbox_email_endpoint(
@@ -821,9 +840,26 @@ async def send_mailbox_email_endpoint(
     current_user: User = Depends(admin_req),
 ) -> ORJSONResponse:
     from app.core.email_service import send_email
+    import base64
     # Convert newlines to HTML breaks so plain text formats correctly in email clients
     html_body = f"<html><body><p>{data.body.replace(chr(10), '<br/>')}</p></body></html>"
-    await send_email(data.to_email, data.subject, html_body)
+    
+    attachments_list = []
+    if data.attachments:
+        for att in data.attachments:
+            try:
+                # content is base64 encoded string, we need bytes for the payload
+                content_bytes = base64.b64decode(att.content)
+                attachments_list.append({
+                    "filename": att.filename,
+                    "content": content_bytes,
+                    "content_type": att.content_type
+                })
+            except Exception as e:
+                # log or ignore
+                pass
+
+    await send_email(data.to_email, data.subject, html_body, attachments=attachments_list, append_to_sent=True)
     return success_response(message="Email sent successfully")
 
 

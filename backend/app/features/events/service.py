@@ -17,7 +17,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from app.core.exceptions import BadRequestException, NotFoundException, ForbiddenException
-from app.features.notifications.service import send_push_notification, notify_multiple_users
+from app.features.notifications.service import send_push_notification, notify_multiple_users, notify_admins
 from app.features.events.schemas import EventCreate, EventRSVPRequest, EventAttendanceRequest
 from app.models.events import Event, EventRSVP, EventAttendance, RSVPStatus
 from app.models.chapters import Chapter
@@ -120,6 +120,16 @@ async def create_event(data: EventCreate, actor_id: UUID, db: AsyncSession) -> D
                 {"event_id": str(event.id), "route": "/events"}
             )
         except Exception: pass
+
+    # Notify admins (panel feed): a new event was created
+    try:
+        await notify_admins(
+            title="📅 New Event Created",
+            body=f"'{data.title}' scheduled for {data.start_at.strftime('%b %d, %I:%M %p')}.",
+            notification_type="ADMIN_EVENT_CREATED",
+            data={"event_id": str(event.id), "route": "/events"},
+        )
+    except Exception: pass
 
     return await _serialize_event(fresh_event)
 
@@ -245,7 +255,17 @@ async def update_rsvp(event_id: UUID, actor_id: UUID, status: RSVPStatus, db: As
                 "🔔 New RSVP Request",
                 f"{actor.full_name} has requested a spot for '{event.title}'.",
                 db,
-                {"event_id": str(event.id), "route": "/events"} # Route to admin manage? 
+                {"event_id": str(event.id), "route": "/events"} # Route to admin manage?
+            )
+        except Exception: pass
+
+        # Also surface in the admin panel feed (SUPER_ADMIN / ADMIN)
+        try:
+            await notify_admins(
+                title="🔔 New RSVP Request",
+                body=f"{actor.full_name} requested a spot for '{event.title}'.",
+                notification_type="ADMIN_RSVP_REQUEST",
+                data={"event_id": str(event.id), "route": "/events"},
             )
         except Exception: pass
 

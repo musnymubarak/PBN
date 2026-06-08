@@ -16,6 +16,7 @@ export function AppShell({
   notifications,
   unreadCount,
   onDismissNotification,
+  onOpenNotification,
   onMarkAllRead,
   onChangePassword,
   onLogout,
@@ -35,6 +36,7 @@ export function AppShell({
           notifications={notifications}
           unreadCount={unreadCount}
           onDismissNotification={onDismissNotification}
+          onOpenNotification={onOpenNotification}
           onMarkAllRead={onMarkAllRead}
           onOpenSettings={() => onChangeTab('settings')}
           onOpenProfile={() => onChangeTab('settings')}

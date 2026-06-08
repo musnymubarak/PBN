@@ -6,6 +6,8 @@ from app.models.memberships import ChapterMembership
 from app.core.exceptions import BadRequestException
 from sqlalchemy.orm import selectinload
 from app.models.horizontal_clubs import HorizontalClub, HorizontalClubMembership, HorizontalClubIndustry
+from app.models.user import User
+from app.features.notifications.service import notify_admins
 
 async def list_clubs(user_id: UUID, db: AsyncSession) -> List[Dict[str, Any]]:
     # Get user's industry IDs from their chapter memberships
@@ -76,6 +78,20 @@ async def join_club(user_id: UUID, club_id: UUID, db: AsyncSession):
     membership = HorizontalClubMembership(user_id=user_id, club_id=club_id)
     db.add(membership)
     await db.commit()
+
+    # Notify admins (panel feed): a member joined a club
+    try:
+        member_name = (await db.execute(
+            select(User.full_name).where(User.id == user_id)
+        )).scalar() or "A member"
+        await notify_admins(
+            title="👥 New Club Member",
+            body=f"{member_name} joined the {club.name} club.",
+            notification_type="ADMIN_CLUB_JOIN",
+            data={"club_id": str(club_id), "route": "/clubs"},
+        )
+    except Exception:
+        pass
 
 async def leave_club(user_id: UUID, club_id: UUID, db: AsyncSession):
     stmt = select(HorizontalClubMembership).where(

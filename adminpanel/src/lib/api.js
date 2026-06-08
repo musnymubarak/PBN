@@ -296,8 +296,8 @@ export const api = {
   getAuditLogFacets: () => apiFetch('/admin/audit-logs/facets'),
 
   // Mailbox Viewer
-  listMailbox: () => apiFetch('/admin/mailbox'),
-  getMailboxEmail: (uid) => apiFetch(`/admin/mailbox/${uid}`),
+  listMailbox: (folder = 'INBOX') => apiFetch(`/admin/mailbox?folder=${encodeURIComponent(folder)}`),
+  getMailboxEmail: (uid, folder = 'INBOX') => apiFetch(`/admin/mailbox/${uid}?folder=${encodeURIComponent(folder)}`),
   sendMailboxEmail: (body) => apiFetch('/admin/mailbox/send', { method: 'POST', body: JSON.stringify(body) }),
 
   // Mailbox Settings (SUPER_ADMIN only)

@@ -17,6 +17,7 @@ from app.models.marketplace import MarketplaceListing, MarketplaceInterest, List
 from app.models.industry_categories import IndustryCategory
 from app.models.user import User, UserRole
 from app.features.marketplace.schemas import MarketplaceListingCreate, MarketplaceListingUpdate
+from app.features.notifications.service import notify_admins
 
 
 async def create_listing(user_id: uuid.UUID, data: MarketplaceListingCreate, db: AsyncSession) -> MarketplaceListing:
@@ -40,6 +41,21 @@ async def create_listing(user_id: uuid.UUID, data: MarketplaceListingCreate, db:
     db.add(listing)
     await db.commit()
     await db.refresh(listing)
+
+    # Notify admins (panel feed): a listing is awaiting approval
+    try:
+        seller_name = (await db.execute(
+            select(User.full_name).where(User.id == user_id)
+        )).scalar() or "A member"
+        await notify_admins(
+            title="🛒 New Listing Pending Approval",
+            body=f"{seller_name} listed '{listing.title}' — awaiting approval.",
+            notification_type="ADMIN_LISTING_PENDING",
+            data={"listing_id": str(listing.id), "route": "/marketplace"},
+        )
+    except Exception:
+        pass
+
     return listing
 
 

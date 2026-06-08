@@ -22,7 +22,7 @@ from jose import jwt
 
 from app.core.exceptions import BadRequestException, NotFoundException
 from app.features.auth.service import hash_password
-from app.features.notifications.service import send_push_notification, notify_multiple_users
+from app.features.notifications.service import send_push_notification, notify_multiple_users, notify_admins
 from app.features.applications.schemas import (
     ApplicationCreate,
     ApplicationStatusUpdate,
@@ -525,6 +525,17 @@ async def update_application_status(
         except Exception:
             pass
 
+        # Notify admins (panel feed): a member was approved & onboarded
+        try:
+            await notify_admins(
+                title="✅ Application Approved",
+                body=f"{app.full_name} ({app.business_name}) was approved and onboarded.",
+                notification_type="ADMIN_MEMBER_APPROVED",
+                data={"member_id": str(user.id), "application_id": str(app.id), "route": "/members"},
+            )
+        except Exception:
+            pass
+
     # Handle Fit Call Scheduled Email
     if data.status == ApplicationStatus.FIT_CALL_SCHEDULED and app.email and app.fit_call_date:
         try:
@@ -548,6 +559,17 @@ async def update_application_status(
             await send_email(app.email, "Update on your PBN Application", html)
         except Exception as e:
             logger.error(f"Failed to send rejection email to {app.email}: {e}")
+
+    if data.status == ApplicationStatus.REJECTED:
+        try:
+            await notify_admins(
+                title="Application Rejected",
+                body=f"{app.full_name}'s application ({app.business_name}) was rejected.",
+                notification_type="ADMIN_APPLICATION_REJECTED",
+                data={"application_id": str(app.id), "route": "/applications"},
+            )
+        except Exception:
+            pass
 
     await db.flush()
     return app

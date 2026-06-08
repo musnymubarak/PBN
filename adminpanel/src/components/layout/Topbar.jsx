@@ -7,10 +7,43 @@ import {
   IconLogout,
   IconSettings,
   IconCheck,
+  IconFileText,
+  IconUserCheck,
+  IconUserX,
+  IconCash,
+  IconRocket,
+  IconShoppingCart,
+  IconMessage,
+  IconArrowsExchange,
+  IconCalendarEvent,
+  IconUsers,
 } from '@tabler/icons-react';
 import { Avatar } from '../ui/Avatar';
 import { IconButton } from '../ui/IconButton';
 import { cx } from '../ui/classNames';
+
+/**
+ * Visual identity per notification_type — icon + accent color.
+ * Keep keys in sync with the backend `notification_type` strings emitted by
+ * `notify_admins(...)` (see backend/app/features/notifications/service.py).
+ */
+const NOTIF_META = {
+  NEW_APPLICATION:           { Icon: IconFileText,      color: '#2563eb' },
+  ADMIN_MEMBER_APPROVED:     { Icon: IconUserCheck,     color: '#16a34a' },
+  ADMIN_APPLICATION_REJECTED:{ Icon: IconUserX,         color: '#dc2626' },
+  ADMIN_PAYMENT_RECEIVED:    { Icon: IconCash,          color: '#059669' },
+  ADMIN_DEAL_ALERT:          { Icon: IconRocket,        color: '#d97706' },
+  ADMIN_LISTING_PENDING:     { Icon: IconShoppingCart,  color: '#7c3aed' },
+  ADMIN_NEW_LEAD:            { Icon: IconMessage,       color: '#0891b2' },
+  ADMIN_NEW_REFERRAL:        { Icon: IconArrowsExchange,color: '#4f46e5' },
+  ADMIN_EVENT_CREATED:       { Icon: IconCalendarEvent, color: '#db2777' },
+  ADMIN_RSVP_REQUEST:        { Icon: IconCalendarEvent, color: '#db2777' },
+  ADMIN_CLUB_JOIN:           { Icon: IconUsers,         color: '#0d9488' },
+};
+
+function notifMeta(type) {
+  return NOTIF_META[type] || { Icon: IconBell, color: 'var(--brand-blue)' };
+}
 
 /**
  * Topbar — search, notifications, settings, profile.
@@ -30,6 +63,7 @@ export function Topbar({
   notifications = [],
   unreadCount = 0,
   onDismissNotification,
+  onOpenNotification,
   onMarkAllRead,
   onOpenSettings,
   onOpenProfile,
@@ -99,30 +133,60 @@ export function Topbar({
                     You're all caught up.
                   </div>
                 ) : (
-                  notifications.slice(0, 8).map(n => (
+                  notifications.slice(0, 8).map(n => {
+                    const { Icon, color } = notifMeta(n.notification_type);
+                    const bodyText = n.body || n.description;
+                    const ts = n.sent_at || n.created_at;
+                    const canOpen = !!(n.data && n.data.route);
+                    return (
                     <div
                       key={n.id}
+                      role="button"
+                      tabIndex={0}
                       className={cx('ds-popover__item', !n.is_read && 'is-unread')}
-                      onClick={() => onDismissNotification && onDismissNotification(n.id)}
+                      style={{ cursor: 'pointer' }}
+                      title={canOpen ? 'Open' : undefined}
+                      onClick={() => {
+                        if (onOpenNotification) {
+                          onOpenNotification(n);
+                          setShowNotifications(false);
+                        } else if (onDismissNotification) {
+                          onDismissNotification(n.id);
+                        }
+                      }}
                     >
-                      <span style={{ width: 8, height: 8, borderRadius: '50%', background: !n.is_read ? 'var(--brand-blue)' : 'var(--neutral-300)', flexShrink: 0, marginTop: 6 }} />
-                      <div style={{ minWidth: 0 }}>
+                      <span
+                        aria-hidden
+                        style={{
+                          width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          background: `color-mix(in srgb, ${color} 14%, transparent)`,
+                          color,
+                        }}
+                      >
+                        <Icon size={16} />
+                      </span>
+                      <div style={{ minWidth: 0, flex: 1 }}>
                         <p style={{ fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--fg-primary)', marginBottom: 2 }}>
                           {n.title || 'Notification'}
                         </p>
-                        {n.description && (
+                        {bodyText && (
                           <p style={{ fontSize: 'var(--text-xs)', color: 'var(--fg-secondary)', lineHeight: 1.45 }}>
-                            {n.description}
+                            {bodyText}
                           </p>
                         )}
-                        {n.created_at && (
+                        {ts && (
                           <p style={{ fontSize: 'var(--text-xs)', color: 'var(--fg-muted)', marginTop: 4 }}>
-                            {new Date(n.created_at).toLocaleString()}
+                            {new Date(ts).toLocaleString()}
                           </p>
                         )}
                       </div>
+                      {!n.is_read && (
+                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--brand-blue)', flexShrink: 0, marginTop: 6 }} />
+                      )}
                     </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </div>

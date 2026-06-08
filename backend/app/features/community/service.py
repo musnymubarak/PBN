@@ -12,7 +12,7 @@ from app.core.exceptions import BadRequestException, NotFoundException, Forbidde
 from app.models.community import CommunityPost, PostLike, PostComment, LeadStatus
 from app.models.memberships import ChapterMembership
 from app.models.user import User, UserRole
-from app.features.notifications.service import send_push_notification
+from app.features.notifications.service import send_push_notification, notify_admins
 from app.features.auth.verification import update_member_verification
 from decimal import Decimal
 
@@ -80,6 +80,18 @@ async def create_post(
     stmt = select(CommunityPost).where(CommunityPost.id == post.id).options(joinedload(CommunityPost.author))
     post = (await db.execute(stmt)).scalar_one()
     
+    # Notify admins (panel feed) when a business opportunity (lead/RFP) is posted
+    if post.post_type != PostType.GENERAL:
+        try:
+            await notify_admins(
+                title="📣 New Lead Posted",
+                body=f"{post.author.full_name} posted a new {post.post_type.value} lead.",
+                notification_type="ADMIN_NEW_LEAD",
+                data={"post_id": str(post.id), "route": "/community"},
+            )
+        except Exception:
+            pass
+
     serialized = await _serialize_post(post, user_id, db)
     return {
         "post": serialized,
@@ -414,7 +426,18 @@ async def record_tyfb(user_id: uuid.UUID, post_id: uuid.UUID, business_value: fl
                 "Big Deal Alert! 🚀",
                 f"A deal worth {business_value:,.2f} LKR was closed in your chapter!",
                 "ADMIN_DEAL_ALERT",
-                {"post_id": str(post.id)}
+                {"post_id": str(post.id), "route": "/community"}
+            )
+        except Exception:
+            pass
+
+        # Notify panel admins (SUPER_ADMIN / ADMIN) so big deals surface in the dashboard
+        try:
+            await notify_admins(
+                title="🚀 Big Deal Closed",
+                body=f"A deal worth LKR {business_value:,.0f} was closed by {post.author.full_name}.",
+                notification_type="ADMIN_DEAL_ALERT",
+                data={"post_id": str(post.id), "route": "/community"},
             )
         except Exception:
             pass

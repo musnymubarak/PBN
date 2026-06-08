@@ -1960,7 +1960,12 @@ function UserManagementPage({ adminUser }) {
                   <div style={{ fontSize: 'var(--text-xs)' }}>{user.phone_number}</div>
                 </td>
                 <td>
-                  <Ds.Badge variant="brand">{user.role}</Ds.Badge>
+                  <Ds.Badge variant={
+                    user.role === 'SUPER_ADMIN' ? 'danger' :
+                    user.role === 'ADMIN' ? 'brand' :
+                    user.role === 'PARTNER_ADMIN' ? 'warning' :
+                    user.role === 'CHAPTER_ADMIN' ? 'success' : 'neutral'
+                  }>{user.role}</Ds.Badge>
                 </td>
                 <td>
                   <Ds.Badge dot variant={user.is_active ? 'success' : 'danger'}>
@@ -4378,17 +4383,43 @@ function formatMailDate(dateStr) {
     : { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
+import { md5 } from './lib/md5.js';
+
 function MailAvatar({ name, email, size = 40 }) {
+  const cleanEmail = (email || '').trim().toLowerCase();
+  
+  let actualEmail = cleanEmail;
+  const match = cleanEmail.match(/<([^>]+)>/);
+  if (match) {
+    actualEmail = match[1].trim();
+  }
+
+  const hash = actualEmail ? md5(actualEmail) : '';
+  const gravatarUrl = hash ? `https://www.gravatar.com/avatar/${hash}?d=blank&s=${size * 2}` : '';
+
   return (
     <div style={{
       width: size, height: size, minWidth: size, borderRadius: '50%',
-      background: avatarColor(email || name || ''), color: '#fff',
+      background: avatarColor(actualEmail || name || ''), color: '#fff',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontWeight: 'var(--weight-bold)', letterSpacing: '0.5px',
       fontSize: size <= 36 ? 'var(--text-xs)' : 'var(--text-sm)',
       boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.15)',
+      position: 'relative',
+      overflow: 'hidden'
     }}>
-      {senderInitials(name || email)}
+      {senderInitials(name || actualEmail)}
+      {gravatarUrl && (
+        <img
+          src={gravatarUrl}
+          alt={name || actualEmail}
+          style={{
+            position: 'absolute', top: 0, left: 0,
+            width: '100%', height: '100%',
+            objectFit: 'cover',
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -4523,6 +4554,7 @@ function parseEmailThread(body, topSender, topDate) {
 }
 
 function MailboxPage({ showToast }) {
+  const [currentFolder, setCurrentFolder] = useState('INBOX');
   const [emails, setEmails] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -4535,11 +4567,12 @@ function MailboxPage({ showToast }) {
   const [compose, setCompose] = useState(null); // null | { to, subject, body }
   const [expandedIndices, setExpandedIndices] = useState({});
 
-  const fetchEmails = useCallback(async () => {
+  const fetchEmails = useCallback(async (folder = currentFolder) => {
     setLoading(true);
     setError('');
+    setSelectedUid(null);
     try {
-      const data = await api.listMailbox();
+      const data = await api.listMailbox(folder);
       setEmails(data || []);
       if (data) {
         const readSet = new Set();
@@ -4556,12 +4589,12 @@ function MailboxPage({ showToast }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentFolder]);
 
   const fetchEmailDetail = useCallback(async (uid) => {
     setDetailLoading(true);
     try {
-      const data = await api.getMailboxEmail(uid);
+      const data = await api.getMailboxEmail(uid, currentFolder);
       setEmailDetail(data);
     } catch (err) {
       console.error(err);
@@ -4569,11 +4602,11 @@ function MailboxPage({ showToast }) {
     } finally {
       setDetailLoading(false);
     }
-  }, [showToast]);
+  }, [showToast, currentFolder]);
 
   useEffect(() => {
     fetchEmails();
-  }, [fetchEmails]);
+  }, [fetchEmails, currentFolder]);
 
   useEffect(() => {
     setExpandedIndices({});
@@ -4600,6 +4633,7 @@ function MailboxPage({ showToast }) {
     return emails.filter(e =>
       (e.subject || '').toLowerCase().includes(s) ||
       (e.from || '').toLowerCase().includes(s) ||
+      (e.to || '').toLowerCase().includes(s) ||
       (e.snippet || '').toLowerCase().includes(s)
     );
   }, [emails, search]);
@@ -4699,16 +4733,46 @@ function MailboxPage({ showToast }) {
       <div className="mailbox-grid" style={{ display: 'grid', gridTemplateColumns: '380px 1fr', gap: 'var(--space-4)', flex: 1, minHeight: 0, marginTop: 'var(--space-4)' }}>
         {/* Email List Sidebar */}
         <div style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
+          {/* Folder tabs */}
+          <div style={{ display: 'flex', borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg-surface)' }}>
+            <button
+              onClick={() => setCurrentFolder('INBOX')}
+              style={{
+                flex: 1, padding: 'var(--space-3)', background: 'none', border: 'none',
+                borderBottom: currentFolder === 'INBOX' ? '2px solid var(--brand-blue)' : '2px solid transparent',
+                color: currentFolder === 'INBOX' ? 'var(--brand-blue)' : 'var(--fg-muted)',
+                fontWeight: currentFolder === 'INBOX' ? 'var(--weight-bold)' : 'var(--weight-medium)',
+                cursor: 'pointer', fontSize: 'var(--text-sm)', transition: 'all 0.2s'
+              }}
+            >
+              Inbox
+            </button>
+            <button
+              onClick={() => setCurrentFolder('INBOX.Sent')}
+              style={{
+                flex: 1, padding: 'var(--space-3)', background: 'none', border: 'none',
+                borderBottom: currentFolder === 'INBOX.Sent' ? '2px solid var(--brand-blue)' : '2px solid transparent',
+                color: currentFolder === 'INBOX.Sent' ? 'var(--brand-blue)' : 'var(--fg-muted)',
+                fontWeight: currentFolder === 'INBOX.Sent' ? 'var(--weight-bold)' : 'var(--weight-medium)',
+                cursor: 'pointer', fontSize: 'var(--text-sm)', transition: 'all 0.2s'
+              }}
+            >
+              Sent
+            </button>
+          </div>
+
           {/* Inbox summary header */}
           <div style={{ padding: 'var(--space-3) var(--space-4)', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-2)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-              <IconInbox size={18} stroke={1.75} style={{ color: 'var(--brand-blue)' }} />
-              <span style={{ fontWeight: 'var(--weight-bold)', color: 'var(--brand-navy)', fontSize: 'var(--text-sm)' }}>Inbox</span>
+              {currentFolder === 'INBOX' ? <IconInbox size={18} stroke={1.75} style={{ color: 'var(--brand-blue)' }} /> : <IconSend size={18} stroke={1.75} style={{ color: 'var(--brand-blue)' }} />}
+              <span style={{ fontWeight: 'var(--weight-bold)', color: 'var(--brand-navy)', fontSize: 'var(--text-sm)' }}>
+                {currentFolder === 'INBOX' ? 'Inbox' : 'Sent Box'}
+              </span>
               <span style={{ fontSize: 'var(--text-xxs)', color: 'var(--fg-muted)' }}>
                 {emails.length} {emails.length === 1 ? 'message' : 'messages'}
               </span>
             </div>
-            {unreadCount > 0 && (
+            {currentFolder === 'INBOX' && unreadCount > 0 && (
               <span className="mailbox-unread-badge">{unreadCount} unread</span>
             )}
           </div>
@@ -4738,8 +4802,8 @@ function MailboxPage({ showToast }) {
               </div>
             ) : filteredEmails.length === 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: 'var(--space-6)', color: 'var(--fg-muted)', fontSize: 'var(--text-sm)', textAlign: 'center', gap: 'var(--space-2)' }}>
-                <IconInbox size={32} stroke={1.5} style={{ opacity: 0.4 }} />
-                {search ? 'No emails match your search.' : 'Your inbox is empty.'}
+                {currentFolder === 'INBOX' ? <IconInbox size={32} stroke={1.5} style={{ opacity: 0.4 }} /> : <IconSend size={32} stroke={1.5} style={{ opacity: 0.4 }} />}
+                {search ? 'No emails match your search.' : `Your ${currentFolder === 'INBOX' ? 'inbox' : 'sent box'} is empty.`}
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
@@ -5010,6 +5074,9 @@ function MailboxPage({ showToast }) {
           initialSubject={compose.subject}
           initialBody={compose.body}
           onClose={() => setCompose(null)}
+          onSuccess={() => {
+            fetchEmails();
+          }}
           showToast={showToast}
           emailSuggestions={emailSuggestions}
         />
@@ -5018,20 +5085,43 @@ function MailboxPage({ showToast }) {
   );
 }
 
-function ComposeEmailModal({ onClose, showToast, initialTo = '', initialSubject = '', initialBody = '', emailSuggestions = [] }) {
+function ComposeEmailModal({ onClose, onSuccess, showToast, initialTo = '', initialSubject = '', initialBody = '', emailSuggestions = [] }) {
   const [to, setTo] = useState(initialTo);
   const [subject, setSubject] = useState(initialSubject);
   const [body, setBody] = useState(initialBody);
+  const [attachments, setAttachments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const isReply = !!initialTo;
+
+  const handleFileChange = (e) => {
+    if (e.target.files) {
+      setAttachments(Array.from(e.target.files));
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     try {
-      await api.sendMailboxEmail({ to_email: to, subject, body });
+      const attachmentData = await Promise.all(attachments.map(file => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = () => {
+            const base64Str = reader.result.split(',')[1];
+            resolve({
+              filename: file.name,
+              content: base64Str,
+              content_type: file.type || 'application/octet-stream'
+            });
+          };
+          reader.onerror = error => reject(error);
+        });
+      }));
+
+      await api.sendMailboxEmail({ to_email: to, subject, body, attachments: attachmentData });
       
       // Save recipient to sent_emails in localStorage
       try {
@@ -5046,6 +5136,7 @@ function ComposeEmailModal({ onClose, showToast, initialTo = '', initialSubject 
       }
 
       showToast('Email sent successfully!');
+      if (onSuccess) onSuccess();
       onClose();
     } catch (err) {
       console.error(err);
@@ -5179,6 +5270,25 @@ function ComposeEmailModal({ onClose, showToast, initialTo = '', initialSubject 
                 }}
                 required 
               />
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
+              <label style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--weight-bold)', color: 'var(--fg-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Attachments</label>
+              <input 
+                type="file" 
+                multiple 
+                onChange={handleFileChange}
+                style={{
+                  fontFamily: 'var(--font-body)',
+                  fontSize: 'var(--text-sm)',
+                  color: 'var(--fg-primary)'
+                }}
+              />
+              {attachments.length > 0 && (
+                <div style={{ fontSize: 'var(--text-xs)', color: 'var(--fg-muted)', marginTop: '4px' }}>
+                  {attachments.length} file(s) selected
+                </div>
+              )}
             </div>
           </div>
 
@@ -9010,6 +9120,35 @@ export default function App() {
     }
   };
 
+  // Maps a backend notification `data.route` to an admin-panel tab.
+  // Routes that only exist in the mobile app (e.g. /my-applications) fall back
+  // to the closest admin tab so the click always lands somewhere sensible.
+  const NOTIF_ROUTE_TO_TAB = {
+    '/applications': 'applications',
+    '/my-applications': 'applications',
+    '/members': 'members',
+    '/payments': 'payments',
+    '/community': 'community',
+    '/referrals': 'referrals',
+    '/my-referrals': 'referrals',
+    '/events': 'events',
+    '/marketplace': 'marketplace',
+    '/clubs': 'clubs',
+  };
+
+  const openNotification = async (n) => {
+    // Mark read (optimistic) — reuse the single-read flow.
+    if (n && !n.is_read) dismissNotification(n.id);
+
+    const route = n?.data?.route || '';
+    const tab = NOTIF_ROUTE_TO_TAB[route] || route.replace(/^\//, '');
+    if (tab) {
+      setActiveTab(tab);
+    } else {
+      showToast('Opened notification');
+    }
+  };
+
   if (!isAuthenticated) {
     return <LoginPage onLogin={handleLogin} />;
   }
@@ -9069,6 +9208,7 @@ export default function App() {
         notifications={notifications}
         unreadCount={unreadCount}
         onDismissNotification={dismissNotification}
+        onOpenNotification={openNotification}
         onMarkAllRead={markAllRead}
         onChangePassword={() => setShowChangePassword(true)}
         onLogout={handleLogout}

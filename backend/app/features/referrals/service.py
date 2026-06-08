@@ -14,7 +14,7 @@ from sqlalchemy.orm import selectinload, joinedload
 from app.core.exceptions import BadRequestException, NotFoundException, ForbiddenException
 from app.features.auth.service import hash_password
 from app.features.auth.verification import update_member_verification
-from app.features.notifications.service import send_push_notification, notify_multiple_users
+from app.features.notifications.service import send_push_notification, notify_multiple_users, notify_admins
 from app.features.referrals.schemas import ReferralCreate, ReferralStatusUpdate
 from app.models.referrals import Referral, ReferralStatus, ReferralStatusHistory
 from app.models.user import User, VerificationLevel
@@ -109,6 +109,17 @@ async def create_referral(data: ReferralCreate, actor_id: UUID, db: AsyncSession
             body=f"{loaded_ref.from_member.full_name} sent you a new lead: {loaded_ref.client_name}",
             notification_type="NEW_REFERRAL",
             data={"referral_id": str(loaded_ref.id), "route": "/my-referrals"}
+        )
+    except Exception:
+        pass
+
+    # Notify admins (panel feed): a new referral was created
+    try:
+        await notify_admins(
+            title="🔗 New Referral",
+            body=f"{loaded_ref.from_member.full_name} referred {loaded_ref.client_name} to {loaded_ref.to_member.full_name}.",
+            notification_type="ADMIN_NEW_REFERRAL",
+            data={"referral_id": str(loaded_ref.id), "route": "/referrals"},
         )
     except Exception:
         pass

@@ -4,6 +4,9 @@ import logging
 import asyncio
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email import encoders
+import typing
 from email.utils import formatdate, make_msgid
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from app.core.config import get_settings
@@ -23,18 +26,18 @@ def render_template(template_name: str, context: dict) -> str:
     template = jinja_env.get_template(template_name)
     return template.render(context)
 
-async def send_email(to_email: str, subject: str, html_content: str):
+async def send_email(to_email: str, subject: str, html_content: str, attachments: typing.Optional[list[dict]] = None, append_to_sent: bool = False):
     """Sends an email asynchronously using SMTP."""
     if not settings.SMTP_USER or not settings.SMTP_PASSWORD:
         logger.warning(f"SMTP credentials not fully configured. Skipping email to {to_email}")
         return
 
     # Run the blocking SMTP operations in a thread to keep it async-friendly
-    await asyncio.to_thread(_send_smtp, to_email, subject, html_content)
+    await asyncio.to_thread(_send_smtp, to_email, subject, html_content, attachments, append_to_sent)
 
-def _send_smtp(to_email: str, subject: str, html_content: str):
+def _send_smtp(to_email: str, subject: str, html_content: str, attachments: typing.Optional[list[dict]] = None, append_to_sent: bool = False):
     """Internal blocking function for sending SMTP email."""
-    msg = MIMEMultipart("alternative")
+    msg = MIMEMultipart("mixed")
     msg["Subject"] = subject
     msg["From"] = f"{settings.SMTP_FROM_NAME} <{settings.SMTP_FROM_EMAIL}>"
     msg["To"] = to_email
@@ -46,8 +49,20 @@ def _send_smtp(to_email: str, subject: str, html_content: str):
     part1 = MIMEText(plain_text, "plain")
     part2 = MIMEText(html_content, "html")
     
-    msg.attach(part1)
-    msg.attach(part2)
+    alt_part = MIMEMultipart("alternative")
+    alt_part.attach(part1)
+    alt_part.attach(part2)
+    msg.attach(alt_part)
+    
+    if attachments:
+        for att in attachments:
+            ctype = att.get('content_type', 'application/octet-stream')
+            maintype, _, subtype = ctype.partition('/')
+            part = MIMEBase(maintype, subtype or 'octet-stream')
+            part.set_payload(att['content'])
+            encoders.encode_base64(part)
+            part.add_header("Content-Disposition", f"attachment; filename=\"{att['filename']}\"")
+            msg.attach(part)
 
     try:
         context = ssl.create_default_context()
@@ -65,5 +80,17 @@ def _send_smtp(to_email: str, subject: str, html_content: str):
                 server.sendmail(settings.SMTP_FROM_EMAIL, to_email, msg.as_string())
         
         logger.info(f"Successfully sent email to {to_email} with subject: {subject}")
+        
+        if append_to_sent:
+            try:
+                import imaplib
+                import time
+                mail = imaplib.IMAP4_SSL(settings.SMTP_HOST, 993, timeout=10)
+                mail.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+                mail.append('INBOX.Sent', '\\Seen', imaplib.Time2Internaldate(time.time()), msg.as_bytes())
+                mail.logout()
+            except Exception as e:
+                logger.error(f"Failed to append to Sent folder: {e}")
+                
     except Exception as e:
         logger.error(f"Failed to send email to {to_email}: {str(e)}")

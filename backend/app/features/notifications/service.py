@@ -22,7 +22,7 @@ from app.core.config import get_settings
 from app.core.database import async_session_factory
 from app.core.exceptions import NotFoundException
 from app.models.notifications import Notification
-from app.models.user import User
+from app.models.user import User, UserRole
 
 logger = logging.getLogger(__name__)
 
@@ -308,6 +308,77 @@ async def notify_multiple_users(
         except Exception as e:
             await session.rollback()
             logger.error(f"notify_multiple_users failed: {e}")
+
+
+# Roles that operate the admin panel / should receive operational alerts.
+_ADMIN_ROLES = [UserRole.SUPER_ADMIN, UserRole.ADMIN]
+
+
+async def notify_admins(
+    title: str,
+    body: str,
+    notification_type: str,
+    data: Dict[str, str] | None = None,
+    include_chapter_admins: bool = False,
+) -> None:
+    """
+    Emit a notification to every active admin (SUPER_ADMIN / ADMIN, and optionally
+    CHAPTER_ADMIN).
+
+    Unlike ``notify_multiple_users``/``broadcast_notification``, this ALWAYS persists a
+    Notification row per admin first — so the admin panel, which polls the DB rather than
+    FCM, surfaces it — and only then attempts a best-effort push. Opens its own DB session,
+    so it is safe to call inline from a request handler or as a background task.
+    """
+    roles = list(_ADMIN_ROLES)
+    if include_chapter_admins:
+        roles.append(UserRole.CHAPTER_ADMIN)
+
+    async with async_session_factory() as session:
+        try:
+            now = datetime.now(timezone.utc)
+            admins = (await session.execute(
+                select(User).where(User.role.in_(roles), User.is_active == True)
+            )).scalars().all()
+            if not admins:
+                return
+
+            # 1. Persist (always — independent of FCM availability)
+            for admin in admins:
+                session.add(Notification(
+                    user_id=admin.id,
+                    title=title,
+                    body=body,
+                    notification_type=notification_type,
+                    data=data,
+                    sent_at=now,
+                    is_read=False,
+                ))
+            await session.commit()
+
+            # 2. Best-effort push
+            if not _init_firebase():
+                logger.info(f"notify_admins [STUB]: '{title}' to {len(admins)} admins.")
+                return
+
+            for admin in admins:
+                token = admin.fcm_token
+                if not token or len(token) < 20 or token.startswith('mock-'):
+                    continue
+                try:
+                    messaging.send(messaging.Message(
+                        notification=messaging.Notification(title=title, body=body),
+                        data=data if data else {},
+                        token=token,
+                        apns=messaging.APNSConfig(
+                            payload=messaging.APNSPayload(aps=messaging.Aps(sound="default"))
+                        ),
+                    ))
+                except Exception as e:
+                    logger.warning(f"notify_admins FCM failed for {admin.id}: {e}")
+        except Exception as e:
+            await session.rollback()
+            logger.error(f"notify_admins failed: {e}")
 
 
 def _serialize_notification(n: Notification) -> Dict[str, Any]:
