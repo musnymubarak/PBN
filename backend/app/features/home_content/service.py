@@ -19,7 +19,7 @@ from app.core.exceptions import NotFoundException
 from app.models.events import Event, EventType
 from app.models.home_content import CtaActionType, HomeSlide, SlideType
 from app.models.memberships import ChapterMembership
-from app.models.user import User
+from app.models.user import User, UserRole
 
 
 # ── Serialization ────────────────────────────────────────────────────────────
