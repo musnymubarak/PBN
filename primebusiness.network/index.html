@@ -1871,12 +1871,52 @@
       background: #0e1535;
       border: 1px solid rgba(255, 255, 255, 0.07);
       border-radius: 8px;
-      padding: 48px 36px;
+      padding: 0;
       transition: all 0.3s;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    @media (min-width: 900px) {
+      .ecosystem-card {
+        flex-direction: row;
+        align-items: stretch;
+      }
+      .ecosystem-card.reverse {
+        flex-direction: row-reverse;
+      }
     }
 
     .ecosystem-card:hover {
       border-color: rgba(201, 168, 76, 0.3);
+    }
+
+    .ecosystem-card-img {
+      width: 100%;
+      height: 240px;
+      object-fit: cover;
+    }
+
+    @media (min-width: 900px) {
+      .ecosystem-card-img {
+        width: 45%;
+        height: auto;
+      }
+    }
+
+    .ecosystem-content-wrap {
+      padding: 36px 32px 48px;
+    }
+
+    @media (min-width: 900px) {
+      .ecosystem-content-wrap {
+        width: 55%;
+        padding: 40px 32px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+      }
     }
 
     .ecosystem-icon {
@@ -1901,7 +1941,8 @@
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-      margin-top: 20px;
+      margin-top: auto;
+      padding-top: 20px;
     }
 
     .ecosystem-tag {
@@ -4019,40 +4060,30 @@
     </div>
     <div class="ecosystem-grid reveal">
       <div class="ecosystem-card">
-        <div class="ecosystem-icon"><span class="ti"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"
-              viewBox="0 0 24 24">
-              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-              <circle cx="9" cy="7" r="4" />
-              <path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
-              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-              <path d="M21 21v-2a4 4 0 0 0 -3 -3.85" />
-            </svg></span></div>
-        <div class="ecosystem-title">CEO Forum</div>
-        <div class="ecosystem-desc">An honorary forum for CEOs, Managing Directors, Founders, and equivalent senior
-          business leaders within PBN. No fee for Forum participation — purely honorary. A space for senior leaders to
-          connect, advise, and collaborate at the highest level.</div>
-        <div class="ecosystem-tags">
-          <span class="ecosystem-tag">CEOs & MDs</span><span class="ecosystem-tag">Founders</span><span
-            class="ecosystem-tag">Honorary</span><span class="ecosystem-tag">No Fee</span>
+        <img class="ecosystem-card-img" src="ceo_forum_sl_v3.png" alt="CEO Forum" />
+        <div class="ecosystem-content-wrap">
+          <div class="ecosystem-title">CEO Forum</div>
+          <div class="ecosystem-desc">An honorary forum for CEOs, Managing Directors, Founders, and equivalent senior
+            business leaders within PBN. No fee for Forum participation — purely honorary. A space for senior leaders to
+            connect, advise, and collaborate at the highest level.</div>
+          <div class="ecosystem-tags">
+            <span class="ecosystem-tag">CEOs & MDs</span><span class="ecosystem-tag">Founders</span><span
+              class="ecosystem-tag">Honorary</span><span class="ecosystem-tag">No Fee</span>
+          </div>
         </div>
       </div>
-      <div class="ecosystem-card">
-        <div class="ecosystem-icon"><span class="ti"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"
-              viewBox="0 0 24 24">
-              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-              <path d="M9 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
-              <path d="M19 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
-              <path
-                d="M9 12h-4a2 2 0 0 0 -2 2v1a2 2 0 0 0 2 2h1a2 2 0 0 0 2 -2v-6a2 2 0 0 1 2 -2h4a2 2 0 0 1 2 2v6a2 2 0 0 0 2 2h1a2 2 0 0 0 2 -2v-1a2 2 0 0 0 -2 -2h-4" />
-            </svg></span></div>
-        <div class="ecosystem-title">PBN Podcast Platform</div>
-        <div class="ecosystem-desc">PBN operates a Podcast Platform as a content and thought leadership channel
-          distributed across all major platforms. Charter Members and Founders Club Members may contribute content.
-          Corporate sponsors may sponsor episodes. All podcast content produced by PBN remains PBN's intellectual
-          property.</div>
-        <div class="ecosystem-tags">
-          <span class="ecosystem-tag">CEO Interviews</span><span class="ecosystem-tag">Business Insights</span><span
-            class="ecosystem-tag">Member Content</span><span class="ecosystem-tag">Sponsor Slots</span>
+      <div class="ecosystem-card reverse">
+        <img class="ecosystem-card-img" src="pbn_podcast_sl.png" alt="PBN Podcast Platform" />
+        <div class="ecosystem-content-wrap">
+          <div class="ecosystem-title">PBN Podcast Platform</div>
+          <div class="ecosystem-desc">PBN operates a Podcast Platform as a content and thought leadership channel
+            distributed across all major platforms. Charter Members and Founders Club Members may contribute content.
+            Corporate sponsors may sponsor episodes. All podcast content produced by PBN remains PBN's intellectual
+            property.</div>
+          <div class="ecosystem-tags">
+            <span class="ecosystem-tag">CEO Interviews</span><span class="ecosystem-tag">Business Insights</span><span
+              class="ecosystem-tag">Member Content</span><span class="ecosystem-tag">Sponsor Slots</span>
+          </div>
         </div>
       </div>
     </div>
