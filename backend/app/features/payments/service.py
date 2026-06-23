@@ -456,6 +456,7 @@ from app.models.payment_proofs import PaymentProof, PaymentProofStatus, PaymentP
 
 async def get_proof_upload_status(token: str, db: AsyncSession) -> Dict[str, Any]:
     from app.models.user import User
+    from app.models.payments import PaymentStatus
     stmt = (
         select(PaymentProof, Payment, User)
         .join(Payment, Payment.id == PaymentProof.payment_id)
@@ -469,6 +470,21 @@ async def get_proof_upload_status(token: str, db: AsyncSession) -> Dict[str, Any
     
     proof, payment, user = row
     
+    # 1. Check if token expired by time
+    if proof.upload_token_expires_at < datetime.now(timezone.utc):
+        raise BadRequestException("This upload link has expired.")
+
+    # 2. Check if already paid (completed in other ways)
+    if payment.status == PaymentStatus.COMPLETED:
+        raise BadRequestException("Payment has already been made and completed.")
+
+    # 3. Check if already uploaded and waiting for review
+    if proof.status == PaymentProofStatus.APPROVED:
+        raise BadRequestException("This payment proof has already been approved.")
+        
+    if proof.status == PaymentProofStatus.PENDING_REVIEW and proof.proof_type is not None:
+        raise BadRequestException("Payment proof has already been uploaded and is pending review.")
+    
     return {
         "status": proof.status.value,
         "payment_amount": str(payment.amount),
@@ -477,6 +493,8 @@ async def get_proof_upload_status(token: str, db: AsyncSession) -> Dict[str, Any
     }
 
 async def submit_payment_proof(token: str, proof_type: PaymentProofType, reference_number: str | None, file: UploadFile | None, db: AsyncSession) -> Dict[str, Any]:
+    from app.models.payments import Payment, PaymentStatus
+    
     stmt = select(PaymentProof).where(PaymentProof.upload_token == token)
     res = await db.execute(stmt)
     proof = res.scalar_one_or_none()
@@ -484,8 +502,23 @@ async def submit_payment_proof(token: str, proof_type: PaymentProofType, referen
     if not proof:
         raise NotFoundException("Invalid or expired upload token.")
         
+    # 1. Check if token expired by time
+    if proof.upload_token_expires_at < datetime.now(timezone.utc):
+        raise BadRequestException("This upload link has expired.")
+
+    # 2. Check if already paid (completed in other ways)
+    pay_stmt = select(Payment).where(Payment.id == proof.payment_id)
+    pay_res = await db.execute(pay_stmt)
+    payment = pay_res.scalar_one_or_none()
+    if payment and payment.status == PaymentStatus.COMPLETED:
+        raise BadRequestException("Payment has already been made and completed.")
+
+    # 3. Check if already uploaded and waiting for review
     if proof.status == PaymentProofStatus.APPROVED:
-        raise BadRequestException("Proof has already been approved.")
+        raise BadRequestException("This payment proof has already been approved.")
+        
+    if proof.status == PaymentProofStatus.PENDING_REVIEW and proof.proof_type is not None:
+        raise BadRequestException("Payment proof has already been uploaded and is pending review.")
         
     proof.proof_type = proof_type
     proof.reference_number = reference_number

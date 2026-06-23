@@ -512,7 +512,7 @@
 
                 const data = resData.data;
 
-                if (data.status.toLowerCase() !== "pending_review") {
+                if (data.status.toLowerCase() !== "pending_review" && data.status.toLowerCase() !== "rejected") {
                     document.getElementById('error-message').textContent = `This payment proof has already been processed (Status: ${data.status}).`;
                     showCard('error-card');
                     return;
