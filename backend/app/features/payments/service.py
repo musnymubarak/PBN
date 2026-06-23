@@ -537,6 +537,30 @@ async def submit_payment_proof(token: str, proof_type: PaymentProofType, referen
 
     proof.status = PaymentProofStatus.PENDING_REVIEW
     await db.flush()
+
+    # Notify admins of new payment proof submission
+    try:
+        from app.models.user import User
+        user = (await db.execute(select(User).where(User.id == proof.user_id))).scalar_one_or_none()
+        user_name = user.full_name if user else "Unknown Member"
+        payment_reason = payment.reason if payment else "Membership Fee"
+        payment_amount = str(payment.amount) if payment else "0"
+        
+        title = "New Payment Proof Submitted"
+        body = f"{user_name} submitted a payment proof of LKR {payment_amount} for '{payment_reason}'."
+        await notify_admins(
+            title=title,
+            body=body,
+            notification_type="PAYMENT_PROOF_SUBMITTED",
+            data={
+                "proof_id": str(proof.id),
+                "payment_id": str(proof.payment_id),
+                "click_action": "/payments"
+            }
+        )
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"Failed to notify admins of payment proof submission: {e}")
     
     return {"message": "Payment proof submitted successfully.", "status": proof.status.value}
 
