@@ -239,7 +239,34 @@ async def update_user(
     old_val = _serialize_user(user)
     
     if "role" in data:
+        old_role = user.role
         user.role = data["role"]
+        
+        if old_role == UserRole.PROSPECT and user.role == UserRole.MEMBER:
+            # Mark pending membership payments as completed
+            from app.models.payments import PaymentStatus, PaymentType
+            await db.execute(
+                update(Payment)
+                .where(
+                    Payment.user_id == user_id, 
+                    Payment.payment_type == PaymentType.MEMBERSHIP,
+                    Payment.status == PaymentStatus.PENDING
+                )
+                .values(status=PaymentStatus.COMPLETED)
+            )
+
+            from app.core.email_service import send_email, render_template
+            import logging
+            logger = logging.getLogger(__name__)
+            if user.email:
+                try:
+                    html = render_template("membership_activated.html", {
+                        "full_name": user.full_name,
+                        "amount": None,
+                    })
+                    await send_email(user.email, "Your PBN Membership is Activated!", html)
+                except Exception as e:
+                    logger.error(f"Failed to send membership activation email to {user.email}: {e}")
     if "is_active" in data:
         user.is_active = data["is_active"]
         # Also toggle chapter membership if it exists

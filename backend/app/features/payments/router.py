@@ -7,7 +7,7 @@ from __future__ import annotations
 from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, File, UploadFile, Form
 from fastapi.responses import ORJSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,8 +15,12 @@ from app.core.config import get_settings
 from app.core.dependencies import get_db
 from app.core.response import success_response, error_response
 from app.features.auth.dependencies import get_current_user, require_role
-from app.features.payments.schemas import PaymentInitiate, SimulateWebhook, PaymentCreateAdmin, PaymentUpdateAdmin
+from app.features.payments.schemas import (
+    PaymentInitiate, SimulateWebhook, PaymentCreateAdmin, PaymentUpdateAdmin,
+    PaymentProofUpload, PaymentProofReview, PaymentProofResponse
+)
 from app.features.payments import service
+from app.models.payment_proofs import PaymentProofStatus
 from app.models.user import User, UserRole
 
 router = APIRouter(tags=["Payments"])
@@ -123,3 +127,65 @@ async def admin_update_payment_endpoint(
 ) -> ORJSONResponse:
     result = await service.update_payment(payment_id, current_user.id, data, db)
     return success_response(data=service._serialize_payment(result), message="Payment updated successfully")
+
+
+# ── Payment Proofs (Public & Admin) ──────────────────────────────────────────
+
+@router.get("/payments/proof/{token}", summary="Get payment proof upload status (Public)")
+async def get_payment_proof_status_endpoint(
+    token: str,
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    result = await service.get_proof_upload_status(token, db)
+    return success_response(data=result)
+
+
+@router.post("/payments/proof/{token}/upload", summary="Upload payment proof (Public)")
+async def upload_payment_proof_endpoint(
+    token: str,
+    proof_type: str = Form(...),
+    reference_number: Optional[str] = Form(None),
+    file: Optional[UploadFile] = File(None),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    from app.models.payment_proofs import PaymentProofType
+    result = await service.submit_payment_proof(
+        token,
+        PaymentProofType(proof_type.lower()),
+        reference_number,
+        file,
+        db
+    )
+    return success_response(data=result)
+
+
+@router.get("/admin/payment-proofs", summary="Admin: list payment proofs")
+async def admin_list_payment_proofs_endpoint(
+    status: Optional[PaymentProofStatus] = Query(None),
+    current_user: User = Depends(require_role([UserRole.SUPER_ADMIN, UserRole.ADMIN])),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    proofs = await service.list_payment_proofs(status, db)
+    return success_response(data=proofs)
+
+
+@router.post("/admin/payment-proofs/{proof_id}/approve", summary="Admin: approve payment proof")
+async def admin_approve_payment_proof_endpoint(
+    proof_id: UUID,
+    data: PaymentProofReview,
+    current_user: User = Depends(require_role([UserRole.SUPER_ADMIN, UserRole.ADMIN])),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    result = await service.approve_payment_proof(proof_id, current_user, data.notes, db)
+    return success_response(data=result)
+
+
+@router.post("/admin/payment-proofs/{proof_id}/reject", summary="Admin: reject payment proof")
+async def admin_reject_payment_proof_endpoint(
+    proof_id: UUID,
+    data: PaymentProofReview,
+    current_user: User = Depends(require_role([UserRole.SUPER_ADMIN, UserRole.ADMIN])),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    result = await service.reject_payment_proof(proof_id, current_user, data.notes, db)
+    return success_response(data=result)

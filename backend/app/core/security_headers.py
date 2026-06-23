@@ -25,7 +25,10 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["X-Content-Type-Options"] = "nosniff"
 
         # Prevent clickjacking
-        response.headers["X-Frame-Options"] = "DENY"
+        if request.url.path.startswith("/static"):
+            response.headers["X-Frame-Options"] = "SAMEORIGIN"
+        else:
+            response.headers["X-Frame-Options"] = "DENY"
 
         # XSS filter
         response.headers["X-XSS-Protection"] = "1; mode=block"
@@ -46,6 +49,12 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
                 "img-src 'self' data:; "
                 "connect-src 'self'; "
                 "frame-ancestors 'none'"
+            )
+        elif request.url.path.startswith("/static"):
+            # Allow static files to be framed/embedded by the application itself
+            response.headers["Content-Security-Policy"] = (
+                "default-src 'self'; "
+                "frame-ancestors 'self' https://admin.primebusiness.network https://primebusiness.network http://localhost:3000 http://localhost:8000"
             )
         else:
             response.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'"

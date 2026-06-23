@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Payment Proof | Prime Business Network</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="alternate icon" type="image/png" href="/favicon.png" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <link href="https://fonts.bunny.net/css?family=dm-sans:300,400,500,600,700,800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --navy: #080d24;
+            --navy-mid: #0e1535;
+            --navy-light: #162050;
+            --white: #ffffff;
+            --gold: #c9a84c;
+            --gold-light: #e8c97a;
+            --gold-dark: #a1853b;
+            --success: #059669;
+            --error: #dc2626;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --text-muted: #7a85b0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--navy);
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .bg-glow {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, rgba(201, 168, 76, 0.08) 0%, transparent 60%);
+            z-index: -1;
+            filter: blur(40px);
+            animation: pulse 8s infinite alternate;
+        }
+
+        @keyframes pulse {
+            from { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+            to { transform: translate(-50%, -50%) scale(1.2); opacity: 0.8; }
+        }
+
+        .main-container {
+            width: 100%;
+            max-width: 500px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .card {
+            background: linear-gradient(145deg, var(--navy-mid), var(--navy-light));
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 40px 30px;
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(20px);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s ease-out;
+            display: none;
+        }
+
+        .card.active {
+            opacity: 1;
+            transform: translateY(0);
+            display: block;
+        }
+
+        .logo-box {
+            margin-bottom: 25px;
+        }
+
+        .logo-text {
+            font-size: 1.25rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-text span {
+            color: var(--gold);
+        }
+
+        .info-header {
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .info-header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .info-header p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--gold-light);
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 14px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: white;
+            font-family: inherit;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--gold);
+            background: rgba(0, 0, 0, 0.4);
+            box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.1);
+        }
+
+        .custom-dropdown {
+            position: relative;
+        }
+
+        .dropdown-selected {
+            width: 100%;
+            padding: 14px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: white;
+            font-size: 0.95rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .dropdown-selected:hover, .custom-dropdown.open .dropdown-selected {
+            border-color: var(--gold);
+            background: rgba(0, 0, 0, 0.4);
+            box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.1);
+        }
+
+        .dropdown-arrow {
+            width: 18px;
+            height: 18px;
+            transition: transform 0.3s;
+        }
+
+        .custom-dropdown.open .dropdown-arrow {
+            transform: rotate(180deg);
+        }
+
+        .dropdown-options {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            right: 0;
+            background: var(--navy-mid);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            overflow: hidden;
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .custom-dropdown.open .dropdown-options {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .dropdown-option {
+            padding: 14px;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+            color: white;
+            font-size: 0.95rem;
+        }
+
+        .dropdown-option:hover {
+            background: rgba(201, 168, 76, 0.1);
+            color: var(--gold);
+        }
+
+        .dropdown-option.selected {
+            background: rgba(201, 168, 76, 0.15);
+            color: var(--gold);
+            font-weight: 600;
+        }
+
+        .file-upload {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+            background: rgba(0,0,0,0.2);
+            border: 1px dashed var(--gold);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .file-upload:hover {
+            background: rgba(201, 168, 76, 0.05);
+        }
+
+        .file-upload input[type="file"] {
+            position: absolute;
+            top: 0;
+            right: 0;
+            margin: 0;
+            padding: 0;
+            font-size: 20px;
+            cursor: pointer;
+            opacity: 0;
+            height: 100%;
+            width: 100%;
+        }
+
+        .file-name {
+            display: block;
+            margin-top: 10px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            word-break: break-all;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            background: var(--gold);
+            color: var(--navy);
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            background: var(--gold-light);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(201, 168, 76, 0.2);
+        }
+
+        .btn:disabled {
+            background: var(--text-muted);
+            color: rgba(255,255,255,0.5);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Loader */
+        .loader {
+            width: 48px;
+            height: 48px;
+            border: 3px solid var(--glass-border);
+            border-bottom-color: var(--gold);
+            border-radius: 50%;
+            display: inline-block;
+            animation: rotation 1s linear infinite;
+        }
+
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        #loading-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        #error-card, #success-card {
+            text-align: center;
+        }
+        
+        .status-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+        }
+
+        .status-icon.success {
+            background: rgba(5, 150, 105, 0.1);
+            color: var(--success);
+        }
+
+        .status-icon.error {
+            background: rgba(220, 38, 38, 0.1);
+            color: var(--error);
+        }
+
+        .payment-summary {
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 24px;
+            text-align: left;
+        }
+
+        .payment-summary .row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+        .payment-summary .row:last-child {
+            margin-bottom: 0;
+            padding-top: 8px;
+            border-top: 1px solid var(--glass-border);
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--gold);
+        }
+
+    </style>
+</head>
+<body>
+    <div class="bg-glow"></div>
+
+    <div class="main-container">
+        
+        <!-- Loading State -->
+        <div id="loading-screen" class="card active">
+            <span class="loader"></span>
+            <p style="color: var(--text-muted); font-weight: 500;">Loading payment details...</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="error-card" class="card">
+            <div class="status-icon error">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </div>
+            <h2 style="margin-bottom: 10px;">Link Invalid</h2>
+            <p id="error-message" style="color: var(--text-muted);"></p>
+        </div>
+
+        <!-- Success State -->
+        <div id="success-card" class="card">
+            <div class="status-icon success">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+            <h2 style="margin-bottom: 10px;">Proof Submitted!</h2>
+            <p style="color: var(--text-muted); margin-bottom: 20px;">Your payment proof has been successfully submitted and is under review. You will be notified once it is approved.</p>
+        </div>
+
+        <!-- Upload Form -->
+        <div id="upload-card" class="card">
+            <div class="logo-box">
+                <span class="logo-text">Prime <span>Business</span> Network</span>
+            </div>
+            
+            <div class="info-header">
+                <h1>Submit Payment Proof</h1>
+                <p>Upload your bank transfer slip or provide a reference number to activate your membership.</p>
+            </div>
+
+            <div class="payment-summary">
+                <div class="row">
+                    <span style="color: var(--text-muted)">Name</span>
+                    <span id="summary-name">...</span>
+                </div>
+                <div class="row">
+                    <span style="color: var(--text-muted)">Reason</span>
+                    <span id="summary-reason">...</span>
+                </div>
+                <div class="row">
+                    <span>Total Amount</span>
+                    <span id="summary-amount">LKR 0.00</span>
+                </div>
+            </div>
+
+            <form id="proof-form" onsubmit="submitProof(event)">
+                <div class="form-group custom-dropdown" id="proof_type_dropdown">
+                    <label>Proof Type</label>
+                    <input type="hidden" id="proof_type" name="proof_type" value="IMAGE">
+                    <div class="dropdown-selected" onclick="toggleDropdown()">
+                        <span id="dropdown_selected_text">Image / Screenshot</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dropdown-arrow"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                    <div class="dropdown-options" id="dropdown_options_list">
+                        <div class="dropdown-option selected" data-value="IMAGE" onclick="selectOption('IMAGE', 'Image / Screenshot')">Image / Screenshot</div>
+                        <div class="dropdown-option" data-value="PDF" onclick="selectOption('PDF', 'PDF Document')">PDF Document</div>
+                        <div class="dropdown-option" data-value="REFERENCE_NUMBER" onclick="selectOption('REFERENCE_NUMBER', 'Reference Number Only')">Reference Number Only</div>
+                    </div>
+                </div>
+
+                <div class="form-group" id="file-group">
+                    <label>Upload Document</label>
+                    <div class="file-upload">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 10px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                        <br>
+                        <span style="font-size: 0.9rem; font-weight: 500;">Click or drag file here</span>
+                        <input type="file" id="file" name="file" accept="image/*,.pdf" onchange="updateFileName(this)">
+                        <span id="file-name" class="file-name"></span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Bank Reference Number (Optional)</label>
+                    <input type="text" id="reference_number" name="reference_number" class="form-control" placeholder="e.g. REF123456789">
+                </div>
+
+                <button type="submit" id="submit-btn" class="btn">Submit Proof</button>
+            </form>
+        </div>
+
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin.includes('localhost') 
+            ? 'http://localhost:8000/api/v1' 
+            : '/api/v1'; 
+
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get('token');
+
+        function showCard(id) {
+            document.querySelectorAll('.card').forEach(el => el.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        function toggleDropdown() {
+            document.getElementById('proof_type_dropdown').classList.toggle('open');
+        }
+
+        function selectOption(value, text) {
+            document.getElementById('proof_type').value = value;
+            document.getElementById('dropdown_selected_text').textContent = text;
+            
+            document.querySelectorAll('.dropdown-option').forEach(el => {
+                el.classList.remove('selected');
+                if(el.dataset.value === value) el.classList.add('selected');
+            });
+            
+            document.getElementById('proof_type_dropdown').classList.remove('open');
+            toggleInputs();
+        }
+
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('proof_type_dropdown');
+            if (dropdown && !dropdown.contains(e.target)) {
+                dropdown.classList.remove('open');
+            }
+        });
+
+        async function init() {
+            if (!token) {
+                document.getElementById('error-message').textContent = "No upload token provided in URL.";
+                showCard('error-card');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/payments/proof/${token}`);
+                const resData = await response.json();
+                
+                if (!response.ok) {
+                    document.getElementById('error-message').textContent = resData.message || "Link is invalid or has expired.";
+                    showCard('error-card');
+                    return;
+                }
+
+                const data = resData.data;
+
+                if (data.status.toLowerCase() !== "pending_review") {
+                    document.getElementById('error-message').textContent = `This payment proof has already been processed (Status: ${data.status}).`;
+                    showCard('error-card');
+                    return;
+                }
+
+                document.getElementById('summary-name').textContent = data.user_name;
+                document.getElementById('summary-reason').textContent = data.payment_reason;
+                document.getElementById('summary-amount').textContent = `LKR ${parseFloat(data.payment_amount).toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+
+                showCard('upload-card');
+            } catch (err) {
+                document.getElementById('error-message').textContent = "Network error. Please try again later.";
+                showCard('error-card');
+            }
+        }
+
+        function toggleInputs() {
+            const type = document.getElementById('proof_type').value;
+            const fileGroup = document.getElementById('file-group');
+            const fileInput = document.getElementById('file');
+            
+            if (type === 'REFERENCE_NUMBER') {
+                fileGroup.style.display = 'none';
+                fileInput.removeAttribute('required');
+            } else {
+                fileGroup.style.display = 'block';
+                if (type === 'IMAGE') {
+                    fileInput.setAttribute('accept', 'image/*');
+                } else {
+                    fileInput.setAttribute('accept', '.pdf');
+                }
+            }
+        }
+
+        function updateFileName(input) {
+            if (input.files && input.files[0]) {
+                document.getElementById('file-name').textContent = input.files[0].name;
+            } else {
+                document.getElementById('file-name').textContent = "";
+            }
+        }
+
+        async function submitProof(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submit-btn');
+            btn.disabled = true;
+            btn.textContent = "Submitting...";
+
+            const type = document.getElementById('proof_type').value;
+            const ref = document.getElementById('reference_number').value;
+            const fileInput = document.getElementById('file');
+
+            if (type !== 'REFERENCE_NUMBER' && (!fileInput.files || !fileInput.files[0])) {
+                alert("Please select a file to upload.");
+                btn.disabled = false;
+                btn.textContent = "Submit Proof";
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("proof_type", type);
+            if (ref) formData.append("reference_number", ref);
+            if (type !== 'REFERENCE_NUMBER' && fileInput.files[0]) {
+                formData.append("file", fileInput.files[0]);
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/payments/proof/${token}/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const resData = await response.json();
+                
+                if (response.ok) {
+                    showCard('success-card');
+                } else {
+                    alert(resData.message || "Failed to submit. Please try again.");
+                    btn.disabled = false;
+                    btn.textContent = "Submit Proof";
+                }
+            } catch (err) {
+                alert("Network error. Please try again.");
+                btn.disabled = false;
+                btn.textContent = "Submit Proof";
+            }
+        }
+
+        setTimeout(init, 500);
+    </script>
+</body>
+</html>

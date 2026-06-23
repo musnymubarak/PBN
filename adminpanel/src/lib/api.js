@@ -367,5 +367,18 @@ export const api = {
     apiFetch(`/admin/community/posts/${id}/tyfb`, { method: 'PATCH', body: JSON.stringify({ business_value }) }),
   deleteCommunityPost: (id) => apiFetch(`/admin/community/posts/${id}`, { method: 'DELETE' }),
   deleteCommunityComment: (id) => apiFetch(`/admin/community/comments/${id}`, { method: 'DELETE' }),
-};
 
+  // Payment Proofs
+  listPaymentProofs: (status = '') => {
+    const qs = status ? `?status=${status}` : '';
+    return apiFetch(`/admin/payment-proofs${qs}`);
+  },
+  approvePaymentProof: (id, notes) => apiFetch(`/admin/payment-proofs/${id}/approve`, {
+    method: 'POST',
+    body: JSON.stringify({ notes }),
+  }),
+  rejectPaymentProof: (id, notes) => apiFetch(`/admin/payment-proofs/${id}/reject`, {
+    method: 'POST',
+    body: JSON.stringify({ notes }),
+  }),
+};

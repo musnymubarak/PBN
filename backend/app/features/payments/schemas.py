@@ -8,9 +8,11 @@ from typing import Optional
 from uuid import UUID
 from decimal import Decimal
 
+from datetime import datetime
 from pydantic import BaseModel, field_validator
 
 from app.models.payments import PaymentType, PaymentStatus
+from app.models.payment_proofs import PaymentProofType, PaymentProofStatus
 
 
 class PaymentInitiate(BaseModel):
@@ -47,3 +49,29 @@ class PaymentUpdateAdmin(BaseModel):
     reason: Optional[str] = None
     notes: Optional[str] = None
     status: Optional[PaymentStatus] = None
+
+class PaymentProofResponse(BaseModel):
+    id: UUID
+    payment_id: UUID
+    user_id: UUID
+    proof_type: Optional[PaymentProofType] = None
+    file_path: Optional[str] = None
+    reference_number: Optional[str] = None
+    status: PaymentProofStatus
+    admin_notes: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
+    created_at: datetime
+    
+    # Optional nested info from joined tables
+    user_name: Optional[str] = None
+    user_phone: Optional[str] = None
+    payment_amount: Optional[Decimal] = None
+    payment_reason: Optional[str] = None
+
+class PaymentProofUpload(BaseModel):
+    proof_type: PaymentProofType
+    reference_number: Optional[str] = None
+
+class PaymentProofReview(BaseModel):
+    notes: Optional[str] = None
+

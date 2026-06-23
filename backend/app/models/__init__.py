@@ -14,6 +14,7 @@ from app.models.referrals import Referral, ReferralStatusHistory  # noqa: F401
 from app.models.events import Event, EventRSVP, EventAttendance  # noqa: F401
 from app.models.privilege_cards import PrivilegeCard, Partner, Offer, OfferRedemption, RedemptionToken, CouponCode  # noqa: F401
 from app.models.payments import Payment  # noqa: F401
+from app.models.payment_proofs import PaymentProof  # noqa: F401
 from app.models.notifications import Notification  # noqa: F401
 from app.models.audit_logs import AuditLog  # noqa: F401
 from app.models.community import CommunityPost, PostLike, PostComment  # noqa: F401
@@ -35,7 +36,7 @@ __all__ = [
     "Referral", "ReferralStatusHistory",
     "Event", "EventRSVP", "EventAttendance",
     "PrivilegeCard", "Partner", "Offer", "OfferRedemption", "RedemptionToken", "CouponCode",
-    "Payment",
+    "Payment", "PaymentProof",
     "Notification",
     "AuditLog",
     "CommunityPost", "PostLike", "PostComment",

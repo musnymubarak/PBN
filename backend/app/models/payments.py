@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from app.models.user import User
+    from app.models.payment_proofs import PaymentProof
 
 
 class PaymentType(str, enum.Enum):
@@ -62,6 +63,7 @@ class Payment(Base, TimestampMixin):
     # Relationships
     user: Mapped["User"] = relationship("User", foreign_keys=[user_id])
     recorded_by: Mapped["User | None"] = relationship("User", foreign_keys=[recorded_by_id])
+    proofs: Mapped[list["PaymentProof"]] = relationship("PaymentProof", back_populates="payment", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return f"<Payment {self.amount} {self.currency} [{self.status.value}]>"

@@ -246,6 +246,36 @@ async def _apply_payment_side_effects(payment: Payment, db: AsyncSession) -> Non
         user = (await db.execute(usr_stmt)).scalar_one_or_none()
         if user and user.role == UserRole.PROSPECT:
             user.role = UserRole.MEMBER
+            
+            # Send standard membership activated email
+            from app.core.email_service import send_email, render_template
+            import logging
+            from app.models.applications import Application
+            from app.features.applications.service import _missing_onboarding_fields
+            logger = logging.getLogger(__name__)
+            
+            onboarding_url = None
+            has_missing_fields = True
+            if user.email:
+                app_stmt = select(Application).where(Application.email == user.email).order_by(desc(Application.created_at))
+                application = (await db.execute(app_stmt)).scalars().first()
+                if application:
+                    has_missing_fields = bool(_missing_onboarding_fields(application))
+                    if application.onboarding_token:
+                        onboarding_url = f"{get_settings().PUBLIC_SITE_URL.rstrip('/')}/onboard?token={application.onboarding_token}"
+                    
+                try:
+                    html = render_template("membership_activated.html", {
+                        "full_name": user.full_name,
+                        "amount": float(payment.amount),
+                        "onboarding_url": onboarding_url,
+                        "has_missing_fields": has_missing_fields,
+                        "app_store_url": get_settings().APP_STORE_URL,
+                        "play_store_url": get_settings().PLAY_STORE_URL
+                    })
+                    await send_email(user.email, "Your PBN Membership is Activated!", html)
+                except Exception as e:
+                    logger.error(f"Failed to send membership activation email to {user.email}: {e}")
 
 
 async def simulate_webhook(payment_id: UUID, db: AsyncSession) -> Dict[str, Any]:
@@ -415,3 +445,142 @@ async def update_payment(
             pass
 
     return payment
+
+
+# ── Payment Proofs ───────────────────────────────────────────────────────────
+
+import os
+import shutil
+from fastapi import UploadFile
+from app.models.payment_proofs import PaymentProof, PaymentProofStatus, PaymentProofType
+
+async def get_proof_upload_status(token: str, db: AsyncSession) -> Dict[str, Any]:
+    from app.models.user import User
+    stmt = (
+        select(PaymentProof, Payment, User)
+        .join(Payment, Payment.id == PaymentProof.payment_id)
+        .join(User, User.id == PaymentProof.user_id)
+        .where(PaymentProof.upload_token == token)
+    )
+    res = await db.execute(stmt)
+    row = res.first()
+    if not row:
+        raise NotFoundException("Invalid or expired upload token.")
+    
+    proof, payment, user = row
+    
+    return {
+        "status": proof.status.value,
+        "payment_amount": str(payment.amount),
+        "payment_reason": payment.reason,
+        "user_name": user.full_name,
+    }
+
+async def submit_payment_proof(token: str, proof_type: PaymentProofType, reference_number: str | None, file: UploadFile | None, db: AsyncSession) -> Dict[str, Any]:
+    stmt = select(PaymentProof).where(PaymentProof.upload_token == token)
+    res = await db.execute(stmt)
+    proof = res.scalar_one_or_none()
+    
+    if not proof:
+        raise NotFoundException("Invalid or expired upload token.")
+        
+    if proof.status == PaymentProofStatus.APPROVED:
+        raise BadRequestException("Proof has already been approved.")
+        
+    proof.proof_type = proof_type
+    proof.reference_number = reference_number
+    
+    if file:
+        upload_dir = "uploads/proofs"
+        os.makedirs(upload_dir, exist_ok=True)
+        ext = file.filename.split('.')[-1] if file.filename and '.' in file.filename else ''
+        filename = f"{uuid.uuid4()}.{ext}"
+        filepath = os.path.join(upload_dir, filename)
+        
+        with open(filepath, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+            
+        proof.file_path = f"/{filepath}"
+
+    proof.status = PaymentProofStatus.PENDING_REVIEW
+    await db.flush()
+    
+    return {"message": "Payment proof submitted successfully.", "status": proof.status.value}
+
+
+async def list_payment_proofs(status: PaymentProofStatus | None, db: AsyncSession) -> List[Dict[str, Any]]:
+    from app.models.user import User
+    stmt = (
+        select(PaymentProof, Payment, User)
+        .join(Payment, Payment.id == PaymentProof.payment_id)
+        .join(User, User.id == PaymentProof.user_id)
+        .order_by(desc(PaymentProof.created_at))
+    )
+    if status:
+        stmt = stmt.where(PaymentProof.status == status)
+        
+    res = await db.execute(stmt)
+    results = []
+    for proof, payment, user in res.all():
+        results.append({
+            "id": str(proof.id),
+            "payment_id": str(payment.id),
+            "user_id": str(user.id),
+            "user_name": user.full_name,
+            "user_phone": user.phone_number,
+            "payment_reason": payment.reason,
+            "payment_amount": str(payment.amount),
+            "proof_type": proof.proof_type.value if proof.proof_type else None,
+            "file_path": proof.file_path,
+            "reference_number": proof.reference_number,
+            "status": proof.status.value,
+            "admin_notes": proof.admin_notes,
+            "created_at": proof.created_at.isoformat(),
+        })
+    return results
+
+
+async def approve_payment_proof(proof_id: UUID, current_user: Any, notes: str | None, db: AsyncSession) -> Dict[str, Any]:
+    stmt = select(PaymentProof).where(PaymentProof.id == proof_id)
+    res = await db.execute(stmt)
+    proof = res.scalar_one_or_none()
+    
+    if not proof:
+        raise NotFoundException("Payment proof not found.")
+        
+    if proof.status == PaymentProofStatus.APPROVED:
+        raise BadRequestException("Payment proof is already approved.")
+        
+    proof.status = PaymentProofStatus.APPROVED
+    proof.admin_notes = notes
+    proof.reviewed_by_id = current_user.id
+    proof.reviewed_at = datetime.now(timezone.utc)
+    
+    # Update payment to completed
+    pay_stmt = select(Payment).where(Payment.id == proof.payment_id)
+    pay_res = await db.execute(pay_stmt)
+    payment = pay_res.scalar_one_or_none()
+    
+    if payment and payment.status != PaymentStatus.COMPLETED:
+        payment.status = PaymentStatus.COMPLETED
+        await _apply_payment_side_effects(payment, db)
+        
+    await db.flush()
+    return {"message": "Payment proof approved successfully."}
+
+
+async def reject_payment_proof(proof_id: UUID, current_user: Any, notes: str | None, db: AsyncSession) -> Dict[str, Any]:
+    stmt = select(PaymentProof).where(PaymentProof.id == proof_id)
+    res = await db.execute(stmt)
+    proof = res.scalar_one_or_none()
+    
+    if not proof:
+        raise NotFoundException("Payment proof not found.")
+        
+    proof.status = PaymentProofStatus.REJECTED
+    proof.admin_notes = notes
+    proof.reviewed_by_id = current_user.id
+    proof.reviewed_at = datetime.now(timezone.utc)
+    
+    await db.flush()
+    return {"message": "Payment proof rejected successfully."}

@@ -55,6 +55,7 @@ import OnboardingPage from './onboarding/OnboardingPage';
 import MemberDetailPage from './members/MemberDetailPage';
 import HomeSlidesPage from './home-content/HomeSlidesPage';
 import ComplementsPage from './complements/ComplementsPage';
+import PaymentProofsTab from './payments/PaymentProofsTab';
 
 
 // ── Login Page ──────────────────────────────────────────────────────────────
@@ -2335,6 +2336,7 @@ function UpdatePaymentModal({ payment, onClose, onUpdate }) {
 }
 
 function PaymentsPage() {
+  const [activeTab, setActiveTab] = useState('transactions');
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showRecordModal, setShowRecordModal] = useState(false);
@@ -2388,7 +2390,14 @@ function PaymentsPage() {
         }
       />
 
-      <div className="ds-stat-grid">
+      <div className="ds-tabs" style={{ marginBottom: '1.5rem', borderBottom: '1px solid var(--border-subtle)', display: 'flex', gap: '2rem' }}>
+        <button className={`ds-tab ${activeTab === 'transactions' ? 'active' : ''}`} onClick={() => setActiveTab('transactions')} style={{ background: 'none', border: 'none', padding: '0.75rem 0', fontWeight: 600, color: activeTab === 'transactions' ? 'var(--brand-blue)' : 'var(--fg-muted)', borderBottom: activeTab === 'transactions' ? '2px solid var(--brand-blue)' : '2px solid transparent', cursor: 'pointer' }}>Transactions</button>
+        <button className={`ds-tab ${activeTab === 'proofs' ? 'active' : ''}`} onClick={() => setActiveTab('proofs')} style={{ background: 'none', border: 'none', padding: '0.75rem 0', fontWeight: 600, color: activeTab === 'proofs' ? 'var(--brand-blue)' : 'var(--fg-muted)', borderBottom: activeTab === 'proofs' ? '2px solid var(--brand-blue)' : '2px solid transparent', cursor: 'pointer' }}>Payment Proofs</button>
+      </div>
+
+      {activeTab === 'transactions' ? (
+        <>
+          <div className="ds-stat-grid">
         <Ds.StatCard
           label="Transactions"
           value={payments.length}
@@ -2482,6 +2491,10 @@ function PaymentsPage() {
           onClose={() => setEditingPayment(null)}
           onUpdate={fetchPayments}
         />
+      )}
+        </>
+      ) : (
+        <PaymentProofsTab />
       )}
     </section>
   );

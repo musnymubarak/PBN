@@ -389,13 +389,17 @@ async def update_application_status(
         await _generate_privilege_card(user.id, db)
 
         # Issue a single-use onboarding token (14-day expiry) and build the link
-        # for the approval email. We do this before sending so the link is in the
-        # email body. Token is regenerated on every approval to prevent reuse of
-        # any prior link.
+        # for the approval email.
         app.onboarding_token = secrets.token_urlsafe(32)
         app.onboarding_token_expires_at = datetime.now(timezone.utc) + timedelta(days=14)
         app.onboarding_completed_at = None
         onboarding_url = f"{settings.PUBLIC_SITE_URL.rstrip('/')}/onboard?token={app.onboarding_token}"
+
+        proof_upload_token = None
+        proof_upload_url = None
+        if data.payment_status != "completed":
+            proof_upload_token = secrets.token_urlsafe(32)
+            proof_upload_url = f"{settings.PUBLIC_SITE_URL.rstrip('/')}/payment-proof.html?token={proof_upload_token}"
 
         # Send Approval Email
         try:
@@ -409,6 +413,8 @@ async def update_application_status(
                 "has_missing_fields": bool(missing_fields),
                 "play_store_url": settings.PLAY_STORE_URL,
                 "app_store_url": settings.APP_STORE_URL,
+                "payment_pending": data.payment_status != "completed",
+                "proof_upload_url": proof_upload_url,
             })
             await send_email(app.email, "Welcome to PBN! Your Application is Approved", html)
         except Exception as e:
@@ -478,6 +484,17 @@ async def update_application_status(
                 recorded_by_id=actor.id,
             )
             db.add(membership_payment)
+            await db.flush()
+
+            if p_status == PaymentStatus.PENDING and proof_upload_token:
+                from app.models.payment_proofs import PaymentProof
+                proof = PaymentProof(
+                    payment_id=membership_payment.id,
+                    user_id=user.id,
+                    upload_token=proof_upload_token,
+                    upload_token_expires_at=datetime.now(timezone.utc) + timedelta(days=14),
+                )
+                db.add(proof)
             
             # If payment is completed, upgrade the user role immediately
             if p_status == PaymentStatus.COMPLETED:
