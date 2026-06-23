@@ -582,6 +582,43 @@ async def delete_application(app_id: UUID, db: AsyncSession) -> None:
     await db.commit()
 
 
+async def update_application_details(
+    app_id: UUID,
+    actor: User,
+    data: dict,
+    db: AsyncSession,
+) -> Application:
+    app = await get_application_by_id(app_id, db)
+    
+    old_values = {}
+    new_values = {}
+    
+    for key, new_val in data.items():
+        if hasattr(app, key):
+            old_val = getattr(app, key)
+            if old_val != new_val:
+                # Store UUIDs as strings in audit log
+                old_values[key] = str(old_val) if isinstance(old_val, UUID) else old_val
+                new_values[key] = str(new_val) if isinstance(new_val, UUID) else new_val
+                setattr(app, key, new_val)
+                
+    if new_values:
+        audit = AuditLog(
+            actor_id=actor.id,
+            entity_type="application",
+            entity_id=app.id,
+            action="update_details",
+            old_value=old_values,
+            new_value=new_values,
+        )
+        db.add(audit)
+        await db.commit()
+        await db.refresh(app)
+        
+    return app
+
+
+
 # ── Onboarding ───────────────────────────────────────────────────────────────
 
 from app.features.applications.schemas import (

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   IconChartBar,
+  IconEdit,
   IconUsers,
   IconHierarchy2,
   IconCoin,
@@ -264,6 +265,10 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
   const [errorMessage, setErrorMessage] = useState('');
   const [fitCallDate, setFitCallDate] = useState(new Date());
   const [approvalEmail, setApprovalEmail] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState({ district: '', chapter_id: '' });
+  const [filteredEditChapters, setFilteredEditChapters] = useState([]);
+  const [industries, setIndustries] = useState([]);
 
   useEffect(() => {
     setLoading(true);
@@ -271,11 +276,15 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
     Promise.all([
       api.getApplication(appId),
       api.listChapters({ active_only: true }).catch(() => []),
+      api.listIndustryCategories().catch(() => []),
     ])
-      .then(([appData, chaptersData]) => {
+      .then(([appData, chaptersData, industriesData]) => {
         setDetail(appData);
         setChapters(chaptersData || []);
+        setIndustries(industriesData || []);
         if (appData.chapter_id) setSelectedChapterId(appData.chapter_id);
+        setEditData({ district: appData.district || '', chapter_id: appData.chapter_id || '' });
+        setFilteredEditChapters((chaptersData || []).filter(c => c.district === appData.district));
       })
       .catch(err => {
         console.error(err);
@@ -337,6 +346,32 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
     }
   };
 
+  const handleEditChange = (field, val) => {
+    const newData = { ...editData, [field]: val };
+    if (field === 'district') {
+      newData.chapter_id = '';
+      setFilteredEditChapters(chapters.filter(c => c.district === val));
+    }
+    setEditData(newData);
+  };
+
+  const handleSaveDetails = async () => {
+    setUpdating(true);
+    setErrorMessage('');
+    try {
+      await api.patchApplication(appId, editData);
+      const freshData = await api.getApplication(appId);
+      setDetail(freshData);
+      setIsEditing(false);
+      onStatusUpdated();
+    } catch (err) {
+      console.error('Failed to update details:', err);
+      setErrorMessage(parseErrorMessage(err.message));
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   const handleDelete = async () => {
     if (!window.confirm('Are you absolutely sure you want to permanently delete this application? This cannot be undone.')) return;
     
@@ -388,23 +423,51 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
         {/* Header */}
         <div className="modal-header">
           <div>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>Application Details</h2>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 800, margin: 0 }}>Application Details</h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
               Review and manage this membership application
             </p>
           </div>
           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+            {!isEditing ? (
+              <Ds.Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setIsEditing(true)} 
+                leftIcon={<IconEdit size={16} />}
+              >
+                Edit
+              </Ds.Button>
+            ) : (
+              <>
+                <Ds.Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => { setIsEditing(false); setEditData({ ...detail }); }} 
+                  disabled={updating}
+                >
+                  Cancel
+                </Ds.Button>
+                <Ds.Button 
+                  variant="primary" 
+                  size="sm" 
+                  onClick={handleSaveDetails} 
+                  loading={updating}
+                >
+                  Save
+                </Ds.Button>
+              </>
+            )}
             <button 
               type="button" 
               className="view-detail-btn" 
               style={{ color: '#ef4444', borderColor: 'transparent', background: '#fef2f2' }} 
               onClick={handleDelete}
               title="Delete Application"
-              disabled={updating}
             >
               <IconTrash size={20} />
             </button>
-            <button type="button" className="modal-close-btn" onClick={onClose}>
+            <button type="button" className="modal-close-btn" onClick={onClose} title="Close">
               <IconX size={20} />
             </button>
           </div>
@@ -431,40 +494,71 @@ function ApplicationDetailModal({ appId, onClose, onStatusUpdated }) {
           </div>
 
           {/* Info Grid */}
-          <div className="detail-grid">
-            <div className="detail-item">
-              <label>Full Name</label>
-              <p>{detail.full_name}</p>
+          {isEditing ? (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem', background: '#f8fafc', padding: '1.5rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+              <div className="form-group">
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>Full Name</label>
+                <Ds.Input type="text" value={editData.full_name || ''} onChange={e => handleEditChange('full_name', e.target.value)} />
+              </div>
+              <div className="form-group">
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>Email</label>
+                <Ds.Input type="email" value={editData.email || ''} onChange={e => handleEditChange('email', e.target.value)} />
+              </div>
+              <div className="form-group">
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>Contact Number</label>
+                <Ds.Input type="text" value={editData.contact_number || ''} onChange={e => handleEditChange('contact_number', e.target.value)} />
+              </div>
+              <div className="form-group">
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>Business Name</label>
+                <Ds.Input type="text" value={editData.business_name || ''} onChange={e => handleEditChange('business_name', e.target.value)} />
+              </div>
+              <div className="form-group">
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>District</label>
+                <Ds.Select 
+                  value={editData.district || ''} 
+                  onChange={val => handleEditChange('district', val)}
+                  options={Array.from(new Set(chapters.map(c => c.district).filter(Boolean))).map(d => ({ id: d, name: d }))}
+                  placeholder="Select District..."
+                />
+              </div>
+              <div className="form-group">
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>Target Chapter</label>
+                <Ds.Select 
+                  value={editData.chapter_id || ''} 
+                  onChange={val => handleEditChange('chapter_id', val)} 
+                  disabled={!editData.district}
+                  options={filteredEditChapters}
+                  placeholder={editData.district ? 'Select Chapter...' : 'Select District first'}
+                />
+              </div>
+              <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>Industry</label>
+                <Ds.Select 
+                  value={editData.industry_category_id || ''} 
+                  onChange={val => handleEditChange('industry_category_id', val)}
+                  options={industries}
+                  placeholder="Select Industry..."
+                />
+              </div>
             </div>
-            <div className="detail-item">
-              <label>Business Name</label>
-              <p>{detail.business_name}</p>
+          ) : (
+            <div className="detail-grid">
+              <div className="detail-item"><label>Full Name</label><p>{detail.full_name}</p></div>
+              <div className="detail-item"><label>Business Name</label><p>{detail.business_name}</p></div>
+              <div className="detail-item"><label>Contact Number</label><p>{detail.contact_number}</p></div>
+              <div className="detail-item"><label>Email</label><p>{detail.email || '—'}</p></div>
+              <div className="detail-item"><label>District</label><p>{detail.district || '—'}</p></div>
+              <div className="detail-item"><label>Industry</label><p>{detail.industry_name || '—'}</p></div>
+              <div className="detail-item">
+                <label>Targetted Chapter</label>
+                <p style={{ fontWeight: 600 }}>{detail.chapter_name || 'No Chapter Assigned'} {detail.district ? `(${detail.district})` : ''}</p>
+              </div>
+              <div className="detail-item">
+                <label>Fit Call Date</label>
+                <p>{detail.fit_call_date ? new Date(detail.fit_call_date).toLocaleDateString() : '—'}</p>
+              </div>
             </div>
-            <div className="detail-item">
-              <label>Contact Number</label>
-              <p>{detail.contact_number}</p>
-            </div>
-            <div className="detail-item">
-              <label>Email</label>
-              <p>{detail.email || '—'}</p>
-            </div>
-            <div className="detail-item">
-              <label>District</label>
-              <p>{detail.district || '—'}</p>
-            </div>
-            <div className="detail-item">
-              <label>Industry</label>
-              <p>{detail.industry_name || '—'}</p>
-            </div>
-            <div className="detail-item">
-              <label>Targetted Chapter</label>
-              <p>{detail.chapter_name || '—'}</p>
-            </div>
-            <div className="detail-item">
-              <label>Fit Call Date</label>
-              <p>{detail.fit_call_date ? new Date(detail.fit_call_date).toLocaleDateString() : '—'}</p>
-            </div>
-          </div>
+          )}
 
           {/* Founding-member profile (Tier-1 fields) */}
           {(detail.designation || detail.decision_authority || detail.years_in_operation || detail.business_legal_type || detail.business_registration_number || detail.website_url || detail.linkedin_url || detail.what_you_offer || detail.what_you_seek || detail.tshirt_size) && (

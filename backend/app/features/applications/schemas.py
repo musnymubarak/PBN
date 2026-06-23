@@ -124,6 +124,24 @@ class ApplicationStatusUpdate(BaseModel):
     email: Optional[str] = None  # Allow admin to backfill missing email when approving
 
 
+class ApplicationAdminUpdate(BaseModel):
+    full_name: Optional[str] = None
+    business_name: Optional[str] = None
+    contact_number: Optional[str] = None
+    email: Optional[str] = None
+    district: Optional[str] = None
+    industry_category_id: Optional[UUID] = None
+    chapter_id: Optional[UUID] = None
+    designation: Optional[str] = None
+    decision_authority: Optional[str] = None
+    years_in_operation: Optional[str] = None
+    business_legal_type: Optional[str] = None
+    business_registration_number: Optional[str] = None
+    website_url: Optional[str] = None
+    linkedin_url: Optional[str] = None
+    what_you_offer: Optional[str] = None
+    what_you_seek: Optional[str] = None
+
 # ── Onboarding Schemas ───────────────────────────────────────────────────────
 
 # Tier-1 fields whose absence should send a legacy applicant to the

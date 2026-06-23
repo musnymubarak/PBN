@@ -75,6 +75,10 @@ export const api = {
   // Applications
   listApplications: (params = {}) => apiFetch(`/applications?${new URLSearchParams(params)}`),
   getApplication: (id) => apiFetch(`/applications/${id}`),
+  patchApplication: (id, body) => apiFetch(`/applications/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+  }),
   updateApplicationStatus: (id, body) =>
     apiFetch(`/applications/${id}/status`, {
       method: 'PATCH',

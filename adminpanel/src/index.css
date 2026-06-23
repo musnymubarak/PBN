@@ -2644,6 +2644,16 @@ tr:nth-last-child(2) .action-dropdown {
 }
 .ds-btn--secondary:hover { background: var(--bg-subtle); border-color: var(--border-strong); }
 
+.ds-btn--outline {
+  background: transparent;
+  color: var(--fg-primary);
+  border-color: var(--border-default);
+}
+.ds-btn--outline:hover { 
+  background: var(--bg-subtle); 
+  border-color: var(--border-strong); 
+}
+
 .ds-btn--ghost {
   background: transparent;
   color: var(--fg-secondary);

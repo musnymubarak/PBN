@@ -18,6 +18,7 @@ from app.core.response import success_response
 from app.features.applications.schemas import (
     ApplicationCreate,
     ApplicationStatusUpdate,
+    ApplicationAdminUpdate,
     OnboardingDetailsUpdate,
     OnboardingTshirtUpdate,
 )
@@ -29,6 +30,8 @@ from app.features.applications.service import (
     get_user_applications,
     list_applications,
     update_application_status,
+    update_application_status,
+    update_application_details,
     delete_application,
     get_onboarding_status,
     update_onboarding_details,
@@ -243,6 +246,27 @@ async def patch_application_status_endpoint(
         data={
             "id": str(app.id),
             "status": app.status.value,
+        }
+    )
+
+
+@router.patch(
+    "/applications/{app_id}",
+    summary="Update application details (Admin)",
+    dependencies=[Depends(require_role([UserRole.SUPER_ADMIN, UserRole.ADMIN]))],
+)
+async def patch_application_details_endpoint(
+    app_id: UUID,
+    data: ApplicationAdminUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    app = await update_application_details(app_id, current_user, data.model_dump(exclude_unset=True), db)
+    return success_response(
+        data={
+            "id": str(app.id),
+            "district": app.district,
+            "chapter_id": str(app.chapter_id) if app.chapter_id else None,
         }
     )
 
