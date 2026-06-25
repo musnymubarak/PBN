@@ -96,6 +96,8 @@
 	<string>PBN needs access to your camera to scan member QR codes for offer redemption.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>PBN needs access to your photo library to allow you to upload and update your profile picture.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>PBN requires location access to help you discover relevant chapters and networking opportunities in your district.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>
