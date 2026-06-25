@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -415,12 +416,6 @@ class _PortfolioEditPageState extends State<PortfolioEditPage> {
                 shape: BoxShape.circle,
                 border: Border.all(color: AppColors.border, width: 2),
                 boxShadow: AppColors.shadowSm,
-                image: fullLogoUrl != null
-                    ? DecorationImage(
-                        image: NetworkImage(fullLogoUrl),
-                        fit: BoxFit.contain,
-                      )
-                    : null,
               ),
               child: fullLogoUrl == null
                   ? const Icon(
@@ -428,7 +423,24 @@ class _PortfolioEditPageState extends State<PortfolioEditPage> {
                       color: AppColors.textMuted,
                       size: 28,
                     )
-                  : null,
+                  : ClipOval(
+                      child: CachedNetworkImage(
+                        imageUrl: fullLogoUrl,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => const Center(
+                          child: SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                        errorWidget: (context, url, error) => const Icon(
+                          TablerIcons.photo_plus,
+                          color: AppColors.textMuted,
+                          size: 28,
+                        ),
+                      ),
+                    ),
             ),
           ),
           const SizedBox(height: 8),
