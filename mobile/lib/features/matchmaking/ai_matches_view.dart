@@ -976,6 +976,7 @@ class _AiMatchesViewState extends State<AiMatchesView> {
       }
       return;
     }
+    if (!mounted) return;
 
     showPbnBottomSheet(
       context,
