@@ -159,6 +159,27 @@ async def upload_payment_proof_endpoint(
     return success_response(data=result)
 
 
+@router.post("/payments/{payment_id}/proof", summary="Upload payment proof (Authenticated)")
+async def upload_payment_proof_authenticated_endpoint(
+    payment_id: UUID,
+    proof_type: str = Form(...),
+    reference_number: Optional[str] = Form(None),
+    file: Optional[UploadFile] = File(None),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    from app.models.payment_proofs import PaymentProofType
+    result = await service.submit_payment_proof_authenticated(
+        payment_id,
+        current_user.id,
+        PaymentProofType(proof_type.lower()),
+        reference_number,
+        file,
+        db
+    )
+    return success_response(data=result)
+
+
 @router.get("/admin/payment-proofs", summary="Admin: list payment proofs")
 async def admin_list_payment_proofs_endpoint(
     status: Optional[PaymentProofStatus] = Query(None),

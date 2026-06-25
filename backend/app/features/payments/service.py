@@ -565,6 +565,84 @@ async def submit_payment_proof(token: str, proof_type: PaymentProofType, referen
     return {"message": "Payment proof submitted successfully.", "status": proof.status.value}
 
 
+async def submit_payment_proof_authenticated(payment_id: UUID, user_id: UUID, proof_type: PaymentProofType, reference_number: str | None, file: UploadFile | None, db: AsyncSession) -> Dict[str, Any]:
+    from app.models.payments import Payment, PaymentStatus
+    
+    stmt = select(PaymentProof).where(PaymentProof.payment_id == payment_id, PaymentProof.user_id == user_id)
+    res = await db.execute(stmt)
+    proof = res.scalar_one_or_none()
+    
+    if not proof:
+        # Create a payment proof record if one doesn't exist for this payment
+        # This handles cases where older payments didn't generate a token automatically
+        proof = PaymentProof(
+            payment_id=payment_id,
+            user_id=user_id,
+            upload_token=uuid.uuid4().hex,
+            upload_token_expires_at=datetime.now(timezone.utc) + timedelta(days=14)
+        )
+        db.add(proof)
+        await db.flush()
+        
+    # Check if already paid
+    pay_stmt = select(Payment).where(Payment.id == proof.payment_id)
+    pay_res = await db.execute(pay_stmt)
+    payment = pay_res.scalar_one_or_none()
+    if payment and payment.status == PaymentStatus.COMPLETED:
+        raise BadRequestException("Payment has already been made and completed.")
+
+    # Check if already uploaded and waiting for review
+    if proof.status == PaymentProofStatus.APPROVED:
+        raise BadRequestException("This payment proof has already been approved.")
+        
+    if proof.status == PaymentProofStatus.PENDING_REVIEW and proof.proof_type is not None:
+        raise BadRequestException("Payment proof has already been uploaded and is pending review.")
+        
+    proof.proof_type = proof_type
+    proof.reference_number = reference_number
+    
+    if file:
+        upload_dir = "uploads/proofs"
+        os.makedirs(upload_dir, exist_ok=True)
+        ext = file.filename.split('.')[-1] if file.filename and '.' in file.filename else ''
+        filename = f"{uuid.uuid4()}.{ext}"
+        filepath = os.path.join(upload_dir, filename)
+        
+        with open(filepath, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+            
+        proof.file_path = f"/{filepath}"
+
+    proof.status = PaymentProofStatus.PENDING_REVIEW
+    await db.flush()
+
+    # Notify admins
+    try:
+        from app.models.user import User
+        user = (await db.execute(select(User).where(User.id == proof.user_id))).scalar_one_or_none()
+        user_name = user.full_name if user else "Unknown Member"
+        payment_reason = payment.reason if payment else "Membership Fee"
+        payment_amount = str(payment.amount) if payment else "0"
+        
+        title = "New Payment Proof Submitted"
+        body = f"{user_name} submitted a payment proof of LKR {payment_amount} for '{payment_reason}'."
+        await notify_admins(
+            title=title,
+            body=body,
+            notification_type="PAYMENT_PROOF_SUBMITTED",
+            data={
+                "proof_id": str(proof.id),
+                "payment_id": str(proof.payment_id),
+                "click_action": "/payments"
+            }
+        )
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"Failed to notify admins of payment proof submission: {e}")
+    
+    return {"message": "Payment proof submitted successfully.", "status": proof.status.value}
+
+
 async def list_payment_proofs(status: PaymentProofStatus | None, db: AsyncSession) -> List[Dict[str, Any]]:
     from app.models.user import User
     stmt = (

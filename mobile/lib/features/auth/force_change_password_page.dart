@@ -177,7 +177,8 @@ class _ForceChangePasswordPageState extends State<ForceChangePasswordPage> {
                   text: 'UPDATE & CONTINUE',
                   onPressed: _submit,
                   isLoading: _loading,
-                  backgroundColor: AppColors.primary,
+                  backgroundColor: AppColors.accent,
+                  textColor: Colors.black,
                 ),
                 
                 const SizedBox(height: 24),

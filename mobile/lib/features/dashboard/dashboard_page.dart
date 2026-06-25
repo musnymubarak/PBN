@@ -28,6 +28,8 @@ import 'package:pbn/features/profile/profile_page.dart';
 import 'package:pbn/features/support/support_page.dart';
 import 'package:pbn/features/marketplace/marketplace_page.dart';
 import 'package:pbn/features/matchmaking/matchmaking_page.dart';
+import 'package:pbn/features/payments/payment_service.dart';
+import 'package:pbn/features/payments/upload_proof_page.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -41,6 +43,7 @@ class _DashboardPageState extends State<DashboardPage> {
   DashboardData? _data;
 
   List<dynamic> _leaderboard = [];
+  Map<String, dynamic>? _pendingMembershipPayment;
   bool _loading = true;
   String? _error;
 
@@ -116,6 +119,23 @@ class _DashboardPageState extends State<DashboardPage> {
           _data = results[0] as DashboardData;
           _loading = false;
         });
+        
+        // If the user is a prospect, check for pending payments
+        if (auth.user?.role == 'PROSPECT') {
+          final payments = await PaymentService().getMyPayments();
+          if (mounted) {
+            setState(() {
+              _pendingMembershipPayment = payments.firstWhere(
+                (p) => p['payment_type'] == 'membership' && p['status'] == 'pending',
+                orElse: () => <String, dynamic>{},
+              );
+              if (_pendingMembershipPayment?.isEmpty ?? true) {
+                _pendingMembershipPayment = null;
+              }
+            });
+          }
+        }
+
         _loadLeaderboard();
         _loadEventFallbacks();
         _loadHomeSlides();
@@ -682,7 +702,7 @@ class _DashboardPageState extends State<DashboardPage> {
           slivers: [
             _buildSliverAppBar(false),
             SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              padding: const EdgeInsets.only(left: 20, right: 20, top: 4, bottom: 20),
               sliver: SliverList.list(
                 children: List.generate(sections.length, (i) {
                   // Cascade only above-the-fold items; cap delay so bottom
@@ -1910,7 +1930,7 @@ class _DashboardPageState extends State<DashboardPage> {
       slivers: [
         _buildSliverAppBar(true),
         SliverPadding(
-          padding: const EdgeInsets.all(32),
+          padding: const EdgeInsets.only(left: 32, right: 32, top: 12, bottom: 32),
           sliver: SliverList.list(
             children: [
               Stack(
@@ -1971,6 +1991,88 @@ class _DashboardPageState extends State<DashboardPage> {
                   ],
                 ),
               ),
+              if (_pendingMembershipPayment != null) ...[
+                const SizedBox(height: 24),
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: AppColors.accent.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppColors.accent.withValues(alpha: 0.3)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(TablerIcons.cash, color: AppColors.accent),
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            child: Text('Payment Required', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+                          ),
+                          Text(
+                            'LKR ${(_pendingMembershipPayment!['amount'] as num).toStringAsFixed(0)}',
+                            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: AppColors.accent),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Complete your membership fee to unlock full access.',
+                        style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.8), fontSize: 12, fontWeight: FontWeight.w500),
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Payment Gateway Coming Soon!')),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: AppColors.accent,
+                                elevation: 0,
+                                side: const BorderSide(color: AppColors.accent),
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                              ),
+                              child: const Text('PAY SECURELY', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900)),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () async {
+                                final res = await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => UploadProofPage(
+                                      paymentId: _pendingMembershipPayment!['id'],
+                                      amount: (_pendingMembershipPayment!['amount'] as num).toDouble(),
+                                    ),
+                                  ),
+                                );
+                                if (res == true) {
+                                  _loadData();
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.accent,
+                                foregroundColor: Colors.black,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                              ),
+                              child: const Text('UPLOAD PROOF', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               const SizedBox(height: 40),
               ElevatedButton(
                 onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SupportPage())),

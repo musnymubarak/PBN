@@ -1241,7 +1241,7 @@ class _MembersPageState extends State<MembersPage> {
                           children: [
                             if (member.isSameChapter)
                               _glassPill(
-                                icon: TablerIcons.discount_check_filled,
+                                icon: TablerIcons.building_community,
                                 label: 'SAME CHAPTER',
                                 color: AppColors.accent,
                               ),
@@ -1539,21 +1539,16 @@ class _MembersPageState extends State<MembersPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (fullLogoUrl != null) ...[
+              if (hasLogo || member.businessName != null) ...[
                 Center(
-                  child: Container(
-                    width: 72,
-                    height: 72,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.border.withValues(alpha: 0.8), width: 1.5),
-                      boxShadow: AppColors.shadowSm,
-                      image: DecorationImage(
-                        image: NetworkImage(fullLogoUrl),
-                        fit: BoxFit.contain,
-                      ),
-                    ),
+                  child: CachedAvatar(
+                    imageUrl: member.businessLogoUrl,
+                    initials: (member.businessName != null && member.businessName!.isNotEmpty) 
+                        ? member.businessName![0].toUpperCase() 
+                        : 'B',
+                    size: 72,
+                    backgroundColor: AppColors.accent.withValues(alpha: 0.1),
+                    textColor: AppColors.accent,
                   ),
                 ),
                 const SizedBox(height: 12),
