@@ -8,7 +8,6 @@ import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/providers/member_provider.dart';
 import 'package:pbn/core/widgets/pbn_bottom_sheet.dart';
 import 'package:pbn/core/services/auth_service.dart';
-import 'package:pbn/core/services/chapter_service.dart';
 import 'package:pbn/core/services/referral_service.dart';
 import 'package:pbn/models/member.dart';
 import 'package:pbn/models/user.dart';
