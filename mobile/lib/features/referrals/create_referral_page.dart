@@ -23,7 +23,6 @@ class CreateReferralPage extends StatefulWidget {
 
 class _CreateReferralPageState extends State<CreateReferralPage> {
   final _referralService = ReferralService();
-  final _chapterService = ChapterService();
   final _authService = AuthService();
 
   List<Member> _members = [];
@@ -55,12 +54,12 @@ class _CreateReferralPageState extends State<CreateReferralPage> {
 
   Future<void> _loadInitialData() async {
     try {
+      final memberProvider = Provider.of<MemberProvider>(context, listen: false);
       _currentUser = await _authService.getProfile();
       if (widget.initialMember != null) {
         _selectedMember = widget.initialMember;
       }
       
-      final memberProvider = Provider.of<MemberProvider>(context, listen: false);
       if (memberProvider.members.isEmpty) {
         await memberProvider.fetchMembers();
       }
@@ -302,7 +301,7 @@ class _CreateReferralPageState extends State<CreateReferralPage> {
                         : ListView.separated(
                             padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                             itemCount: filtered.length,
-                            separatorBuilder: (_, __) => Divider(height: 1, color: AppColors.border.withValues(alpha: 0.5)),
+                            separatorBuilder: (context, index) => Divider(height: 1, color: AppColors.border.withValues(alpha: 0.5)),
                             itemBuilder: (context, index) {
                               final m = filtered[index];
                               return ListTile(

@@ -1112,6 +1112,7 @@ class _MembersPageState extends State<MembersPage> {
                                   ),
                                 ),
                               ),
+                            ],
                           ),
                         ),
                       ],

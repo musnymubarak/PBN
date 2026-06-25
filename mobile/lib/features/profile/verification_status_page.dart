@@ -21,12 +21,10 @@ class _VerificationStatusPageState extends State<VerificationStatusPage> {
 
   double _businessValue = 0.0;
   bool _valueMet = false;
-  bool _portfolioComplete = false;
   bool _canRequest = false;
 
   String? _status;
   String? _rejectionReason;
-  String? _createdAt;
   Map<String, dynamic> _portfolioChecks = {};
 
   @override
@@ -43,11 +41,9 @@ class _VerificationStatusPageState extends State<VerificationStatusPage> {
         setState(() {
           _businessValue = (data['business_value'] as num?)?.toDouble() ?? 0.0;
           _valueMet = data['business_value_met'] ?? false;
-          _portfolioComplete = data['portfolio_complete'] ?? false;
           _canRequest = data['can_request'] ?? false;
           _status = data['status'];
           _rejectionReason = data['rejection_reason'];
-          _createdAt = data['created_at'];
           _portfolioChecks = data['portfolio_checks'] ?? {};
           _loading = false;
         });
@@ -61,6 +57,7 @@ class _VerificationStatusPageState extends State<VerificationStatusPage> {
     setState(() => _submitting = true);
     try {
       await _apiClient.post('/verification-requests/me/request');
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Verification request submitted successfully!'),
@@ -69,6 +66,7 @@ class _VerificationStatusPageState extends State<VerificationStatusPage> {
       );
       _loadStatus();
     } catch (e) {
+      if (!mounted) return;
       String msg = 'Failed to submit request.';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(msg), backgroundColor: AppColors.error),
