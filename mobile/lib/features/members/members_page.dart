@@ -1506,16 +1506,10 @@ class _MembersPageState extends State<MembersPage> {
       return const SizedBox.shrink();
     }
 
-    final baseUrl = ApiClient().dio.options.baseUrl.split('/api')[0];
-    final fullLogoUrl = hasLogo
-        ? (member.businessLogoUrl!.startsWith('http')
-            ? member.businessLogoUrl!
-            : '$baseUrl${member.businessLogoUrl}')
-        : null;
     final fullBrochureUrl = hasBrochure
         ? (member.businessBrochureUrl!.startsWith('http')
             ? member.businessBrochureUrl!
-            : '$baseUrl${member.businessBrochureUrl}')
+            : '${ApiClient().dio.options.baseUrl.split('/api')[0]}${member.businessBrochureUrl}')
         : null;
 
     return Column(

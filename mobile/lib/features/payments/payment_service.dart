@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
-import 'package:pbn/core/config/api_config.dart';
+import 'package:pbn/core/services/api_client.dart';
 
 class PaymentService {
-  final Dio _dio = ApiConfig.client;
+  final Dio _dio = ApiClient().dio;
 
   Future<List<Map<String, dynamic>>> getMyPayments() async {
     try {
