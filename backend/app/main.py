@@ -185,10 +185,15 @@ def _register_routes(app: FastAPI) -> None:
     os.makedirs("uploads/events", exist_ok=True)
     os.makedirs("uploads/banners", exist_ok=True)
     os.makedirs("uploads/chapter-posters", exist_ok=True)
+    os.makedirs("uploads/logos", exist_ok=True)
+    os.makedirs("uploads/brochures", exist_ok=True)
     app.mount("/static", StaticFiles(directory="uploads"), name="static")
+
+    from app.features.verification_requests.router import router as verification_router
 
     app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
     app.include_router(app_router, prefix=settings.API_V1_PREFIX)
+    app.include_router(verification_router, prefix=settings.API_V1_PREFIX)
     app.include_router(chap_router, prefix=settings.API_V1_PREFIX + "/chapters")
     app.include_router(ref_router, prefix=settings.API_V1_PREFIX)
     app.include_router(ev_router, prefix=settings.API_V1_PREFIX)

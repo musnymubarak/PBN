@@ -218,6 +218,26 @@ export default function MemberDetailPage({ memberId, onBack }) {
               <FieldRow label="Business name" value={business.business_name} />
               <FieldRow label="Description" value={business.description} />
               <FieldRow label="Website" value={business.website} href={business.website} />
+              <FieldRow label="Established year" value={business.established_year} />
+              <FieldRow label="BR number" value={business.br_number} mono />
+              <FieldRow label="Physical address" value={business.address} />
+              <FieldRow label="Google maps link" value={business.google_maps_url} href={business.google_maps_url} />
+              <FieldRow label="LinkedIn URL" value={business.linkedin_url} href={business.linkedin_url} />
+              <FieldRow label="Facebook URL" value={business.facebook_url} href={business.facebook_url} />
+              <FieldRow label="Instagram URL" value={business.instagram_url} href={business.instagram_url} />
+              {business.brochure_url && (
+                <FieldRow label="Brochure PDF" value="Download PDF Brochure" href={asAbsolute(business.brochure_url)} />
+              )}
+              {business.logo_url && (
+                <div style={{ marginTop: 12 }}>
+                  <div style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 }}>Business logo</div>
+                  <img
+                    src={asAbsolute(business.logo_url)}
+                    alt="Business Logo"
+                    style={{ maxHeight: 80, maxWidth: 200, borderRadius: 8, border: '1px solid var(--border-subtle)', padding: 4, background: '#fff' }}
+                  />
+                </div>
+              )}
             </Section>
           )}
         </div>

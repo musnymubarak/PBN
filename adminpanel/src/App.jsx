@@ -56,6 +56,7 @@ import MemberDetailPage from './members/MemberDetailPage';
 import HomeSlidesPage from './home-content/HomeSlidesPage';
 import ComplementsPage from './complements/ComplementsPage';
 import PaymentProofsTab from './payments/PaymentProofsTab';
+import VerificationRequestsPage from './verification/VerificationRequestsPage';
 
 
 // ── Login Page ──────────────────────────────────────────────────────────────
@@ -9310,6 +9311,7 @@ export default function App() {
   const renderContent = () => {
     const commonProps = { adminUser, showToast, onShowChangePassword: () => setShowChangePassword(true) };
     if (activeTab === 'applications') return <ApplicationsPage />;
+    if (activeTab === 'verification-requests') return <VerificationRequestsPage showToast={showToast} />;
     if (activeTab === 'members') return <MembersPage />;
     if (activeTab === 'user-management') {
       if (adminUser?.role !== 'SUPER_ADMIN') return <MembersPage />;

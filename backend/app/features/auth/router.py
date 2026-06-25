@@ -38,6 +38,18 @@ from pydantic import BaseModel
 class UpdateProfileRequest(BaseModel):
     full_name: str
     phone_number: str
+
+class UpdateBusinessRequest(BaseModel):
+    business_name: str
+    description: str | None = None
+    website: str | None = None
+    address: str | None = None
+    established_year: str | None = None
+    br_number: str | None = None
+    google_maps_url: str | None = None
+    linkedin_url: str | None = None
+    facebook_url: str | None = None
+    instagram_url: str | None = None
 from app.features.auth.service import (
     login,
     logout,
@@ -316,3 +328,183 @@ async def toggle_2fa_endpoint(
         data={"two_factor_enabled": enabled},
         message=f"Two-Factor Authentication {'enabled' if enabled else 'disabled'}."
     )
+
+
+@router.get("/me/business", summary="Get current user's business details")
+async def get_my_business(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+) -> ORJSONResponse:
+    from app.models.businesses import Business
+    from sqlalchemy import select
+    stmt = select(Business).where(Business.owner_user_id == current_user.id)
+    business = (await db.execute(stmt)).scalar_one_or_none()
+    
+    if not business:
+         return success_response(data=None)
+         
+    return success_response(data={
+        "id": str(business.id),
+        "business_name": business.business_name,
+        "description": business.description,
+        "website": business.website,
+        "logo_url": business.logo_url,
+        "address": business.address,
+        "established_year": business.established_year,
+        "br_number": business.br_number,
+        "brochure_url": business.brochure_url,
+        "google_maps_url": business.google_maps_url,
+        "linkedin_url": business.linkedin_url,
+        "facebook_url": business.facebook_url,
+        "instagram_url": business.instagram_url,
+    })
+
+
+@router.put("/me/business", summary="Update current user's business details")
+async def update_my_business(
+    body: UpdateBusinessRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+) -> ORJSONResponse:
+    from app.models.businesses import Business
+    from sqlalchemy import select
+    
+    stmt = select(Business).where(Business.owner_user_id == current_user.id)
+    business = (await db.execute(stmt)).scalar_one_or_none()
+    if not business:
+         from app.models.memberships import ChapterMembership
+         ind_cat_id = (await db.execute(select(ChapterMembership.industry_category_id).where(ChapterMembership.user_id == current_user.id).limit(1))).scalar_one_or_none()
+         if not ind_cat_id:
+              from app.models.industry_categories import IndustryCategory
+              ind_cat_id = (await db.execute(select(IndustryCategory.id).limit(1))).scalar()
+         business = Business(owner_user_id=current_user.id, business_name=body.business_name, industry_category_id=ind_cat_id)
+         db.add(business)
+         await db.flush()
+         
+    business.business_name = body.business_name
+    business.description = body.description
+    business.website = body.website
+    business.address = body.address
+    business.established_year = body.established_year
+    business.br_number = body.br_number
+    business.google_maps_url = body.google_maps_url
+    business.linkedin_url = body.linkedin_url
+    business.facebook_url = body.facebook_url
+    business.instagram_url = body.instagram_url
+    
+    await db.commit()
+    return success_response(data={
+        "id": str(business.id),
+        "business_name": business.business_name,
+        "description": business.description,
+        "website": business.website,
+        "logo_url": business.logo_url,
+        "address": business.address,
+        "established_year": business.established_year,
+        "br_number": business.br_number,
+        "brochure_url": business.brochure_url,
+        "google_maps_url": business.google_maps_url,
+        "linkedin_url": business.linkedin_url,
+        "facebook_url": business.facebook_url,
+        "instagram_url": business.instagram_url,
+    })
+
+
+@router.post("/me/business/logo", summary="Upload business logo")
+async def upload_business_logo(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+) -> ORJSONResponse:
+    from app.core.exceptions import BadRequestException
+    from app.models.businesses import Business
+    from sqlalchemy import select
+
+    # 1. Size Validation (5MB limit)
+    MAX_SIZE = 5 * 1024 * 1024
+    if file.size and file.size > MAX_SIZE:
+        raise BadRequestException("File too large. Maximum size allowed is 5MB.", code="FILE_TOO_LARGE")
+
+    # 2. Format Validation
+    ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"]
+    if file.content_type not in ALLOWED_TYPES:
+        raise BadRequestException("Only JPEG, PNG, and WebP images are allowed.", code="INVALID_FORMAT")
+
+    ext = file.filename.split(".")[-1].lower() if "." in file.filename else "jpg"
+    if ext not in ["jpg", "jpeg", "png", "webp"]:
+         raise BadRequestException("Invalid file extension.", code="INVALID_EXTENSION")
+
+    os.makedirs("uploads/logos", exist_ok=True)
+    filename = f"logo_{current_user.id}_{uuid.uuid4().hex[:8]}.{ext}"
+    file_path = f"uploads/logos/{filename}"
+    
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+        
+    # Get or create business
+    stmt = select(Business).where(Business.owner_user_id == current_user.id)
+    business = (await db.execute(stmt)).scalar_one_or_none()
+    if not business:
+         from app.models.memberships import ChapterMembership
+         ind_cat_id = (await db.execute(select(ChapterMembership.industry_category_id).where(ChapterMembership.user_id == current_user.id).limit(1))).scalar_one_or_none()
+         if not ind_cat_id:
+              from app.models.industry_categories import IndustryCategory
+              ind_cat_id = (await db.execute(select(IndustryCategory.id).limit(1))).scalar()
+         business = Business(owner_user_id=current_user.id, business_name="My Business", industry_category_id=ind_cat_id)
+         db.add(business)
+         await db.flush()
+
+    business.logo_url = f"/static/logos/{filename}"
+    await db.commit()
+    
+    return success_response(data={"logo_url": business.logo_url}, status_code=200)
+
+
+@router.post("/me/business/brochure", summary="Upload business PDF brochure")
+async def upload_business_brochure(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+) -> ORJSONResponse:
+    from app.core.exceptions import BadRequestException
+    from app.models.businesses import Business
+    from sqlalchemy import select
+
+    # 1. Size Validation (10MB limit)
+    MAX_SIZE = 10 * 1024 * 1024
+    if file.size and file.size > MAX_SIZE:
+        raise BadRequestException("File too large. Maximum size allowed is 10MB.", code="FILE_TOO_LARGE")
+
+    # 2. Format Validation
+    if file.content_type != "application/pdf":
+        raise BadRequestException("Only PDF documents are allowed.", code="INVALID_FORMAT")
+
+    ext = file.filename.split(".")[-1].lower() if "." in file.filename else "pdf"
+    if ext != "pdf":
+         raise BadRequestException("Invalid file extension. Only .pdf is allowed.", code="INVALID_EXTENSION")
+
+    os.makedirs("uploads/brochures", exist_ok=True)
+    filename = f"brochure_{current_user.id}_{uuid.uuid4().hex[:8]}.pdf"
+    file_path = f"uploads/brochures/{filename}"
+    
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+        
+    # Get or create business
+    stmt = select(Business).where(Business.owner_user_id == current_user.id)
+    business = (await db.execute(stmt)).scalar_one_or_none()
+    if not business:
+         from app.models.memberships import ChapterMembership
+         ind_cat_id = (await db.execute(select(ChapterMembership.industry_category_id).where(ChapterMembership.user_id == current_user.id).limit(1))).scalar_one_or_none()
+         if not ind_cat_id:
+              from app.models.industry_categories import IndustryCategory
+              ind_cat_id = (await db.execute(select(IndustryCategory.id).limit(1))).scalar()
+         business = Business(owner_user_id=current_user.id, business_name="My Business", industry_category_id=ind_cat_id)
+         db.add(business)
+         await db.flush()
+
+    business.brochure_url = f"/static/brochures/{filename}"
+    await db.commit()
+    
+    return success_response(data={"brochure_url": business.brochure_url}, status_code=200)
+

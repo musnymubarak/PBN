@@ -18,8 +18,13 @@ async def update_member_verification(user: User, delta_value: Decimal, db: Async
     """Update user's cumulative value and potentially promote to next verification tier."""
     user.cumulative_value_generated += delta_value
     
+    # If the user is currently NONE, they cannot be auto-promoted.
+    # Verification level VERIFIED requires manual admin approval.
+    if user.verification_level == VerificationLevel.NONE:
+        return
+        
     val = user.cumulative_value_generated
-    new_level = VerificationLevel.NONE
+    new_level = VerificationLevel.VERIFIED
     
     # Tier thresholds in LKR (approximate based on bylaws goals)
     if val >= 5000000:
@@ -28,8 +33,6 @@ async def update_member_verification(user: User, delta_value: Decimal, db: Async
         new_level = VerificationLevel.GOLD
     elif val >= 1000000:
         new_level = VerificationLevel.SILVER
-    elif val >= 25000:
-        new_level = VerificationLevel.VERIFIED
         
     if new_level != user.verification_level:
         old_level = user.verification_level

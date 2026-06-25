@@ -22,6 +22,7 @@ from app.models.marketplace import MarketplaceListing, MarketplaceInterest  # no
 from app.models.matchmaking import MatchingProfile, IndustryRelationship, MatchSuggestion  # noqa: F401
 from app.models.complements import ComplementType, MemberComplement, FulfilmentStatus  # noqa: F401
 from app.models.home_content import HomeSlide  # noqa: F401
+from app.models.verification_requests import VerificationRequest  # noqa: F401
 
 __all__ = [
     "Base",
@@ -44,5 +45,6 @@ __all__ = [
     "MatchingProfile", "IndustryRelationship", "MatchSuggestion",
     "ComplementType", "MemberComplement", "FulfilmentStatus",
     "HomeSlide",
+    "VerificationRequest",
 ]
 

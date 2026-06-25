@@ -381,4 +381,20 @@ export const api = {
     method: 'POST',
     body: JSON.stringify({ notes }),
   }),
+
+  // Verification Requests
+  listVerificationRequests: (params = {}) => {
+    const qs = new URLSearchParams();
+    Object.entries(params).forEach(([k, v]) => {
+      if (v !== undefined && v !== null && v !== '') qs.append(k, v);
+    });
+    return apiFetch(`/verification-requests/admin/list?${qs.toString()}`);
+  },
+  approveVerificationRequest: (id) => apiFetch(`/verification-requests/admin/${id}/approve`, {
+    method: 'POST',
+  }),
+  rejectVerificationRequest: (id, reason) => apiFetch(`/verification-requests/admin/${id}/reject`, {
+    method: 'POST',
+    body: JSON.stringify({ reason }),
+  }),
 };

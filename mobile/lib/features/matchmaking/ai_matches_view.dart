@@ -13,6 +13,7 @@ import 'package:pbn/core/services/matchmaking_service.dart';
 import 'package:pbn/core/widgets/cached_avatar.dart';
 import 'package:pbn/core/widgets/pbn_bottom_sheet.dart';
 import 'package:pbn/features/matchmaking/business_matching_profile_page.dart';
+import 'package:pbn/features/referrals/create_referral_page.dart';
 import 'package:pbn/models/matchmaking.dart';
 import 'package:pbn/models/member.dart';
 
@@ -1070,6 +1071,51 @@ class _ConnectContactSheet extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 16),
+          InkWell(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              Navigator.pop(context); // Close sheet
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => CreateReferralPage(initialMember: member),
+                ),
+              );
+            },
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: AppColors.goldGradient,
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: AppColors.goldGlow,
+              ),
+              child: Center(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(TablerIcons.send, color: Colors.white, size: 16),
+                    const SizedBox(width: 8),
+                    Text(
+                      'SEND OPPORTUNITY',
+                      style: GoogleFonts.dmSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ],
       ),

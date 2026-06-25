@@ -17,8 +17,11 @@ import 'package:pbn/core/services/chapter_service.dart';
 import 'package:pbn/core/widgets/cached_avatar.dart';
 import 'package:pbn/core/widgets/pbn_app_bar_actions.dart';
 import 'package:pbn/features/matchmaking/business_matching_profile_page.dart';
+import 'package:pbn/features/profile/portfolio_edit_page.dart';
+import 'package:pbn/features/profile/verification_status_page.dart';
 import 'package:pbn/models/chapter.dart';
 import 'package:pbn/models/user.dart';
+
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -1256,6 +1259,28 @@ class _ProfilePageState extends State<ProfilePage> {
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const BusinessMatchingProfilePage()),
+              ),
+            ),
+            _hairlineDivider(),
+            _settingsRow(
+              icon: TablerIcons.briefcase,
+              iconColor: Colors.teal,
+              title: 'My Business Portfolio',
+              subtitle: 'Logo, address, registration details & brochure',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const PortfolioEditPage()),
+              ),
+            ),
+            _hairlineDivider(),
+            _settingsRow(
+              icon: TablerIcons.discount_check,
+              iconColor: AppColors.primary,
+              title: 'Verification Status',
+              subtitle: 'Apply for and manage verified status',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const VerificationStatusPage()),
               ),
             ),
             _hairlineDivider(),

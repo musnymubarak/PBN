@@ -10,9 +10,11 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/providers/member_provider.dart';
 import 'package:pbn/core/widgets/cached_avatar.dart';
+import 'package:pbn/core/services/api_client.dart';
 import 'package:pbn/core/widgets/pbn_app_bar_actions.dart';
 import 'package:pbn/core/widgets/pbn_bottom_sheet.dart';
 import 'package:pbn/features/members/member_card.dart';
+import 'package:pbn/features/referrals/create_referral_page.dart';
 import 'package:pbn/models/member.dart';
 
 enum _MemberScope { myChapter, global }
@@ -1000,6 +1002,7 @@ class _MembersPageState extends State<MembersPage> {
                           value: member.company,
                         ),
                       ]),
+                      _buildBusinessPortfolioSection(member),
                       if (member.isSameChapter) ...[
                         const SizedBox(height: 18),
                         _detailLabel('Contact'),
@@ -1109,10 +1112,54 @@ class _MembersPageState extends State<MembersPage> {
                                   ),
                                 ),
                               ),
-                            ],
                           ),
                         ),
                       ],
+                      const SizedBox(height: 16),
+                      InkWell(
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          Navigator.pop(context); // Close sheet
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => CreateReferralPage(initialMember: member),
+                            ),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: AppColors.goldGradient,
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: AppColors.goldGlow,
+                          ),
+                          child: Center(
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(TablerIcons.send, color: Colors.white, size: 16),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'SEND OPPORTUNITY',
+                                  style: GoogleFonts.dmSans(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                    letterSpacing: 0.8,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
         );
@@ -1478,5 +1525,297 @@ class _MembersPageState extends State<MembersPage> {
       default:
         return AppColors.accent;
     }
+  }
+
+  Widget _buildBusinessPortfolioSection(Member member) {
+    final hasLogo = member.businessLogoUrl != null && member.businessLogoUrl!.isNotEmpty;
+    final hasDesc = member.businessDescription != null && member.businessDescription!.isNotEmpty;
+    final hasWeb = member.businessWebsite != null && member.businessWebsite!.isNotEmpty;
+    final hasAddr = member.businessAddress != null && member.businessAddress!.isNotEmpty;
+    final hasEst = member.businessEstablishedYear != null && member.businessEstablishedYear!.isNotEmpty;
+    final hasBr = member.businessBrNumber != null && member.businessBrNumber!.isNotEmpty;
+    final hasBrochure = member.businessBrochureUrl != null && member.businessBrochureUrl!.isNotEmpty;
+    final hasMaps = member.businessGoogleMapsUrl != null && member.businessGoogleMapsUrl!.isNotEmpty;
+    
+    final hasSocials = (member.businessLinkedinUrl != null && member.businessLinkedinUrl!.isNotEmpty) ||
+                       (member.businessFacebookUrl != null && member.businessFacebookUrl!.isNotEmpty) ||
+                       (member.businessInstagramUrl != null && member.businessInstagramUrl!.isNotEmpty);
+
+    if (!hasLogo && !hasDesc && !hasWeb && !hasAddr && !hasEst && !hasBr && !hasBrochure && !hasSocials) {
+      return const SizedBox.shrink();
+    }
+
+    final baseUrl = ApiClient().dio.options.baseUrl.split('/api')[0];
+    final fullLogoUrl = hasLogo
+        ? (member.businessLogoUrl!.startsWith('http')
+            ? member.businessLogoUrl!
+            : '$baseUrl${member.businessLogoUrl}')
+        : null;
+    final fullBrochureUrl = hasBrochure
+        ? (member.businessBrochureUrl!.startsWith('http')
+            ? member.businessBrochureUrl!
+            : '$baseUrl${member.businessBrochureUrl}')
+        : null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 18),
+        _detailLabel('Business Portfolio'),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: AppColors.surfaceGradient,
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: AppColors.border.withValues(alpha: 0.7)),
+            boxShadow: AppColors.shadowSm,
+          ),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (fullLogoUrl != null) ...[
+                Center(
+                  child: Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.border.withValues(alpha: 0.8), width: 1.5),
+                      boxShadow: AppColors.shadowSm,
+                      image: DecorationImage(
+                        image: NetworkImage(fullLogoUrl),
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+              if (hasDesc) ...[
+                Text(
+                  member.businessDescription!,
+                  style: GoogleFonts.dmSans(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textSecondary,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                _hairlineDivider(),
+                const SizedBox(height: 10),
+              ],
+              if (hasEst) ...[
+                _portfolioDetailRow(
+                  icon: TablerIcons.calendar_time,
+                  iconColor: Colors.amber,
+                  label: 'ESTABLISHED IN',
+                  value: member.businessEstablishedYear!,
+                ),
+                const SizedBox(height: 10),
+              ],
+              if (hasBr) ...[
+                _portfolioDetailRow(
+                  icon: TablerIcons.file_text,
+                  iconColor: Colors.blueGrey,
+                  label: 'BUSINESS REGISTRATION NO',
+                  value: member.businessBrNumber!,
+                ),
+                const SizedBox(height: 10),
+              ],
+              if (hasWeb) ...[
+                _portfolioDetailRow(
+                  icon: TablerIcons.world,
+                  iconColor: AppColors.accentBlue,
+                  label: 'WEBSITE',
+                  value: member.businessWebsite!,
+                  onTap: () => launchUrl(Uri.parse(member.businessWebsite!), mode: LaunchMode.externalApplication),
+                ),
+                const SizedBox(height: 10),
+              ],
+              if (hasAddr) ...[
+                _portfolioDetailRow(
+                  icon: TablerIcons.map_pin,
+                  iconColor: Colors.redAccent,
+                  label: 'ADDRESS',
+                  value: member.businessAddress!,
+                  onTap: hasMaps
+                      ? () => launchUrl(Uri.parse(member.businessGoogleMapsUrl!), mode: LaunchMode.externalApplication)
+                      : null,
+                  actionWidget: hasMaps
+                      ? const Icon(TablerIcons.map, color: Colors.redAccent, size: 16)
+                      : null,
+                ),
+                const SizedBox(height: 10),
+              ],
+              if (fullBrochureUrl != null) ...[
+                const SizedBox(height: 6),
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.accentBlue.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.accentBlue.withValues(alpha: 0.2)),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  child: Row(
+                    children: [
+                      const Icon(TablerIcons.file_type_pdf, color: AppColors.accentBlue, size: 24),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Company Brochure',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                                color: AppColors.text,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              fullBrochureUrl.split('/').last,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: AppColors.textSecondary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () => launchUrl(Uri.parse(fullBrochureUrl), mode: LaunchMode.externalApplication),
+                        child: const Text(
+                          'DOWNLOAD',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 11,
+                            color: AppColors.accentBlue,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ],
+              if (hasSocials) ...[
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (member.businessLinkedinUrl != null && member.businessLinkedinUrl!.isNotEmpty)
+                      _socialIconButton(
+                        icon: TablerIcons.brand_linkedin,
+                        color: const Color(0xFF0077B5),
+                        url: member.businessLinkedinUrl!,
+                      ),
+                    if (member.businessFacebookUrl != null && member.businessFacebookUrl!.isNotEmpty)
+                      _socialIconButton(
+                        icon: TablerIcons.brand_facebook,
+                        color: const Color(0xFF1877F2),
+                        url: member.businessFacebookUrl!,
+                      ),
+                    if (member.businessInstagramUrl != null && member.businessInstagramUrl!.isNotEmpty)
+                      _socialIconButton(
+                        icon: TablerIcons.brand_instagram,
+                        color: const Color(0xFFE1306C),
+                        url: member.businessInstagramUrl!,
+                      ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _portfolioDetailRow({
+    required IconData icon,
+    required Color iconColor,
+    required String label,
+    required String value,
+    VoidCallback? onTap,
+    Widget? actionWidget,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, size: 16, color: iconColor),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      fontSize: 8.5,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.textMuted,
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    value,
+                    style: GoogleFonts.dmSans(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: onTap != null ? AppColors.accentBlue : AppColors.text,
+                      decoration: onTap != null ? TextDecoration.underline : null,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (actionWidget != null) ...[
+              const SizedBox(width: 8),
+              actionWidget,
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _socialIconButton({
+    required IconData icon,
+    required Color color,
+    required String url,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: InkWell(
+        onTap: () => launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication),
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1),
+            shape: BoxShape.circle,
+            border: Border.all(color: color.withValues(alpha: 0.25), width: 1),
+          ),
+          child: Icon(icon, size: 18, color: color),
+        ),
+      ),
+    );
   }
 }

@@ -27,6 +27,14 @@ class Business(Base, TimestampMixin):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     website: Mapped[str | None] = mapped_column(String(500), nullable=True)
     logo_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    address: Mapped[str | None] = mapped_column(Text, nullable=True)
+    established_year: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    br_number: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    brochure_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    google_maps_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    linkedin_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    facebook_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    instagram_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     def __repr__(self) -> str:
         return f"<Business {self.business_name}>"

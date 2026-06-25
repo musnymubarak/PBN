@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
 import 'package:pbn/core/constants/app_colors.dart';
+import 'package:pbn/core/providers/member_provider.dart';
+import 'package:pbn/core/widgets/pbn_bottom_sheet.dart';
 import 'package:pbn/core/services/auth_service.dart';
 import 'package:pbn/core/services/chapter_service.dart';
 import 'package:pbn/core/services/referral_service.dart';
@@ -11,7 +14,8 @@ import 'package:pbn/models/member.dart';
 import 'package:pbn/models/user.dart';
 
 class CreateReferralPage extends StatefulWidget {
-  const CreateReferralPage({super.key});
+  final Member? initialMember;
+  const CreateReferralPage({super.key, this.initialMember});
 
   @override
   State<CreateReferralPage> createState() => _CreateReferralPageState();
@@ -52,13 +56,15 @@ class _CreateReferralPageState extends State<CreateReferralPage> {
   Future<void> _loadInitialData() async {
     try {
       _currentUser = await _authService.getProfile();
-      final memberships = await _chapterService.getMyMemberships();
-      if (memberships.isNotEmpty) {
-        final allMembers =
-            await _chapterService.getChapterMembers(memberships.first.chapter.id);
-        _members =
-            allMembers.where((m) => m.userId != _currentUser?.id).toList();
+      if (widget.initialMember != null) {
+        _selectedMember = widget.initialMember;
       }
+      
+      final memberProvider = Provider.of<MemberProvider>(context, listen: false);
+      if (memberProvider.members.isEmpty) {
+        await memberProvider.fetchMembers();
+      }
+      _members = memberProvider.members.where((m) => m.userId != _currentUser?.id).toList();
     } catch (_) {}
     if (mounted) setState(() => _loadingMembers = false);
   }
@@ -243,68 +249,171 @@ class _CreateReferralPageState extends State<CreateReferralPage> {
     );
   }
 
+  void _openMemberSelector() {
+    showPbnBottomSheet(
+      context,
+      builder: (ctx) {
+        String searchQuery = '';
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final filtered = _members.where((m) {
+              final query = searchQuery.toLowerCase();
+              return m.fullName.toLowerCase().contains(query) ||
+                  m.industry.toLowerCase().contains(query) ||
+                  m.company.toLowerCase().contains(query);
+            }).toList();
+
+            return PbnBottomSheet(
+              scrollable: false,
+              resizeForKeyboard: true,
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
+                    child: TextField(
+                      autofocus: true,
+                      onChanged: (val) => setModalState(() => searchQuery = val),
+                      decoration: InputDecoration(
+                        hintText: 'Search by name, company, or industry...',
+                        prefixIcon: const Icon(TablerIcons.search, size: 20),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: AppColors.border.withValues(alpha: 0.5)),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: filtered.isEmpty
+                        ? Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(32.0),
+                              child: Text(
+                                'No members found',
+                                style: GoogleFonts.dmSans(
+                                  fontSize: 15,
+                                  color: AppColors.textMuted,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          )
+                        : ListView.separated(
+                            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                            itemCount: filtered.length,
+                            separatorBuilder: (_, __) => Divider(height: 1, color: AppColors.border.withValues(alpha: 0.5)),
+                            itemBuilder: (context, index) {
+                              final m = filtered[index];
+                              return ListTile(
+                                contentPadding: EdgeInsets.zero,
+                                leading: CircleAvatar(
+                                  radius: 20,
+                                  backgroundColor: AppColors.surfaceAlt,
+                                  backgroundImage: m.profilePhoto != null && m.profilePhoto!.isNotEmpty
+                                      ? NetworkImage(m.profilePhoto!)
+                                      : null,
+                                  child: m.profilePhoto == null || m.profilePhoto!.isEmpty
+                                      ? Text(m.initials, style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary))
+                                      : null,
+                                ),
+                                title: Text(
+                                  m.fullName,
+                                  style: GoogleFonts.dmSans(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.text,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  '${m.company} · ${m.industry}',
+                                  style: GoogleFonts.dmSans(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                                onTap: () {
+                                  setState(() => _selectedMember = m);
+                                  Navigator.pop(ctx);
+                                },
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   // ──────────────────────────────────────────────────────────
-  // DROPDOWN — P-4 styled
+  // MEMBER SELECTOR TRIGGER
   // ──────────────────────────────────────────────────────────
   Widget _buildMemberDropdown() {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: AppColors.surfaceGradient,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    return InkWell(
+      onTap: _openMemberSelector,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: AppColors.surfaceGradient,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
+          boxShadow: AppColors.shadowSm,
         ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
-        boxShadow: AppColors.shadowSm,
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      child: Row(
-        children: [
-          _iconContainer(TablerIcons.user, AppColors.accentBlue),
-          const SizedBox(width: 14),
-          Expanded(
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<Member>(
-                value: _selectedMember,
-                isExpanded: true,
-                isDense: false,
-                hint: Text(
-                  'Select a member…',
-                  style: GoogleFonts.dmSans(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textMuted,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+        child: Row(
+          children: [
+            _iconContainer(TablerIcons.user, AppColors.accentBlue),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _selectedMember != null
+                        ? _selectedMember!.fullName
+                        : 'Select a member…',
+                    style: GoogleFonts.dmSans(
+                      fontSize: 15,
+                      fontWeight: _selectedMember != null
+                          ? FontWeight.w700
+                          : FontWeight.w600,
+                      color: _selectedMember != null
+                          ? AppColors.text
+                          : AppColors.textMuted,
+                    ),
                   ),
-                ),
-                icon: const Icon(
-                  TablerIcons.chevron_down,
-                  size: 20,
-                  color: AppColors.textMuted,
-                ),
-                style: GoogleFonts.dmSans(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.text,
-                ),
-                dropdownColor: AppColors.surface,
-                borderRadius: BorderRadius.circular(16),
-                items: _members
-                    .map(
-                      (m) => DropdownMenuItem(
-                        value: m,
-                        child: Text(
-                          '${m.fullName} (${m.industry})',
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                  if (_selectedMember != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      '${_selectedMember!.company} · ${_selectedMember!.industry}',
+                      style: GoogleFonts.dmSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textSecondary,
                       ),
-                    )
-                    .toList(),
-                onChanged: (m) => setState(() => _selectedMember = m),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ],
               ),
             ),
-          ),
-        ],
+            const Icon(
+              TablerIcons.chevron_down,
+              size: 20,
+              color: AppColors.textMuted,
+            ),
+          ],
+        ),
       ),
     );
   }

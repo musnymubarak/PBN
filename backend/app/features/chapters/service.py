@@ -99,7 +99,8 @@ async def get_all_members(db: AsyncSession, requester_id: UUID | None = None) ->
         .outerjoin(Business, (Business.owner_user_id == User.id) & (Business.industry_category_id == ChapterMembership.industry_category_id))
         .where(
             ChapterMembership.is_active.is_(True),
-            User.is_active.is_(True)
+            User.is_active.is_(True),
+            User.full_name.not_ilike("%system lock%")
         )
         .order_by(User.full_name)
     )
@@ -136,6 +137,16 @@ async def get_all_members(db: AsyncSession, requester_id: UUID | None = None) ->
                 "name": biz.business_name,
                 "district": biz.district,
                 "website": biz.website,
+                "logo_url": biz.logo_url,
+                "description": biz.description,
+                "address": biz.address,
+                "established_year": biz.established_year,
+                "br_number": biz.br_number,
+                "brochure_url": biz.brochure_url,
+                "google_maps_url": biz.google_maps_url,
+                "linkedin_url": biz.linkedin_url,
+                "facebook_url": biz.facebook_url,
+                "instagram_url": biz.instagram_url,
             } if biz else None,
         })
 
@@ -167,7 +178,8 @@ async def get_chapter_members(chapter_id: UUID, db: AsyncSession) -> List[Dict[s
         .where(
             ChapterMembership.chapter_id == chapter_id,
             ChapterMembership.is_active.is_(True),
-            User.is_active.is_(True)
+            User.is_active.is_(True),
+            User.full_name.not_ilike("%system lock%")
         )
         .order_by(User.full_name)
     )
@@ -197,6 +209,16 @@ async def get_chapter_members(chapter_id: UUID, db: AsyncSession) -> List[Dict[s
                 "name": biz.business_name,
                 "district": biz.district,
                 "website": biz.website,
+                "logo_url": biz.logo_url,
+                "description": biz.description,
+                "address": biz.address,
+                "established_year": biz.established_year,
+                "br_number": biz.br_number,
+                "brochure_url": biz.brochure_url,
+                "google_maps_url": biz.google_maps_url,
+                "linkedin_url": biz.linkedin_url,
+                "facebook_url": biz.facebook_url,
+                "instagram_url": biz.instagram_url,
             } if biz else None,
         }
         members.append(member_data)

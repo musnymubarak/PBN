@@ -35,6 +35,7 @@ export const MENU_GROUPS = [
     label: 'Operations',
     links: [
       { id: 'applications', icon: IconClipboardList, label: 'Applications' },
+      { id: 'verification-requests', icon: IconUserShield, label: 'Verification Requests' },
       { id: 'referrals', icon: IconHierarchy2, label: 'Referral Pipeline' },
       { id: 'community', icon: IconMessages, label: 'Community & Leads' },
       { id: 'events', icon: IconCalendarEvent, label: 'Event Management' },
