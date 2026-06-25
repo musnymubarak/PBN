@@ -556,10 +556,12 @@ async def update_application_status(
     # Handle Fit Call Scheduled Email
     if data.status == ApplicationStatus.FIT_CALL_SCHEDULED and app.email and app.fit_call_date:
         try:
+            slst_tz = timezone(timedelta(hours=5, minutes=30))
+            local_time = app.fit_call_date.astimezone(slst_tz)
             html = render_template("fit_call_scheduled.html", {
                 "full_name": app.full_name,
                 "business_name": app.business_name,
-                "fit_call_date": app.fit_call_date.strftime("%Y-%m-%d %I:%M %p")
+                "fit_call_date": local_time.strftime("%Y-%m-%d %I:%M %p") + " (SLST)"
             })
             await send_email(app.email, "Fit Call Scheduled - Prime Business Network", html)
         except Exception as e:
