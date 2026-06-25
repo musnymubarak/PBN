@@ -93,7 +93,8 @@ class MatchmakingService:
                 and_(
                     User.id != user_id,
                     User.is_active == True,
-                    ChapterMembership.is_active == True
+                    ChapterMembership.is_active == True,
+                    User.full_name.not_ilike("%system lock%")
                 )
             )
             .options(joinedload(User.matching_profile))

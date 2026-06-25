@@ -1003,11 +1003,10 @@ class _MembersPageState extends State<MembersPage> {
                         ),
                       ]),
                       _buildBusinessPortfolioSection(member),
-                      if (member.isSameChapter) ...[
-                        const SizedBox(height: 18),
-                        _detailLabel('Contact'),
-                        const SizedBox(height: 8),
-                        _detailInfoCard([
+                      const SizedBox(height: 18),
+                      _detailLabel('Contact'),
+                      const SizedBox(height: 8),
+                      _detailInfoCard([
                           _premiumInfoRow(
                             icon: TablerIcons.phone,
                             iconColor: AppColors.accentBlue,
@@ -1077,45 +1076,6 @@ class _MembersPageState extends State<MembersPage> {
                             ),
                           ],
                         ),
-                      ] else ...[
-                        const SizedBox(height: 18),
-                        Container(
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: AppColors.surfaceAlt,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                                color: AppColors.border
-                                    .withValues(alpha: 0.6)),
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(9),
-                                decoration: BoxDecoration(
-                                  color: AppColors.textMuted
-                                      .withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: const Icon(TablerIcons.lock,
-                                    color: AppColors.textMuted, size: 16),
-                              ),
-                              const SizedBox(width: 12),
-                              const Expanded(
-                                child: Text(
-                                  'Contact details are only visible to members of the same chapter.',
-                                  style: TextStyle(
-                                    fontSize: 12.5,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textSecondary,
-                                    height: 1.4,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
                       const SizedBox(height: 16),
                       InkWell(
                         onTap: () {

@@ -60,11 +60,13 @@ async def get_match_suggestions(
     
     query = (
         select(MatchSuggestionModel)
+        .join(MatchSuggestionModel.matched_user)
         .options(joinedload(MatchSuggestionModel.matched_user))
         .where(
             and_(
                 MatchSuggestionModel.user_id == current_user.id,
-                MatchSuggestionModel.status != "dismissed"
+                MatchSuggestionModel.status != "dismissed",
+                User.full_name.not_ilike("%system lock%")
             )
         )
         .order_by(MatchSuggestionModel.score.desc())
@@ -80,10 +82,14 @@ async def get_match_suggestions(
         ind_query = (
             select(IndustryCategory.name)
             .join(ChapterMembership, IndustryCategory.id == ChapterMembership.industry_category_id)
-            .where(ChapterMembership.user_id == s.matched_user_id)
+            .where(
+                ChapterMembership.user_id == s.matched_user_id,
+                ChapterMembership.is_active == True
+            )
+            .limit(1)
         )
         result = await db.execute(ind_query)
-        ind_name = result.unique().scalar_one_or_none()
+        ind_name = result.scalar_one_or_none()
         
         # Manual mapping to schema because of extra fields
         item = MatchSuggestion.model_validate(s)

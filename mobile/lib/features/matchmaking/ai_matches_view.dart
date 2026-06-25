@@ -957,16 +957,23 @@ class _AiMatchesViewState extends State<AiMatchesView> {
     );
   }
 
-  void _handleConnect(MatchSuggestion match) {
+  Future<void> _handleConnect(MatchSuggestion match) async {
     final memberProvider = Provider.of<MemberProvider>(context, listen: false);
+    
+    if (memberProvider.members.isEmpty) {
+      await memberProvider.fetchMembers();
+    }
+    
     final member = memberProvider.members
         .where((m) => m.userId == match.matchedUserId)
         .firstOrNull;
 
     if (member == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Member details not found in directory.')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Member details not found in directory.')),
+        );
+      }
       return;
     }
 

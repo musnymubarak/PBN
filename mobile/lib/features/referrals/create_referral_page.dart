@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/providers/member_provider.dart';
 import 'package:pbn/core/widgets/pbn_bottom_sheet.dart';
+import 'package:pbn/core/widgets/cached_avatar.dart';
 import 'package:pbn/core/services/auth_service.dart';
 import 'package:pbn/core/services/referral_service.dart';
 import 'package:pbn/models/member.dart';
@@ -305,15 +306,13 @@ class _CreateReferralPageState extends State<CreateReferralPage> {
                               final m = filtered[index];
                               return ListTile(
                                 contentPadding: EdgeInsets.zero,
-                                leading: CircleAvatar(
-                                  radius: 20,
+                                leading: CachedAvatar(
+                                  imageUrl: m.profilePhoto,
+                                  initials: m.initials,
+                                  size: 40,
                                   backgroundColor: AppColors.surfaceAlt,
-                                  backgroundImage: m.profilePhoto != null && m.profilePhoto!.isNotEmpty
-                                      ? NetworkImage(m.profilePhoto!)
-                                      : null,
-                                  child: m.profilePhoto == null || m.profilePhoto!.isEmpty
-                                      ? Text(m.initials, style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary))
-                                      : null,
+                                  textColor: AppColors.primary,
+                                  fontSize: 14,
                                 ),
                                 title: Text(
                                   m.fullName,
@@ -487,6 +486,7 @@ class _CreateReferralPageState extends State<CreateReferralPage> {
                   color: AppColors.textMuted,
                 ),
                 isCollapsed: true,
+                filled: false,
                 contentPadding: const EdgeInsets.symmetric(vertical: 14),
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
@@ -557,6 +557,7 @@ class _CreateReferralPageState extends State<CreateReferralPage> {
             height: 1.5,
           ),
           isCollapsed: true,
+          filled: false,
           contentPadding: EdgeInsets.zero,
           border: InputBorder.none,
           enabledBorder: InputBorder.none,

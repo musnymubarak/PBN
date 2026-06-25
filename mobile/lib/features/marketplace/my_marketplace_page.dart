@@ -984,8 +984,7 @@ class _MyMarketplacePageState extends State<MyMarketplacePage>
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              message ??
-                  'Contact details are only visible to members of the same chapter.',
+              message ?? 'Contact details are not provided.',
               style: const TextStyle(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w600,
