@@ -294,6 +294,26 @@ async def simulate_webhook(payment_id: UUID, db: AsyncSession) -> Dict[str, Any]
 
 async def get_my_payments(user_id: UUID, db: AsyncSession) -> List[Dict[str, Any]]:
     """Return all payments for a user, newest first."""
+    from app.models.user import User, UserRole
+    user = (await db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
+    
+    if user and user.role == UserRole.PROSPECT:
+        m_stmt = select(Payment).where(
+            Payment.user_id == user_id,
+            Payment.payment_type == PaymentType.MEMBERSHIP
+        )
+        existing_mem_payment = (await db.execute(m_stmt)).scalars().first()
+        if not existing_mem_payment:
+            new_payment = Payment(
+                user_id=user_id,
+                amount=Decimal("15000.00"),
+                currency="LKR",
+                payment_type=PaymentType.MEMBERSHIP,
+                reason="Membership fee",
+                status=PaymentStatus.PENDING,
+            )
+            db.add(new_payment)
+            await db.flush()
     stmt = select(Payment).where(Payment.user_id == user_id).order_by(desc(Payment.created_at))
     result = await db.execute(stmt)
     return [_serialize_payment(p) for p in result.scalars().all()]

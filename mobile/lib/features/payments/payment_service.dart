@@ -7,7 +7,7 @@ class PaymentService {
   Future<List<Map<String, dynamic>>> getMyPayments() async {
     try {
       final response = await _dio.get('/payments/my');
-      if (response.data['success'] == true) {
+      if (response.data['status'] == 'success') {
         return List<Map<String, dynamic>>.from(response.data['data']);
       }
       return [];
@@ -36,7 +36,7 @@ class PaymentService {
         data: formData,
       );
       
-      return response.data['success'] == true;
+      return response.data['status'] == 'success';
     } catch (e) {
       throw Exception('Failed to upload payment proof');
     }
