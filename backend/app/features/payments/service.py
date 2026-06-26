@@ -323,14 +323,14 @@ async def get_my_payments(user_id: UUID, db: AsyncSession) -> List[Dict[str, Any
             await db.flush()
     stmt = select(Payment).options(joinedload(Payment.proofs)).where(Payment.user_id == user_id).order_by(desc(Payment.created_at))
     result = await db.execute(stmt)
-    return [_serialize_payment(p) for p in result.scalars().all()]
+    return [_serialize_payment(p) for p in result.unique().scalars().all()]
 
 
 async def get_payment_status(payment_id: UUID, user_id: UUID | None, is_admin: bool, db: AsyncSession) -> Dict[str, Any]:
     """Get a single payment's status."""
     payment = (await db.execute(
         select(Payment).options(joinedload(Payment.proofs)).where(Payment.id == payment_id)
-    )).scalar_one_or_none()
+    )).unique().scalar_one_or_none()
 
     if not payment:
         raise NotFoundException("Payment not found")
@@ -352,7 +352,7 @@ async def list_all_payments(
     if type_filter:
         stmt = stmt.where(Payment.payment_type == type_filter)
     result = await db.execute(stmt)
-    return [_serialize_payment(p) for p in result.scalars().all()]
+    return [_serialize_payment(p) for p in result.unique().scalars().all()]
 
 
 async def record_manual_payment(
