@@ -231,7 +231,7 @@ class _UploadProofPageState extends State<UploadProofPage> {
             // Payment Method Selector
             _buildLabel('Payment Method'),
             DropdownButtonFormField<String>(
-              value: _proofType,
+              initialValue: _proofType,
               style: GoogleFonts.dmSans(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.text),
               decoration: InputDecoration(
                 filled: true,
