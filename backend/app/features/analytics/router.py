@@ -32,7 +32,7 @@ member_req = require_role([UserRole.MEMBER, UserRole.CHAPTER_ADMIN, UserRole.SUP
 
 @router.get("/dashboard", summary="User Dashboard Overview")
 async def dashboard_endpoint(
-    current_user: User = Depends(member_req),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
     payload = await get_dashboard(current_user.id, db)

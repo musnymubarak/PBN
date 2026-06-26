@@ -31,7 +31,7 @@ member_req = require_role([UserRole.MEMBER, UserRole.CHAPTER_ADMIN, UserRole.SUP
 @router.post("/payments/initiate", summary="Initiate a payment", status_code=201)
 async def initiate_payment_endpoint(
     data: PaymentInitiate,
-    current_user: User = Depends(member_req),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
     result = await service.initiate_payment(
@@ -79,7 +79,7 @@ async def simulate_webhook_endpoint(
 
 @router.get("/payments/my", summary="My payment history")
 async def my_payments_endpoint(
-    current_user: User = Depends(member_req),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
     payments = await service.get_my_payments(current_user.id, db)
@@ -89,7 +89,7 @@ async def my_payments_endpoint(
 @router.get("/payments/{payment_id}/status", summary="Get payment status")
 async def payment_status_endpoint(
     payment_id: UUID,
-    current_user: User = Depends(member_req),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
     is_admin = current_user.role in (UserRole.CHAPTER_ADMIN, UserRole.SUPER_ADMIN, UserRole.ADMIN)
