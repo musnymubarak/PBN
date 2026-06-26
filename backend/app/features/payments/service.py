@@ -309,34 +309,18 @@ async def get_my_payments(user_id: UUID, db: AsyncSession) -> List[Dict[str, Any
             Payment.user_id == user_id,
             Payment.payment_type == PaymentType.MEMBERSHIP
         )
-        existing_payments = (await db.execute(m_stmt)).scalars().all()
-        completed_payment = next((p for p in existing_payments if p.status == PaymentStatus.COMPLETED), None)
-        
-        if completed_payment:
-            # Self-healing: Upgrade user to MEMBER since they have a completed membership payment
-            user.role = UserRole.MEMBER
-            # Also ensure their chapter membership is activated
-            from app.models.memberships import ChapterMembership
-            ship_stmt = select(ChapterMembership).where(
-                ChapterMembership.user_id == user_id
-            ).order_by(desc(ChapterMembership.created_at)).limit(1)
-            membership = (await db.execute(ship_stmt)).scalar_one_or_none()
-            if membership:
-                membership.is_active = True
+        existing_mem_payment = (await db.execute(m_stmt)).unique().scalars().first()
+        if not existing_mem_payment:
+            new_payment = Payment(
+                user_id=user_id,
+                amount=Decimal("15000.00"),
+                currency="LKR",
+                payment_type=PaymentType.MEMBERSHIP,
+                reason="Membership fee",
+                status=PaymentStatus.PENDING,
+            )
+            db.add(new_payment)
             await db.flush()
-        else:
-            existing_mem_payment = existing_payments[0] if existing_payments else None
-            if not existing_mem_payment:
-                new_payment = Payment(
-                    user_id=user_id,
-                    amount=Decimal("15000.00"),
-                    currency="LKR",
-                    payment_type=PaymentType.MEMBERSHIP,
-                    reason="Membership fee",
-                    status=PaymentStatus.PENDING,
-                )
-                db.add(new_payment)
-                await db.flush()
     stmt = select(Payment).options(joinedload(Payment.proofs)).where(Payment.user_id == user_id).order_by(desc(Payment.created_at))
     result = await db.execute(stmt)
     return [_serialize_payment(p) for p in result.unique().scalars().all()]

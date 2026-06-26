@@ -124,10 +124,6 @@ class _DashboardPageState extends State<DashboardPage> {
         // If the user is a prospect, check for pending payments
         if (auth.user?.role.toUpperCase() == 'PROSPECT') {
           final payments = await PaymentService().getMyPayments();
-          
-          // Refresh profile in case the backend healed/upgraded our role during getMyPayments
-          await auth.refreshProfile();
-          
           if (mounted) {
             setState(() {
               _pendingMembershipPayment = payments.firstWhere(
