@@ -122,7 +122,7 @@ class _DashboardPageState extends State<DashboardPage> {
         });
         
         // If the user is a prospect, check for pending payments
-        if (auth.user?.role == 'PROSPECT') {
+        if (auth.user?.role.toUpperCase() == 'PROSPECT') {
           final payments = await PaymentService().getMyPayments();
           if (mounted) {
             setState(() {
@@ -1993,57 +1993,129 @@ class _DashboardPageState extends State<DashboardPage> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Complete your membership fee to unlock full access.',
+                        _pendingMembershipPayment!['proof_status'] == 'pending_review'
+                            ? 'Verification of payment receipt is in progress.'
+                            : 'Complete your membership fee to unlock full access.',
                         style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.8), fontSize: 12, fontWeight: FontWeight.w500),
                       ),
-                      const SizedBox(height: 20),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Payment Gateway Coming Soon!')),
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                foregroundColor: AppColors.accent,
-                                elevation: 0,
-                                side: const BorderSide(color: AppColors.accent),
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                              ),
-                              child: const Text('PAY SECURELY', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900)),
-                            ),
+                      if (_pendingMembershipPayment!['proof_status'] == 'pending_review') ...[
+                        const SizedBox(height: 20),
+                        Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF59E0B).withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.2)),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: () async {
-                                final res = await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => UploadProofPage(
-                                      paymentId: _pendingMembershipPayment!['id'],
-                                      amount: (_pendingMembershipPayment!['amount'] as num).toDouble(),
+                          child: Row(
+                            children: const [
+                              Icon(TablerIcons.clock, color: Color(0xFFF59E0B), size: 20),
+                              SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  'Receipt uploaded. Review pending.',
+                                  style: TextStyle(
+                                    color: Color(0xFFF59E0B),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ] else ...[
+                        if (_pendingMembershipPayment!['proof_status'] == 'rejected') ...[
+                          const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: AppColors.error.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: AppColors.error.withValues(alpha: 0.2)),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: const [
+                                    Icon(TablerIcons.alert_triangle, color: AppColors.error, size: 18),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Receipt Rejected',
+                                      style: TextStyle(
+                                        color: AppColors.error,
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if (_pendingMembershipPayment!['proof_notes'] != null &&
+                                    (_pendingMembershipPayment!['proof_notes'] as String).isNotEmpty) ...[
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    'Reason: ${_pendingMembershipPayment!['proof_notes']}',
+                                    style: const TextStyle(
+                                      color: AppColors.error,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
                                     ),
                                   ),
-                                );
-                                if (res == true) {
-                                  _loadData();
-                                }
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.accent,
-                                foregroundColor: Colors.black,
-                                elevation: 0,
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                              ),
-                              child: const Text('UPLOAD PROOF', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900)),
+                                ],
+                              ],
                             ),
                           ),
                         ],
-                      ),
+                        const SizedBox(height: 20),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Payment Gateway Coming Soon!')),
+                                  );
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: AppColors.accent,
+                                  elevation: 0,
+                                  side: const BorderSide(color: AppColors.accent),
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                ),
+                                child: const Text('PAY SECURELY', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900)),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: () async {
+                                  final res = await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => UploadProofPage(
+                                        paymentId: _pendingMembershipPayment!['id'],
+                                        amount: (_pendingMembershipPayment!['amount'] as num).toDouble(),
+                                      ),
+                                    ),
+                                  );
+                                  if (res == true) {
+                                    _loadData();
+                                  }
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.accent,
+                                  foregroundColor: Colors.black,
+                                  elevation: 0,
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                ),
+                                child: const Text('UPLOAD PROOF', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900)),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),

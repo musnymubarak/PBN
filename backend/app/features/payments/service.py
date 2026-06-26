@@ -40,6 +40,11 @@ def _generate_hmac(data: str, secret: str) -> str:
 
 
 def _serialize_payment(p: Payment) -> Dict[str, Any]:
+    # Find the latest proof if loaded
+    latest_proof = None
+    if "proofs" in p.__dict__ and p.proofs:
+        latest_proof = sorted(p.proofs, key=lambda x: x.created_at or datetime.min, reverse=True)[0]
+
     return {
         "id": str(p.id),
         "user_id": str(p.user_id),
@@ -55,6 +60,8 @@ def _serialize_payment(p: Payment) -> Dict[str, Any]:
         "updated_at": p.updated_at.isoformat() if p.updated_at else None,
         "user_name": p.user.full_name if "user" in p.__dict__ and p.user else None,
         "user_phone": p.user.phone_number if "user" in p.__dict__ and p.user else None,
+        "proof_status": latest_proof.status.value if latest_proof else None,
+        "proof_notes": latest_proof.admin_notes if latest_proof else None,
     }
 
 
@@ -314,7 +321,7 @@ async def get_my_payments(user_id: UUID, db: AsyncSession) -> List[Dict[str, Any
             )
             db.add(new_payment)
             await db.flush()
-    stmt = select(Payment).where(Payment.user_id == user_id).order_by(desc(Payment.created_at))
+    stmt = select(Payment).options(joinedload(Payment.proofs)).where(Payment.user_id == user_id).order_by(desc(Payment.created_at))
     result = await db.execute(stmt)
     return [_serialize_payment(p) for p in result.scalars().all()]
 
@@ -322,7 +329,7 @@ async def get_my_payments(user_id: UUID, db: AsyncSession) -> List[Dict[str, Any
 async def get_payment_status(payment_id: UUID, user_id: UUID | None, is_admin: bool, db: AsyncSession) -> Dict[str, Any]:
     """Get a single payment's status."""
     payment = (await db.execute(
-        select(Payment).where(Payment.id == payment_id)
+        select(Payment).options(joinedload(Payment.proofs)).where(Payment.id == payment_id)
     )).scalar_one_or_none()
 
     if not payment:
@@ -339,7 +346,7 @@ async def list_all_payments(
     status_filter: str | None, type_filter: str | None, db: AsyncSession
 ) -> List[Dict[str, Any]]:
     """Admin: list all payments with user info and optional filters."""
-    stmt = select(Payment).options(joinedload(Payment.user)).order_by(desc(Payment.created_at))
+    stmt = select(Payment).options(joinedload(Payment.user), joinedload(Payment.proofs)).order_by(desc(Payment.created_at))
     if status_filter:
         stmt = stmt.where(Payment.status == status_filter)
     if type_filter:

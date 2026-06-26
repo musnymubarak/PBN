@@ -7,6 +7,8 @@ class Payment {
   final String createdAt;
   final String? reason;
   final String? notes;
+  final String? proofStatus;
+  final String? proofNotes;
 
   Payment({
     required this.id,
@@ -17,6 +19,8 @@ class Payment {
     required this.createdAt,
     this.reason,
     this.notes,
+    this.proofStatus,
+    this.proofNotes,
   });
 
   factory Payment.fromJson(Map<String, dynamic> json) => Payment(
@@ -28,9 +32,15 @@ class Payment {
         createdAt: json['created_at'] ?? '',
         reason: json['reason'],
         notes: json['notes'],
+        proofStatus: json['proof_status'],
+        proofNotes: json['proof_notes'],
       );
 
   String get statusLabel {
+    if (status == 'pending' && proofStatus != null) {
+      if (proofStatus == 'pending_review') return 'Proof Pending';
+      if (proofStatus == 'rejected') return 'Proof Rejected';
+    }
     switch (status) {
       case 'pending': return 'Pending';
       case 'completed': return 'Completed';
