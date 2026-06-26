@@ -128,10 +128,13 @@ class _UploadProofPageState extends State<UploadProofPage> {
     setState(() => _isLoading = true);
 
     try {
+      final reference = _referenceController.text.trim();
+      final finalReference = reference.isNotEmpty ? '$_proofType: $reference' : _proofType;
+
       final success = await _paymentService.uploadPaymentProof(
         widget.paymentId,
-        _proofType,
-        _referenceController.text.trim(),
+        _isPdf ? 'pdf' : 'image',
+        finalReference,
         _selectedFile!.path,
       );
 

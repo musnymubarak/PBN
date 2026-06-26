@@ -45,6 +45,13 @@ def _serialize_payment(p: Payment) -> Dict[str, Any]:
     if "proofs" in p.__dict__ and p.proofs:
         latest_proof = sorted(p.proofs, key=lambda x: x.created_at or datetime.min, reverse=True)[0]
 
+    # A PaymentProof record is created at application-approval time with
+    # status=PENDING_REVIEW but proof_type=None (no actual upload yet).
+    # Only report proof_status when the user has actually uploaded something
+    # (proof_type is set), otherwise the mobile app incorrectly shows
+    # "Receipt uploaded. Review pending."
+    proof_actually_submitted = latest_proof and latest_proof.proof_type is not None
+
     return {
         "id": str(p.id),
         "user_id": str(p.user_id),
@@ -60,8 +67,8 @@ def _serialize_payment(p: Payment) -> Dict[str, Any]:
         "updated_at": p.updated_at.isoformat() if p.updated_at else None,
         "user_name": p.user.full_name if "user" in p.__dict__ and p.user else None,
         "user_phone": p.user.phone_number if "user" in p.__dict__ and p.user else None,
-        "proof_status": latest_proof.status.value if latest_proof else None,
-        "proof_notes": latest_proof.admin_notes if latest_proof else None,
+        "proof_status": latest_proof.status.value if proof_actually_submitted else None,
+        "proof_notes": latest_proof.admin_notes if proof_actually_submitted else None,
     }
 
 
