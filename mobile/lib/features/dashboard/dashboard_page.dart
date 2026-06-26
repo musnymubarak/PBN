@@ -2165,7 +2165,7 @@ class _DashboardPageState extends State<DashboardPage> {
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: navItems.map((item) {
@@ -2175,9 +2175,9 @@ class _DashboardPageState extends State<DashboardPage> {
                   onTap: () => setState(() => _currentIndex = item.index),
                   behavior: HitTestBehavior.opaque,
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
+                    padding: const EdgeInsets.symmetric(vertical: 1, horizontal: 2),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 4),
+                      padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 4),
                       decoration: BoxDecoration(
                         gradient: isActive
                             ? LinearGradient(
@@ -2199,7 +2199,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             color: isActive ? AppColors.accent : AppColors.textMuted,
                             size: isActive ? 22 : 21,
                           ),
-                          const SizedBox(height: 3),
+                          const SizedBox(height: 1),
                           Text(
                             item.label,
                             style: TextStyle(
@@ -2209,7 +2209,7 @@ class _DashboardPageState extends State<DashboardPage> {
                               letterSpacing: 0.3,
                             ),
                           ),
-                          const SizedBox(height: 3),
+                          const SizedBox(height: 1),
                           Container(
                             width: isActive ? 16 : 0,
                             height: 2,
