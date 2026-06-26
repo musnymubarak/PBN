@@ -196,51 +196,6 @@ class _NotificationsPageState extends State<NotificationsPage> {
         ],
       ),
       actions: [
-        if (unread > 0)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Material(
-              color: Colors.transparent,
-              borderRadius: BorderRadius.circular(10),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(10),
-                onTap: _markAllRead,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        AppColors.accent.withValues(alpha: 0.18),
-                        AppColors.accent.withValues(alpha: 0.06),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                        color:
-                            AppColors.accent.withValues(alpha: 0.32)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(TablerIcons.checks,
-                          size: 13, color: AppColors.accent),
-                      const SizedBox(width: 5),
-                      Text(
-                        'MARK ALL',
-                        style: GoogleFonts.dmSans(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.accent,
-                          letterSpacing: 0.8,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
         const PbnAppBarActions(),
       ],
     );
@@ -403,6 +358,49 @@ class _NotificationsPageState extends State<NotificationsPage> {
         _filterChip(_Filter.all, 'All', _notifications.length),
         const SizedBox(width: 8),
         _filterChip(_Filter.unread, 'Unread', unread),
+        if (unread > 0) ...[
+          const Spacer(),
+          Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(10),
+              onTap: _markAllRead,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.accent.withValues(alpha: 0.18),
+                      AppColors.accent.withValues(alpha: 0.06),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                      color: AppColors.accent.withValues(alpha: 0.32)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(TablerIcons.checks,
+                        size: 13, color: AppColors.accent),
+                    const SizedBox(width: 5),
+                    Text(
+                      'MARK ALL',
+                      style: GoogleFonts.dmSans(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.accent,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }

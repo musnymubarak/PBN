@@ -53,7 +53,7 @@ class _MatchmakingDashboardPageState extends State<MatchmakingDashboardPage> wit
             ),
             actions: const [PbnAppBarActions()],
             bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(73),
+              preferredSize: const Size.fromHeight(48),
               child: Container(
                 color: Colors.white,
                 child: Column(
@@ -72,12 +72,12 @@ class _MatchmakingDashboardPageState extends State<MatchmakingDashboardPage> wit
                       dividerColor: Colors.transparent,
                       labelStyle: const TextStyle(
                         fontWeight: FontWeight.w800,
-                        fontSize: 13,
+                        fontSize: 12,
                         letterSpacing: 0.5,
                       ),
                       unselectedLabelStyle: const TextStyle(
                         fontWeight: FontWeight.w700,
-                        fontSize: 13,
+                        fontSize: 12,
                         letterSpacing: 0.5,
                       ),
                       overlayColor: WidgetStateProperty.resolveWith<Color?>(
@@ -93,14 +93,24 @@ class _MatchmakingDashboardPageState extends State<MatchmakingDashboardPage> wit
                       ),
                       tabs: const [
                         Tab(
-                          icon: Icon(TablerIcons.sparkles, size: 18),
-                          text: 'AI MATCHES',
-                          iconMargin: EdgeInsets.only(bottom: 4),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(TablerIcons.sparkles, size: 14),
+                              SizedBox(width: 6),
+                              Text('AI MATCHES'),
+                            ],
+                          ),
                         ),
                         Tab(
-                          icon: Icon(TablerIcons.arrows_exchange, size: 18),
-                          text: 'REFERRALS',
-                          iconMargin: EdgeInsets.only(bottom: 4),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(TablerIcons.arrows_exchange, size: 14),
+                              SizedBox(width: 6),
+                              Text('REFERRALS'),
+                            ],
+                          ),
                         ),
                       ],
                     ),

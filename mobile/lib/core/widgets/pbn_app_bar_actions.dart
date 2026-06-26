@@ -3,13 +3,21 @@ import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:provider/provider.dart';
 import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/providers/notification_provider.dart';
+import 'package:pbn/core/providers/auth_provider.dart';
 import 'package:pbn/features/community/community_page.dart';
 
 class PbnAppBarActions extends StatelessWidget {
-  const PbnAppBarActions({super.key});
+  final bool showBell;
+  
+  const PbnAppBarActions({super.key, this.showBell = true});
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+    if (auth.user?.role.toUpperCase() == 'PROSPECT') {
+      return const SizedBox.shrink();
+    }
+
     final notifs = context.watch<NotificationProvider>();
     
     return Row(
@@ -22,50 +30,52 @@ class PbnAppBarActions extends StatelessWidget {
             MaterialPageRoute(builder: (_) => const CommunityPage()),
           ),
         ),
-        const SizedBox(width: 8),
-        Stack(
-          clipBehavior: Clip.none,
-          children: [
-            _buildActionIcon(
-              icon: TablerIcons.bell,
-              onPressed: () => Navigator.pushNamed(context, '/notifications'),
-            ),
-            if (notifs.unreadCount > 0)
-              Positioned(
-                right: -2,
-                top: -2,
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: AppColors.accent,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 1.5),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.accent.withValues(alpha: 0.3),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  constraints: const BoxConstraints(
-                    minWidth: 16,
-                    minHeight: 16,
-                  ),
-                  child: Center(
-                    child: Text(
-                      '${notifs.unreadCount}',
-                      style: const TextStyle(
-                        fontSize: 8,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w900,
+        if (showBell) ...[
+          const SizedBox(width: 8),
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              _buildActionIcon(
+                icon: TablerIcons.bell,
+                onPressed: () => Navigator.pushNamed(context, '/notifications'),
+              ),
+              if (notifs.unreadCount > 0)
+                Positioned(
+                  right: -2,
+                  top: -2,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: AppColors.error,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 1.5),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.error.withValues(alpha: 0.3),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 16,
+                      minHeight: 16,
+                    ),
+                    child: Center(
+                      child: Text(
+                        '${notifs.unreadCount}',
+                        style: const TextStyle(
+                          fontSize: 8,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-          ],
-        ),
+            ],
+          ),
+        ],
         const SizedBox(width: 16),
       ],
     );

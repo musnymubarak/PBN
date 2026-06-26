@@ -41,6 +41,7 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   int _currentIndex = 0;
   DashboardData? _data;
+  bool _isScrolled = false;
 
   List<dynamic> _leaderboard = [];
   Map<String, dynamic>? _pendingMembershipPayment;
@@ -326,46 +327,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: Stack(
-        children: [
-          // Background ambient glows
-          Positioned(
-            top: -100,
-            right: -100,
-            child: Container(
-              width: 300,
-              height: 300,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    AppColors.accentBlue.withValues(alpha: 0.08),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 100,
-            left: -100,
-            child: Container(
-              width: 250,
-              height: 250,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    AppColors.accent.withValues(alpha: 0.05),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-          ),
-          IndexedStack(index: _currentIndex, children: pages),
-        ],
-      ),
+      body: IndexedStack(index: _currentIndex, children: pages),
       bottomNavigationBar: _buildBottomNav(isProspect),
     );
   }
@@ -408,6 +370,14 @@ class _DashboardPageState extends State<DashboardPage> {
       snap: true,
       automaticallyImplyLeading: false,
       titleSpacing: 16,
+      shape: _isScrolled
+          ? const Border(
+              bottom: BorderSide(
+                color: AppColors.border,
+                width: 0.8,
+              ),
+            )
+          : null,
       title: Row(
         children: [
           // Gold-ringed avatar
@@ -515,7 +485,7 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
         ],
       ),
-      actions: const [PbnAppBarActions()],
+      actions: isProspect ? const [] : const [PbnAppBarActions()],
     );
   }
 
@@ -695,27 +665,40 @@ class _DashboardPageState extends State<DashboardPage> {
         highlightColor: Colors.white.withValues(alpha: 0.9),
         duration: const Duration(milliseconds: 1400),
       ),
-      child: RefreshIndicator(
-        onRefresh: _loadData,
-        color: AppColors.primary,
-        child: CustomScrollView(
-          slivers: [
-            _buildSliverAppBar(false),
-            SliverPadding(
-              padding: const EdgeInsets.only(left: 20, right: 20, top: 4, bottom: 20),
-              sliver: SliverList.list(
-                children: List.generate(sections.length, (i) {
-                  // Cascade only above-the-fold items; cap delay so bottom
-                  // sections don't wait for the whole list to finish.
-                  final delayMs = (i * 35).clamp(0, 280);
-                  return sections[i]
-                      .animate(delay: delayMs.ms)
-                      .fadeIn(duration: 320.ms, curve: Curves.easeOutCubic)
-                      .slideY(begin: 0.10, end: 0, duration: 320.ms, curve: Curves.easeOutCubic);
-                }),
+      child: NotificationListener<ScrollNotification>(
+        onNotification: (notification) {
+          if (notification is ScrollUpdateNotification) {
+            final isScrolled = notification.metrics.pixels > 0;
+            if (isScrolled != _isScrolled) {
+              setState(() {
+                _isScrolled = isScrolled;
+              });
+            }
+          }
+          return false;
+        },
+        child: RefreshIndicator(
+          onRefresh: _loadData,
+          color: AppColors.primary,
+          child: CustomScrollView(
+            slivers: [
+              _buildSliverAppBar(false),
+              SliverPadding(
+                padding: const EdgeInsets.only(left: 20, right: 20, top: 4, bottom: 20),
+                sliver: SliverList.list(
+                  children: List.generate(sections.length, (i) {
+                    // Cascade only above-the-fold items; cap delay so bottom
+                    // sections don't wait for the whole list to finish.
+                    final delayMs = (i * 35).clamp(0, 280);
+                    return sections[i]
+                        .animate(delay: delayMs.ms)
+                        .fadeIn(duration: 320.ms, curve: Curves.easeOutCubic)
+                        .slideY(begin: 0.10, end: 0, duration: 320.ms, curve: Curves.easeOutCubic);
+                  }),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -1217,17 +1200,12 @@ class _DashboardPageState extends State<DashboardPage> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
+        color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.12),
-            blurRadius: 32,
-            offset: const Offset(0, 12),
-          ),
-        ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
+        clipBehavior: Clip.antiAliasWithSaveLayer,
         child: Stack(
           children: [
             Positioned.fill(
@@ -1380,17 +1358,12 @@ class _DashboardPageState extends State<DashboardPage> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
+        color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.12),
-            blurRadius: 32,
-            offset: const Offset(0, 12),
-          ),
-        ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
+        clipBehavior: Clip.antiAliasWithSaveLayer,
         child: Stack(
           children: [
             Positioned.fill(
@@ -1495,17 +1468,12 @@ class _DashboardPageState extends State<DashboardPage> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
+        color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF6366F1).withValues(alpha: 0.12),
-            blurRadius: 32,
-            offset: const Offset(0, 12),
-          ),
-        ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
+        clipBehavior: Clip.antiAliasWithSaveLayer,
         child: Stack(
           children: [
             if (event != null) ...[
@@ -1701,17 +1669,12 @@ class _DashboardPageState extends State<DashboardPage> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
+        color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.12),
-            blurRadius: 32,
-            offset: const Offset(0, 12),
-          ),
-        ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
+        clipBehavior: Clip.antiAliasWithSaveLayer,
         child: Stack(
           children: [
             if (event != null) ...[
@@ -1926,9 +1889,21 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildProspectDashboard() {
-    return CustomScrollView(
-      slivers: [
-        _buildSliverAppBar(true),
+    return NotificationListener<ScrollNotification>(
+      onNotification: (notification) {
+        if (notification is ScrollUpdateNotification) {
+          final isScrolled = notification.metrics.pixels > 0;
+          if (isScrolled != _isScrolled) {
+            setState(() {
+              _isScrolled = isScrolled;
+            });
+          }
+        }
+        return false;
+      },
+      child: CustomScrollView(
+        slivers: [
+          _buildSliverAppBar(true),
         SliverPadding(
           padding: const EdgeInsets.only(left: 32, right: 32, top: 12, bottom: 32),
           sliver: SliverList.list(
@@ -2083,6 +2058,7 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
         ),
       ],
+    ),
     );
   }
 
@@ -2117,7 +2093,7 @@ class _DashboardPageState extends State<DashboardPage> {
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: navItems.map((item) {
@@ -2127,9 +2103,9 @@ class _DashboardPageState extends State<DashboardPage> {
                   onTap: () => setState(() => _currentIndex = item.index),
                   behavior: HitTestBehavior.opaque,
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                    padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                      padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 4),
                       decoration: BoxDecoration(
                         gradient: isActive
                             ? LinearGradient(
@@ -2141,7 +2117,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                 end: Alignment.bottomCenter,
                               )
                             : null,
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -2149,9 +2125,9 @@ class _DashboardPageState extends State<DashboardPage> {
                           Icon(
                             item.icon,
                             color: isActive ? AppColors.accent : AppColors.textMuted,
-                            size: isActive ? 23 : 22,
+                            size: isActive ? 22 : 21,
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 3),
                           Text(
                             item.label,
                             style: TextStyle(
@@ -2163,8 +2139,8 @@ class _DashboardPageState extends State<DashboardPage> {
                           ),
                           const SizedBox(height: 3),
                           Container(
-                            width: isActive ? 18 : 0,
-                            height: 2.5,
+                            width: isActive ? 16 : 0,
+                            height: 2,
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
                                 colors: AppColors.goldGradient,

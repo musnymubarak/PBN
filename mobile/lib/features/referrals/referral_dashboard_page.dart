@@ -366,31 +366,31 @@ By joining, you become part of a strong ecosystem built on reliable partnerships
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Icon(TablerIcons.briefcase,
-                      color: AppColors.accent, size: 32),
-                  const SizedBox(height: 14),
+                      color: AppColors.accent, size: 24),
+                  const SizedBox(height: 8),
                   const Text(
                     'TOTAL BUSINESS ACTIVITY',
                     style: TextStyle(
                       color: AppColors.accent,
-                      fontSize: 11,
+                      fontSize: 10.5,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 1.4,
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 4),
                   Text(
                     '$total',
                     style: GoogleFonts.dmSans(
                       color: Colors.white,
-                      fontSize: 64,
+                      fontSize: 48,
                       fontWeight: FontWeight.w900,
-                      letterSpacing: -2,
+                      letterSpacing: -1.5,
                       height: 1.0,
                       shadows: [
                         Shadow(
@@ -401,26 +401,24 @@ By joining, you become part of a strong ecosystem built on reliable partnerships
                       ],
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  // TODO: scope to current quarter once backend exposes
-                  // createdAt filtering on referrals.
+                  const SizedBox(height: 4),
                   Text(
                     'given + received, all time',
                     style: GoogleFonts.dmSans(
                       color: Colors.white.withValues(alpha: 0.75),
-                      fontSize: 13,
+                      fontSize: 12.5,
                       fontWeight: FontWeight.w500,
                       height: 1.45,
                     ),
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 12),
                   if (ratioPill == null)
                     _buildNewOpportunityCta()
                   else
                     Row(
                       children: [
                         Flexible(child: ratioPill),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 10),
                         _buildNewOpportunityCta(),
                       ],
                     ),
@@ -519,10 +517,10 @@ By joining, you become part of a strong ecosystem built on reliable partnerships
           ).then((_) => _loadStats());
         },
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
           decoration: BoxDecoration(
             gradient: const LinearGradient(colors: AppColors.goldGradient),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
             boxShadow: [
               BoxShadow(
                 color: AppColors.accent.withValues(alpha: 0.35),
@@ -534,13 +532,13 @@ By joining, you become part of a strong ecosystem built on reliable partnerships
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: const [
-              Icon(TablerIcons.plus, color: Colors.white, size: 14),
-              SizedBox(width: 8),
+              Icon(TablerIcons.plus, color: Colors.white, size: 13),
+              SizedBox(width: 6),
               Text(
                 'NEW OPPORTUNITY',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 11,
+                  fontSize: 10.5,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 0.8,
                 ),

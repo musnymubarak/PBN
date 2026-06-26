@@ -9,7 +9,7 @@ class AppColors {
   static const Color accent       = Color(0xFFC9A84C);  // Brand gold
 
   // -- Backgrounds --
-  static const Color background     = Color(0xFFF8FAFC);
+  static const Color background     = Color(0xFFFFFFFF);
   static const Color surface        = Color(0xFFFFFFFF);
   static const Color surfaceAlt     = Color(0xFFEAEDF5);
 

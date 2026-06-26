@@ -245,28 +245,28 @@ class _AiMatchesViewState extends State<AiMatchesView> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(TablerIcons.sparkles, color: AppColors.accent, size: 32),
-                  const SizedBox(height: 14),
+                  const Icon(TablerIcons.sparkles, color: AppColors.accent, size: 24),
+                  const SizedBox(height: 8),
                   const Text(
                     'AI BUSINESS MATCHMAKING',
                     style: TextStyle(
                       color: AppColors.accent,
-                      fontSize: 11,
+                      fontSize: 10.5,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 1.4,
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 4),
                   Text(
                     headline,
                     style: GoogleFonts.dmSans(
                       color: Colors.white,
-                      fontSize: 24,
+                      fontSize: 20,
                       fontWeight: FontWeight.w900,
                       letterSpacing: -0.4,
                       height: 1.15,
@@ -281,22 +281,22 @@ class _AiMatchesViewState extends State<AiMatchesView> {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 6),
                   Text(
                     'Based on industry, network gap, verification, and your stated needs.',
                     style: GoogleFonts.dmSans(
                       color: Colors.white.withValues(alpha: 0.75),
-                      fontSize: 13,
+                      fontSize: 12.5,
                       fontWeight: FontWeight.w500,
-                      height: 1.45,
+                      height: 1.4,
                     ),
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 12),
                   Material(
                     color: Colors.transparent,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                     child: InkWell(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(10),
                       onTap: () {
                         HapticFeedback.selectionClick();
                         Navigator.push(
@@ -307,10 +307,10 @@ class _AiMatchesViewState extends State<AiMatchesView> {
                         );
                       },
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(colors: AppColors.goldGradient),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(10),
                           boxShadow: [
                             BoxShadow(
                               color: AppColors.accent.withValues(alpha: 0.35),
@@ -322,13 +322,13 @@ class _AiMatchesViewState extends State<AiMatchesView> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: const [
-                            Icon(TablerIcons.user_cog, color: Colors.white, size: 14),
-                            SizedBox(width: 8),
+                            Icon(TablerIcons.user_cog, color: Colors.white, size: 13),
+                            SizedBox(width: 6),
                             Text(
                               'EDIT MATCH PROFILE',
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 11,
+                                fontSize: 10.5,
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: 0.8,
                               ),
