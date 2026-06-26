@@ -2162,73 +2162,76 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
         ],
       ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: navItems.map((item) {
-              bool isActive = _currentIndex == item.index;
-              return Expanded(
-                child: GestureDetector(
-                  onTap: () => setState(() => _currentIndex = item.index),
-                  behavior: HitTestBehavior.opaque,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 1, horizontal: 2),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 4),
-                      decoration: BoxDecoration(
-                        gradient: isActive
-                            ? LinearGradient(
-                                colors: [
-                                  AppColors.accent.withValues(alpha: 0.18),
-                                  AppColors.accent.withValues(alpha: 0.08),
-                                ],
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                              )
-                            : null,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            item.icon,
-                            color: isActive ? AppColors.accent : AppColors.textMuted,
-                            size: isActive ? 22 : 21,
-                          ),
-                          const SizedBox(height: 1),
-                          Text(
-                            item.label,
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: isActive ? FontWeight.w900 : FontWeight.w600,
+      child: Builder(
+        builder: (context) {
+          final bottomInset = MediaQuery.of(context).viewPadding.bottom;
+          final reducedBottom = (bottomInset - 16).clamp(0.0, double.infinity);
+          return Padding(
+            padding: EdgeInsets.only(left: 8, right: 8, top: 4, bottom: reducedBottom),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: navItems.map((item) {
+                bool isActive = _currentIndex == item.index;
+                return Expanded(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _currentIndex = item.index),
+                    behavior: HitTestBehavior.opaque,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                        decoration: BoxDecoration(
+                          gradient: isActive
+                              ? LinearGradient(
+                                  colors: [
+                                    AppColors.accent.withValues(alpha: 0.18),
+                                    AppColors.accent.withValues(alpha: 0.08),
+                                  ],
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                )
+                              : null,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              item.icon,
                               color: isActive ? AppColors.accent : AppColors.textMuted,
-                              letterSpacing: 0.3,
+                              size: isActive ? 23 : 22,
                             ),
-                          ),
-                          const SizedBox(height: 1),
-                          Container(
-                            width: isActive ? 16 : 0,
-                            height: 2,
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: AppColors.goldGradient,
+                            const SizedBox(height: 1),
+                            Text(
+                              item.label,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: isActive ? FontWeight.w900 : FontWeight.w600,
+                                color: isActive ? AppColors.accent : AppColors.textMuted,
+                                letterSpacing: 0.3,
                               ),
-                              borderRadius: BorderRadius.circular(2),
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 1),
+                            Container(
+                              width: isActive ? 16 : 0,
+                              height: 2,
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: AppColors.goldGradient,
+                                ),
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              );
-            }).toList(),
-          ),
-        ),
+                );
+              }).toList(),
+            ),
+          );
+        },
       ),
     );
   }
