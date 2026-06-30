@@ -13,6 +13,8 @@ import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/providers/auth_provider.dart';
 import 'package:pbn/core/services/event_service.dart';
 import 'package:pbn/models/event.dart';
+import 'package:pbn/features/payments/payment_service.dart';
+import 'package:pbn/features/payments/payment_webview_page.dart';
 
 class EventDetailPage extends StatefulWidget {
   final Event event;
@@ -948,9 +950,55 @@ class _EventDetailPageState extends State<EventDetailPage> {
         borderRadius: BorderRadius.circular(16),
         onTap: _isLoading
             ? null
-            : () {
+            : () async {
                 HapticFeedback.selectionClick();
-                _handleRSVP('going');
+                if (_currentEvent.fee > 0) {
+                  setState(() => _isLoading = true);
+                  try {
+                    final res = await PaymentService().initiatePayment(
+                      paymentType: 'meeting_fee',
+                      amount: _currentEvent.fee,
+                      eventId: _currentEvent.id,
+                    );
+                    final paymentPageUrl = res['payment_url'];
+                    final paymentId = res['payment_id'];
+                    
+                    if (!mounted) return;
+                    setState(() => _isLoading = false);
+                    
+                    final reqId = await Navigator.push<String?>(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => PaymentWebViewPage(
+                          paymentPageUrl: paymentPageUrl,
+                          paymentId: paymentId,
+                        ),
+                      ),
+                    );
+                    
+                    if (reqId != null) {
+                      _refreshEventDataSilently();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Seat reserved successfully!'),
+                          backgroundColor: AppColors.success,
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      setState(() => _isLoading = false);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Failed to initiate payment: ${e.toString()}'),
+                          backgroundColor: AppColors.error,
+                        ),
+                      );
+                    }
+                  }
+                } else {
+                  _handleRSVP('going');
+                }
               },
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 16),

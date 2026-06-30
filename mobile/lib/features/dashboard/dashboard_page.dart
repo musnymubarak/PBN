@@ -30,6 +30,7 @@ import 'package:pbn/features/marketplace/marketplace_page.dart';
 import 'package:pbn/features/matchmaking/matchmaking_page.dart';
 import 'package:pbn/features/payments/payment_service.dart';
 import 'package:pbn/features/payments/upload_proof_page.dart';
+import 'package:pbn/features/payments/payment_webview_page.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -2072,10 +2073,49 @@ class _DashboardPageState extends State<DashboardPage> {
                           children: [
                             Expanded(
                               child: ElevatedButton(
-                                onPressed: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Payment Gateway Coming Soon!')),
-                                  );
+                                onPressed: () async {
+                                  setState(() => _loading = true);
+                                  try {
+                                    final res = await PaymentService().initiatePayment(
+                                      paymentType: 'membership',
+                                      amount: (_pendingMembershipPayment!['amount'] as num).toDouble(),
+                                    );
+                                    final paymentPageUrl = res['payment_url'];
+                                    final paymentId = res['payment_id'];
+                                    
+                                    if (!mounted) return;
+                                    setState(() => _loading = false);
+                                    
+                                    final reqId = await Navigator.push<String?>(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => PaymentWebViewPage(
+                                          paymentPageUrl: paymentPageUrl,
+                                          paymentId: paymentId,
+                                        ),
+                                      ),
+                                    );
+                                    
+                                    if (reqId != null) {
+                                      _loadData();
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Payment processed successfully!'),
+                                          backgroundColor: AppColors.success,
+                                        ),
+                                      );
+                                    }
+                                  } catch (e) {
+                                    if (mounted) {
+                                      setState(() => _loading = false);
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Failed to initiate payment: ${e.toString()}'),
+                                          backgroundColor: AppColors.error,
+                                        ),
+                                      );
+                                    }
+                                  }
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.white,

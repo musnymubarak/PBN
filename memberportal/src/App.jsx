@@ -14,6 +14,8 @@ import ClubsPage from './pages/ClubsPage';
 import CommunityPage from './pages/CommunityPage';
 import EventsPage from './pages/EventsPage';
 import PaymentsPage from './pages/PaymentsPage';
+import PaymentSuccessPage from './pages/PaymentSuccessPage';
+import PaymentCancelledPage from './pages/PaymentCancelledPage';
 import RewardsPage from './pages/RewardsPage';
 import ApplicationsPage from './pages/ApplicationsPage';
 import SupportPage from './pages/SupportPage';
@@ -42,6 +44,8 @@ export default function App() {
             <Route path="/referrals" element={<AppShell><ReferralsPage /></AppShell>} />
             <Route path="/marketplace" element={<AppShell><MarketplacePage /></AppShell>} />
             <Route path="/payments" element={<AppShell><PaymentsPage /></AppShell>} />
+            <Route path="/payment-success" element={<AppShell><PaymentSuccessPage /></AppShell>} />
+            <Route path="/payment-cancelled" element={<AppShell><PaymentCancelledPage /></AppShell>} />
             <Route path="/rewards" element={<AppShell><RewardsPage /></AppShell>} />
             <Route path="/applications" element={<AppShell><ApplicationsPage /></AppShell>} />
             <Route path="/support" element={<AppShell><SupportPage /></AppShell>} />

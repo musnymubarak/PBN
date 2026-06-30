@@ -2431,16 +2431,17 @@ function PaymentsPage() {
               <th>Reason</th>
               <th>Type</th>
               <th>Amount</th>
+              <th>Gateway Ref</th>
               <th>Status</th>
               <th className="ds-table__actions" />
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <Ds.Table.LoadingRow colSpan={7} label="Loading payments…" />
+              <Ds.Table.LoadingRow colSpan={8} label="Loading payments…" />
             ) : payments.length === 0 ? (
               <Ds.Table.EmptyRow
-                colSpan={7}
+                colSpan={8}
                 icon={IconCoin}
                 title="No payments yet"
                 description="Recorded transactions will appear here."
@@ -2464,6 +2465,9 @@ function PaymentsPage() {
                 </td>
                 <td className="ds-table__primary" style={{ fontWeight: 'var(--weight-bold)' }}>
                   {formatCurrency(p.amount)}
+                </td>
+                <td style={{ fontFamily: 'monospace', fontSize: '0.85rem' }} className="ds-table__muted">
+                  {p.gateway_reference || '—'}
                 </td>
                 <td>
                   <Ds.Badge dot variant={p.status === 'completed' ? 'success' : p.status === 'failed' ? 'danger' : 'warning'}>
