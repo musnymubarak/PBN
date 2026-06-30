@@ -51,7 +51,7 @@ class PaymentService {
       final response = await _dio.post('/payments/initiate', data: {
         'payment_type': paymentType,
         'amount': amount,
-        if (eventId != null) 'event_id': eventId,
+        'event_id': ?eventId,
       });
       if (response.data['status'] == 'success') {
         return Map<String, dynamic>.from(response.data['data']);
