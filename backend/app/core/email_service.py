@@ -26,20 +26,27 @@ def render_template(template_name: str, context: dict) -> str:
     template = jinja_env.get_template(template_name)
     return template.render(context)
 
-async def send_email(to_email: str, subject: str, html_content: str, attachments: typing.Optional[list[dict]] = None, append_to_sent: bool = False):
+async def send_email(to_email: str, subject: str, html_content: str, attachments: typing.Optional[list[dict]] = None, append_to_sent: bool = False, custom_smtp: typing.Optional[dict] = None):
     """Sends an email asynchronously using SMTP."""
-    if not settings.SMTP_USER or not settings.SMTP_PASSWORD:
+    if not custom_smtp and (not settings.SMTP_USER or not settings.SMTP_PASSWORD):
         logger.warning(f"SMTP credentials not fully configured. Skipping email to {to_email}")
         return
 
     # Run the blocking SMTP operations in a thread to keep it async-friendly
-    await asyncio.to_thread(_send_smtp, to_email, subject, html_content, attachments, append_to_sent)
+    await asyncio.to_thread(_send_smtp, to_email, subject, html_content, attachments, append_to_sent, custom_smtp)
 
-def _send_smtp(to_email: str, subject: str, html_content: str, attachments: typing.Optional[list[dict]] = None, append_to_sent: bool = False):
+def _send_smtp(to_email: str, subject: str, html_content: str, attachments: typing.Optional[list[dict]] = None, append_to_sent: bool = False, custom_smtp: typing.Optional[dict] = None):
     """Internal blocking function for sending SMTP email."""
+    smtp_host = custom_smtp.get('host') if custom_smtp else settings.SMTP_HOST
+    smtp_port = custom_smtp.get('port') if custom_smtp else settings.SMTP_PORT
+    smtp_user = custom_smtp.get('user') if custom_smtp else settings.SMTP_USER
+    smtp_password = custom_smtp.get('password') if custom_smtp else settings.SMTP_PASSWORD
+    from_email = custom_smtp.get('from_email') if custom_smtp else settings.SMTP_FROM_EMAIL
+    from_name = custom_smtp.get('from_name') if custom_smtp else settings.SMTP_FROM_NAME
+
     msg = MIMEMultipart("mixed")
     msg["Subject"] = subject
-    msg["From"] = f"{settings.SMTP_FROM_NAME} <{settings.SMTP_FROM_EMAIL}>"
+    msg["From"] = f"{from_name} <{from_email}>"
     msg["To"] = to_email
     msg["Date"] = formatdate(localtime=True)
     msg["Message-ID"] = make_msgid(domain="primebusiness.network")
@@ -68,16 +75,16 @@ def _send_smtp(to_email: str, subject: str, html_content: str, attachments: typi
         context = ssl.create_default_context()
         
         # Use SMTP_SSL for port 465 (common in cPanel)
-        if settings.SMTP_PORT == 465:
-            with smtplib.SMTP_SSL(settings.SMTP_HOST, settings.SMTP_PORT, context=context) as server:
-                server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-                server.sendmail(settings.SMTP_FROM_EMAIL, to_email, msg.as_string())
+        if smtp_port == 465:
+            with smtplib.SMTP_SSL(smtp_host, smtp_port, context=context) as server:
+                server.login(smtp_user, smtp_password)
+                server.sendmail(from_email, to_email, msg.as_string())
         else:
             # For port 587 or others using STARTTLS
-            with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT) as server:
+            with smtplib.SMTP(smtp_host, smtp_port) as server:
                 server.starttls(context=context)
-                server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-                server.sendmail(settings.SMTP_FROM_EMAIL, to_email, msg.as_string())
+                server.login(smtp_user, smtp_password)
+                server.sendmail(from_email, to_email, msg.as_string())
         
         logger.info(f"Successfully sent email to {to_email} with subject: {subject}")
         
@@ -85,8 +92,8 @@ def _send_smtp(to_email: str, subject: str, html_content: str, attachments: typi
             try:
                 import imaplib
                 import time
-                mail = imaplib.IMAP4_SSL(settings.SMTP_HOST, 993, timeout=10)
-                mail.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+                mail = imaplib.IMAP4_SSL(smtp_host, 993, timeout=10)
+                mail.login(smtp_user, smtp_password)
                 mail.append('INBOX.Sent', '\\Seen', imaplib.Time2Internaldate(time.time()), msg.as_bytes())
                 mail.logout()
             except Exception as e:

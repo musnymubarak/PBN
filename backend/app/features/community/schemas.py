@@ -67,3 +67,15 @@ class PostCreate(BaseModel):
 
 class CommentCreate(BaseModel):
     content: str
+
+class SMTPSettingsUpdate(BaseModel):
+    host: str
+    port: int
+    user: str
+    password: str
+    from_email: Optional[str] = None
+    from_name: Optional[str] = None
+
+class SendEmailRequest(BaseModel):
+    subject: str
+    content: str

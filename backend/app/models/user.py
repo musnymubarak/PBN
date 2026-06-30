@@ -83,6 +83,9 @@ class User(Base, TimestampMixin):
     notification_settings: Mapped[dict | None] = mapped_column(
         JSONB, nullable=True, default=None
     )
+    smtp_settings: Mapped[dict | None] = mapped_column(
+        JSONB, nullable=True, default=None
+    )
 
     # ── Value-Based Verification (Bylaws Article 9.2) ────────────────────
     verification_level: Mapped[VerificationLevel] = mapped_column(

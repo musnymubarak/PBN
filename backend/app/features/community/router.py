@@ -10,7 +10,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.dependencies import get_db
 from app.core.response import success_response, error_response
 from app.features.auth.dependencies import require_role
-from app.features.community.schemas import PostCreate, CommentCreate, PostResponse, CommentResponse
+from app.features.community.schemas import PostCreate, CommentCreate, PostResponse, CommentResponse, SMTPSettingsUpdate, SendEmailRequest
+from sqlalchemy import select
+from app.core.email_service import send_email
 from app.features.community.service import (
     create_post,
     list_posts,
@@ -222,3 +224,41 @@ async def record_tyfb_endpoint(
         return error_response(message="Business value is required")
     await record_tyfb(current_user.id, post_id, float(business_value), db)
     return success_response(message="TYFB value recorded and lead closed successfully")
+
+
+@router.post("/members/smtp-settings", summary="Update personal SMTP settings")
+async def update_smtp_settings_endpoint(
+    data: SMTPSettingsUpdate,
+    current_user: User = Depends(member_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    current_user.smtp_settings = data.model_dump()
+    db.add(current_user)
+    await db.commit()
+    return success_response(message="SMTP settings updated successfully")
+
+
+@router.post("/members/{target_user_id}/send-email", summary="Send an email to another member using personal SMTP")
+async def send_member_email_endpoint(
+    target_user_id: UUID,
+    data: SendEmailRequest,
+    current_user: User = Depends(member_req),
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    if not current_user.smtp_settings:
+        return error_response(message="Please configure your personal SMTP settings first", status_code=400)
+        
+    result = await db.execute(select(User).where(User.id == target_user_id))
+    target_user = result.scalars().first()
+    
+    if not target_user or not target_user.email:
+        return error_response(message="Target user not found or has no email address", status_code=404)
+        
+    await send_email(
+        to_email=target_user.email,
+        subject=data.subject,
+        html_content=data.content,
+        custom_smtp=current_user.smtp_settings
+    )
+    
+    return success_response(message="Email sent successfully")
