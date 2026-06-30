@@ -53,17 +53,17 @@ class _PaymentWebViewPageState extends State<PaymentWebViewPage> {
             }
           },
           onWebResourceError: (WebResourceError error) {
-            debugPrint("WebView resource error: ${error.description}");
+            debugPrint('WebView resource error: ${error.description}');
           },
           onNavigationRequest: (NavigationRequest request) {
             final url = request.url;
-            debugPrint("WebView navigating to: $url");
+            debugPrint('WebView navigating to: $url');
 
             // Intercept return url redirect
             if (url.contains('/payments/bancstac/return')) {
               final uri = Uri.parse(url);
-              final reqId = uri.queryParameters['ReqID'];
-              debugPrint("WebView intercepted Bancstac return callback. ReqID: $reqId");
+              final reqId = uri.queryParameters['ReqID'] ?? uri.queryParameters['reqid'];
+              debugPrint('WebView intercepted Bancstac return callback. ReqID: $reqId');
               
               // Pop and return the intercepted reqId
               Navigator.pop(context, reqId);
@@ -106,7 +106,7 @@ class _PaymentWebViewPageState extends State<PaymentWebViewPage> {
           WebViewWidget(controller: _controller),
           if (_isLoading)
             Container(
-              color: AppColors.background.withOpacity(0.9),
+              color: AppColors.background.withAlpha(230),
               child: Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,

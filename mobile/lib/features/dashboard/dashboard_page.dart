@@ -2098,6 +2098,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                     
                                     if (reqId != null) {
                                       _loadData();
+                                      if (!mounted) return;
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         const SnackBar(
                                           content: Text('Payment processed successfully!'),

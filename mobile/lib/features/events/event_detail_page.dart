@@ -978,6 +978,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     
                     if (reqId != null) {
                       _refreshEventDataSilently();
+                      if (!mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Seat reserved successfully!'),
