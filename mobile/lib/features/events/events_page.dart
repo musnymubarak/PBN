@@ -1266,11 +1266,11 @@ class _EventsPageState extends State<EventsPage>
       icon = TablerIcons.discount_check;
     } else if (isRequested) {
       tint = AppColors.warning;
-      label = "Awaiting Approval";
+      label = 'Awaiting Approval';
       icon = TablerIcons.clock;
     } else {
       tint = AppColors.textSecondary;
-      label = "$count attending";
+      label = '$count attending';
       icon = TablerIcons.users_group;
     }
 
