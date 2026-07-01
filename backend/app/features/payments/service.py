@@ -226,7 +226,7 @@ async def process_webhook(
 async def _apply_payment_side_effects(payment: Payment, db: AsyncSession) -> None:
     """Apply automated side-effects after successful payment."""
     if payment.payment_type == PaymentType.MEETING_FEE and payment.reference_id:
-        # Create EventRSVP with status going
+        # Create EventRSVP with status requested (Waiting for Admin approval)
         from app.models.events import EventRSVP, RSVPStatus
         existing = (await db.execute(
             select(EventRSVP).where(
@@ -238,9 +238,11 @@ async def _apply_payment_side_effects(payment: Payment, db: AsyncSession) -> Non
             rsvp = EventRSVP(
                 event_id=uuid.UUID(payment.reference_id),
                 user_id=payment.user_id,
-                status=RSVPStatus.GOING,
+                status=RSVPStatus.REQUESTED,
             )
             db.add(rsvp)
+        else:
+            existing.status = RSVPStatus.REQUESTED
 
     elif payment.payment_type == PaymentType.MEMBERSHIP:
         # 1. Activate the ChapterMembership for this user

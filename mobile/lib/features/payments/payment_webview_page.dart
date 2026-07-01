@@ -59,16 +59,21 @@ class _PaymentWebViewPageState extends State<PaymentWebViewPage> {
             final url = request.url;
             debugPrint('WebView navigating to: $url');
 
-            // Intercept return url redirect
-            if (url.contains('/payments/bancstac/return')) {
+            // Intercept return url redirect once the backend has completed verification
+            if (url.contains('payment-success.html')) {
               final uri = Uri.parse(url);
-              final reqId = uri.queryParameters['ReqID'] ?? uri.queryParameters['reqid'];
-              debugPrint('WebView intercepted Bancstac return callback. ReqID: $reqId');
-              
-              // Pop and return the intercepted reqId
+              final reqId = uri.queryParameters['req_id'] ?? uri.queryParameters['reqid'];
+              debugPrint('WebView detected success redirect. ReqID: $reqId');
               Navigator.pop(context, reqId);
               return NavigationDecision.prevent;
             }
+            
+            if (url.contains('payment-cancelled.html')) {
+              debugPrint('WebView detected cancel redirect.');
+              Navigator.pop(context, null);
+              return NavigationDecision.prevent;
+            }
+
             return NavigationDecision.navigate;
           },
         ),

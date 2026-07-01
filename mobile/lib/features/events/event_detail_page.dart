@@ -14,6 +14,7 @@ import 'package:pbn/core/providers/auth_provider.dart';
 import 'package:pbn/core/services/event_service.dart';
 import 'package:pbn/models/event.dart';
 import 'package:pbn/features/payments/payment_service.dart';
+import 'package:pbn/core/widgets/custom_alert.dart';
 import 'package:pbn/features/payments/payment_webview_page.dart';
 
 class EventDetailPage extends StatefulWidget {
@@ -979,21 +980,21 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     if (reqId != null) {
                       _refreshEventDataSilently();
                       if (!mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Seat reserved successfully!'),
-                          backgroundColor: AppColors.success,
-                        ),
+                      CustomAlert.show(
+                        context,
+                        isSuccess: true,
+                        title: 'Payment Successful',
+                        message: 'Payment successful, waiting for approval.',
                       );
                     }
                   } catch (e) {
                     if (mounted) {
                       setState(() => _isLoading = false);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Failed to initiate payment: ${e.toString()}'),
-                          backgroundColor: AppColors.error,
-                        ),
+                      CustomAlert.show(
+                        context,
+                        isSuccess: false,
+                        title: 'Payment Failed',
+                        message: 'Failed to initiate payment: ${e.toString()}',
                       );
                     }
                   }

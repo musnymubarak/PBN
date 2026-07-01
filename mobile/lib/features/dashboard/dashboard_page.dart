@@ -31,6 +31,7 @@ import 'package:pbn/features/matchmaking/matchmaking_page.dart';
 import 'package:pbn/features/payments/payment_service.dart';
 import 'package:pbn/features/payments/upload_proof_page.dart';
 import 'package:pbn/features/payments/payment_webview_page.dart';
+import 'package:pbn/core/widgets/custom_alert.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -2099,21 +2100,21 @@ class _DashboardPageState extends State<DashboardPage> {
                                     if (reqId != null) {
                                       _loadData();
                                       if (!mounted) return;
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(
-                                          content: Text('Payment processed successfully!'),
-                                          backgroundColor: AppColors.success,
-                                        ),
+                                      CustomAlert.show(
+                                        context,
+                                        isSuccess: true,
+                                        title: 'Payment Successful',
+                                        message: 'Payment processed successfully!',
                                       );
                                     }
                                   } catch (e) {
                                     if (mounted) {
                                       setState(() => _loading = false);
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: Text('Failed to initiate payment: ${e.toString()}'),
-                                          backgroundColor: AppColors.error,
-                                        ),
+                                      CustomAlert.show(
+                                        context,
+                                        isSuccess: false,
+                                        title: 'Payment Failed',
+                                        message: 'Failed to initiate payment: ${e.toString()}',
                                       );
                                     }
                                   }
