@@ -79,10 +79,8 @@ async def initiate_payment(
     event_id: UUID | None,
     db: AsyncSession,
 ) -> Dict[str, Any]:
-    """Create a pending Payment and return the WebxPay redirect URL."""
-    settings = get_settings()
-
-    order_id = f"PBN-{uuid.uuid4().hex[:12].upper()}"
+    """Create a pending Payment and return the Bancstac Hosted Page redirect URL."""
+    from app.features.payments.bancstac_service import BancstacService
 
     payment = Payment(
         user_id=user_id,
@@ -95,35 +93,36 @@ async def initiate_payment(
     db.add(payment)
     await db.flush()
 
-    # Build WebxPay signature payload
-    sig_string = (
-        f"{settings.WEBXPAY_MERCHANT_ID}{order_id}{float(amount):.2f}"
-        f"LKR{hashlib.md5(settings.WEBXPAY_SECRET_KEY.encode()).hexdigest().upper()}"
-    )
-    signature = hashlib.md5(sig_string.encode()).hexdigest().upper()
+    # Amount in cents (minimum 200 cents = LKR 2.00)
+    amount_cents = int(amount * 100)
 
-    payment_url = (
-        f"{settings.WEBXPAY_API_URL}?"
-        f"merchant_id={settings.WEBXPAY_MERCHANT_ID}"
-        f"&order_id={order_id}"
-        f"&payment_id={payment.id}"
-        f"&amount={float(amount):.2f}"
-        f"&currency=LKR"
-        f"&return_url={settings.WEBXPAY_RETURN_URL}"
-        f"&cancel_url={settings.WEBXPAY_CANCEL_URL}"
-        f"&notify_url={settings.WEBXPAY_NOTIFY_URL}"
-        f"&hash={signature}"
-    )
+    # Call Bancstac PAYMENT_INIT service
+    bancstac = BancstacService()
+    try:
+        init_res = await bancstac.initiate_payment(
+            amount=amount_cents,
+            payment_id=str(payment.id),
+            payment_type=payment_type.value
+        )
+        req_id = init_res["req_id"]
+        payment_url = init_res["payment_page_url"]
 
-    # Store the order_id on the payment for later lookup
-    payment.gateway_reference = order_id
-    await db.flush()
+        # Store the reqid on the payment for later lookup/completion
+        payment.gateway_reference = req_id
+        await db.flush()
 
-    return {
-        "payment_id": str(payment.id),
-        "payment_url": payment_url,
-        "order_id": order_id,
-    }
+        return {
+            "payment_id": str(payment.id),
+            "payment_url": payment_url,
+            "order_id": req_id,
+        }
+    except Exception as e:
+        logger.error(f"Bancstac initiation failed: {e}")
+        payment.status = PaymentStatus.FAILED
+        payment.notes = f"Initiation failed: {str(e)}"
+        await db.flush()
+        raise BadRequestException(f"Payment gateway initiation failed: {str(e)}")
+
 
 
 async def verify_webhook_signature(payload: dict, secret: str) -> bool:
@@ -227,7 +226,7 @@ async def process_webhook(
 async def _apply_payment_side_effects(payment: Payment, db: AsyncSession) -> None:
     """Apply automated side-effects after successful payment."""
     if payment.payment_type == PaymentType.MEETING_FEE and payment.reference_id:
-        # Create EventRSVP with status going
+        # Create EventRSVP with status requested (Waiting for Admin approval)
         from app.models.events import EventRSVP, RSVPStatus
         existing = (await db.execute(
             select(EventRSVP).where(
@@ -239,9 +238,11 @@ async def _apply_payment_side_effects(payment: Payment, db: AsyncSession) -> Non
             rsvp = EventRSVP(
                 event_id=uuid.UUID(payment.reference_id),
                 user_id=payment.user_id,
-                status=RSVPStatus.GOING,
+                status=RSVPStatus.REQUESTED,
             )
             db.add(rsvp)
+        else:
+            existing.status = RSVPStatus.REQUESTED
 
     elif payment.payment_type == PaymentType.MEMBERSHIP:
         # 1. Activate the ChapterMembership for this user
@@ -304,6 +305,75 @@ async def simulate_webhook(payment_id: UUID, db: AsyncSession) -> Dict[str, Any]
         "order_id": "SIMULATED",
     }
     return await process_webhook(payload, db, _skip_signature_check=True)
+
+
+async def complete_bancstac_payment(req_id: str, db: AsyncSession) -> Dict[str, Any]:
+    """Verify and complete a payment initiated via Bancstac."""
+    from app.features.payments.bancstac_service import BancstacService
+    
+    payment = (await db.execute(
+        select(Payment).where(Payment.gateway_reference == req_id)
+    )).scalar_one_or_none()
+
+    if not payment:
+        raise NotFoundException("Payment record not found for the given gateway reference")
+
+    if payment.status != PaymentStatus.PENDING:
+        return _serialize_payment(payment)
+
+    bancstac = BancstacService()
+    try:
+        resp_data = await bancstac.complete_payment(req_id)
+        payment.gateway_response = resp_data
+        response_code = resp_data.get("responseCode")
+        
+        if response_code == "00":
+            payment.status = PaymentStatus.COMPLETED
+            await _apply_payment_side_effects(payment, db)
+            
+            # Notify User
+            try:
+                await send_push_notification(
+                    user_id=payment.user_id,
+                    title="Payment Successful",
+                    body=f"Your payment of LKR {float(payment.amount):,.0f} has been confirmed.",
+                    notification_type="PAYMENT_SUCCESS",
+                    data={"payment_id": str(payment.id), "route": "/payments"}
+                )
+            except Exception:
+                pass
+
+            # Notify admins
+            try:
+                await notify_admins(
+                    title="💰 Payment Received",
+                    body=f"LKR {float(payment.amount):,.0f} received via Card for {payment.payment_type.value}.",
+                    notification_type="ADMIN_PAYMENT_RECEIVED",
+                    data={"payment_id": str(payment.id), "route": "/payments"},
+                )
+            except Exception:
+                pass
+        else:
+            payment.status = PaymentStatus.FAILED
+            payment.notes = f"Payment failed: {resp_data.get('responseText', 'No reason provided')}"
+
+        audit = AuditLog(
+            actor_id=None,
+            entity_type="payment",
+            entity_id=payment.id,
+            action="bancstac_completed",
+            old_value={"status": "pending"},
+            new_value={"status": payment.status.value},
+        )
+        db.add(audit)
+        await db.flush()
+
+        return _serialize_payment(payment)
+        
+    except Exception as e:
+        logger.error(f"Failed to complete Bancstac payment for req_id={req_id}: {e}")
+        raise BadRequestException(f"Failed to verify payment with gateway: {str(e)}")
+
 
 
 async def get_my_payments(user_id: UUID, db: AsyncSession) -> List[Dict[str, Any]]:
@@ -526,6 +596,56 @@ async def get_proof_upload_status(token: str, db: AsyncSession) -> Dict[str, Any
         "user_name": user.full_name,
     }
 
+
+async def initiate_online_payment_by_token(token: str, db: AsyncSession) -> Dict[str, Any]:
+    from app.models.user import User
+    from app.models.payments import PaymentStatus
+    
+    stmt = (
+        select(PaymentProof, Payment, User)
+        .join(Payment, Payment.id == PaymentProof.payment_id)
+        .join(User, User.id == PaymentProof.user_id)
+        .where(PaymentProof.upload_token == token)
+    )
+    res = await db.execute(stmt)
+    row = res.first()
+    if not row:
+        raise NotFoundException("Invalid or expired upload token.")
+    
+    proof, payment, user = row
+    
+    if proof.upload_token_expires_at < datetime.now(timezone.utc):
+        raise BadRequestException("This link has expired.")
+
+    if payment.status == PaymentStatus.COMPLETED:
+        raise BadRequestException("Payment has already been made and completed.")
+
+    amount_cents = int(payment.amount * 100)
+    
+    from app.features.payments.bancstac_service import BancstacService
+    bancstac = BancstacService()
+    try:
+        init_res = await bancstac.initiate_payment(
+            amount=amount_cents,
+            payment_id=str(payment.id),
+            payment_type=payment.payment_type.value,
+            return_url=f"{get_settings().PUBLIC_SITE_URL.rstrip('/')}/api/v1/payments/bancstac/return?source=email"
+        )
+        req_id = init_res["req_id"]
+        payment_url = init_res["payment_page_url"]
+
+        payment.gateway_reference = req_id
+        await db.flush()
+
+        return {
+            "payment_page_url": payment_url,
+            "req_id": req_id
+        }
+    except Exception as e:
+        logger.error(f"Bancstac online payment initiation by token failed: {e}")
+        raise BadRequestException(f"Payment gateway initiation failed: {str(e)}")
+
+
 async def submit_payment_proof(token: str, proof_type: PaymentProofType, reference_number: str | None, file: UploadFile | None, db: AsyncSession) -> Dict[str, Any]:
     from app.models.payments import Payment, PaymentStatus
     
@@ -704,6 +824,7 @@ async def list_payment_proofs(status: PaymentProofStatus | None, db: AsyncSessio
             "reference_number": proof.reference_number,
             "status": proof.status.value,
             "admin_notes": proof.admin_notes,
+            "gateway_reference": payment.gateway_reference,
             "created_at": proof.created_at.isoformat(),
         })
     return results

@@ -41,4 +41,24 @@ class PaymentService {
       throw Exception('Failed to upload payment proof');
     }
   }
+
+  Future<Map<String, dynamic>> initiatePayment({
+    required String paymentType,
+    required double amount,
+    String? eventId,
+  }) async {
+    try {
+      final response = await _dio.post('/payments/initiate', data: {
+        'payment_type': paymentType,
+        'amount': amount,
+        'event_id': ?eventId,
+      });
+      if (response.data['status'] == 'success') {
+        return Map<String, dynamic>.from(response.data['data']);
+      }
+      throw Exception(response.data['message'] ?? 'Failed to initiate payment');
+    } catch (e) {
+      throw Exception('Failed to initiate payment: $e');
+    }
+  }
 }

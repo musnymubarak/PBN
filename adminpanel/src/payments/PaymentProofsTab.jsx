@@ -136,7 +136,8 @@ export default function PaymentProofsTab() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem', background: '#f8fafc', padding: '1rem', borderRadius: '8px' }}>
                 <div><label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Member</label><div style={{ fontWeight: 600 }}>{selectedProof.user_name}</div></div>
                 <div><label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Amount</label><div style={{ fontWeight: 600, color: '#0f172a' }}>LKR {selectedProof.payment_amount?.toLocaleString()}</div></div>
-                <div style={{ gridColumn: 'span 2' }}><label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Reason</label><div>{selectedProof.payment_reason}</div></div>
+                <div><label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Reason</label><div>{selectedProof.payment_reason}</div></div>
+                <div><label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Gateway Ref</label><div style={{ fontFamily: 'monospace' }}>{selectedProof.gateway_reference || 'None'}</div></div>
               </div>
 
               {selectedProof.proof_type === 'REFERENCE_NUMBER' ? (

@@ -8,7 +8,7 @@ from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, File, UploadFile, Form
-from fastapi.responses import ORJSONResponse
+from fastapi.responses import ORJSONResponse, RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
@@ -44,21 +44,36 @@ async def initiate_payment_endpoint(
     return success_response(data=result, message="Payment initiated", status_code=201)
 
 
-# ── WebxPay webhook callback ────────────────────────────────────────────────
-#
-# DISABLED until WebxPay goes live. Re-enabling this requires completing the
-# F-05b hardening checklist first: bind payment_id into the signed payload,
-# add an nginx-level source-IP allowlist for WebxPay's egress range, and add
-# Redis-based replay protection. Leaving the route mounted while idle exposes
-# an unauthenticated state-mutation surface for no business benefit.
-#
-# @router.post("/payments/webhook", summary="WebxPay webhook callback")
-# async def webhook_endpoint(
-#     payload: dict,
-#     db: AsyncSession = Depends(get_db),
-# ) -> ORJSONResponse:
-#     result = await service.process_webhook(payload, db)
-#     return success_response(data=result)
+@router.get("/payments/bancstac/return", summary="Bancstac return callback")
+async def bancstac_return_endpoint(
+    reqid_upper: Optional[str] = Query(None, alias="ReqID"),
+    reqid_lower: Optional[str] = Query(None, alias="reqid"),
+    source: Optional[str] = Query(None),
+    db: AsyncSession = Depends(get_db),
+) -> RedirectResponse:
+    reqid = reqid_upper or reqid_lower
+    settings = get_settings()
+    if not reqid:
+        return RedirectResponse(url=f"{settings.PUBLIC_SITE_URL}/payment-cancelled.html?error=missing_reqid")
+
+    try:
+        payment_details = await service.complete_bancstac_payment(reqid, db)
+        is_success = payment_details.get("status") == "completed"
+    except Exception:
+        is_success = False
+
+    if source == "portal":
+        base_redirect_url = "https://portal.primebusiness.network"
+        if is_success:
+            return RedirectResponse(url=f"{base_redirect_url}/payment-success")
+        else:
+            return RedirectResponse(url=f"{base_redirect_url}/payment-cancelled")
+    else:
+        if is_success:
+            return RedirectResponse(url=f"{settings.PUBLIC_SITE_URL}/payment-success.html?req_id={reqid}")
+        else:
+            return RedirectResponse(url=f"{settings.PUBLIC_SITE_URL}/payment-cancelled.html?req_id={reqid}")
+
 
 
 @router.post("/payments/simulate-webhook", summary="Simulate successful payment (dev only)")
@@ -157,6 +172,16 @@ async def upload_payment_proof_endpoint(
         db
     )
     return success_response(data=result)
+
+
+@router.post("/payments/proof/{token}/pay-online", summary="Initiate online card payment for proof token (Public)")
+async def initiate_online_payment_by_token_endpoint(
+    token: str,
+    db: AsyncSession = Depends(get_db),
+) -> ORJSONResponse:
+    result = await service.initiate_online_payment_by_token(token, db)
+    return success_response(data=result, message="Online payment initiated")
+
 
 
 @router.post("/payments/{payment_id}/proof", summary="Upload payment proof (Authenticated)")

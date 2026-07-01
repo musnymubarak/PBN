@@ -54,13 +54,14 @@ class Settings(BaseSettings):
     REDIS_DB: int = 0
     REDIS_URL: str = "redis://localhost:6379/0"
 
-    # ── WebxPay ───────────────────────────────────────────────
-    WEBXPAY_MERCHANT_ID: str = ""
-    WEBXPAY_SECRET_KEY: str = ""
-    WEBXPAY_API_URL: str = "https://pay.webxpay.com/index.php"
-    WEBXPAY_RETURN_URL: str = "http://localhost:8000/api/v1/payments/return"
-    WEBXPAY_CANCEL_URL: str = "http://localhost:8000/api/v1/payments/cancel"
-    WEBXPAY_NOTIFY_URL: str = "http://localhost:8000/api/v1/payments/webhook"
+    # ── Bancstac / Paycenter ──────────────────────────────────
+    BANCSTAC_CLIENT_ID: str = ""
+    BANCSTAC_AUTH_TOKEN: str = ""
+    BANCSTAC_HMAC_SECRET: str = ""
+    BANCSTAC_API_URL: str = "https://paycorp-cbc.prod.aws.paycorp.lk/rest/service/proxy"
+    BANCSTAC_RETURN_URL: str = "http://localhost:8000/api/v1/payments/bancstac/return"
+    BANCSTAC_CANCEL_URL: str = "https://primebusiness.network/payment-cancelled"
+
 
     FIREBASE_SERVICE_ACCOUNT_JSON: str | None = None
     GEMINI_API_KEY: str | None = None

@@ -45,6 +45,19 @@ services:
     networks:
       - pbn-network
 
+  # ── Member Portal ────────────────────────────────────────
+  memberportal:
+    build:
+      context: ./memberportal
+      dockerfile: Dockerfile
+    container_name: pbn-memberportal
+    restart: unless-stopped
+    # No host port. Reached only by the pbn-admin gateway over docker DNS.
+    depends_on:
+      - api
+    networks:
+      - pbn-network
+
   # ── Public Website (primebusiness.network) ───────────────
   website:
     build:

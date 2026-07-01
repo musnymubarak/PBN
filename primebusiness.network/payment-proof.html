@@ -419,6 +419,19 @@
                 </div>
             </div>
 
+            <!-- Pay Online Section -->
+            <div class="online-pay-box" style="margin-bottom: 24px; padding: 20px; border: 1px solid var(--gold); border-radius: 16px; background: rgba(201, 168, 76, 0.05); text-align: center;">
+                <p style="margin-bottom: 16px; font-weight: 600; color: white;">Fast & Secure Card Payment</p>
+                <button id="pay-online-btn" onclick="payOnline()" class="btn" style="background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: white; margin-top: 0;">Pay Online with Visa/Mastercard</button>
+            </div>
+
+            <!-- Divider -->
+            <div style="display: flex; align-items: center; margin-bottom: 24px;">
+                <hr style="flex: 1; border: 0; border-top: 1px solid var(--glass-border);">
+                <span style="padding: 0 10px; font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Or Upload Proof</span>
+                <hr style="flex: 1; border: 0; border-top: 1px solid var(--glass-border);">
+            </div>
+
             <form id="proof-form" onsubmit="submitProof(event)">
                 <div class="form-group custom-dropdown" id="proof_type_dropdown">
                     <label>Proof Type</label>
@@ -598,6 +611,30 @@
                 alert("Network error. Please try again.");
                 btn.disabled = false;
                 btn.textContent = "Submit Proof";
+            }
+        }
+
+        async function payOnline() {
+            const btn = document.getElementById('pay-online-btn');
+            btn.disabled = true;
+            btn.textContent = "Initiating...";
+            
+            try {
+                const response = await fetch(`${API_BASE}/payments/proof/${token}/pay-online`, {
+                    method: 'POST'
+                });
+                const resData = await response.json();
+                if (response.ok) {
+                    window.location.href = resData.data.payment_page_url;
+                } else {
+                    alert(resData.message || "Failed to initiate online payment.");
+                    btn.disabled = false;
+                    btn.textContent = "Pay Online with Visa/Mastercard";
+                }
+            } catch (err) {
+                alert("Network error. Please try again.");
+                btn.disabled = false;
+                btn.textContent = "Pay Online with Visa/Mastercard";
             }
         }
 
