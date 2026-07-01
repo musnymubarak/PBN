@@ -70,7 +70,7 @@ class _PaymentWebViewPageState extends State<PaymentWebViewPage> {
             
             if (url.contains('payment-cancelled.html')) {
               debugPrint('WebView detected cancel redirect.');
-              Navigator.pop(context, null);
+              Navigator.pop(context, 'FAILED');
               return NavigationDecision.prevent;
             }
 

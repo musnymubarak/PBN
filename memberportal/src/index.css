@@ -3876,5 +3876,107 @@ tr:nth-last-child(2) .action-dropdown {
   }
 }
 
+/* ── Custom Login Enhancements ───────────────────────────────────────────── */
+
+.login-orb-1 {
+  position: absolute;
+  top: -10%;
+  left: -10%;
+  width: 450px;
+  height: 450px;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.12) 0%, transparent 70%);
+  z-index: 0;
+  pointer-events: none;
+  animation: floatOrb1 18s ease-in-out infinite alternate;
+}
+
+.login-orb-2 {
+  position: absolute;
+  bottom: -10%;
+  right: -10%;
+  width: 450px;
+  height: 450px;
+  background: radial-gradient(circle, rgba(198, 165, 76, 0.08) 0%, transparent 70%);
+  z-index: 0;
+  pointer-events: none;
+  animation: floatOrb2 15s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes floatOrb1 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(40px, 20px) scale(1.1); }
+}
+
+@keyframes floatOrb2 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(-30px, -40px) scale(1.08); }
+}
+
+.login-branding-grid {
+  position: absolute;
+  inset: 0;
+  opacity: 0.08;
+  background-image: 
+    radial-gradient(var(--brand-amber) 1px, transparent 1px),
+    linear-gradient(rgba(198, 165, 76, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(198, 165, 76, 0.03) 1px, transparent 1px);
+  background-size: 20px 20px, 40px 40px, 40px 40px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.login-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  background: rgba(198, 165, 76, 0.08);
+  border: 1px solid rgba(198, 165, 76, 0.25);
+  color: var(--brand-amber);
+  border-radius: var(--radius-full);
+  font-size: 0.6875rem;
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.08em;
+  margin-bottom: 1.5rem;
+  text-transform: uppercase;
+  position: relative;
+  z-index: 2;
+}
+
+.login-features-list {
+  margin-top: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  position: relative;
+  z-index: 2;
+}
+
+.login-feature-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.login-feature-icon {
+  color: var(--brand-amber);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.login-feature-title {
+  font-weight: var(--weight-semibold);
+  color: white;
+}
+
+/* Enhancing existing forms for modern interactive feel */
+.login-input-wrap:focus-within .login-input-icon {
+  color: var(--brand-blue);
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+
 
 

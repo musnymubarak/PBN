@@ -977,7 +977,15 @@ class _EventDetailPageState extends State<EventDetailPage> {
                       ),
                     );
                     
-                    if (reqId != null) {
+                    if (reqId == 'FAILED') {
+                      if (!mounted) return;
+                      CustomAlert.show(
+                        context,
+                        isSuccess: false,
+                        title: 'Payment Failed',
+                        message: 'The transaction was declined or cancelled. Please try again or use another card.',
+                      );
+                    } else if (reqId != null) {
                       _refreshEventDataSilently();
                       if (!mounted) return;
                       CustomAlert.show(
