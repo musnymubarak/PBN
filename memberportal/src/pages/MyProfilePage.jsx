@@ -55,7 +55,7 @@ export default function MyProfilePage() {
   );
 
   return (
-    <div className="dashboard-body" style={{ maxWidth: '1000px', margin: '0 auto', paddingBottom: '3rem' }}>
+    <div className="dashboard-body" style={{ position: 'relative', paddingBottom: '3rem' }}>
       <Ds.PageHeader title="My Profile" />
 
       {/* Hero Card */}

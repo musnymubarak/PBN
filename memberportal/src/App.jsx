@@ -17,7 +17,6 @@ import PaymentsPage from './pages/PaymentsPage';
 import PaymentSuccessPage from './pages/PaymentSuccessPage';
 import PaymentCancelledPage from './pages/PaymentCancelledPage';
 import RewardsPage from './pages/RewardsPage';
-import ApplicationsPage from './pages/ApplicationsPage';
 import SupportPage from './pages/SupportPage';
 
 import MemberProfilePage from './pages/MemberProfilePage';
@@ -47,7 +46,6 @@ export default function App() {
             <Route path="/payment-success" element={<AppShell><PaymentSuccessPage /></AppShell>} />
             <Route path="/payment-cancelled" element={<AppShell><PaymentCancelledPage /></AppShell>} />
             <Route path="/rewards" element={<AppShell><RewardsPage /></AppShell>} />
-            <Route path="/applications" element={<AppShell><ApplicationsPage /></AppShell>} />
             <Route path="/support" element={<AppShell><SupportPage /></AppShell>} />
             <Route path="/profile" element={<AppShell><MyProfilePage /></AppShell>} />
             <Route path="/portfolio" element={<AppShell><BusinessPortfolioPage /></AppShell>} />

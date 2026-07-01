@@ -48,7 +48,7 @@ export default function ChangePasswordPage() {
   };
 
   return (
-    <div className="dashboard-body" style={{ maxWidth: '1000px', margin: '0 auto', paddingBottom: '3rem' }}>
+    <div className="dashboard-body" style={{ position: 'relative', paddingBottom: '3rem' }}>
       <div style={{ marginBottom: '2rem' }}>
         <Ds.Button variant="ghost" leftIcon={<IconArrowLeft size={16} />} onClick={() => navigate('/profile')}>
           Back to Profile

@@ -28,7 +28,7 @@ export default function SettingsPage() {
     setSuccess('');
 
     try {
-      await api.post('/community/members/smtp-settings', {
+      await api.post('/members/smtp-settings', {
         host: formData.host,
         port: parseInt(formData.port),
         user: formData.user,

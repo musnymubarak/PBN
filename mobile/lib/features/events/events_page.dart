@@ -1064,7 +1064,7 @@ class _EventsPageState extends State<EventsPage>
                         // Footer: RSVP count + view-details CTA
                         Row(
                           children: [
-                            _rsvpChip(event.rsvps.length, myStatus),
+                            _rsvpChip(event.confirmedRsvpsCount, myStatus),
                             const Spacer(),
                             Row(
                               children: [
@@ -1254,13 +1254,25 @@ class _EventsPageState extends State<EventsPage>
   Widget _rsvpChip(int count, String? myStatus) {
     // Reflect the user's own RSVP if known, otherwise show the headcount.
     final isGoing = myStatus == 'going';
-    final tint = isGoing ? AppColors.success : AppColors.textSecondary;
+    final isRequested = myStatus == 'requested';
 
-    final label = isGoing
-        ? "You're going · $count"
-        : '$count interested';
-    final icon =
-        isGoing ? TablerIcons.discount_check : TablerIcons.users_group;
+    final Color tint;
+    final String label;
+    final IconData icon;
+
+    if (isGoing) {
+      tint = AppColors.success;
+      label = "You're going · $count";
+      icon = TablerIcons.discount_check;
+    } else if (isRequested) {
+      tint = AppColors.warning;
+      label = "Awaiting Approval";
+      icon = TablerIcons.clock;
+    } else {
+      tint = AppColors.textSecondary;
+      label = "$count attending";
+      icon = TablerIcons.users_group;
+    }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),

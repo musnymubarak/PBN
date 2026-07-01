@@ -29,8 +29,13 @@ export function AuthProvider({ children }) {
   const login = async (identifier, password) => {
     try {
       const res = await api.post('/auth/login', { identifier, password });
-      const { access_token, refresh_token } = res.data.data;
+      const data = res.data.data;
       
+      if (data.requires_2fa) {
+        return { success: true, requires2FA: true, tfaToken: data.tfa_token };
+      }
+      
+      const { access_token, refresh_token } = data;
       localStorage.setItem('accessToken', access_token);
       localStorage.setItem('refreshToken', refresh_token);
       
@@ -48,6 +53,28 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const verify2FA = async (tfaToken, otp) => {
+    try {
+      const res = await api.post('/auth/verify-2fa', { tfa_token: tfaToken, otp });
+      const { access_token, refresh_token } = res.data.data;
+      
+      localStorage.setItem('accessToken', access_token);
+      localStorage.setItem('refreshToken', refresh_token);
+      
+      // Fetch user profile immediately after 2FA login verification
+      const userRes = await api.get('/auth/me', {
+        headers: { Authorization: `Bearer ${access_token}` }
+      });
+      setUser(userRes.data.data);
+      return { success: true };
+    } catch (err) {
+      return {
+        success: false,
+        error: err.response?.data?.error?.message || 'Verification failed'
+      };
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
@@ -55,7 +82,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, verify2FA }}>
       {children}
     </AuthContext.Provider>
   );
