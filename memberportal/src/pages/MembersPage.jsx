@@ -323,53 +323,28 @@ export default function MembersPage() {
           />
 
           {/* District Selector */}
-          <div style={{ position: 'relative' }}>
-            <select
-              value={selectedDistrict}
-              onChange={e => setSelectedDistrict(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '0.625rem 1rem',
-                fontSize: 'var(--text-sm)',
-                borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-subtle)',
-                background: 'var(--bg-surface)',
-                color: 'var(--fg-primary)',
-                outline: 'none',
-                cursor: 'pointer'
-              }}
-            >
-              <option value="all">All Districts</option>
-              {uniqueDistrictsList.map(dist => (
-                <option key={dist} value={dist}>{dist}</option>
-              ))}
-            </select>
-          </div>
+          <Ds.Select
+            value={selectedDistrict}
+            onChange={setSelectedDistrict}
+            options={[
+              { id: 'all', name: 'All Districts' },
+              ...uniqueDistrictsList.map(dist => ({ id: dist, name: dist }))
+            ]}
+            placeholder="All Districts"
+          />
 
           {/* Chapter Selector (Only shows if scope is not limited to my_chapter) */}
           {scope !== 'my_chapter' && (
-            <div style={{ position: 'relative' }}>
-              <select
-                value={selectedChapter}
-                onChange={e => setSelectedChapter(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '0.625rem 1rem',
-                  fontSize: 'var(--text-sm)',
-                  borderRadius: 'var(--radius-md)',
-                  border: '1px solid var(--border-subtle)',
-                  background: 'var(--bg-surface)',
-                  color: 'var(--fg-primary)',
-                  outline: 'none',
-                  cursor: 'pointer'
-                }}
-              >
-                <option value="all">All Chapters</option>
-                {uniqueChaptersList.map(ch => (
-                  <option key={ch} value={ch}>{ch}</option>
-                ))}
-              </select>
-            </div>
+            <Ds.Select
+              value={selectedChapter}
+              onChange={setSelectedChapter}
+              options={[
+                { id: 'all', name: 'All Chapters' },
+                ...uniqueChaptersList.map(ch => ({ id: ch, name: ch }))
+              ]}
+              placeholder="All Chapters"
+              searchable
+            />
           )}
         </div>
       </div>

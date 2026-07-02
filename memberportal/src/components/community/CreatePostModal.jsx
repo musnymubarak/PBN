@@ -171,39 +171,26 @@ export default function CreatePostModal({ isOpen, onClose, onSuccess }) {
               {/* Visibility and Metadata */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <Ds.Field label="Visibility">
-                  <select
-                    name="visibility"
+                  <Ds.Select
                     value={formData.visibility}
-                    onChange={handleChange}
-                    style={{
-                      width: '100%', padding: '0.75rem 1rem', borderRadius: '12px',
-                      border: '1px solid var(--border-subtle)', background: 'var(--bg-canvas)',
-                      color: 'var(--fg-primary)', fontSize: 'var(--text-sm)', fontWeight: 700
-                    }}
-                  >
-                    <option value="chapter">Chapter Only</option>
-                    <option value="network">Network-wide</option>
-                  </select>
+                    onChange={(val) => setFormData(prev => ({ ...prev, visibility: val }))}
+                    options={[
+                      { id: 'chapter', name: 'Chapter Only' },
+                      { id: 'network', name: 'Network-wide' }
+                    ]}
+                    placeholder="Select visibility…"
+                  />
                 </Ds.Field>
 
                 {formData.post_type !== 'general' && (
                   <Ds.Field label="Target Industry">
-                    <select
-                      name="target_industry_id"
+                    <Ds.Select
                       value={formData.target_industry_id}
-                      onChange={handleChange}
-                      required
-                      style={{
-                        width: '100%', padding: '0.75rem 1rem', borderRadius: '12px',
-                        border: '1px solid var(--border-subtle)', background: 'var(--bg-canvas)',
-                        color: 'var(--fg-primary)', fontSize: 'var(--text-sm)', fontWeight: 700
-                      }}
-                    >
-                      <option value="">Select Industry...</option>
-                      {industries.map(ind => (
-                        <option key={ind.id} value={ind.id}>{ind.name}</option>
-                      ))}
-                    </select>
+                      onChange={(val) => setFormData(prev => ({ ...prev, target_industry_id: val }))}
+                      options={industries.map(ind => ({ id: ind.id, name: ind.name }))}
+                      placeholder="Select Industry..."
+                      searchable
+                    />
                   </Ds.Field>
                 )}
               </div>
@@ -223,21 +210,13 @@ export default function CreatePostModal({ isOpen, onClose, onSuccess }) {
               {/* Targeted Club (Optional) */}
               {formData.post_type !== 'general' && clubs.length > 0 && (
                 <Ds.Field label="Target Horizontal Club (Optional)" hint="Directs the opportunity to this circle.">
-                  <select
-                    name="target_club_id"
+                  <Ds.Select
                     value={formData.target_club_id}
-                    onChange={handleChange}
-                    style={{
-                      width: '100%', padding: '0.75rem 1rem', borderRadius: '12px',
-                      border: '1px solid var(--border-subtle)', background: 'var(--bg-canvas)',
-                      color: 'var(--fg-primary)', fontSize: 'var(--text-sm)', fontWeight: 700
-                    }}
-                  >
-                    <option value="">Select horizontal club...</option>
-                    {clubs.map(c => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
+                    onChange={(val) => setFormData(prev => ({ ...prev, target_club_id: val }))}
+                    options={clubs.map(c => ({ id: c.id, name: c.name }))}
+                    placeholder="Select horizontal club..."
+                    allowClear
+                  />
                 </Ds.Field>
               )}
 

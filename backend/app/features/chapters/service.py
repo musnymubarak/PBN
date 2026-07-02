@@ -117,6 +117,7 @@ async def get_all_members(db: AsyncSession, requester_id: UUID | None = None) ->
             "profile_photo": user.profile_photo,
             "verification_level": user.verification_level.value if user.verification_level else None,
             "chapter_name": chap.name,
+            "district_name": chap.district,
             "industry": ind.name,
             "is_same_chapter": is_same_chapter,
             "industry_category": {

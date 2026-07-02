@@ -200,12 +200,33 @@ export default function RewardsPage() {
           }} />
 
           {/* Card Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <div style={{ fontSize: '0.85rem', fontWeight: 950, letterSpacing: '1px' }}>PRIME BUSINESS NETWORK</div>
-              <div style={{ fontSize: '0.6rem', fontWeight: 800, letterSpacing: '0.5px', marginTop: '2px', color: cardStyle.textMuted }}>{cardStyle.label}</div>
+              <div style={{ fontSize: '1.05rem', fontWeight: 900, letterSpacing: '-0.02em', color: cardStyle.color }}>
+                Prime <span style={{ color: 'var(--brand-amber)' }}>Business</span> Network
+              </div>
+              <div style={{ fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.5px', marginTop: '2px', color: cardStyle.textMuted }}>
+                {cardStyle.label}
+              </div>
             </div>
-            <IconAward size={28} />
+            {/* Gold EMV Chip Mockup */}
+            <div style={{
+              width: '36px',
+              height: '26px',
+              background: 'linear-gradient(135deg, #fef08a 0%, #ca8a04 100%)',
+              borderRadius: '6px',
+              position: 'relative',
+              overflow: 'hidden',
+              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.4), 0 2px 4px rgba(0,0,0,0.15)'
+            }}>
+              {/* EMV Grid Lines */}
+              <div style={{
+                position: 'absolute', inset: 0,
+                backgroundImage: 'radial-gradient(rgba(0,0,0,0.15) 1px, transparent 1px)',
+                backgroundSize: '6px 6px',
+                opacity: 0.8
+              }} />
+            </div>
           </div>
 
           {/* Card Middle - Card Number */}
@@ -222,12 +243,27 @@ export default function RewardsPage() {
           {/* Card Footer */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
             <div>
-              <div style={{ fontSize: '0.55rem', color: cardStyle.textMuted, fontWeight: 800, textTransform: 'uppercase' }}>CARDHOLDER</div>
-              <div style={{ fontSize: '0.85rem', fontWeight: 900 }}>{card?.member_name || 'Verified PBN Member'}</div>
+              <div style={{ fontSize: '0.55rem', color: cardStyle.textMuted, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                {tier === 'charter' ? 'CHARTER MEMBER' : 'PREMIUM MEMBER'}
+              </div>
+              <div style={{ fontSize: '1.15rem', fontWeight: 900, marginTop: '2px' }}>
+                {card?.member_name || 'Verified PBN Member'}
+              </div>
             </div>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '0.55rem', color: cardStyle.textMuted, fontWeight: 800, textTransform: 'uppercase' }}>POINTS</div>
-              <div style={{ fontSize: '1rem', fontWeight: 950 }}>{points.toLocaleString()} PTS</div>
+            
+            {/* Gold Tier Badge */}
+            <div style={{
+              padding: '6px 14px',
+              background: tier === 'gold' || tier === 'platinum' ? '#0e1535' : 'linear-gradient(135deg, #FFEAB2 0%, var(--brand-amber) 100%)',
+              color: tier === 'gold' || tier === 'platinum' ? 'var(--brand-amber)' : '#0e1535',
+              borderRadius: '20px',
+              fontSize: '0.65rem',
+              fontWeight: 900,
+              letterSpacing: '0.5px',
+              boxShadow: '0 4px 10px rgba(0,0,0,0.15)',
+              textTransform: 'uppercase'
+            }}>
+              {tier === 'charter' ? 'FOUNDING' : (tier || 'MEMBER')}
             </div>
           </div>
         </div>

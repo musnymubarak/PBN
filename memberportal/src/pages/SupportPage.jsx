@@ -130,21 +130,18 @@ export default function SupportPage() {
 
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               <Ds.Field label="Inquiry Category">
-                <select
+                <Ds.Select
                   value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  style={{
-                    width: '100%', padding: '0.75rem 1rem', borderRadius: '12px',
-                    border: '1px solid var(--border-subtle)', background: 'var(--bg-canvas)',
-                    color: 'var(--fg-primary)', fontSize: 'var(--text-sm)', fontWeight: 700
-                  }}
-                >
-                  <option value="membership">Membership Alignment</option>
-                  <option value="tech">Technology & Portal Bug</option>
-                  <option value="billing">Billing & Payments</option>
-                  <option value="clubs">Clubs & Vertical Exceptions</option>
-                  <option value="feedback">General Feedback</option>
-                </select>
+                  onChange={(val) => setFormData({ ...formData, category: val })}
+                  options={[
+                    { id: 'membership', name: 'Membership Alignment' },
+                    { id: 'tech', name: 'Technology & Portal Bug' },
+                    { id: 'billing', name: 'Billing & Payments' },
+                    { id: 'clubs', name: 'Clubs & Vertical Exceptions' },
+                    { id: 'feedback', name: 'General Feedback' }
+                  ]}
+                  placeholder="Select category…"
+                />
               </Ds.Field>
 
               <Ds.Field label="Subject" hint="Brief title of your request">

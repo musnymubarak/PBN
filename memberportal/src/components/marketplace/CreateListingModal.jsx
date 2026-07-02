@@ -181,42 +181,28 @@ export default function CreateListingModal({ isOpen, onClose, listing, onSuccess
                   <Ds.Field label="Offer Title" hint="Provide a clear, engaging title.">
                     <Ds.Input type="text" name="title" value={formData.title} onChange={handleChange} required placeholder="e.g., Premium Web Design Package" />
                   </Ds.Field>
-
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                     <Ds.Field label="Category">
-                      <select 
-                        name="category" 
-                        value={formData.category} 
-                        onChange={handleChange}
-                        style={{
-                          width: '100%', padding: '0.75rem 1rem', borderRadius: '12px',
-                          border: '1px solid var(--border-subtle)', background: 'var(--bg-canvas)',
-                          color: 'var(--fg-primary)', fontSize: 'var(--text-sm)', fontWeight: 700
-                        }}
-                      >
-                        <option value="product">Product</option>
-                        <option value="service">Service</option>
-                        <option value="consultation">Consultation</option>
-                      </select>
+                      <Ds.Select
+                        value={formData.category}
+                        onChange={(val) => setFormData(prev => ({ ...prev, category: val }))}
+                        options={[
+                          { id: 'product', name: 'Product' },
+                          { id: 'service', name: 'Service' },
+                          { id: 'consultation', name: 'Consultation' }
+                        ]}
+                        placeholder="Select category…"
+                      />
                     </Ds.Field>
 
                     <Ds.Field label="Industry">
-                      <select 
-                        name="industry_category_id" 
-                        value={formData.industry_category_id} 
-                        onChange={handleChange}
-                        required
-                        style={{
-                          width: '100%', padding: '0.75rem 1rem', borderRadius: '12px',
-                          border: '1px solid var(--border-subtle)', background: 'var(--bg-canvas)',
-                          color: 'var(--fg-primary)', fontSize: 'var(--text-sm)', fontWeight: 700
-                        }}
-                      >
-                        <option value="">Select Industry...</option>
-                        {industries.map(ind => (
-                          <option key={ind.id} value={ind.id}>{ind.name}</option>
-                        ))}
-                      </select>
+                      <Ds.Select
+                        value={formData.industry_category_id}
+                        onChange={(val) => setFormData(prev => ({ ...prev, industry_category_id: val }))}
+                        options={industries.map(ind => ({ id: ind.id, name: ind.name }))}
+                        placeholder="Select Industry..."
+                        searchable
+                      />
                     </Ds.Field>
                   </div>
                 </div>
