@@ -27,6 +27,13 @@ from google import genai
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
+class CalculatedScore:
+    def __init__(self, total_score: float, breakdown: dict, reasons: List[str]):
+        self.total_score = total_score
+        self.breakdown = breakdown
+        self.reasons = reasons
+
+
 class MatchmakingService:
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -56,6 +63,91 @@ class MatchmakingService:
         await self.db.commit()
         await self.db.refresh(profile)
         return profile
+
+    async def compute_match_score(self, user_id_1: uuid.UUID, user_id_2: uuid.UUID) -> CalculatedScore:
+        """Helper for background tasks to calculate score between two arbitrary users."""
+        u1_res = await self.db.execute(
+            select(User).options(joinedload(User.matching_profile)).where(User.id == user_id_1)
+        )
+        u1 = u1_res.unique().scalar_one_or_none()
+        
+        u2_res = await self.db.execute(
+            select(User).options(joinedload(User.matching_profile)).where(User.id == user_id_2)
+        )
+        u2 = u2_res.unique().scalar_one_or_none()
+        
+        if not u1 or not u2:
+            return CalculatedScore(0.0, {}, [])
+            
+        m1_res = await self.db.execute(
+            select(ChapterMembership).where(
+                and_(ChapterMembership.user_id == user_id_1, ChapterMembership.is_active == True)
+            )
+        )
+        m1 = m1_res.scalar_one_or_none()
+        
+        m2_res = await self.db.execute(
+            select(ChapterMembership).where(
+                and_(ChapterMembership.user_id == user_id_2, ChapterMembership.is_active == True)
+            )
+        )
+        m2 = m2_res.scalar_one_or_none()
+        
+        if not m1 or not m2:
+            return CalculatedScore(0.0, {}, [])
+            
+        rel_result = await self.db.execute(
+            select(IndustryRelationship).where(
+                or_(
+                    IndustryRelationship.industry_a_id == m1.industry_category_id,
+                    IndustryRelationship.industry_b_id == m1.industry_category_id
+                )
+            )
+        )
+        relationships = rel_result.scalars().all()
+        rel_map = {}
+        for r in relationships:
+            other_id = r.industry_b_id if r.industry_a_id == m1.industry_category_id else r.industry_a_id
+            rel_map[other_id] = r
+            
+        industry_names_result = await self.db.execute(
+            select(IndustryCategory.id, IndustryCategory.name)
+        )
+        industry_name_map = {iid: name for iid, name in industry_names_result.all()}
+        
+        # Load referrals
+        referrals_res = await self.db.execute(
+            select(Referral).where(
+                or_(
+                    and_(Referral.from_member_id == user_id_1, Referral.to_member_id == user_id_2),
+                    and_(Referral.from_member_id == user_id_2, Referral.to_member_id == user_id_1)
+                )
+            )
+        )
+        referrals = referrals_res.scalars().all()
+
+        # Load shared clubs
+        c1_res = await self.db.execute(
+            select(HorizontalClubMembership.club_id).where(
+                and_(HorizontalClubMembership.user_id == user_id_1, HorizontalClubMembership.is_active == True)
+            )
+        )
+        c1_ids = set(c1_res.scalars().all())
+        
+        c2_res = await self.db.execute(
+            select(HorizontalClubMembership.club_id).where(
+                and_(HorizontalClubMembership.user_id == user_id_2, HorizontalClubMembership.is_active == True)
+            )
+        )
+        c2_ids = set(c2_res.scalars().all())
+        shared_club_ids = c1_ids.intersection(c2_ids)
+
+        score, breakdown, reasons = await self._calculate_score(
+            u1, m1, u2, m2, rel_map, industry_name_map,
+            user_referrals=referrals,
+            shared_club_ids=shared_club_ids
+        )
+        return CalculatedScore(score, breakdown, reasons)
 
     async def compute_matches_for_user(self, user_id: uuid.UUID, limit: int = 10):
         """
@@ -126,15 +218,60 @@ class MatchmakingService:
         )
         industry_name_map = {iid: name for iid, name in industry_names_result.all()}
 
+        # 3c. Bulk-load referrals for the current user to prevent N+1 queries
+        referrals_res = await self.db.execute(
+            select(Referral).where(
+                or_(
+                    Referral.from_member_id == user_id,
+                    Referral.to_member_id == user_id
+                )
+            )
+        )
+        referrals = referrals_res.scalars().all()
+        referral_map = {}
+        for r in referrals:
+            other = r.to_member_id if r.from_member_id == user_id else r.from_member_id
+            if other not in referral_map:
+                referral_map[other] = []
+            referral_map[other].append(r)
+
+        # 3d. Bulk-load shared horizontal club memberships to prevent N+1 queries
+        clubs_res = await self.db.execute(
+            select(HorizontalClubMembership.club_id).where(
+                and_(
+                    HorizontalClubMembership.user_id == user_id,
+                    HorizontalClubMembership.is_active == True
+                )
+            )
+        )
+        user_club_ids = set(clubs_res.scalars().all())
+        
+        all_clubs_res = await self.db.execute(
+            select(HorizontalClubMembership.user_id, HorizontalClubMembership.club_id).where(
+                HorizontalClubMembership.is_active == True
+            )
+        )
+        other_clubs_map = {}
+        for uid, cid in all_clubs_res.all():
+            if uid not in other_clubs_map:
+                other_clubs_map[uid] = set()
+            other_clubs_map[uid].add(cid)
+
         # 4. Score each potential match
         suggestions = []
         for other_user, other_membership in others:
             try:
+                other_id = other_user.id
+                u_referrals = referral_map.get(other_id, [])
+                u_shared_clubs = user_club_ids.intersection(other_clubs_map.get(other_id, set()))
+                
                 score, breakdown, reasons = await self._calculate_score(
                     user, user_membership,
                     other_user, other_membership,
                     rel_map,
                     industry_name_map,
+                    user_referrals=u_referrals,
+                    shared_club_ids=u_shared_clubs
                 )
                 
                 if score > 0.3: # Minimum threshold
@@ -177,25 +314,26 @@ class MatchmakingService:
                 obj = MatchSuggestion(**match)
                 self.db.add(obj)
             
-            # IMPORTANT: do NOT generate Gemini strategies here.
-            # Strategies are generated lazily in `get_partnership_strategy()`
-            # the first time the user opens the match — then cached on the row
-            # so subsequent views never hit Gemini again. This keeps free-tier
-            # quota usage proportional to user engagement, not match volume.
             saved_suggestions.append(obj)
 
         await self.db.commit()
         return saved_suggestions
 
-    async def _calculate_score(self, u1, m1, u2, m2, rel_map, industry_name_map):
-        """Weighted scoring algorithm.
+    async def _calculate_score(
+        self, u1, m1, u2, m2, rel_map, industry_name_map,
+        user_referrals: Optional[List[Referral]] = None,
+        shared_club_ids: Optional[set] = None
+    ):
+        """Weighted scoring algorithm with Hybrid Semantic-Keyword profile similarity,
+        shared horizontal club alignment, and transaction boost logic.
 
-        Returns (score, breakdown, ordered_reasons). The caller joins the first
-        three entries from `ordered_reasons` into the suggestion's `explanation`
-        field — so reason ordering matters: highest-signal pushers go first,
-        and `r_chapter` goes last because it fires for almost every pair and
-        is the least-informative reason when it stands alone.
+        Returns (score, breakdown, ordered_reasons).
         """
+        if user_referrals is None:
+            user_referrals = []
+        if shared_club_ids is None:
+            shared_club_ids = set()
+
         score = 0.0
         breakdown = {}
 
@@ -203,10 +341,10 @@ class MatchmakingService:
         W_INDUSTRY = 0.4
         W_CHAPTER = 0.2
         W_VERIFICATION = 0.1
-        W_CLUBS = 0.1  # Reserved for future shared-horizontal-club bonus
+        W_CLUBS = 0.1
         W_PROFILE = 0.2
 
-        # Reason buckets — merged in priority order at the bottom of the function.
+        # Reason buckets
         r_industry: Optional[str] = None
         r_target_sector: Optional[str] = None
         r_profile: Optional[str] = None
@@ -214,16 +352,17 @@ class MatchmakingService:
         r_quality: Optional[str] = None
         r_tenure: Optional[str] = None
         r_chapter: Optional[str] = None
+        r_clubs: Optional[str] = None
+        r_referrals: Optional[str] = None
 
         p1 = u1.matching_profile
         p2 = u2.matching_profile
 
-        # 1. Industry Complementarity (the strongest signal when it fires)
+        # 1. Industry Complementarity
         industry_score = 0.2  # Base neutral score
         other_industry_id = m2.industry_category_id
 
-        # Detect target-sector match first — used both as a reason and as a
-        # score fallback when no predefined industry_relationship row exists.
+        # Target-sector check
         target_sector_match = False
         if p1 and p1.target_sectors and other_industry_id:
             other_industry_name = industry_name_map.get(other_industry_id, "")
@@ -237,7 +376,7 @@ class MatchmakingService:
                     r_target_sector = "In your target sectors"
 
         if m1.industry_category_id == m2.industry_category_id:
-            industry_score = 0.0  # Competitors in same industry
+            industry_score = 0.0  # Competitors
             r_industry = "Same industry (competitors)"
         elif other_industry_id in rel_map:
             rel = rel_map[other_industry_id]
@@ -248,17 +387,15 @@ class MatchmakingService:
                 industry_score = 0.6 * rel.strength
                 r_industry = "Adjacent industry sectors"
         elif target_sector_match:
-            # No predefined relationship row, but the user explicitly listed this
-            # industry as a target — treat as a user-overridable adjacent signal.
             industry_score = 0.6
 
         score += industry_score * W_INDUSTRY
         breakdown["industry"] = industry_score
 
-        # 2. Chapter / Network Gap (cross-chapter is the higher-value case)
+        # 2. Chapter / Network Location
         chapter_score = 1.0
         if m1.chapter_id == m2.chapter_id:
-            chapter_score = 0.3  # Already in same chapter, lower marginal value
+            chapter_score = 0.3
             r_chapter = "Same chapter member"
         else:
             r_chapter = "Cross-chapter opportunity"
@@ -266,7 +403,7 @@ class MatchmakingService:
         score += chapter_score * W_CHAPTER
         breakdown["chapter"] = chapter_score
 
-        # 3. Verification & Trust — graded so verified+ users always earn a reason
+        # 3. Verification & Trust
         v_map = {
             VerificationLevel.NONE: 0.1,
             VerificationLevel.VERIFIED: 0.5,
@@ -286,9 +423,10 @@ class MatchmakingService:
         elif v_score >= 0.5:
             r_verification = "Verified member"
 
-        # 4. Profile & Needs — bi-directional keyword matching
+        # 4. Profile & Needs — Hybrid Keyword + Semantic Matching
         profile_score = 0.2
         if p1 and p2:
+            # Keyword matching
             a_to_b = sum(
                 1
                 for need in (p1.looking_for or [])
@@ -306,20 +444,69 @@ class MatchmakingService:
                 )
             )
             total = a_to_b + b_to_a
+            keyword_score = 0.2
             if total > 0:
-                profile_score = min(1.0, 0.4 + (total * 0.2))
+                keyword_score = min(1.0, 0.4 + (total * 0.2))
 
-            if a_to_b > 0 and b_to_a > 0:
-                r_profile = "Mutual service fit"
-            elif a_to_b > 0:
-                r_profile = "Matches your stated needs"
-            elif b_to_a > 0:
-                r_profile = "You offer what they need"
+            # Semantic matching
+            has_embeddings = (
+                p1.looking_for_embedding is not None and p2.services_embedding is not None
+            ) or (
+                p2.looking_for_embedding is not None and p1.services_embedding is not None
+            )
+
+            if has_embeddings:
+                sim_a_to_b = self._cosine_similarity(p1.looking_for_embedding, p2.services_embedding)
+                sim_b_to_a = self._cosine_similarity(p2.looking_for_embedding, p1.services_embedding)
+                semantic_score = max(sim_a_to_b, sim_b_to_a)
+                
+                # Hybrid: 60% semantic similarity + 40% keyword match
+                profile_score = 0.6 * semantic_score + 0.4 * keyword_score
+                
+                if semantic_score > 0.65:
+                    if sim_a_to_b > sim_b_to_a:
+                        r_profile = "Strong semantic fit for your needs"
+                    else:
+                        r_profile = "Strong semantic match for your services"
+            else:
+                profile_score = keyword_score
+
+            if not r_profile:
+                if a_to_b > 0 and b_to_a > 0:
+                    r_profile = "Mutual service fit"
+                elif a_to_b > 0:
+                    r_profile = "Matches your stated needs"
+                elif b_to_a > 0:
+                    r_profile = "You offer what they need"
 
         score += profile_score * W_PROFILE
         breakdown["profile"] = profile_score
 
-        # 5. Profile quality (explanation-only — no score impact, signals depth)
+        # 5. Shared Horizontal Clubs
+        clubs_score = 0.0
+        shared_clubs_count = len(shared_club_ids)
+        if shared_clubs_count > 0:
+            clubs_score = min(1.0, shared_clubs_count * 0.5)
+            r_clubs = f"Shared horizontal club member ({shared_clubs_count} clubs)"
+            
+        score += clubs_score * W_CLUBS
+        breakdown["clubs"] = clubs_score
+
+        # 6. Referral & Transaction Interaction Boost
+        interaction_boost = 0.0
+        success_count = sum(1 for r in user_referrals if r.status == ReferralStatus.SUCCESS)
+        active_count = sum(1 for r in user_referrals if r.status not in [ReferralStatus.SUCCESS, ReferralStatus.FAILED])
+        
+        if success_count > 0:
+            interaction_boost += min(0.15, success_count * 0.05)
+            r_referrals = "Proven referral partnership history"
+        elif active_count > 0:
+            interaction_boost += 0.05
+            r_referrals = "Active business dialogue"
+            
+        score = min(1.0, score + interaction_boost)
+
+        # 7. Profile Quality
         if p2:
             has_description = bool(
                 p2.business_description
@@ -331,7 +518,7 @@ class MatchmakingService:
             elif service_count >= 4:
                 r_quality = "Diversified service offering"
 
-        # 6. Tenure signal (explanation-only, best-effort)
+        # 8. Tenure
         try:
             if u2.created_at:
                 created = u2.created_at
@@ -343,15 +530,17 @@ class MatchmakingService:
                 elif age < timedelta(days=30):
                     r_tenure = "New to the network"
         except Exception:
-            pass  # Never block a match for a date arithmetic edge case
+            pass
 
-        # Merge reasons in priority order — caller takes [:3].
+        # Merge reasons in priority order
         ordered = [
             r for r in [
                 r_industry,
                 r_target_sector,
                 r_profile,
                 r_verification,
+                r_referrals,
+                r_clubs,
                 r_quality,
                 r_tenure,
                 r_chapter,
@@ -491,3 +680,121 @@ Format: Return only the suggestion text."""
                     "Please wait about a minute and try again."
                 )
             return "Failed to generate AI strategy. Please try again later."
+
+    def _cosine_similarity(self, v1: Optional[List[float]], v2: Optional[List[float]]) -> float:
+        if not v1 or not v2:
+            return 0.0
+        try:
+            dot_product = sum(a * b for a, b in zip(v1, v2))
+            norm_v1 = sum(a * a for a in v1) ** 0.5
+            norm_v2 = sum(b * b for b in v2) ** 0.5
+            if norm_v1 == 0.0 or norm_v2 == 0.0:
+                return 0.0
+            return dot_product / (norm_v1 * norm_v2)
+        except Exception as e:
+            logger.error(f"Error computing cosine similarity: {e}")
+            return 0.0
+
+    async def enrich_and_embed_profile_task(self, user_id: uuid.UUID):
+        """Asynchronously triggers the profile enrichment and embedding task."""
+        from app.core.database import async_session_factory
+        async with async_session_factory() as db:
+            service = MatchmakingService(db)
+            await service.enrich_and_embed_profile(user_id)
+
+    async def enrich_and_embed_profile(self, user_id: uuid.UUID):
+        """Extracts key tags using Gemini and computes embeddings for the profile."""
+        profile = await self.get_or_create_profile(user_id)
+        
+        # 1. AI Profile Enrichment
+        if profile.business_description and len(profile.business_description.strip()) > 10:
+            enriched_services = await self._enrich_tags_via_gemini(
+                text=profile.business_description,
+                current_tags=profile.services_offered,
+                tag_type="services_offered"
+            )
+            if enriched_services:
+                # Merge and preserve unique
+                profile.services_offered = list(set(profile.services_offered + enriched_services))
+                
+            enriched_looking_for = await self._enrich_tags_via_gemini(
+                text=profile.business_description,
+                current_tags=profile.looking_for,
+                tag_type="looking_for"
+            )
+            if enriched_looking_for:
+                profile.looking_for = list(set(profile.looking_for + enriched_looking_for))
+                
+        # 2. Semantic Embeddings
+        services_text = ", ".join(profile.services_offered) if profile.services_offered else ""
+        if profile.business_description:
+            services_text += f"\nDescription: {profile.business_description}"
+            
+        looking_for_text = ", ".join(profile.looking_for) if profile.looking_for else ""
+        
+        if services_text.strip():
+            profile.services_embedding = await self._generate_embedding_gemini(services_text)
+            
+        if looking_for_text.strip():
+            profile.looking_for_embedding = await self._generate_embedding_gemini(looking_for_text)
+            
+        self.db.add(profile)
+        await self.db.commit()
+        logger.info(f"Generated semantic embeddings for user {user_id}")
+
+    async def _generate_embedding_gemini(self, text: str) -> Optional[List[float]]:
+        if not settings.GEMINI_API_KEY or not text.strip():
+            return None
+        import asyncio
+        try:
+            def _call():
+                client = genai.Client(api_key=settings.GEMINI_API_KEY)
+                response = client.models.embed_content(
+                    model="gemini-embedding-2",
+                    contents=text
+                )
+                if hasattr(response, "embeddings") and response.embeddings:
+                    return response.embeddings[0].values
+                return None
+            return await asyncio.to_thread(_call)
+        except Exception as e:
+            logger.error(f"Failed to generate embedding: {e}")
+            return None
+
+    async def _enrich_tags_via_gemini(self, text: str, current_tags: List[str], tag_type: str) -> List[str]:
+        if not settings.GEMINI_API_KEY or not text.strip():
+            return []
+        import asyncio
+        import json
+        
+        prompt = f"""Given the following business description:
+"{text}"
+
+Identify relevant, concise keyword tags (under 3 words per tag) for: {tag_type}.
+Already defined tags: {current_tags}
+Return up to 5 additional highly specific tags in a JSON array of strings format.
+Return ONLY the JSON array of strings e.g. ["tag1", "tag2"]."""
+        
+        try:
+            def _call():
+                client = genai.Client(api_key=settings.GEMINI_API_KEY)
+                response = client.models.generate_content(
+                    model="gemini-2.5-flash-lite",
+                    contents=prompt
+                )
+                if not response.text:
+                    return "[]"
+                clean_text = response.text.strip()
+                if clean_text.startswith("```"):
+                    clean_text = clean_text.split("\n", 1)[-1].rsplit("\n", 1)[0].strip()
+                    if clean_text.startswith("json"):
+                        clean_text = clean_text[4:].strip()
+                return clean_text
+            json_str = await asyncio.to_thread(_call)
+            tags = json.loads(json_str)
+            if isinstance(tags, list):
+                return [str(t).strip() for t in tags if t]
+            return []
+        except Exception as e:
+            logger.error(f"Failed to enrich tags: {e}")
+            return []

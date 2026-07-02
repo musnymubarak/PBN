@@ -31,6 +31,9 @@ class MatchingProfile(Base, TimestampMixin):
     looking_for: Mapped[List[str]] = mapped_column(JSONB, default=list, nullable=False)
     target_sectors: Mapped[List[str]] = mapped_column(JSONB, default=list, nullable=False)
     
+    services_embedding: Mapped[Optional[List[float]]] = mapped_column(JSONB, nullable=True)
+    looking_for_embedding: Mapped[Optional[List[float]]] = mapped_column(JSONB, nullable=True)
+    
     matching_enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     matching_preferences: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
 
