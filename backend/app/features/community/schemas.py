@@ -72,7 +72,7 @@ class SMTPSettingsUpdate(BaseModel):
     host: str
     port: int
     user: str
-    password: str
+    password: Optional[str] = None
     from_email: Optional[str] = None
     from_name: Optional[str] = None
 

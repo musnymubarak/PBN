@@ -552,7 +552,7 @@ class _DashboardPageState extends State<DashboardPage> {
       const SizedBox(height: 18),
       _buildSmartActionCard(),
       const SizedBox(height: 14),
-      _buildClubsQuickLink(),
+      _buildMeetingsQuickLink(),
       const SizedBox(height: 28),
       _sectionHeader(title: 'Your Performance'),
       _buildRoiHeroCard(),
@@ -2885,9 +2885,9 @@ class _DashboardPageState extends State<DashboardPage> {
             curve: Curves.easeOutCubic);
   }
 
-  Widget _buildClubsQuickLink() {
+  Widget _buildMeetingsQuickLink() {
     return GestureDetector(
-      onTap: () => Navigator.pushNamed(context, '/clubs'),
+      onTap: () => Navigator.pushNamed(context, '/events'),
       child: Container(
         height: 84,
         decoration: BoxDecoration(
@@ -2934,7 +2934,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: const Icon(
-                        TablerIcons.layers_linked,
+                        TablerIcons.calendar_event,
                         color: AppColors.accent,
                         size: 24,
                       ),
@@ -2946,7 +2946,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'Horizontal Clubs',
+                            'Upcoming Meetings',
                             style: GoogleFonts.dmSans(
                               fontWeight: FontWeight.w800,
                               fontSize: 16,
@@ -2956,7 +2956,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           ),
                           const SizedBox(height: 2),
                           const Text(
-                            'Connect by industry across chapters',
+                            'View chapter meetings and RSVP log',
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,

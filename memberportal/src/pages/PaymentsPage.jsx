@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { IconCash, IconPlus, IconUpload, IconCreditCard, IconReceipt, IconRefresh } from '@tabler/icons-react';
+import { 
+  IconCash, 
+  IconPlus, 
+  IconUpload, 
+  IconCreditCard, 
+  IconReceipt, 
+  IconRefresh, 
+  IconCircleCheck, 
+  IconShield 
+} from '@tabler/icons-react';
 import * as Ds from '../components/ui';
 import api from '../lib/api';
 
@@ -130,34 +139,87 @@ export default function PaymentsPage() {
   };
 
   return (
-    <div className="dashboard-body">
-      <Ds.PageHeader
-        title="Payments"
-        description="Manage your memberships, event meeting fees, and gateway transactions."
-        actions={
-          <Ds.Button
-            variant="ghost"
-            leftIcon={<IconRefresh size={16} />}
-            onClick={fetchPayments}
-            loading={loading}
-          >
-            Refresh
-          </Ds.Button>
-        }
-      />
+    <div className="dashboard-body" style={{ position: 'relative', paddingBottom: '4rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+        <Ds.PageHeader
+          title="Payments"
+          description="Manage your memberships, event meeting fees, and gateway transactions."
+          actions={
+            <Ds.Button
+              variant="ghost"
+              leftIcon={<IconRefresh size={16} />}
+              onClick={fetchPayments}
+              loading={loading}
+            >
+              Refresh
+            </Ds.Button>
+          }
+        />
+      </div>
 
-      {/* Stats row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
-        <Ds.StatCard
-          title="Total Paid"
-          value={formatLKR(totalPaid)}
-          description="Confirmed online & manual transactions"
-        />
-        <Ds.StatCard
-          title="Pending Payments"
-          value={formatLKR(totalPending)}
-          description="Outstanding balances requiring action"
-        />
+      {/* Hero Banner (styled like Event & Club Hero) */}
+      <div className="event-hero-v3">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxWidth: '80%' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <IconCreditCard size={20} style={{ color: 'var(--brand-amber)' }} />
+            <span style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--brand-amber)', letterSpacing: '0.15em' }}>ECOSYSTEM LEDGER</span>
+          </div>
+          <h3 style={{ fontSize: '1.6rem', fontWeight: 900, color: 'white', letterSpacing: '-0.02em', margin: '4px 0 0 0' }}>
+            Financial Accounts
+          </h3>
+          <p style={{ color: 'rgba(255, 255, 255, 0.85)', fontSize: '0.9rem', margin: '4px 0 10px 0', fontWeight: 600 }}>
+            Track your active membership subscriptions, event entrance clearances, and invoice payment histories.
+          </p>
+          
+          <div style={{
+            background: 'var(--brand-blue)',
+            color: 'white',
+            alignSelf: 'flex-start',
+            borderRadius: '8px',
+            padding: '4px 10px',
+            fontSize: '0.7rem',
+            fontWeight: 900,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px'
+          }}>
+            <IconShield size={12} />
+            Secure Gateway Integration Active
+          </div>
+        </div>
+      </div>
+
+      {/* Stats Counter Row (styled like Event & Club stats) */}
+      <div className="event-stats-v3">
+        <div className="event-stat-card-v3">
+          <div className="event-stat-icon-v3" style={{ background: 'rgba(52, 211, 153, 0.1)', color: '#34d399' }}>
+            <IconCircleCheck size={18} />
+          </div>
+          <div className="event-stat-info-v3">
+            <span className="event-stat-val-v3">{formatLKR(totalPaid)}</span>
+            <span className="event-stat-lbl-v3">Total Paid</span>
+          </div>
+        </div>
+        
+        <div className="event-stat-card-v3">
+          <div className="event-stat-icon-v3" style={{ background: 'var(--brand-amber-50)', color: 'var(--brand-amber)' }}>
+            <IconCreditCard size={18} />
+          </div>
+          <div className="event-stat-info-v3">
+            <span className="event-stat-val-v3">{formatLKR(totalPending)}</span>
+            <span className="event-stat-lbl-v3">Pending Payments</span>
+          </div>
+        </div>
+
+        <div className="event-stat-card-v3">
+          <div className="event-stat-icon-v3" style={{ background: 'var(--brand-blue-50)', color: 'var(--brand-blue)' }}>
+            <IconReceipt size={18} />
+          </div>
+          <div className="event-stat-info-v3">
+            <span className="event-stat-val-v3">{payments.length}</span>
+            <span className="event-stat-lbl-v3">Total Records</span>
+          </div>
+        </div>
       </div>
 
       {loading ? (

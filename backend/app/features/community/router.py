@@ -225,6 +225,22 @@ async def record_tyfb_endpoint(
     await record_tyfb(current_user.id, post_id, float(business_value), db)
     return success_response(message="TYFB value recorded and lead closed successfully")
 
+@router.get("/members/smtp-settings", summary="Get personal SMTP settings")
+async def get_smtp_settings_endpoint(
+    current_user: User = Depends(member_req),
+) -> ORJSONResponse:
+    settings = current_user.smtp_settings or {}
+    has_password = bool(settings.get("password"))
+    safe_settings = {
+        "host": settings.get("host", ""),
+        "port": settings.get("port", 587),
+        "user": settings.get("user", ""),
+        "from_email": settings.get("from_email", ""),
+        "from_name": settings.get("from_name", ""),
+        "has_password": has_password,
+    }
+    return success_response(data=safe_settings)
+
 
 @router.post("/members/smtp-settings", summary="Update personal SMTP settings")
 async def update_smtp_settings_endpoint(
@@ -232,7 +248,12 @@ async def update_smtp_settings_endpoint(
     current_user: User = Depends(member_req),
     db: AsyncSession = Depends(get_db),
 ) -> ORJSONResponse:
-    current_user.smtp_settings = data.model_dump()
+    old_settings = current_user.smtp_settings or {}
+    new_settings = data.model_dump()
+    if not new_settings.get("password") and old_settings.get("password"):
+        new_settings["password"] = old_settings["password"]
+    
+    current_user.smtp_settings = new_settings
     db.add(current_user)
     await db.commit()
     return success_response(message="SMTP settings updated successfully")

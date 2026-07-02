@@ -161,6 +161,7 @@ async def me_endpoint(
             "must_change_password": current_user.must_change_password,
             "two_factor_enabled": current_user.two_factor_enabled,
             "profile_photo": current_user.profile_photo,
+            "verification_level": current_user.verification_level.value,
             "created_at": current_user.created_at.isoformat(),
             "updated_at": current_user.updated_at.isoformat(),
         },

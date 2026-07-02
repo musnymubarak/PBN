@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' hide ChangeNotifierProvider;
+import 'package:pbn/core/providers/riverpod_providers.dart';
 import 'package:pbn/core/theme/app_theme.dart';
 import 'package:pbn/core/constants/app_colors.dart';
 import 'package:pbn/core/providers/auth_provider.dart';
-import 'package:pbn/core/providers/notification_provider.dart';
-import 'package:pbn/core/providers/member_provider.dart';
-import 'package:pbn/core/providers/club_provider.dart';
 import 'package:pbn/features/auth/login_page.dart';
 import 'package:pbn/features/auth/splash_page.dart';
 import 'package:pbn/features/dashboard/dashboard_page.dart';
@@ -48,15 +47,20 @@ Future<void> main() async {
     debugPrint('PrefsService initialization failed: $e');
   }
 
+  final container = ProviderContainer();
+
   runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => NotificationProvider()),
-        ChangeNotifierProvider(create: (_) => MemberProvider()),
-        ChangeNotifierProvider(create: (_) => ClubProvider()),
-      ],
-      child: const PBNApp(),
+    UncontrolledProviderScope(
+      container: container,
+      child: MultiProvider(
+        providers: [
+          ChangeNotifierProvider.value(value: container.read(authRiverpodProvider)),
+          ChangeNotifierProvider.value(value: container.read(notificationRiverpodProvider)),
+          ChangeNotifierProvider.value(value: container.read(memberRiverpodProvider)),
+          ChangeNotifierProvider.value(value: container.read(clubRiverpodProvider)),
+        ],
+        child: const PBNApp(),
+      ),
     ),
   );
 }

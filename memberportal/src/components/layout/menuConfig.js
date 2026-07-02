@@ -46,7 +46,6 @@ export const MAIN_MENU = [
     title: 'Account',
     isGroup: true,
     links: [
-      { title: 'Applications', path: '/applications', icon: IconFileText },
       { title: 'Support', path: '/support', icon: IconHelp },
     ]
   }

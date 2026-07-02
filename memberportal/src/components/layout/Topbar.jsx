@@ -17,6 +17,7 @@ import {
   IconArrowsExchange,
   IconCalendarEvent,
   IconUsers,
+  IconCircleCheckFilled,
 } from '@tabler/icons-react';
 import { Avatar } from '../ui/Avatar';
 import { IconButton } from '../ui/IconButton';
@@ -214,11 +215,48 @@ export function Topbar({
               <span className="ds-topbar__profile-name">{adminUser?.full_name || 'Admin User'}</span>
               <span className="ds-topbar__profile-role">{adminUser?.role || 'Administrator'}</span>
             </span>
-            <Avatar
-              size="sm"
-              name={adminUser?.full_name || 'Admin'}
-              variant="brand"
-            />
+            <div style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
+              <Avatar
+                size="sm"
+                src={adminUser?.profile_photo || undefined}
+                name={adminUser?.full_name || 'Admin'}
+                variant="brand"
+              />
+              {adminUser?.verification_level && adminUser.verification_level !== 'none' && (() => {
+                const lvl = adminUser.verification_level.toLowerCase();
+                const tierColor =
+                  lvl === 'gold'     ? '#D97706' :   // amber — matches mobile accent
+                  lvl === 'silver'   ? '#9CA3AF' :   // silver grey — matches mobile textMuted
+                  lvl === 'platinum' ? '#E5E7EB' :   // light grey
+                                      '#2563EB';     // blue — verified (mobile accentBlue)
+                const tierLabel =
+                  lvl === 'gold'     ? 'Gold Member' :
+                  lvl === 'silver'   ? 'Silver Member' :
+                  lvl === 'platinum' ? 'Platinum Member' :
+                                      'Verified Member';
+                return (
+                  <span
+                    title={tierLabel}
+                    style={{
+                      position: 'absolute',
+                      bottom: '-3px',
+                      right: '-3px',
+                      width: '16px',
+                      height: '16px',
+                      borderRadius: '50%',
+                      background: 'white',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: `0 0 0 1.5px white, 0 1px 4px rgba(0,0,0,0.18)`,
+                      lineHeight: 1,
+                    }}
+                  >
+                    <IconCircleCheckFilled size={16} style={{ color: tierColor }} />
+                  </span>
+                );
+              })()}
+            </div>
           </button>
 
           {showProfileMenu && (

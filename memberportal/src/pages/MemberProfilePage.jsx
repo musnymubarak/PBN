@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { IconMail, IconSend, IconArrowLeft, IconBriefcase, IconMapPin, IconBuildingSkyscraper, IconPhone, IconBrandWhatsapp } from '@tabler/icons-react';
+import { IconMail, IconSend, IconArrowLeft, IconBriefcase, IconMapPin, IconBuildingSkyscraper, IconPhone, IconBrandWhatsapp, IconCircleCheckFilled, IconAlertTriangle } from '@tabler/icons-react';
 import * as Ds from '../components/ui';
 import api from '../lib/api';
 
@@ -15,6 +15,9 @@ export default function MemberProfilePage() {
   const [emailSubject, setEmailSubject] = useState('Connection request via PBN Portal');
   const [emailContent, setEmailContent] = useState('');
   const [isSending, setIsSending] = useState(false);
+
+  const [successBanner, setSuccessBanner] = useState('');
+  const [errorBanner, setErrorBanner] = useState('');
 
   useEffect(() => {
     const fetchMember = async () => {
@@ -39,16 +42,20 @@ export default function MemberProfilePage() {
   const handleSendEmail = async (e) => {
     e.preventDefault();
     setIsSending(true);
+    setErrorBanner('');
+    setSuccessBanner('');
 
     try {
-      await api.post(`/community/members/${member.user_id}/send-email`, {
+      await api.post(`/members/${member.user_id}/send-email`, {
         subject: emailSubject,
-        body: emailContent
+        content: emailContent
       });
-      alert('Email sent successfully using your personal SMTP settings!');
       setShowEmailModal(false);
+      setSuccessBanner('Email sent successfully using your personal SMTP settings!');
+      setTimeout(() => setSuccessBanner(''), 6000);
     } catch (err) {
-      alert(err.response?.data?.error?.message || 'Failed to send email. Please check your SMTP settings.');
+      setErrorBanner(err.response?.data?.error?.message || 'Failed to send email. Please check your SMTP settings.');
+      setTimeout(() => setErrorBanner(''), 6000);
     } finally {
       setIsSending(false);
     }
@@ -87,6 +94,46 @@ export default function MemberProfilePage() {
           Back to Directory
         </Ds.Button>
       </div>
+
+      {successBanner && (
+        <div style={{
+          marginBottom: '1.5rem',
+          padding: '1rem',
+          background: 'var(--brand-green-50)',
+          color: 'var(--brand-green-700)',
+          border: '1px solid var(--brand-green-100)',
+          borderRadius: 'var(--radius-lg)',
+          fontSize: 'var(--text-sm)',
+          fontWeight: 600,
+          boxShadow: '0 2px 8px rgba(16,185,129,0.05)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem'
+        }}>
+          <IconCircleCheckFilled size={18} style={{ color: '#10b981', flexShrink: 0 }} />
+          <span>{successBanner}</span>
+        </div>
+      )}
+
+      {errorBanner && (
+        <div style={{
+          marginBottom: '1.5rem',
+          padding: '1rem',
+          background: 'var(--brand-red-50)',
+          color: 'var(--brand-red-600)',
+          border: '1px solid var(--brand-red-100)',
+          borderRadius: 'var(--radius-lg)',
+          fontSize: 'var(--text-sm)',
+          fontWeight: 600,
+          boxShadow: '0 2px 8px rgba(239,68,68,0.05)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem'
+        }}>
+          <IconAlertTriangle size={18} style={{ color: '#ef4444', flexShrink: 0 }} />
+          <span>{errorBanner}</span>
+        </div>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '2rem' }}>
         <Ds.Card padded style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
@@ -168,33 +215,37 @@ export default function MemberProfilePage() {
         <Ds.Modal
           isOpen={true}
           onClose={() => setShowEmailModal(false)}
-          title={`Email ${member.full_name}`}
         >
+          <Ds.Modal.Header title={`Email ${member.full_name}`} onClose={() => setShowEmailModal(false)} />
+          
           <form onSubmit={handleSendEmail}>
-            <p style={{ fontSize: 'var(--text-sm)', color: 'var(--fg-secondary)', marginBottom: '1.5rem' }}>
-              This email will be sent directly from your configured personal SMTP server.
-            </p>
-            <Ds.Field label="Subject">
-              <Ds.Input
-                value={emailSubject}
-                onChange={e => setEmailSubject(e.target.value)}
-                required
-              />
-            </Ds.Field>
-            <Ds.Field label="Message">
-              <Ds.Textarea
-                value={emailContent}
-                onChange={e => setEmailContent(e.target.value)}
-                rows={6}
-                required
-              />
-            </Ds.Field>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '2rem' }}>
+            <Ds.Modal.Body>
+              <p style={{ fontSize: 'var(--text-sm)', color: 'var(--fg-secondary)', marginBottom: '1.5rem' }}>
+                This email will be sent directly from your configured personal SMTP server.
+              </p>
+              <Ds.Field label="Subject">
+                <Ds.Input
+                  value={emailSubject}
+                  onChange={e => setEmailSubject(e.target.value)}
+                  required
+                />
+              </Ds.Field>
+              <Ds.Field label="Message" style={{ marginTop: '1rem' }}>
+                <Ds.Textarea
+                  value={emailContent}
+                  onChange={e => setEmailContent(e.target.value)}
+                  rows={6}
+                  required
+                />
+              </Ds.Field>
+            </Ds.Modal.Body>
+
+            <Ds.Modal.Footer>
               <Ds.Button variant="ghost" onClick={() => setShowEmailModal(false)}>Cancel</Ds.Button>
               <Ds.Button variant="primary" type="submit" loading={isSending} leftIcon={<IconSend size={16} />}>
                 Send Message
               </Ds.Button>
-            </div>
+            </Ds.Modal.Footer>
           </form>
         </Ds.Modal>
       )}

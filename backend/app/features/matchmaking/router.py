@@ -1,6 +1,6 @@
 import uuid
 from typing import List, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_db
@@ -25,12 +25,14 @@ async def get_my_matching_profile(
 @router.put("/profile")
 async def update_my_matching_profile(
     data: MatchingProfileUpdate,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Update the current user's business matching profile."""
     service = MatchmakingService(db)
     profile = await service.update_profile(current_user.id, data.model_dump(exclude_unset=True))
+    background_tasks.add_task(service.enrich_and_embed_profile_task, current_user.id)
     return success_response(data=MatchingProfile.model_validate(profile).model_dump(mode='json'))
 
 @router.post("/compute")
