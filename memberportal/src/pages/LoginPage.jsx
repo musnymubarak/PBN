@@ -178,7 +178,6 @@ export default function LoginPage() {
       {/* Premium floating background orbs wrapped to prevent bottom scroll overflow */}
       <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none', zIndex: 0 }}>
         <div className="login-orb-1" />
-        <div className="login-orb-2" />
       </div>
 
       {/* Header Bar */}

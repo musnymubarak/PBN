@@ -456,6 +456,33 @@
       color: #080d24;
     }
 
+    .nav-portal {
+      background: transparent;
+      color: #ffffff;
+      border: 1px solid #7a85b0;
+      padding: 9px 24px;
+      border-radius: 4px;
+      font-family: var(--font-body);
+      font-weight: 500;
+      font-size: 0.875rem;
+      letter-spacing: 0.04em;
+      transition: background 0.2s, border-color 0.2s, transform 0.15s;
+      display: inline-block;
+    }
+
+    .nav-portal:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: #ffffff;
+      transform: translateY(-1px);
+      color: #ffffff;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
     .hamburger {
       display: none;
       flex-direction: column;
@@ -1883,6 +1910,7 @@
         flex-direction: row;
         align-items: stretch;
       }
+
       .ecosystem-card.reverse {
         flex-direction: row-reverse;
       }
@@ -2736,7 +2764,7 @@
       }
 
       .nav-links,
-      .nav-cta {
+      .nav-actions {
         display: none;
       }
 
@@ -3248,7 +3276,10 @@
       <li><a href="team">Operations</a></li>
       <li><a href="#pricing">Pricing</a></li>
     </ul>
-    <a href="#cta" class="nav-cta">Secure Your Seat</a>
+    <div class="nav-actions">
+      <a href="https://portal.primebusiness.network" target="_blank" class="nav-portal">Member Login</a>
+      <a href="#cta" class="nav-cta">Secure Your Seat</a>
+    </div>
     <div class="hamburger" id="hamburger" onclick="openMenu()">
       <span></span><span></span><span></span>
     </div>
@@ -3264,6 +3295,8 @@
     <a href="#chapters" onclick="closeMenu()">Chapters</a>
     <a href="team" onclick="closeMenu()">Operations</a>
     <a href="#pricing" onclick="closeMenu()">Pricing</a>
+    <a href="https://portal.primebusiness.network" target="_blank" onclick="closeMenu()"
+      style="color: #c9a84c; font-weight: 600;">Member Login</a>
     <a href="#cta" onclick="closeMenu()">Secure Your Seat →</a>
   </div>
 
@@ -3729,7 +3762,7 @@
       <div class="divider"></div>
     </div>
     <div class="clubs-grid reveal">
-      
+
       <div class="club-card">
         <div class="club-icon"><span class="ti"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36"
               viewBox="0 0 24 24">
@@ -3951,11 +3984,11 @@
             class="ch-tag">Digital Marketer</span><span class="ch-tag">Cybersecurity</span><span class="ch-tag">Data
             Analyst</span><span class="ch-tag">UI/UX Designer</span><span class="ch-tag">Real Estate Agent</span><span
             class="ch-tag">Architect</span><span class="ch-tag">Contractor</span><span class="ch-tag">Interior
-            Designer</span><span class="ch-tag">Quantity Surveyor</span><span
-            class="ch-tag">Photographer</span><span class="ch-tag">PR Firm</span><span class="ch-tag">Event
-            Organiser</span><span class="ch-tag">Branding Designer</span><span class="ch-tag">Content Creator</span><span 
-            class="ch-tag">SEO Specialist</span><span class="ch-tag">Recruitment Agency</span><span 
-            class="ch-tag">Logistics &amp; Freight</span><span class="ch-tag">Commercial Printer</span><span 
+            Designer</span><span class="ch-tag">Quantity Surveyor</span><span class="ch-tag">Photographer</span><span
+            class="ch-tag">PR Firm</span><span class="ch-tag">Event
+            Organiser</span><span class="ch-tag">Branding Designer</span><span class="ch-tag">Content
+            Creator</span><span class="ch-tag">SEO Specialist</span><span class="ch-tag">Recruitment Agency</span><span
+            class="ch-tag">Logistics &amp; Freight</span><span class="ch-tag">Commercial Printer</span><span
             class="ch-tag">Travel Agent</span>
         </div>
       </div>
@@ -4146,7 +4179,8 @@
           <tr>
             <td data-label="Profession" class="rf-prof">HR Consultant</td>
             <td data-label="Business They RECEIVE">Recruitment, payroll outsourcing, HR policies</td>
-            <td data-label="Business They CREATE FOR Others" class="rf-give">Lawyer, Accountant, Software Development, Business
+            <td data-label="Business They CREATE FOR Others" class="rf-give">Lawyer, Accountant, Software Development,
+              Business
               Coach</td>
           </tr>
           <tr>
@@ -4174,7 +4208,8 @@
           <tr>
             <td data-label="Profession" class="rf-prof">Management Consultant</td>
             <td data-label="Business They RECEIVE">Business process improvement, restructuring, feasibility</td>
-            <td data-label="Business They CREATE FOR Others" class="rf-give">Accountant, Software Development, HR Consultant,
+            <td data-label="Business They CREATE FOR Others" class="rf-give">Accountant, Software Development, HR
+              Consultant,
               Lawyer</td>
           </tr>
           <tr>
@@ -4186,25 +4221,29 @@
           <tr>
             <td data-label="Profession" class="rf-prof">Digital Marketer</td>
             <td data-label="Business They RECEIVE">SEO, paid ads, social media, branding campaigns</td>
-            <td data-label="Business They CREATE FOR Others" class="rf-give">Software Development, Photographer, PR Firm, Content
+            <td data-label="Business They CREATE FOR Others" class="rf-give">Software Development, Photographer, PR
+              Firm, Content
               Creator</td>
           </tr>
           <tr>
             <td data-label="Profession" class="rf-prof">Cybersecurity Specialist</td>
             <td data-label="Business They RECEIVE">Pen testing, security audits, compliance (ISO, PCI)</td>
-            <td data-label="Business They CREATE FOR Others" class="rf-give">Software Development, Lawyer, Management Consultant
+            <td data-label="Business They CREATE FOR Others" class="rf-give">Software Development, Lawyer, Management
+              Consultant
             </td>
           </tr>
           <tr>
             <td data-label="Profession" class="rf-prof">Data Analyst</td>
             <td data-label="Business They RECEIVE">Business intelligence, dashboards, data pipelines</td>
-            <td data-label="Business They CREATE FOR Others" class="rf-give">Software Development, Management Consultant,
+            <td data-label="Business They CREATE FOR Others" class="rf-give">Software Development, Management
+              Consultant,
               Financial Advisor</td>
           </tr>
           <tr>
             <td data-label="Profession" class="rf-prof">UI/UX Designer</td>
             <td data-label="Business They RECEIVE">App design, website UX, product design, prototyping</td>
-            <td data-label="Business They CREATE FOR Others" class="rf-give">Software Development, Digital Marketer, Branding
+            <td data-label="Business They CREATE FOR Others" class="rf-give">Software Development, Digital Marketer,
+              Branding
               Designer</td>
           </tr>
           <tr>
@@ -4237,58 +4276,68 @@
             <td data-label="Business They CREATE FOR Others" class="rf-give">Architect, Building Contractor, Real Estate
               Agent</td>
           </tr>
-          
-          
-          
+
+
+
           <tr>
             <td data-label="Profession" class="rf-prof">Photographer / Videographer</td>
             <td data-label="Business They RECEIVE">Corporate shoots, events, product &amp; brand photography</td>
-            <td data-label="Business They CREATE FOR Others" class="rf-give">Digital Marketer, PR Firm, Event Organiser</td>
+            <td data-label="Business They CREATE FOR Others" class="rf-give">Digital Marketer, PR Firm, Event Organiser
+            </td>
           </tr>
           <tr>
             <td data-label="Profession" class="rf-prof">PR / Communications Firm</td>
             <td data-label="Business They RECEIVE">Media relations, press releases, reputation management</td>
-            <td data-label="Business They CREATE FOR Others" class="rf-give">Digital Marketer, Event Organiser, Lawyer</td>
+            <td data-label="Business They CREATE FOR Others" class="rf-give">Digital Marketer, Event Organiser, Lawyer
+            </td>
           </tr>
           <tr>
             <td data-label="Profession" class="rf-prof">Event Organiser</td>
             <td data-label="Business They RECEIVE">Corporate events, conferences, product launches</td>
-            <td data-label="Business They CREATE FOR Others" class="rf-give">PR Firm, Photographer, Branding Designer</td>
+            <td data-label="Business They CREATE FOR Others" class="rf-give">PR Firm, Photographer, Branding Designer
+            </td>
           </tr>
           <tr>
             <td data-label="Profession" class="rf-prof">Branding Designer</td>
             <td data-label="Business They RECEIVE">Logo design, brand identity, marketing materials</td>
-            <td data-label="Business They CREATE FOR Others" class="rf-give">Digital Marketer, PR Firm, Content Creator</td>
+            <td data-label="Business They CREATE FOR Others" class="rf-give">Digital Marketer, PR Firm, Content Creator
+            </td>
           </tr>
           <tr>
             <td data-label="Profession" class="rf-prof">Content Creator</td>
             <td data-label="Business They RECEIVE">Copywriting, blog posts, video scripts, social content</td>
-            <td data-label="Business They CREATE FOR Others" class="rf-give">Digital Marketer, Branding Designer, PR Firm</td>
+            <td data-label="Business They CREATE FOR Others" class="rf-give">Digital Marketer, Branding Designer, PR
+              Firm</td>
           </tr>
           <tr>
             <td data-label="Profession" class="rf-prof">SEO Specialist</td>
             <td data-label="Business They RECEIVE">Search engine rankings, website traffic, local SEO</td>
-            <td data-label="Business They CREATE FOR Others" class="rf-give">Digital Marketer, Content Creator, IT / Software Company</td>
+            <td data-label="Business They CREATE FOR Others" class="rf-give">Digital Marketer, Content Creator, IT /
+              Software Company</td>
           </tr>
           <tr>
             <td data-label="Profession" class="rf-prof">Recruitment Agency</td>
             <td data-label="Business They RECEIVE">Talent sourcing, executive search, bulk hiring</td>
-            <td data-label="Business They CREATE FOR Others" class="rf-give">HR Consultant, Corporate Trainer, Lawyer</td>
+            <td data-label="Business They CREATE FOR Others" class="rf-give">HR Consultant, Corporate Trainer, Lawyer
+            </td>
           </tr>
           <tr>
             <td data-label="Profession" class="rf-prof">Logistics &amp; Freight</td>
             <td data-label="Business They RECEIVE">Import/export shipping, customs clearance, warehouse storage</td>
-            <td data-label="Business They CREATE FOR Others" class="rf-give">Insurance Agent, Tax Advisor, Accountant</td>
+            <td data-label="Business They CREATE FOR Others" class="rf-give">Insurance Agent, Tax Advisor, Accountant
+            </td>
           </tr>
           <tr>
             <td data-label="Profession" class="rf-prof">Commercial Printer</td>
             <td data-label="Business They RECEIVE">Business cards, banners, large format printing, packaging</td>
-            <td data-label="Business They CREATE FOR Others" class="rf-give">Branding Designer, Event Organiser, PR Firm</td>
+            <td data-label="Business They CREATE FOR Others" class="rf-give">Branding Designer, Event Organiser, PR Firm
+            </td>
           </tr>
           <tr>
             <td data-label="Profession" class="rf-prof">Travel Agent</td>
             <td data-label="Business They RECEIVE">Corporate travel, retreat bookings, visa assistance</td>
-            <td data-label="Business They CREATE FOR Others" class="rf-give">Event Organiser, Insurance Agent, HR Consultant</td>
+            <td data-label="Business They CREATE FOR Others" class="rf-give">Event Organiser, Insurance Agent, HR
+              Consultant</td>
           </tr>
         </tbody>
       </table>

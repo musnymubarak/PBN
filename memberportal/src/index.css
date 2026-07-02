@@ -3990,8 +3990,7 @@ tr:nth-last-child(2) .action-dropdown {
 
 @media (min-width: 769px) {
   .login-page-v2 {
-    height: 100vh;
-    overflow: hidden;
+    min-height: 100vh;
   }
 }
 
@@ -4375,8 +4374,6 @@ tr:nth-last-child(2) .action-dropdown {
   .login-split-image-pane-v3 {
     height: 220px;
     padding: 1.5rem;
-  }
-  .login-split-form-pane-v3 {
   }
 }
 
