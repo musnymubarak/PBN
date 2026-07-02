@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { IconServer, IconCheck } from '@tabler/icons-react';
 import * as Ds from '../components/ui';
 import api from '../lib/api';
@@ -13,9 +13,36 @@ export default function SettingsPage() {
     from_name: ''
   });
   
+  const [loading, setLoading] = useState(true);
+  const [hasPassword, setHasPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await api.get('/members/smtp-settings');
+        if (res.data?.data) {
+          const s = res.data.data;
+          setFormData({
+            host: s.host || '',
+            port: s.port || 587,
+            user: s.user || '',
+            password: '', // keep empty on load
+            from_email: s.from_email || '',
+            from_name: s.from_name || ''
+          });
+          setHasPassword(s.has_password || false);
+        }
+      } catch (err) {
+        console.error('Failed to fetch SMTP settings', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -32,17 +59,33 @@ export default function SettingsPage() {
         host: formData.host,
         port: parseInt(formData.port),
         user: formData.user,
-        password: formData.password,
+        password: formData.password || null, // send null if unchanged/empty
         from_email: formData.from_email || null,
         from_name: formData.from_name || null
       });
       setSuccess('SMTP settings securely saved to your profile.');
+      setHasPassword(true); // user saved/updated a password successfully
+      setFormData(prev => ({ ...prev, password: '' })); // clear the field
     } catch (err) {
       setError(err.response?.data?.error?.message || 'Failed to save settings.');
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="dashboard-body">
+        <Ds.PageHeader
+          title="Email Configuration"
+          description="Connect your personal or corporate email server to send messages directly from your own address."
+        />
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}>
+          <Ds.Spinner size="lg" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="dashboard-body">
@@ -99,13 +142,14 @@ export default function SettingsPage() {
                 required
               />
             </Ds.Field>
-            <Ds.Field label="Password / App Password">
+            <Ds.Field label="Password / App Password" hint={hasPassword ? "Password is configured. Leave blank to keep existing password." : ""}>
               <Ds.Input
                 type="password"
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                required
+                placeholder={hasPassword ? "••••••••" : "Your email password"}
+                required={!hasPassword}
               />
             </Ds.Field>
           </div>

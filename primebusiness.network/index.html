@@ -3305,7 +3305,7 @@
     <div class="reveal countdown-wrap">
       <div class="section-label">FLAGSHIP CHAPTER LAUNCH</div>
       <h2 class="section-title">The Countdown Is On</h2>
-      <p class="section-sub">We are starting our first chapter on <strong>1st of July at 6:00 PM Sri Lanka
+      <p class="section-sub">We are starting our first chapter on <strong>15th of July at 6:00 PM Sri Lanka
           Time</strong>. Don't miss your chance to secure your exclusive industry seat.</p>
 
       <div class="countdown-card">
@@ -4700,18 +4700,19 @@
   <script>
     // Countdown Timer initialization
     (function initCountdown() {
-      // July 1, 2026 6:00 PM Sri Lanka Time (UTC+5:30)
-      const targetDate = new Date("2026-07-01T18:00:00+05:30").getTime();
+      // July 15, 2026 6:00 PM Sri Lanka Time (UTC+5:30)
+      const targetDate = new Date("2026-07-15T18:00:00+05:30").getTime();
+      let timerInterval;
 
       function updateCountdown() {
         const now = new Date().getTime();
         const distance = targetDate - now;
 
         if (distance < 0) {
-          clearInterval(timerInterval);
+          if (timerInterval) clearInterval(timerInterval);
           const countdownEl = document.getElementById("launch-countdown-sec");
           if (countdownEl) countdownEl.style.display = "none";
-          return;
+          return true;
         }
 
         const days = Math.floor(distance / (1000 * 60 * 60 * 24));
@@ -4728,10 +4729,12 @@
         if (hEl) hEl.innerText = String(hours).padStart(2, '0');
         if (mEl) mEl.innerText = String(minutes).padStart(2, '0');
         if (sEl) sEl.innerText = String(seconds).padStart(2, '0');
+        return false;
       }
 
-      updateCountdown();
-      const timerInterval = setInterval(updateCountdown, 1000);
+      if (!updateCountdown()) {
+        timerInterval = setInterval(updateCountdown, 1000);
+      }
     })();
 
     // Scroll reveal

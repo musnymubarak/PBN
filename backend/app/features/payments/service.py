@@ -400,7 +400,61 @@ async def get_my_payments(user_id: UUID, db: AsyncSession) -> List[Dict[str, Any
             await db.flush()
     stmt = select(Payment).options(joinedload(Payment.proofs)).where(Payment.user_id == user_id).order_by(desc(Payment.created_at))
     result = await db.execute(stmt)
-    return [_serialize_payment(p) for p in result.unique().scalars().all()]
+    raw_payments = result.unique().scalars().all()
+
+    # Filter out duplicate pending/failed payments to prevent dashboard clutter
+    filtered_payments = []
+    completed_event_ids = set()
+    completed_membership = False
+
+    # First pass: identify completed payments and delete stale pending ones (older than 30 minutes)
+    has_updates = False
+    for p in list(raw_payments):
+        if p.status == PaymentStatus.PENDING and p.created_at:
+            created_at_utc = p.created_at if p.created_at.tzinfo else p.created_at.replace(tzinfo=timezone.utc)
+            if (datetime.now(timezone.utc) - created_at_utc) > timedelta(minutes=30):
+                await db.delete(p)
+                raw_payments.remove(p)
+                has_updates = True
+                continue
+
+        if p.status == PaymentStatus.COMPLETED:
+            if p.payment_type == PaymentType.MEETING_FEE and p.reference_id:
+                completed_event_ids.add(p.reference_id)
+            elif p.payment_type == PaymentType.MEMBERSHIP:
+                completed_membership = True
+
+    if has_updates:
+        await db.flush()
+
+    seen_pending_events = set()
+    seen_pending_membership = False
+
+    # Second pass: filter raw payments
+    for p in raw_payments:
+        if p.status == PaymentStatus.COMPLETED:
+            filtered_payments.append(p)
+        else:
+            if p.payment_type == PaymentType.MEETING_FEE and p.reference_id:
+                # If already paid completed for this event, ignore pending/failed attempts
+                if p.reference_id in completed_event_ids:
+                    continue
+                # Keep only the latest pending/failed record for the event
+                if p.reference_id not in seen_pending_events:
+                    seen_pending_events.add(p.reference_id)
+                    filtered_payments.append(p)
+            elif p.payment_type == PaymentType.MEMBERSHIP:
+                # If membership is completed, ignore other pending/failed membership entries
+                if completed_membership:
+                    continue
+                # Keep only the latest pending/failed membership record
+                if not seen_pending_membership:
+                    seen_pending_membership = True
+                    filtered_payments.append(p)
+            else:
+                filtered_payments.append(p)
+
+    return [_serialize_payment(p) for p in filtered_payments]
 
 
 async def get_payment_status(payment_id: UUID, user_id: UUID | None, is_admin: bool, db: AsyncSession) -> Dict[str, Any]:
